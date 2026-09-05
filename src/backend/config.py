@@ -1,6 +1,6 @@
 import os
 from functools import lru_cache
-from typing import Annotated, Any, List, Protocol, Optional
+from typing import Annotated, Any, List, Literal, Protocol, Optional
 
 from dotenv import dotenv_values
 from pydantic import (
@@ -165,12 +165,12 @@ class FrontendConfig(BaseModel):
 class LoggingConfig(BaseModel):
     """Application logging configuration.
 
-    All modules use ``logging.getLogger(__name__)`` and inherit from the root
-    logger configured in ``log.py`` — no per-module handlers needed.
+    All modules use ``get_logger(__name__)`` and inherit from the root logger
+    configured in ``log.py`` — no per-module handlers needed.
     """
 
-    level: str = Field(default="INFO", alias="LOGGING__LEVEL")
-    dir: str = Field(default="logs", alias="LOGGING__DIR")
+    level: str = Field(default="INFO")
+    format: Literal["text", "json"] = Field(default="text")
 
 
 class GoogleSSOConfig(BaseModel):

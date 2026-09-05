@@ -7,6 +7,7 @@ from .auth.routes.auth import router as auth_router
 from .auth.routes.invitations import router as invitation_router
 from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
+from .log import setup_logging
 from .users.routes import router as users_router
 from fastapi.staticfiles import StaticFiles
 
@@ -25,6 +26,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     if config is None:
         config = get_app_config()
 
+    setup_logging(config.logging)
     app = FastAPI(
         title="Fantasy Backend",
         lifespan=lifespan,
