@@ -20,7 +20,7 @@ pytestmark = pytest.mark.integration
 
 
 async def _user(db: AsyncSession, name: str) -> User:
-    model = UserModel(name=name, email=f"{name}-{uuid.uuid4()}@test.local")
+    model = UserModel(name=name, email=f"{name}-{uuid.uuid4()}@example.com")
     db.add(model)
     await db.flush()
     return User.model_validate(model)

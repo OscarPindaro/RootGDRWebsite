@@ -18,7 +18,7 @@ pytestmark = pytest.mark.integration
 
 
 async def _user(db: AsyncSession, name: str) -> User:
-    model = UserModel(name=name, email=f"{name}-{uuid.uuid4()}@test.local")
+    model = UserModel(name=name, email=f"{name}-{uuid.uuid4()}@example.com")
     db.add(model)
     await db.flush()
     return User.model_validate(model)
@@ -43,8 +43,8 @@ async def test_world_is_visible_to_its_creator_and_shared_users(
     shared_world = await get_world(db_session, world.id, shared_user)
     worlds, total = await get_worlds(db_session, shared_user)
 
-    assert shared_world.id == world.id
-    assert [item.id for item in worlds] == [world.id]
+    assert str(shared_world.id) == str(world.id)
+    assert [str(item.id) for item in worlds] == [str(world.id)]
     assert total == 1
     with pytest.raises(WorldNotFoundException):
         await get_world(db_session, world.id, outsider)
