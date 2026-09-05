@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -17,7 +18,46 @@ _COMPOSE_FILES = {
 
 
 class ComposeError(RuntimeError):
-    """Raised when a Docker Compose operation fails."""
+    """Raised when a Compose operation fails."""
+
+
+def _engine_works(engine: str) -> bool:
+    if shutil.which(engine) is None:
+        return False
+    try:
+        result = subprocess.run(
+            [engine, "info"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except OSError, subprocess.TimeoutExpired:
+        return False
+    return result.returncode == 0
+
+
+def _container_engine() -> str:
+    override = os.environ.get("HARNESS_CONTAINER_ENGINE")
+    if override:
+        engine = override.strip().lower()
+        if engine not in {"docker", "podman"}:
+            raise ComposeError(
+                "HARNESS_CONTAINER_ENGINE must be either 'docker' or 'podman'"
+            )
+        if not _engine_works(engine):
+            raise ComposeError(f"Configured container engine '{engine}' is unavailable")
+        return engine
+
+    for engine in ("docker", "podman"):
+        if _engine_works(engine):
+            return engine
+    raise ComposeError("Neither Docker nor Podman is available")
+
+
+def _compose_command(engine: str) -> list[str]:
+    if engine == "podman" and shutil.which("podman-compose") is not None:
+        return ["podman-compose"]
+    return [engine, "compose"]
 
 
 def _environment(environment_state: EnvironmentState) -> dict[str, str]:
@@ -37,9 +77,9 @@ def _environment(environment_state: EnvironmentState) -> dict[str, str]:
 
 
 def _run(environment_state: EnvironmentState, *args: str) -> str:
+    engine = _container_engine()
     command = [
-        "docker",
-        "compose",
+        *_compose_command(engine),
         "--project-name",
         environment_state.compose_project,
         "-f",
@@ -55,7 +95,7 @@ def _run(environment_state: EnvironmentState, *args: str) -> str:
     )
     if result.returncode != 0:
         raise ComposeError(
-            f"docker compose {' '.join(args)} failed:\n{result.stderr.strip()}"
+            f"Compose {' '.join(args)} failed using {engine}:\n{result.stderr.strip()}"
         )
     return result.stdout.strip()
 

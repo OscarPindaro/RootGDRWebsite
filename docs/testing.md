@@ -99,6 +99,10 @@ pytestmark = pytest.mark.integration  # or pytest.mark.unit
 
 CI runs them as separate jobs: `pytest -m unit` then `pytest -m integration`.
 
+The test harness uses Docker when its daemon is reachable and otherwise falls back
+to Podman. Set `HARNESS_CONTAINER_ENGINE=docker` or
+`HARNESS_CONTAINER_ENGINE=podman` to override automatic detection.
+
 ---
 
 ## Fixtures (`tests/conftest.py`)
