@@ -19,6 +19,19 @@ class WorldAccessDeniedException(HTTPException):
         )
 
 
+class WorldImageNotFoundException(HTTPException):
+    def __init__(self, world_id: uuid.UUID):
+        super().__init__(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"World {world_id} does not have an image",
+        )
+
+
+class ImageUploadException(HTTPException):
+    def __init__(self, detail: str = "Unable to store the world image"):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+
+
 class SharedUserNotFoundException(HTTPException):
     def __init__(self):
         super().__init__(

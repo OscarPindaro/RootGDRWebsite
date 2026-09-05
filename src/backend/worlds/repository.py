@@ -35,12 +35,15 @@ class WorldRepository:
         )
 
     @staticmethod
-    def _options(include_shared_with: bool):
+    def _options(include_shared_with: bool, include_image: bool = False):
         return (
             selectinload(WorldModel.created_by),
             selectinload(WorldModel.shared_with)
             if include_shared_with
             else noload(WorldModel.shared_with),
+            selectinload(WorldModel.image)
+            if include_image
+            else noload(WorldModel.image),
         )
 
     async def create(self, data: WorldCreate, created_by_id: uuid.UUID) -> WorldModel:
@@ -63,10 +66,11 @@ class WorldRepository:
         user_id: uuid.UUID,
         is_admin: bool,
         include_shared_with: bool = False,
+        include_image: bool = False,
     ) -> WorldModel | None:
         stmt = (
             select(WorldModel)
-            .options(*self._options(include_shared_with))
+            .options(*self._options(include_shared_with, include_image))
             .where(WorldModel.id == world_id)
         )
         if not is_admin:

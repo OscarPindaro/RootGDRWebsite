@@ -65,6 +65,9 @@ class WorldResponse(AppBaseModel, TimestampMixin):
     description: Annotated[
         str, Field(max_length=10_000, description="World description")
     ]
+    image_url: Annotated[
+        str | None, Field(default=None, description="Authenticated world image URL")
+    ]
     created_by: Annotated[UserResponse, Field(description="User who created the world")]
     shared_with: Annotated[
         list[UserResponse] | None,

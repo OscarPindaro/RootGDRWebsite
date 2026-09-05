@@ -1,15 +1,27 @@
+import mimetypes
 import uuid
+from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_user
 from ..dependencies import get_db_session
+from ..filesystem.base import FileSystem
+from ..filesystem.dependencies import get_filesystem
 from ..schemas import PagedResponse
 from ..users.schemas import User
 from .models import WorldModel
 from .schemas import WorldCreate, WorldResponse, WorldUpdate
-from .service import create_world, delete_world, get_world, get_worlds, update_world
+from .service import (
+    create_world,
+    delete_world,
+    get_world,
+    get_worlds,
+    read_world_image,
+    update_world,
+    upload_world_image,
+)
 
 router = APIRouter(prefix="/api/worlds", tags=["worlds"])
 
@@ -43,6 +55,38 @@ async def list_worlds(
         total=total,
         page=page,
         page_size=page_size,
+    )
+
+
+@router.put("/{world_id}/image", response_model=WorldResponse)
+async def upload_world_image_route(
+    world_id: uuid.UUID,
+    image: UploadFile = File(...),
+    user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
+    db: AsyncSession = Depends(get_db_session),
+) -> WorldResponse:
+    """Replace a world image when the current user owns it or is an administrator."""
+    return _to_response(await upload_world_image(db, world_id, image, user, filesystem))
+
+
+@router.get("/{world_id}/image", response_class=Response)
+async def get_world_image_route(
+    world_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
+    db: AsyncSession = Depends(get_db_session),
+) -> Response:
+    """Return an image for an accessible world."""
+    image, content = await read_world_image(db, world_id, user, filesystem)
+    media_type = mimetypes.guess_type(image.name)[0] or "application/octet-stream"
+    return Response(
+        content,
+        media_type=media_type,
+        headers={
+            "Content-Disposition": f"inline; filename*=UTF-8''{quote(image.name, safe='')}",
+            "X-Content-Type-Options": "nosniff",
+        },
     )
 
 
