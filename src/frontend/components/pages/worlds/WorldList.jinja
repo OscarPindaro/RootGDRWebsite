@@ -1,0 +1,34 @@
+{#def worlds, total, page, page_size, current_user=None #}
+{#css common/Avatar.css, common/Button.css, common/Card.css, common/Grid.css, common/HStack.css, common/Menu.css, common/Tooltip.css, common/VStack.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, pages/worlds/WorldList.css #}
+<layout.Page title="Worlds" current_user={{ current_user }} active="worlds">
+  <div class="world-list">
+    <common.VStack gap=8>
+      <header class="world-list-header">
+        <h1>Worlds</h1>
+        <p>Explore the worlds that you created or that other adventurers shared with you.</p>
+      </header>
+      {% if worlds %}
+      <pages.worlds.WorldGrid worlds={{ worlds }} />
+      {% else %}
+      <common.Card variant="outlined" class="world-list-empty">
+        <common.VStack gap=2 align="center">
+          <common.Icon name="map" size=32 />
+          <h2>No worlds yet</h2>
+          <p>Create a world through the API to begin tracking your adventures.</p>
+        </common.VStack>
+      </common.Card>
+      {% endif %}
+      {% if total > page_size %}
+      <nav class="world-pagination" aria-label="World pages">
+        {% if page > 1 %}
+        <a href="/worlds?page={{ page - 1 }}&amp;page_size={{ page_size }}">Previous</a>
+        {% endif %}
+        <span>Page {{ page }}</span>
+        {% if page * page_size < total %}
+        <a href="/worlds?page={{ page + 1 }}&amp;page_size={{ page_size }}">Next</a>
+        {% endif %}
+      </nav>
+      {% endif %}
+    </common.VStack>
+  </div>
+</layout.Page>

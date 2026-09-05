@@ -1,0 +1,16 @@
+{#def world #}
+<common.Card class="world-card" variant="outlined">
+  <common.HStack gap=4 align="stretch">
+    <div class="world-card-image">
+      {% if world.image_url %}
+      <img src="{{ world.image_url }}" alt="{{ world.name }}" />
+      {% else %}
+      <common.Icon name="map" size=32 />
+      {% endif %}
+    </div>
+    <common.VStack gap=2 class="world-card-content">
+      <h2>{{ world.name }}</h2>
+      <p>{{ world.description }}</p>
+    </common.VStack>
+  </common.HStack>
+</common.Card>

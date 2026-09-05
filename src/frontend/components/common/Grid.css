@@ -1,0 +1,14 @@
+.grid {
+  display: grid;
+  gap: var(--grid-gap, var(--sp-6));
+}
+
+.grid-columns-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+@media (max-width: 960px) {
+  .grid-columns-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 640px) {
+  .grid-columns-3 { grid-template-columns: 1fr; }
+}

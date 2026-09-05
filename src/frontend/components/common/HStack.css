@@ -1,0 +1,12 @@
+.h-stack {
+  display: flex;
+  gap: var(--stack-gap, var(--sp-4));
+}
+
+.h-stack-align-center { align-items: center; }
+.h-stack-align-start { align-items: flex-start; }
+.h-stack-align-end { align-items: flex-end; }
+.h-stack-justify-start { justify-content: flex-start; }
+.h-stack-justify-between { justify-content: space-between; }
+.h-stack-justify-end { justify-content: flex-end; }
+.h-stack-wrap { flex-wrap: wrap; }

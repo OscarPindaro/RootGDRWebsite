@@ -1,0 +1,6 @@
+{#def worlds #}
+<common.Grid columns=3 gap=6 class="world-grid">
+  {% for world in worlds %}
+  <pages.worlds.WorldCard world={{ world }} />
+  {% endfor %}
+</common.Grid>

@@ -71,10 +71,12 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         from .auth.views import router as auth_views_router  # noqa: PLC0415
         from .users.views import router as users_views_router  # noqa: PLC0415
         from .views import router as views_router  # noqa: PLC0415
+        from .worlds.views import router as worlds_views_router  # noqa: PLC0415
 
         app.include_router(auth_views_router)
         app.include_router(users_views_router)
         app.include_router(views_router)
+        app.include_router(worlds_views_router)
 
         # Dev-only: mount the component showcase
         if config.env == "dev":

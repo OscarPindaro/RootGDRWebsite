@@ -1,0 +1,10 @@
+.v-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stack-gap, var(--sp-4));
+}
+
+.v-stack-align-stretch { align-items: stretch; }
+.v-stack-align-start { align-items: flex-start; }
+.v-stack-align-center { align-items: center; }
+.v-stack-align-end { align-items: flex-end; }

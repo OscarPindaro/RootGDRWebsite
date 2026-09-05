@@ -12,6 +12,7 @@
   <nav class="sidebar-nav" tabindex="0">
     <layout.SidebarSection>
       <layout.SidebarItem href="/" icon="home" label="Home" :active="active" match="home" />
+      <layout.SidebarItem href="/worlds" icon="map" label="Worlds" :active="active" match="worlds" />
     </layout.SidebarSection>
     {% if current_user and current_user.role == 'admin' %}
     <layout.SidebarSection label="Admin">
