@@ -52,6 +52,7 @@ def test_real_registry_registers_all_tables() -> None:
         "UserAuthProviderModel",
         "UserPasswordModel",
         "UserModel",
+        "WorldModel",
     }
 
 
