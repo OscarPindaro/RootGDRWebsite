@@ -1,0 +1,10 @@
+{#def title, current_user=None, active=None #}
+{#css common/Avatar.css, common/Button.css, common/Menu.css, common/Tooltip.css, layout/Sidebar.css, layout/UserMenu.css #}
+{# Pass values through with `:prop="expr"`. A quoted "{{ title }}" is handed to
+   the child component as that literal string, not as the variable's value. #}
+<layout.BlankPage :title="title">
+  <layout.Sidebar :current_user="current_user" :active="active" />
+  <main class="page-main">
+    {{ content }}
+  </main>
+</layout.BlankPage>

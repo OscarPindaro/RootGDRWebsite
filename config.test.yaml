@@ -1,0 +1,18 @@
+env: dev
+database:
+  user: app_user
+  host: localhost
+  port: 5432
+  db: backend_test
+migrator:
+  user: migrator_user
+  host: localhost
+  port: 5432
+  db: backend_test
+auth:
+  bootstrap_admin_email: e2e-admin@example.com
+  cookie_secure: false
+frontend:
+  enabled: true
+backend_host: 127.0.0.1
+backend_port: 8002
