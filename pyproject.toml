@@ -26,9 +26,11 @@ dependencies = [
     "aiofiles>=25.1.0",
     "python-dotenv>=1.1.1",
     "markdown-it-py>=4.2.0",
+    "python-telegram-bot>=22.5,<23",
 ]
 
 [project.scripts]
+devin-telegram-bot = "devin_bot.bot:main"
 harness = "harness.cli:cli"
 
 [build-system]
@@ -38,6 +40,7 @@ build-backend = "uv_build"
 [tool.uv_build]
 packages = [
   { include = "backend", from = "src" },
+  { include = "devin_bot", from = "src" },
   { include = "harness", from = "src" },
 ]
 
