@@ -7,6 +7,7 @@ A change done in a file in general should not have a ripple effect on a very dis
 If there is a bug, the bug should be as much as possible local to the place where it happened.
 Do not use `getattr` or `setattr`. Use explicit typed attributes.
 Use Pydantic models instead of untyped dictionaries for domain data and internal boundaries.
+DO NOT COAUTHOR THE COMMITS
 
 
 ## Tools
