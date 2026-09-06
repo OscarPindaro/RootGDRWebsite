@@ -5,6 +5,8 @@ Be concise, both when talking and writing code.
 Every line of code is a potential liablity, so a solution should not add useless complexity.
 A change done in a file in general should not have a ripple effect on a very distant unrelated file.
 If there is a bug, the bug should be as much as possible local to the place where it happened.
+Do not use `getattr` or `setattr`. Use explicit typed attributes.
+Use Pydantic models instead of untyped dictionaries for domain data and internal boundaries.
 
 
 ## Tools
