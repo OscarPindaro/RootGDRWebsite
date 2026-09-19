@@ -15,10 +15,16 @@ class ConfigError(RuntimeError):
 
 
 def _paths(root: Path) -> tuple[Path, Path]:
-    env_file = root / ".env.test"
-    if not env_file.exists():
-        env_file = root / ".env.test.example"
-    return env_file, root / "config.test.yaml"
+    """Resolve the test env file, preferring the committed ``test.env``.
+
+    Order: committed ``test.env`` (deterministic, non-production values) →
+    private ``.env.test`` (ignored, may hold overrides) → ``.env.test.example``.
+    """
+    for candidate in ("test.env", ".env.test", ".env.test.example"):
+        env_file = root / candidate
+        if env_file.exists():
+            return env_file, root / "config.test.yaml"
+    return root / "test.env", root / "config.test.yaml"
 
 
 def validate(root: Path | None = None) -> None:
@@ -27,7 +33,7 @@ def validate(root: Path | None = None) -> None:
     missing = [
         f"  {label} not found at {path}"
         for path, label in (
-            (env_file, ".env.test or .env.test.example"),
+            (env_file, "test.env, .env.test or .env.test.example"),
             (config_file, "config.test.yaml"),
         )
         if not path.exists()
@@ -36,7 +42,8 @@ def validate(root: Path | None = None) -> None:
         raise ConfigError(
             "Test configuration is incomplete:\n"
             + "\n".join(missing)
-            + "\n\nEnsure .env.test or .env.test.example and config.test.yaml exist."
+            + "\n\nEnsure test.env (or .env.test / .env.test.example) and "
+            "config.test.yaml exist."
         )
     try:
         data = yaml.safe_load(config_file.read_text())

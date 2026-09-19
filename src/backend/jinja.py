@@ -101,6 +101,7 @@ def _build_templates(templates_dir: str):
     templates.env.filters["metric_value"] = _metric_value
     templates.env.filters["time"] = _time
     templates.env.filters["markdown"] = _markdown
+    templates.env.filters["cat_index"] = _cat_index
     templates.env.globals["now"] = lambda: datetime.now(UTC)
     return templates
 

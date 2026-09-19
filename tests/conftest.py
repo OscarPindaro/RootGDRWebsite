@@ -1,5 +1,13 @@
+# ruff: noqa: E402
 import os
 from collections.abc import AsyncGenerator, Generator
+
+# Importing ``src.backend.server`` builds the app at module import time, which
+# reads AppConfig. Point it at the committed test configuration before any
+# backend import so a fresh checkout can run tests without a private .env.
+# The harness may override these; setdefault keeps its choice.
+os.environ.setdefault("ENV_FILE", "test.env")
+os.environ.setdefault("YAML_CONFIG_FILE", "config.test.yaml")
 
 import pytest
 import pytest_asyncio
@@ -17,7 +25,7 @@ from src.backend.server import create_app
 
 class TestAppConfig(AppConfig):
     model_config = SettingsConfigDict(
-        env_file=os.environ.get("ENV_FILE", ".env.test"),
+        env_file=os.environ.get("ENV_FILE", "test.env"),
         yaml_file=os.environ.get("YAML_CONFIG_FILE", "config.test.yaml"),
         extra="ignore",
         env_nested_delimiter="__",

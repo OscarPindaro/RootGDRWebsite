@@ -34,17 +34,22 @@ from jinja2 import meta
 # a bare Environment -- a bare env would silently stop checking custom filters.
 from backend.jinja import _build_templates
 
-TEMPLATES = pathlib.Path(__file__).parents[3] / "templates"
-NAMES = sorted(p.relative_to(TEMPLATES).as_posix() for p in TEMPLATES.rglob("*.html"))
+# The application has no standalone ``templates/`` directory: everything is a
+# JinjaX component under ``src/frontend/components``. Compile those instead, so
+# this guard still catches a syntax error or a typo'd filter in a component.
+COMPONENTS = pathlib.Path(__file__).parents[3] / "src" / "frontend" / "components"
+NAMES = sorted(
+    p.relative_to(COMPONENTS).as_posix() for p in COMPONENTS.rglob("*.jinja")
+)
 
 
 def _env():
-    return _build_templates(str(TEMPLATES)).env
+    return _build_templates(str(COMPONENTS)).env
 
 
 def test_templates_are_discovered():
     """Guard against the parametrized tests silently degrading to zero cases."""
-    assert NAMES, f"no templates found under {TEMPLATES}"
+    assert NAMES, f"no components found under {COMPONENTS}"
 
 
 @pytest.mark.unit
@@ -64,6 +69,8 @@ def test_referenced_templates_exist(name):
     # `None` marks a dynamically-computed target (e.g. `{% include some_var %}`)
     # which cannot be resolved without rendering; skip those rather than fail.
     missing = [
-        ref for ref in referenced if ref is not None and not (TEMPLATES / ref).is_file()
+        ref
+        for ref in referenced
+        if ref is not None and not (COMPONENTS / ref).is_file()
     ]
     assert not missing, f"{name} references non-existent template(s): {missing}"
