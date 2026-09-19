@@ -19,3 +19,8 @@
 .cat-5 { background: var(--cat-5); }
 .cat-6 { background: var(--cat-6); }
 .cat-7 { background: var(--cat-7); }
+
+.avatar-photo {
+  object-fit: cover;
+  border: 1px solid var(--line);
+}

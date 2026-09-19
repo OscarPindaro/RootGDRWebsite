@@ -45,6 +45,10 @@ class User(AppBaseModel, TimestampMixin):
             description="User's email address",
         ),
     ]
+    avatar_url: Annotated[
+        str | None,
+        Field(default=None, description="Profile picture URL from the auth provider"),
+    ]
     role: Annotated[
         UserRole,
         Field(default=UserRole.MEMBER, description="User role"),
@@ -73,6 +77,10 @@ class UserResponse(AppBaseModel, TimestampMixin):
             examples=["john@example.com"],
             description="User's email address",
         ),
+    ]
+    avatar_url: Annotated[
+        str | None,
+        Field(default=None, description="Profile picture URL from the auth provider"),
     ]
     role: Annotated[
         UserRole,

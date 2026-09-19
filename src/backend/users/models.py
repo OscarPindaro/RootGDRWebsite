@@ -9,6 +9,7 @@ from ..db.mixins import TimestampMixin, UUIDv7PrimaryKeyMixin
 class UserModel(Base, UUIDv7PrimaryKeyMixin, TimestampMixin):
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
+    avatar_url: Mapped[str | None] = mapped_column(String(512), nullable=True)
     role: Mapped[UserRole] = mapped_column(
         SAEnum(UserRole, name="user_role"), nullable=False, default=UserRole.MEMBER
     )

@@ -21,7 +21,9 @@ def test_catalog_exposes_configured_application_name() -> None:
 
 
 def test_showcase_sidebar_link_is_development_only() -> None:
-    user = SimpleNamespace(name="Admin", email="admin@example.com", role="admin")
+    user = SimpleNamespace(
+        name="Admin", email="admin@example.com", role="admin", avatar_url=None
+    )
     development = get_catalog(str(COMPONENTS_DIR), env="dev")
     production = get_catalog(str(COMPONENTS_DIR), env="prod")
 

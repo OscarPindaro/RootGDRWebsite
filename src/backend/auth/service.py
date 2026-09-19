@@ -42,6 +42,19 @@ async def find_by_provider(
     return result.scalar_one_or_none()
 
 
+def _provider_avatar(openid) -> str | None:
+    """Return the provider's profile picture URL, if the payload has one."""
+    picture = getattr(openid, "picture", None)
+    return picture.strip() if isinstance(picture, str) and picture.strip() else None
+
+
+def _sync_avatar(user: UserModel, openid) -> None:
+    """Refresh a user's avatar from the provider when one is available."""
+    avatar = _provider_avatar(openid)
+    if avatar:
+        user.avatar_url = avatar
+
+
 async def find_by_email(db: AsyncSession, email: str) -> UserModel | None:
     """Find a user by email (may exist from another provider)."""
     result = await db.execute(select(UserModel).where(UserModel.email == email))
@@ -138,6 +151,7 @@ async def login_with_provider(
     # 1. Already linked?
     user = await find_by_provider(db, provider, openid.id)
     if user:
+        _sync_avatar(user, openid)
         return user
 
     # 2. Existing user via email from another provider?
@@ -148,6 +162,7 @@ async def login_with_provider(
                 user_id=user.id, provider=provider, provider_sub=openid.id
             )
         )
+        _sync_avatar(user, openid)
         await db.flush()
         return user
 
@@ -168,6 +183,7 @@ async def login_with_provider(
         name=openid.display_name or openid.email,
         email=openid.email,
         role=role,
+        avatar_url=_provider_avatar(openid),
     )
     db.add(user)
     await db.flush()
