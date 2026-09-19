@@ -120,14 +120,19 @@ Masters and site administrators manage pages; every world member can read them. 
 - Raw embedded HTML remains disabled. Richer embeds must be expressed as a
   syntax the server renderer understands, never as raw markup: enabling raw HTML
   would also let any member store a script that runs on every reader's page.
-- The writing surface is a real editor, not a bare textarea. It is loaded **on
-  demand**, when someone starts editing, and only for users who are allowed to
-  edit. Readers never download it.
+- The writing surface is a real editor, not a bare textarea. **CodeMirror 6** is
+  the choice: the document stays the Markdown string, and the line under the
+  cursor shows its Markdown while the rest is rendered. The reasoning, including
+  why Milkdown was considered and rejected, is in `docs/features/frontend.md`.
+- It is loaded **on demand**, when someone starts editing, and only for users who
+  are allowed to edit. Readers never download it.
 - The editor's live rendering and the server's rendered output must agree. The
   prototype in `prototypes/devin-prototype/` checks this word by word, block by
   block and measurement by measurement (`render-compare.html`).
-- Editor choice is still open; `docs/features/frontend.md` records the candidates
-  and what each costs.
+- Structured content — an inline card of a character, an image with width and
+  caption, a callout — is rendered as a view over a syntax, not as a real
+  editable node. That is the cost of keeping the document as plain Markdown, and
+  it is accepted.
 - htmx loads and saves the editor fragment; save, cancel, and validation behavior
   must still work if the enhancement fails to load.
 - Validation errors are rendered in the editor without discarding the submitted
@@ -316,10 +321,10 @@ Each content type is completed independently in model → migration → schema �
 
 ### Phase 5 — Rich editing and fast navigation
 
-- **P5.0 — Editor decision:** choose between the candidates recorded in
-  `docs/features/frontend.md` (CodeMirror 6 and Milkdown, with TipTap as the
-  heavier option), based on the prototype in `prototypes/devin-prototype/`.
-- **P5.1 — Editor field:** package the chosen editor as a reusable JinjaX field,
+- **P5.0 — Editor decision:** settled on **CodeMirror 6** (see
+  `docs/features/frontend.md` for the alternatives considered and what was
+  accepted).
+- **P5.1 — Editor field:** package CodeMirror 6 as a reusable JinjaX field,
   loaded on demand and only for users who can edit. Preserve the underlying
   Markdown source, use server-rendered CommonMark as authoritative output, and
   cover htmx reinitialization and fallback behavior.

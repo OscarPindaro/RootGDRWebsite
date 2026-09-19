@@ -50,10 +50,17 @@ allungare il drawer.
 
 ## Confronto dei motori di scrittura
 
-`editor.html` apre tre pagine che montano lo **stesso documento** (la scheda di
-Roccianera) dentro la stessa impaginazione, cambiando solo il motore. Ci si
-arriva dal link **Motori di scrittura** in fondo al rail, da qualunque pagina,
-oppure dalla command palette.
+**Scelto: CodeMirror 6.** Il documento resta la stringa Markdown, e la riga sotto
+il cursore mostra il suo Markdown mentre il resto è reso. Milkdown è stato
+prototipato per intero ed è stato scartato: riscrive il documento a ogni
+salvataggio, e il modello di scrittura che si voleva è quello di CodeMirror. Il
+ragionamento completo, con quello che accettiamo scegliendolo, è in
+`docs/features/frontend.md`.
+
+Le tre pagine restano come documentazione della scelta: montano lo **stesso
+documento** (la scheda di Roccianera) dentro la stessa impaginazione, cambiando
+solo il motore. Ci si arriva dal link **Motori di scrittura** in fondo al rail,
+da qualunque pagina, oppure dalla command palette.
 
 | Pagina | Motore | Modello |
 |---|---|---|

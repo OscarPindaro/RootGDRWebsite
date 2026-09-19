@@ -203,18 +203,43 @@ A document can be a **draft**: only its author sees it, and it is listed among
 the drafts of its type rather than among the published content. Creating a place
 is the same editing surface as any other place, plus this state.
 
-### Writing engine (open)
+### Writing engine: CodeMirror 6 (decided)
 
-The current prototype edits Markdown in a plain `textarea` and draws the caret,
-the active line and the mention pills around it. That is a hack, not a
-foundation. Three engines were prototyped side by side on the same document —
-see `prototypes/devin-prototype/editor.html`:
+**CodeMirror 6** is the editor. The document stays the Markdown string, and the
+current line shows its Markdown while the rest is rendered — the Obsidian model.
+Every rendered construct is a decoration, so what is saved is exactly what was
+typed, and no serializer can rewrite a document behind the author's back.
 
-| Engine | Licence | Document model | What it costs us |
+| Engine | Licence | Document model | Verdict |
 |---|---|---|---|
-| CodeMirror 6 | MIT | **the Markdown string** | every rendered construct is decoration code we write; the prototype covers headings, lists, quotes, emphasis, code and references, but tables and images are not done |
-| Milkdown | MIT | ProseMirror + Remark | no mention support: a ProseMirror plugin by hand, and the CommonMark serializer escapes `@[Name]` until Remark is taught otherwise |
-| TipTap | MIT core | JSON tree | `@[Name]` must be declared to tokenizer, parser and serializer |
+| **CodeMirror 6** | MIT | the Markdown string | **chosen** |
+| Milkdown | MIT | ProseMirror + Remark | rejected, see below |
+| TipTap | MIT core | JSON tree | excluded: JSON runtime model, and the block features that justify it are not wanted |
+
+**Why Milkdown was considered, and why it lost.** Milkdown was prototyped in
+full (`editor-milkdown.html`) and is the only other credible candidate: WYSIWYG,
+markers never visible, Markdown parsed and re-serialized through Remark. Two
+things decided against it:
+
+- **It rewrites the document on every save.** Any syntax it does not know is
+  altered silently: the prototype shows `@[Name]` saved back as `@\[Name\]`.
+  With CodeMirror that class of bug cannot exist, because the saved bytes are
+  the typed bytes.
+- **The model that was actually wanted is CodeMirror's.** Seeing the Markdown of
+  the line you are on, and the rendered text everywhere else, is what the
+  prototype was asked for. Milkdown never shows the markers at all.
+
+**What we accept by choosing it.** Structured content — an inline card of a
+character, an image with a width and a caption, a callout — cannot be a real
+editable node in CodeMirror. A decoration can hide or restyle text; it cannot
+invent a node with its own attributes and interaction. Those features are
+rendered as views over a syntax, and their parameters are edited as text. If a
+case appears where that is not enough, the escape hatch is the editor component
+and not the application: its interface is "load Markdown, return Markdown".
+
+**TipTap** was excluded on the model, not on quality: its runtime document is a
+JSON tree, and the block-editor features that justify that (drag-and-drop
+blocks, slash commands, embedded databases) are explicitly not wanted here.
 
 **What it weighs, and who pays.** Measured on the prototype: about 200 KB
 gzipped for any of the three, against 18 KB for the application's own
@@ -222,6 +247,12 @@ JavaScript. That cost is paid **only by people who edit, and only when they star
 editing**: the reading page is server HTML with no editor on it, and the editor
 is loaded on demand. A player never downloads it. Do not mount the editor on
 every page "because it will be needed eventually".
+
+**Not a user preference.** Only the editor role loads the editor, and two people
+editing the same document through two different engines would rewrite it through
+two different serializers. The engine is a build-time choice behind a component
+seam — one JinjaX component whose interface is "load Markdown, return Markdown" —
+not a setting in a menu.
 
 The stored document is Markdown, and that is settled. What is not settled is
 **who owns the syntax in between**: every engine builds its own model while you

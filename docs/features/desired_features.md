@@ -116,6 +116,18 @@ Four groups:
   central. Open question: whether it earns the complexity over a timeline plus
   a map used separately.
 
+### Inline cards of content
+
+- Instead of a bare reference, an item can be embedded in a body as a small
+  card: portrait or symbol, name, title, short description.
+- Open question: which syntax, and whether it is a variant of the reference
+  (`@[Name]` with a display attribute) or a separate construct.
+- Constraint to remember: the editor is CodeMirror 6, where the document is the
+  Markdown string, so a card is a **view over a syntax**, not an editable node
+  with its own interface. Changing what the card points at means editing the
+  syntax. If that ever becomes unacceptable, the escape hatch is the editor
+  component, not the whole application — see `docs/features/frontend.md`.
+
 ### Random tables
 
 - Generators for names, encounters, loot, and similar, used at the table.
