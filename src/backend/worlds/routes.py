@@ -44,12 +44,12 @@ async def create_world_route(
 async def list_worlds(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    include_shared_with: bool = Query(False),
+    include_members: bool = Query(False),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> PagedResponse[WorldResponse]:
     """List the worlds accessible to the current user."""
-    worlds, total = await get_worlds(db, user, page, page_size, include_shared_with)
+    worlds, total = await get_worlds(db, user, page, page_size, include_members)
     return PagedResponse(
         data=[_to_response(world) for world in worlds],
         total=total,
@@ -93,26 +93,24 @@ async def get_world_image_route(
 @router.get("/{world_id}", response_model=WorldResponse)
 async def get_world_route(
     world_id: uuid.UUID,
-    include_shared_with: bool = Query(False),
+    include_members: bool = Query(False),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> WorldResponse:
     """Return one accessible world."""
-    return _to_response(await get_world(db, world_id, user, include_shared_with))
+    return _to_response(await get_world(db, world_id, user, include_members))
 
 
 @router.patch("/{world_id}", response_model=WorldResponse)
 async def update_world_route(
     world_id: uuid.UUID,
     data: WorldUpdate,
-    include_shared_with: bool = Query(False),
+    include_members: bool = Query(False),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> WorldResponse:
     """Update a world when the current user owns it or is an administrator."""
-    return _to_response(
-        await update_world(db, world_id, data, user, include_shared_with)
-    )
+    return _to_response(await update_world(db, world_id, data, user, include_members))
 
 
 @router.delete("/{world_id}", status_code=status.HTTP_204_NO_CONTENT)

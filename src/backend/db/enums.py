@@ -46,3 +46,16 @@ class UserRole(str, Enum):
 
     ADMIN = "admin"
     MEMBER = "member"
+
+
+class WorldRole(str, Enum):
+    """A user's role inside one world.
+
+    MASTER — manages the world, membership and all of its content
+    PLAYER — reads all world content and manages only their own characters
+
+    The world owner is always treated as a master regardless of this value.
+    """
+
+    MASTER = "master"
+    PLAYER = "player"

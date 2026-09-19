@@ -44,12 +44,17 @@ class UUIDv7PrimaryKeyMixin:
     Best for: internal PKs and high-insert tables.
     Benefit: monotonically increasing → sequential B-tree inserts → better
     index locality and fewer page splits compared to UUID4.
+
+    ``uuid_utils.uuid7()`` returns its own ``UUID`` type, which compares equal
+    to ``uuid.UUID`` but hashes differently. That breaks SQLAlchemy's identity
+    matching (``selectinload`` sentinel lookups) and ``jsonable_encoder`` in
+    logs, so the value is normalised to a stdlib ``uuid.UUID`` immediately.
     """
 
     id: MappedColumn[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
-        default=uuid_utils.uuid7,  # Rust-backed, negligible overhead
+        default=lambda: uuid.UUID(str(uuid_utils.uuid7())),
     )
 
 

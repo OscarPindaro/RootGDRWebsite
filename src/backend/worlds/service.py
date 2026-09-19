@@ -5,7 +5,7 @@ from pathlib import Path
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..db.enums import UserRole
+from ..db.enums import UserRole, WorldRole
 from ..files.models import FileModel, StorageType
 from ..filesystem.base import FileSystem
 from ..log import get_logger
@@ -17,7 +17,7 @@ from .exceptions import (
     WorldImageNotFoundException,
     WorldNotFoundException,
 )
-from .models import WorldModel
+from .models import WorldMembershipModel, WorldModel
 from .repository import WorldRepository
 from .schemas import WorldCreate, WorldUpdate
 
@@ -47,11 +47,11 @@ async def get_world(
     db: AsyncSession,
     world_id: uuid.UUID,
     user: User,
-    include_shared_with: bool = False,
+    include_members: bool = False,
     include_image: bool = False,
 ) -> WorldModel:
     world = await WorldRepository(db).get(
-        world_id, user.id, _is_admin(user), include_shared_with, include_image
+        world_id, user.id, _is_admin(user), include_members, include_image
     )
     if world is None:
         raise WorldNotFoundException(world_id)
@@ -63,11 +63,23 @@ async def get_worlds(
     user: User,
     page: int = 1,
     page_size: int = 20,
-    include_shared_with: bool = False,
+    include_members: bool = False,
 ) -> tuple[list[WorldModel], int]:
     return await WorldRepository(db).get_page(
-        user.id, _is_admin(user), page, page_size, include_shared_with
+        user.id, _is_admin(user), page, page_size, include_members
     )
+
+
+async def get_world_role(db: AsyncSession, world: WorldModel, user: User) -> WorldRole:
+    """Return the user's effective role in a world they can access."""
+    if _is_admin(user) or world.created_by_id == user.id:
+        return WorldRole.MASTER
+    membership = await WorldRepository(db).get_membership(world.id, user.id)
+    return membership.role if membership else WorldRole.PLAYER
+
+
+async def is_master(db: AsyncSession, world: WorldModel, user: User) -> bool:
+    return await get_world_role(db, world, user) == WorldRole.MASTER
 
 
 async def update_world(
@@ -75,9 +87,9 @@ async def update_world(
     world_id: uuid.UUID,
     data: WorldUpdate,
     user: User,
-    include_shared_with: bool = False,
+    include_members: bool = False,
 ) -> WorldModel:
-    world = await get_world(db, world_id, user, include_shared_with)
+    world = await get_world(db, world_id, user, include_members)
     _ensure_owner(world, user)
     try:
         updated = await WorldRepository(db).update(world, data)

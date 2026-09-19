@@ -5,11 +5,12 @@ import pytest
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.backend.db.enums import WorldRole
 from src.backend.filesystem.local import LocalFileSystem
 from src.backend.users.models import UserModel
 from src.backend.users.schemas import User
 from src.backend.worlds.exceptions import WorldAccessDeniedException
-from src.backend.worlds.schemas import WorldCreate
+from src.backend.worlds.schemas import WorldCreate, WorldMemberInput
 from src.backend.worlds.service import (
     create_world,
     read_world_image,
@@ -61,7 +62,7 @@ async def test_shared_user_cannot_replace_a_world_image(
         WorldCreate(
             name="Eldoria",
             description="An old kingdom.",
-            shared_with=[shared_user.id],
+            members=[WorldMemberInput(user_id=shared_user.id, role=WorldRole.PLAYER)],
         ),
         creator,
     )

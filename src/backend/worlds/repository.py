@@ -4,18 +4,30 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import noload, selectinload
 
+from ..db.enums import WorldRole
 from ..users.models import UserModel
-from .models import WorldModel
-from .schemas import WorldCreate, WorldUpdate
+from .models import WorldMembershipModel, WorldModel
+from .schemas import WorldCreate, WorldMemberInput, WorldUpdate
 
 
 class WorldRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def _get_users(self, user_ids: list[uuid.UUID]) -> list[UserModel]:
-        if not user_ids:
-            return []
+    async def _resolve_members(
+        self, entries: list[WorldMemberInput], owner_id: uuid.UUID
+    ) -> list[WorldMembershipModel]:
+        """Build membership rows, validating that every user exists.
+
+        The owner is always present as a master and wins over any conflicting
+        entry, so a payload can never demote or drop the owner.
+        """
+        by_user: dict[uuid.UUID, WorldRole] = {}
+        for entry in entries:
+            by_user[entry.user_id] = WorldRole(entry.role)
+        by_user[owner_id] = WorldRole.MASTER
+
+        user_ids = list(by_user)
         users = list(
             (
                 await self.db.scalars(
@@ -23,24 +35,27 @@ class WorldRepository:
                 )
             ).all()
         )
-        if len(users) != len(set(user_ids)):
-            raise ValueError("One or more shared users do not exist")
-        return users
+        if len(users) != len(user_ids):
+            raise ValueError("One or more members do not exist")
+        return [
+            WorldMembershipModel(user_id=user.id, role=by_user[user.id], user=user)
+            for user in users
+        ]
 
     @staticmethod
     def _visible(user_id: uuid.UUID):
         return or_(
             WorldModel.created_by_id == user_id,
-            WorldModel.shared_with.any(UserModel.id == user_id),
+            WorldModel.memberships.any(WorldMembershipModel.user_id == user_id),
         )
 
     @staticmethod
-    def _options(include_shared_with: bool, include_image: bool = False):
+    def _options(include_members: bool, include_image: bool = False):
         return (
             selectinload(WorldModel.created_by),
-            selectinload(WorldModel.shared_with)
-            if include_shared_with
-            else noload(WorldModel.shared_with),
+            selectinload(WorldModel.memberships).selectinload(WorldMembershipModel.user)
+            if include_members
+            else noload(WorldModel.memberships),
             selectinload(WorldModel.image)
             if include_image
             else noload(WorldModel.image),
@@ -54,8 +69,8 @@ class WorldRepository:
             name=data.name,
             description=data.description,
             created_by=created_by,
-            shared_with=await self._get_users(data.shared_with),
         )
+        world.memberships = await self._resolve_members(data.members, created_by_id)
         self.db.add(world)
         await self.db.flush()
         return world
@@ -65,12 +80,12 @@ class WorldRepository:
         world_id: uuid.UUID,
         user_id: uuid.UUID,
         is_admin: bool,
-        include_shared_with: bool = False,
+        include_members: bool = False,
         include_image: bool = False,
     ) -> WorldModel | None:
         stmt = (
             select(WorldModel)
-            .options(*self._options(include_shared_with, include_image))
+            .options(*self._options(include_members, include_image))
             .where(WorldModel.id == world_id)
         )
         if not is_admin:
@@ -83,13 +98,13 @@ class WorldRepository:
         is_admin: bool,
         page: int,
         page_size: int,
-        include_shared_with: bool = False,
+        include_members: bool = False,
     ) -> tuple[list[WorldModel], int]:
         if page < 1 or page_size < 1:
             raise ValueError("page and page_size must be positive")
         visibility = self._visible(user_id)
         count_stmt = select(func.count()).select_from(WorldModel)
-        stmt = select(WorldModel).options(*self._options(include_shared_with))
+        stmt = select(WorldModel).options(*self._options(include_members))
         if not is_admin:
             count_stmt = count_stmt.where(visibility)
             stmt = stmt.where(visibility)
@@ -110,10 +125,24 @@ class WorldRepository:
             world.name = data.name
         if data.description is not None:
             world.description = data.description
-        if data.shared_with is not None:
-            world.shared_with = await self._get_users(data.shared_with)
+        if data.members is not None:
+            world.memberships = await self._resolve_members(
+                data.members, world.created_by_id
+            )
         await self.db.flush()
         return world
+
+    async def get_membership(
+        self, world_id: uuid.UUID, user_id: uuid.UUID
+    ) -> WorldMembershipModel | None:
+        return (
+            await self.db.execute(
+                select(WorldMembershipModel).where(
+                    WorldMembershipModel.world_id == world_id,
+                    WorldMembershipModel.user_id == user_id,
+                )
+            )
+        ).scalar_one_or_none()
 
     async def delete(self, world: WorldModel) -> None:
         await self.db.delete(world)

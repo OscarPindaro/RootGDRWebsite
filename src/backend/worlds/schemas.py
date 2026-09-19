@@ -2,8 +2,17 @@ from typing import Annotated
 
 from pydantic import Field
 
+from ..db.enums import WorldRole
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 from ..users.schemas import UserResponse
+
+
+class WorldMemberInput(AppBaseModel):
+    user_id: Annotated[UUIDField, Field(description="User ID of the member")]
+    role: Annotated[
+        WorldRole,
+        Field(default=WorldRole.PLAYER, description="Role inside the world"),
+    ]
 
 
 class WorldCreate(AppBaseModel):
@@ -22,14 +31,14 @@ class WorldCreate(AppBaseModel):
             min_length=1,
             max_length=10_000,
             examples=["An archipelago recovering from a century-old magical storm."],
-            description="World description",
+            description="World description (Markdown)",
         ),
     ]
-    shared_with: Annotated[
-        list[UUIDField],
+    members: Annotated[
+        list[WorldMemberInput],
         Field(
             default_factory=list,
-            description="User IDs allowed to view this private world",
+            description="Additional members. The creator is always a master.",
         ),
     ]
 
@@ -53,25 +62,31 @@ class WorldUpdate(AppBaseModel):
             description="Replacement world description",
         ),
     ]
-    shared_with: Annotated[
-        list[UUIDField] | None,
-        Field(default=None, description="Replacement list of users allowed to view"),
+    members: Annotated[
+        list[WorldMemberInput] | None,
+        Field(
+            default=None,
+            description="Replacement member list. The owner cannot be removed.",
+        ),
     ]
+
+
+class WorldMemberResponse(AppBaseModel):
+    user: Annotated[UserResponse, Field(description="The member")]
+    role: Annotated[WorldRole, Field(description="Role inside the world")]
 
 
 class WorldResponse(AppBaseModel, TimestampMixin):
     id: Annotated[UUIDField, Field(description="World ID")]
     name: Annotated[str, Field(max_length=255, description="World name")]
     description: Annotated[
-        str, Field(max_length=10_000, description="World description")
+        str, Field(max_length=10_000, description="World description (Markdown)")
     ]
     image_url: Annotated[
         str | None, Field(default=None, description="Authenticated world image URL")
     ]
     created_by: Annotated[UserResponse, Field(description="User who created the world")]
-    shared_with: Annotated[
-        list[UserResponse] | None,
-        Field(
-            default=None, description="Users allowed to view the world, when requested"
-        ),
+    members: Annotated[
+        list[WorldMemberResponse] | None,
+        Field(default=None, description="World members, when requested"),
     ]

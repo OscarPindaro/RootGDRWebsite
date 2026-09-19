@@ -3,7 +3,7 @@ import uuid
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.backend.db.enums import UserRole
+from src.backend.db.enums import UserRole, WorldRole
 from src.backend.users.models import UserModel
 from src.backend.users.schemas import User
 from src.backend.worlds.exceptions import (
@@ -11,39 +11,45 @@ from src.backend.worlds.exceptions import (
     WorldAccessDeniedException,
     WorldNotFoundException,
 )
-from src.backend.worlds.schemas import WorldCreate, WorldUpdate
-from src.backend.worlds.service import create_world, get_world, get_worlds, update_world
+from src.backend.worlds.schemas import WorldCreate, WorldMemberInput, WorldUpdate
+from src.backend.worlds.service import (
+    create_world,
+    get_world,
+    get_world_role,
+    get_worlds,
+    update_world,
+)
 
 pytestmark = pytest.mark.integration
 
 
-async def _user(db: AsyncSession, name: str) -> User:
-    model = UserModel(name=name, email=f"{name}-{uuid.uuid4()}@example.com")
+async def _user(db: AsyncSession, name: str, role: UserRole = UserRole.MEMBER) -> User:
+    model = UserModel(name=name, email=f"{name}-{uuid.uuid4()}@example.com", role=role)
     db.add(model)
     await db.flush()
     return User.model_validate(model)
 
 
-async def test_world_is_visible_to_its_creator_and_shared_users(
+async def test_world_is_visible_to_its_creator_and_members(
     db_session: AsyncSession,
 ) -> None:
     creator = await _user(db_session, "creator")
-    shared_user = await _user(db_session, "shared")
+    member = await _user(db_session, "member")
     outsider = await _user(db_session, "outsider")
     world = await create_world(
         db_session,
         WorldCreate(
             name="The Shattered Coast",
             description="A storm-ravaged archipelago.",
-            shared_with=[shared_user.id],
+            members=[WorldMemberInput(user_id=member.id, role=WorldRole.PLAYER)],
         ),
         creator,
     )
 
-    shared_world = await get_world(db_session, world.id, shared_user)
-    worlds, total = await get_worlds(db_session, shared_user)
+    member_world = await get_world(db_session, world.id, member)
+    worlds, total = await get_worlds(db_session, member)
 
-    assert str(shared_world.id) == str(world.id)
+    assert str(member_world.id) == str(world.id)
     assert [str(item.id) for item in worlds] == [str(world.id)]
     assert total == 1
     with pytest.raises(WorldNotFoundException):
@@ -53,40 +59,56 @@ async def test_world_is_visible_to_its_creator_and_shared_users(
             db_session,
             world.id,
             WorldUpdate(name="An Unauthorised Change"),
-            shared_user,
+            member,
         )
 
 
-async def test_world_owner_can_replace_sharing_and_invalid_users_are_rejected(
+async def test_owner_is_always_a_master_and_cannot_be_demoted(
     db_session: AsyncSession,
 ) -> None:
     creator = await _user(db_session, "creator")
-    shared_user = await _user(db_session, "shared")
+    other = await _user(db_session, "other")
     world = await create_world(
         db_session,
-        WorldCreate(name="Eldoria", description="An old kingdom."),
+        WorldCreate(
+            name="Eldoria",
+            description="An old kingdom.",
+            # Try to demote the owner; the owner must win.
+            members=[WorldMemberInput(user_id=creator.id, role=WorldRole.PLAYER)],
+        ),
         creator,
     )
+
+    assert await get_world_role(db_session, world, creator) == WorldRole.MASTER
 
     updated = await update_world(
         db_session,
         world.id,
         WorldUpdate(
-            description="A newly charted kingdom.", shared_with=[shared_user.id]
+            description="A newly charted kingdom.",
+            members=[WorldMemberInput(user_id=other.id, role=WorldRole.MASTER)],
         ),
         creator,
-        include_shared_with=True,
+        include_members=True,
     )
 
     assert updated.description == "A newly charted kingdom."
-    assert [user.id for user in updated.shared_with] == [shared_user.id]
+    assert {m.user.id: m.role for m in updated.memberships} == {
+        creator.id: WorldRole.MASTER,
+        other.id: WorldRole.MASTER,
+    }
+
+
+async def test_invalid_members_are_rejected(db_session: AsyncSession) -> None:
+    creator = await _user(db_session, "creator")
+
     with pytest.raises(SharedUserNotFoundException):
         await create_world(
             db_session,
             WorldCreate(
                 name="Unknown",
                 description="Nobody can see it.",
-                shared_with=[uuid.uuid4()],
+                members=[WorldMemberInput(user_id=uuid.uuid4())],
             ),
             creator,
         )
@@ -96,8 +118,7 @@ async def test_administrator_can_manage_another_users_world(
     db_session: AsyncSession,
 ) -> None:
     creator = await _user(db_session, "creator")
-    administrator = await _user(db_session, "administrator")
-    administrator.role = UserRole.ADMIN
+    administrator = await _user(db_session, "administrator", UserRole.ADMIN)
     world = await create_world(
         db_session,
         WorldCreate(name="The Vale", description="A fertile valley."),
