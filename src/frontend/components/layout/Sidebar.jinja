@@ -12,13 +12,13 @@
   <nav class="sidebar-nav" tabindex="0">
     <layout.SidebarSection>
       <layout.SidebarItem href="/" icon="home" label="Home" :active="active" match="home" />
-      <layout.SidebarItem href="/worlds" icon="map" label="Worlds" :active="active" match="worlds" />
+      <layout.SidebarItem href="/worlds" icon="map" label="Mondi" :active="active" match="worlds" />
     </layout.SidebarSection>
     {% if current_user and current_user.role == 'admin' %}
-    <layout.SidebarSection label="Admin">
-      <layout.SidebarItem href="/admin/users" icon="users" label="Users" :active="active" match="admin-users" :badge="badges['admin'] if badges and badges.get('admin') else none" />
+    <layout.SidebarSection label="Amministrazione">
+      <layout.SidebarItem href="/admin/users" icon="users" label="Utenti" :active="active" match="admin-users" :badge="badges['admin'] if badges and badges.get('admin') else none" />
       {% if env == "dev" %}
-      <layout.SidebarItem href="/components" icon="palette" label="Showcase" :active="active" match="showcase" />
+      <layout.SidebarItem href="/components" icon="palette" label="Componenti" :active="active" match="showcase" />
       {% endif %}
     </layout.SidebarSection>
     {% endif %}

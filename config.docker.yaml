@@ -1,3 +1,4 @@
+app_name: Root GDR
 database:
   user: app_user
   host: db

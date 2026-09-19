@@ -1,3 +1,4 @@
+app_name: Root GDR
 env: dev
 database:
   user: app_user

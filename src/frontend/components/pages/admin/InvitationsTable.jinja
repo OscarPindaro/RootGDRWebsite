@@ -1,25 +1,25 @@
 {#def invitations #}
 {#css common/Button.css, common/Pill.css, common/Table.css #}
-<common.Table headers={{ ["Email", "Role", "Invited By", "Expires", "Status", ""] }}>
+<common.Table headers={{ ["Email", "Ruolo", "Invitato da", "Scade", "Stato", ""] }}>
   {% for inv in invitations %}
   <tr>
     <td>{{ inv.email }}</td>
     <td>
       {% if inv.role == 'admin' %}
-      <common.Pill variant="role-admin">Admin</common.Pill>
+      <common.Pill variant="role-admin">Amministratore</common.Pill>
       {% else %}
-      <common.Pill variant="role-member">Member</common.Pill>
+      <common.Pill variant="role-member">Membro</common.Pill>
       {% endif %}
     </td>
     <td>{{ inv.invited_by_name or inv.invited_by }}</td>
     <td><em>{{ inv.expires_at | time }}</em></td>
     <td>
       {% if inv.accepted_at %}
-      <common.Pill variant="success">Accepted</common.Pill>
+      <common.Pill variant="success">Accettato</common.Pill>
       {% elif inv.is_expired %}
-      <common.Pill variant="danger">Expired</common.Pill>
+      <common.Pill variant="danger">Scaduto</common.Pill>
       {% else %}
-      <common.Pill variant="warning">Pending</common.Pill>
+      <common.Pill variant="warning">In attesa</common.Pill>
       {% endif %}
     </td>
     <td>
@@ -30,7 +30,7 @@
         hx-swap="innerHTML"
         :hx-on::after-request="'if(event.detail.successful){document.querySelector(\'#confirm-dialog dialog\').showModal(); lucide.createIcons();}'">
         <common.Icon name="trash-2" size=16 />
-        Revoke
+        Revoca
       </common.Button>
       {% endif %}
     </td>

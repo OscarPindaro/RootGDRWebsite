@@ -39,5 +39,5 @@ def test_dev_login_control_is_only_rendered_when_enabled() -> None:
     disabled = catalog.render("pages.login.Login", dev_login_enabled=False)
     enabled = catalog.render("pages.login.Login", dev_login_enabled=True)
 
-    assert "Dev sign in" not in disabled
-    assert "Dev sign in" in enabled
+    assert "Accesso di sviluppo" not in disabled
+    assert "Accesso di sviluppo" in enabled

@@ -1,6 +1,6 @@
 {#def current_user=None, roles=[], error=None, email="", role="member" #}
 {#css common/Alert.css, common/Button.css, common/Dialog.css, common/Field.css, common/Tooltip.css #}
-<common.Dialog title="Invite user">
+<common.Dialog title="Invita utente">
   <form class="invite-form"
         hx-post="/admin/users/invite"
         hx-target="#invitations-table"
@@ -11,13 +11,13 @@
     {% endif %}
     <common.Field label="Email" name="email" type="email" placeholder="jane@example.com"
                   required :value="email" />
-    <common.Field label="Role" name="role" type="select"
+    <common.Field label="Ruolo" name="role" type="select"
                   :options="roles"
                   :value="role" />
     <div class="invite-actions">
       <common.Button type="button" variant="secondary" size="md"
-                     onclick="this.closest('dialog').close()">Cancel</common.Button>
-      <common.Button type="submit" variant="primary" size="md">Send invite</common.Button>
+                     onclick="this.closest('dialog').close()">Annulla</common.Button>
+      <common.Button type="submit" variant="primary" size="md">Invia invito</common.Button>
     </div>
   </form>
 </common.Dialog>
