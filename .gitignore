@@ -222,3 +222,6 @@ __marimo__/
 node_modules/
 playwright-report/
 test-results/
+
+# Harness screenshot/test artifacts
+harness-artifacts/

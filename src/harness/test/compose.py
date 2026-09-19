@@ -72,6 +72,10 @@ def _environment(environment_state: EnvironmentState) -> dict[str, str]:
         HARNESS_CONFIG_FILE=str(environment_state.config.docker),
         HARNESS_ENV_FILE=str(environment_state.config.env),
         HARNESS_PROJECT=environment_state.compose_project,
+        # Compose engines disagree on how relative volume paths are resolved
+        # (file-relative vs cwd-relative). Pass the repo root explicitly so
+        # bind mounts point at the same place under docker and podman.
+        HARNESS_REPO_ROOT=str(_REPO_ROOT),
     )
     return {**os.environ, **values}
 

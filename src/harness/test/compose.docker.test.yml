@@ -13,8 +13,8 @@ services:
     ports:
       - "${HARNESS_DB_PORT:-5432}:5432"
     volumes:
-      - ../../../deploy/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh:z
-      - ../../../deploy/init_db.sql:/opt/init_db.sql:z
+      - ${HARNESS_REPO_ROOT}/deploy/init_db.sh:/docker-entrypoint-initdb.d/init_db.sh:z
+      - ${HARNESS_REPO_ROOT}/deploy/init_db.sql:/opt/init_db.sql:z
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-backend_test}"]
       interval: 3s
@@ -23,7 +23,7 @@ services:
 
   app:
     build:
-      context: ../../..
+      context: ${HARNESS_REPO_ROOT}
       dockerfile: Dockerfile
     depends_on:
       db:
@@ -33,11 +33,16 @@ services:
     ports:
       - "${HARNESS_BACKEND_PORT}:8000"
     volumes:
-      - ../../../src:/app/src
-      - ../../../alembic:/app/alembic
-      - ${HARNESS_CONFIG_FILE}:/app/config.yaml:ro
+      # ``:z`` relabels the bind mount for SELinux (Fedora/RHEL). Without it
+      # the app cannot read the mounted config and silently falls back to
+      # config defaults (database host ``localhost``).
+      - ${HARNESS_REPO_ROOT}/src:/app/src:z
+      - ${HARNESS_REPO_ROOT}/alembic:/app/alembic:z
+      - ${HARNESS_CONFIG_FILE}:/app/config.yaml:ro,z
       - uploads:/app/data
-    command: ["uv", "run", "--no-sync", "uvicorn", "src.backend.server:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+    # The installed distribution is ``backend`` (from ``src/``); ``src.backend``
+    # is not importable in the container, so launch the package directly.
+    command: ["uv", "run", "--no-sync", "uvicorn", "backend.server:app", "--host", "0.0.0.0", "--port", "8000"]
 
 volumes:
   uploads:

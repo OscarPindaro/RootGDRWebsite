@@ -1,8 +1,16 @@
-import json
+"""Authenticated Playwright helpers and screenshot capture.
+
+Authentication goes through the development login (``/auth/dev-login``), which
+sets the same ``access_token`` / ``refresh_token`` cookies a real login sets.
+The API request context shares its cookie jar with the browser context, so once
+``authenticate_context`` returns, page navigations are authenticated. The old
+localStorage token trick is gone: the backend reads cookies, not localStorage.
+"""
+
 import re
 from pathlib import Path
 
-from playwright.sync_api import BrowserContext, Error as PlaywrightError
+from playwright.sync_api import Browser, BrowserContext, Error as PlaywrightError
 from playwright.sync_api import Playwright, sync_playwright
 from pydantic import BaseModel
 
@@ -15,7 +23,23 @@ class ScreenshotResult(BaseModel):
     console_errors: list[str]
 
 
-def _authenticate(context: BrowserContext, base_url: str, email: str) -> None:
+class AuthSession(BaseModel):
+    """The authenticated identity established on a browser context."""
+
+    email: str
+    access_token: str
+    refresh_token: str
+
+
+def authenticate_context(
+    context: BrowserContext, base_url: str, email: str
+) -> AuthSession:
+    """Log a browser context in through the dev login and verify its cookies.
+
+    Raises ``RuntimeError`` if the login fails or the auth cookies are not
+    present afterwards, so a change in cookie handling fails loudly here
+    instead of silently rendering anonymous pages.
+    """
     response = context.request.post(
         f"{base_url}/auth/dev-login",
         data={"email": email},
@@ -23,13 +47,46 @@ def _authenticate(context: BrowserContext, base_url: str, email: str) -> None:
     if not response.ok:
         raise RuntimeError(f"Dev login failed: {response.status} {response.text()}")
     tokens = response.json()
-    context.add_init_script(
-        "localStorage.setItem('access_token', "
-        + json.dumps(tokens["access_token"])
-        + "); localStorage.setItem('refresh_token', "
-        + json.dumps(tokens["refresh_token"])
-        + ");"
+    cookie_names = {cookie["name"] for cookie in context.cookies(base_url)}
+    missing = {"access_token", "refresh_token"} - cookie_names
+    if missing:
+        raise RuntimeError(
+            "Dev login did not establish the expected cookies: "
+            f"missing {sorted(missing)}"
+        )
+    return AuthSession(
+        email=email,
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
     )
+
+
+def new_authenticated_context(
+    playwright: Playwright,
+    base_url: str,
+    *,
+    email: str,
+    phone: bool = False,
+) -> tuple[Browser, BrowserContext]:
+    """Create a browser context that is already authenticated.
+
+    Returns the browser too so the caller can close it. Reusable by screenshot
+    capture and by the Playwright end-to-end tests.
+    """
+    browser = playwright.chromium.launch(headless=True)
+    context_options = (
+        playwright.devices["Pixel 7"]
+        if phone
+        else {"viewport": {"width": 1440, "height": 900}}
+    )
+    context = browser.new_context(**context_options)
+    try:
+        authenticate_context(context, base_url, email)
+    except Exception:
+        context.close()
+        browser.close()
+        raise
+    return browser, context
 
 
 def _capture(
@@ -46,15 +103,10 @@ def _capture(
     expect_visible: str | None,
     expected_status: int,
 ) -> None:
-    browser = playwright.chromium.launch(headless=True)
-    context_options = (
-        playwright.devices["Pixel 7"]
-        if phone
-        else {"viewport": {"width": 1440, "height": 900}}
+    browser, context = new_authenticated_context(
+        playwright, base_url, email=email, phone=phone
     )
-    context = browser.new_context(**context_options)
     try:
-        _authenticate(context, base_url, email)
         page = context.new_page()
         profile = "phone" if phone else "desktop"
         target_url = f"{base_url}{path}"
