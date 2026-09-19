@@ -217,3 +217,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Node tooling, usato solo dai prototipi per i test di browser
+node_modules/
+playwright-report/
+test-results/

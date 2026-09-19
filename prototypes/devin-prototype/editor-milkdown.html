@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motore: Milkdown · Le Cronache di Boscochiaro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="editors.css">
+</head>
+<body data-page="luogo" data-world="boscochiaro">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container">
+
+        <nav class="crumbs" style="margin-bottom: 1.25rem">
+          <a href="index.html">Mondi</a>
+          <span class="crumbs__sep">/</span>
+          <a href="editor.html">Motori</a>
+          <span class="crumbs__sep">/</span>
+          <span>Milkdown</span>
+        </nav>
+
+        <div data-doc data-locked="false">
+          <div class="docbar">
+            <span class="eyebrow">Motore di scrittura · <b>Milkdown</b></span>
+            <div class="docbar__actions">
+              <a class="btn btn--ghost btn--sm" href="editor-tiptap.html">TipTap</a>
+              <a class="btn btn--ghost btn--sm" href="editor-codemirror.html">CodeMirror 6</a>
+              <button class="btn btn--ghost btn--sm" type="button" data-doc-lock aria-pressed="false">Sbloccato</button>
+            </div>
+          </div>
+
+          <div class="docpage">
+            <div>
+              <div class="document">
+                <div class="document__head document__head--plain">
+                  <div class="document__id">
+                    <div class="engine-title">Roccianera</div>
+                    <span class="engine-sub">Città sotterranea del Ducato, tre livelli e nessuna finestra.</span>
+                  </div>
+                </div>
+
+                <div class="document__page">
+                  <span class="eyebrow">Descrizione · scrivi qui, il resto sono campi separati</span>
+                  <div class="engine" id="engine"></div>
+                  <p class="engine-hint" style="margin-top: 1rem">
+                    Non c'è nessun pannello di anteprima: si scrive dentro il documento già reso.
+                    Prova a scrivere <code>@</code>.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <aside class="stack">
+              <div class="engine-note">
+                <b>Milkdown</b> — MIT, WYSIWYG guidato da plugin, su ProseMirror + Remark.
+                <ul>
+                  <li>Nessuna anteprima a fianco: <b>si edita il testo già reso</b>, come in Typora. I marcatori spariscono mentre scrivi.</li>
+                  <li>Per la reference ho dovuto scrivere un <b>plugin ProseMirror</b> a mano: Milkdown non ha le mention pronte, e qui la pillola è solo una decorazione di vista.</li>
+                  <li>Conseguenza visibile: il serializzatore CommonMark <b>escappa le parentesi</b> — in basso leggi <code>@\[Nome\]</code>. Per salvare <code>@[Nome]</code> serve anche un plugin Remark: la sintassi va dichiarata due volte.</li>
+                  <li>Il menu <code>@</code> è nostro, come nelle altre due pagine.</li>
+                </ul>
+              </div>
+              <div class="engine-source">
+                <span class="eyebrow">Markdown prodotto dal listener</span>
+                <pre data-markdown-out></pre>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="marks.js"></script>
+<script src="entities.js"></script>
+<script src="shell.js"></script>
+<script src="editor-shared.js"></script>
+<script type="module">
+import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from "https://esm.sh/@milkdown/kit@7/core";
+import { commonmark } from "https://esm.sh/@milkdown/kit@7/preset/commonmark";
+import { history } from "https://esm.sh/@milkdown/kit@7/plugin/history";
+import { listener, listenerCtx } from "https://esm.sh/@milkdown/kit@7/plugin/listener";
+import { $prose } from "https://esm.sh/@milkdown/kit@7/utils";
+import { Plugin, PluginKey } from "https://esm.sh/@milkdown/kit@7/prose/state";
+import { Decoration, DecorationSet } from "https://esm.sh/@milkdown/kit@7/prose/view";
+
+const shared = window.EditorShared;
+const out = document.querySelector("[data-markdown-out]");
+const popup = shared.createPopup();
+
+const content = `Roccianera non si vede da fuori. L'ingresso è una fenditura a mezza costa sopra @[Il Guado Spezzato], e da lì si scende per tre livelli senza incontrare una sola finestra.
+
+## I tre livelli
+
+Il primo è il mercato: banchi di pietra, turni di lampade ogni sei ore. Il secondo è la corte, dove @[Barone Talpa] riceve chi ha qualcosa da offrire.
+
+> «Chi scende al terzo livello non torna a raccontarlo.»
+
+- Il pozzo centrale scende più in basso del terzo livello.
+- Nessuno paga in moneta: si paga secondo @[Le regole della Casa], in favori registrati.`;
+
+const MENTION = /@\[([^\]]+)\]/g;
+
+/* ---------- la pillola, disegnata sopra il testo ----------
+   ProseMirror non ha più `Decoration.replace`: si nasconde il testo con
+   una decorazione inline e si mette la pillola come widget nello stesso
+   punto. `@milkdown/prose/view` riesporta solo widget, inline e node. */
+function pillWidget(label, entry) {
+  return function () {
+    const wrap = document.createElement("span");
+    wrap.innerHTML = shared.pill(entry, label);
+    return wrap.firstChild;
+  };
+}
+
+function buildDecorations(state) {
+  const decos = [];
+  const sel = state.selection;
+  state.doc.descendants((node, pos) => {
+    if (!node.isText || !node.text) return;
+    MENTION.lastIndex = 0;
+    let match;
+    while ((match = MENTION.exec(node.text))) {
+      const start = pos + match.index;
+      const end = start + match[0].length;
+      /* dove sta il cursore resta la sorgente, così si può correggere */
+      if (sel.from <= end && sel.to >= start) continue;
+      decos.push(Decoration.inline(start, end, { class: "mention-hidden" }));
+      decos.push(Decoration.widget(start, pillWidget(match[1], window.ENTITIES.find(match[1])), {
+        side: -1,
+        key: "mention-" + match[1]
+      }));
+    }
+  });
+  return DecorationSet.create(state.doc, decos);
+}
+
+/* ---------- query in corso: @ seguito da lettere prima del cursore ---------- */
+function queryAt(state) {
+  const sel = state.selection;
+  if (!sel.empty) return null;
+  const $from = sel.$from;
+  if (!$from.parent.isTextblock) return null;
+  const before = $from.parent.textBetween(0, $from.parentOffset, undefined, "\ufffc");
+  const match = /@([\w'’\-À-ÿ]*)$/.exec(before);
+  if (!match) return null;
+  return { query: match[1], from: $from.pos - match[0].length, to: $from.pos };
+}
+
+const mentionPlugin = new Plugin({
+  key: new PluginKey("mentions"),
+  props: {
+    decorations: (state) => buildDecorations(state),
+    handleKeyDown(view, event) {
+      if (!popup.isOpen()) return false;
+      if (event.key === "Escape") { popup.close(); return true; }
+      if (event.key === "ArrowDown") { popup.move(1); return true; }
+      if (event.key === "ArrowUp") { popup.move(-1); return true; }
+      if (event.key === "Enter" || event.key === "Tab") {
+        popup.pickActive();
+        return true;
+      }
+      return false;
+    }
+  },
+  view(editorView) {
+    function refresh() {
+      const found = queryAt(editorView.state);
+      if (!found) { popup.close(); return; }
+      const coords = editorView.coordsAtPos(found.from);
+      popup.show(
+        shared.search(found.query),
+        found.query,
+        { left: coords.left, top: coords.top, bottom: coords.bottom },
+        function (entry) {
+          editorView.dispatch(
+            editorView.state.tr.insertText("@[" + entry.name + "] ", found.from, found.to)
+          );
+          editorView.focus();
+        }
+      );
+    }
+    return {
+      update(view, previous) {
+        if (view.state.doc.eq(previous.doc) && view.state.selection.eq(previous.selection)) return;
+        refresh();
+      },
+      destroy() { popup.close(); }
+    };
+  }
+});
+
+const editor = await Editor.make()
+  .config((ctx) => {
+    ctx.set(rootCtx, document.getElementById("engine"));
+    ctx.set(defaultValueCtx, content);
+    ctx.get(listenerCtx).markdownUpdated((_ctx, markdown) => {
+      out.textContent = markdown;
+    });
+  })
+  .use(commonmark)
+  .use(history)
+  .use(listener)
+  .use($prose(() => mentionPlugin))
+  .create();
+
+shared.wireLock(function (locked) {
+  const view = editor.ctx.get(editorViewCtx);
+  view.setProps({ editable: () => !locked });
+});
+
+/* il listener parla solo quando il documento cambia: il valore di
+   partenza è quello che abbiamo dato in ingresso */
+out.textContent = content;
+</script>
+</body>
+</html>

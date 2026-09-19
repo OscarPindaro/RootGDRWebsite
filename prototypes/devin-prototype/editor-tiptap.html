@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motore: TipTap · Le Cronache di Boscochiaro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="editors.css">
+</head>
+<body data-page="luogo" data-world="boscochiaro">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container">
+
+        <nav class="crumbs" style="margin-bottom: 1.25rem">
+          <a href="index.html">Mondi</a>
+          <span class="crumbs__sep">/</span>
+          <a href="editor.html">Motori</a>
+          <span class="crumbs__sep">/</span>
+          <span>TipTap</span>
+        </nav>
+
+        <div data-doc data-locked="false">
+          <div class="docbar">
+            <span class="eyebrow">Motore di scrittura · <b>TipTap</b></span>
+            <div class="docbar__actions">
+              <a class="btn btn--ghost btn--sm" href="editor-codemirror.html">CodeMirror 6</a>
+              <a class="btn btn--ghost btn--sm" href="editor-milkdown.html">Milkdown</a>
+              <button class="btn btn--ghost btn--sm" type="button" data-doc-lock aria-pressed="false">Sbloccato</button>
+            </div>
+          </div>
+
+          <div class="docpage">
+            <div>
+              <div class="document">
+                <div class="document__head document__head--plain">
+                  <div class="document__id">
+                    <div class="engine-title">Roccianera</div>
+                    <span class="engine-sub">Città sotterranea del Ducato, tre livelli e nessuna finestra.</span>
+                  </div>
+                </div>
+
+                <div class="document__page">
+                  <span class="eyebrow">Descrizione · scrivi qui, il resto sono campi separati</span>
+                  <div class="engine" id="engine"></div>
+                  <p class="engine-hint" style="margin-top: 1rem">
+                    Prova: scrivi <code>@</code> e poi qualche lettera. Il menu è lo stesso dell'applicazione.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <aside class="stack">
+              <div class="engine-note">
+                <b>TipTap</b> — motore ProseMirror, headless, licenza MIT sul core.
+                <ul>
+                  <li>Il contenuto vive come <b>albero JSON</b>, non come Markdown.</li>
+                  <li>Il nodo mention è <b>pronto</b>: menu, inserimento e resa arrivano dall'estensione. Il menu è nostro.</li>
+                  <li>La sintassi <code>@[Nome]</code> non è Markdown standard: ho dovuto dichiararla <b>tre volte</b> — tokenizer, parser e serializzatore. Fatto questo, il salvataggio è pulito (guarda in basso).</li>
+                  <li>Blocca il documento e il contenuto diventa di sola lettura: una riga.</li>
+                </ul>
+              </div>
+              <div class="engine-source">
+                <span class="eyebrow">Markdown prodotto da <code>getMarkdown()</code></span>
+                <pre data-markdown-out></pre>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="marks.js"></script>
+<script src="entities.js"></script>
+<script src="shell.js"></script>
+<script src="editor-shared.js"></script>
+<script type="module">
+import { Editor } from "https://esm.sh/@tiptap/core@3";
+import StarterKit from "https://esm.sh/@tiptap/starter-kit@3";
+import Mention from "https://esm.sh/@tiptap/extension-mention@3";
+import { Markdown } from "https://esm.sh/@tiptap/markdown@3";
+
+const shared = window.EditorShared;
+const popup = shared.createPopup();
+const out = document.querySelector("[data-markdown-out]");
+
+/* la pillola: nodo atomico disegnato da noi, così l'icona e il colore
+   sono gli stessi del resto dell'applicazione */
+const PlaceMention = Mention.extend({
+  addAttributes() {
+    return {
+      id: { default: null },
+      label: { default: null },
+      kind: { default: null },
+      color: { default: null },
+      href: { default: null }
+    };
+  },
+  renderText({ node }) {
+    return "@[" + (node.attrs.label || "") + "]";
+  },
+  /* la sintassi @[Nome] non è Markdown standard: va insegnata al
+     parser e al serializzatore, altrimenti il salvataggio la perde */
+  markdownTokenizer: {
+    name: "mention",
+    level: "inline",
+    start: (src) => src.indexOf("@["),
+    tokenize: (src) => {
+      const match = /^@\[([^\]]+)\]/.exec(src);
+      if (!match) return undefined;
+      return { type: "mention", raw: match[0], text: match[1] };
+    }
+  },
+  parseMarkdown: (token) => ({
+    type: "mention",
+    attrs: { id: token.text, label: token.text }
+  }),
+  renderMarkdown: (node) => "@[" + (node.attrs.label || "") + "]",
+  addNodeView() {
+    return ({ node }) => {
+      const entry = window.ENTITIES.find(node.attrs.label) || {};
+      const kind = node.attrs.kind || entry.kind || "";
+      const tint = (node.attrs.color || entry.color || "").replace(/^--/, "");
+      const dom = document.createElement("a");
+      dom.className = "mention";
+      dom.href = node.attrs.href || entry.href || "#";
+      dom.title = kind;
+      dom.setAttribute("data-kind", kind);
+      dom.setAttribute("data-color", tint);
+      dom.textContent = node.attrs.label || "";
+      return { dom };
+    };
+  }
+});
+
+const content = `Roccianera non si vede da fuori. L'ingresso è una fenditura a mezza costa sopra @[Il Guado Spezzato], e da lì si scende per tre livelli senza incontrare una sola finestra.
+
+## I tre livelli
+
+Il primo è il mercato: banchi di pietra, turni di lampade ogni sei ore. Il secondo è la corte, dove @[Barone Talpa] riceve chi ha qualcosa da offrire.
+
+> «Chi scende al terzo livello non torna a raccontarlo.»
+
+- Il pozzo centrale scende più in basso del terzo livello.
+- Nessuno paga in moneta: si paga secondo @[Le regole della Casa], in favori registrati.`;
+
+const editor = new Editor({
+  element: document.getElementById("engine"),
+  extensions: [
+    StarterKit,
+    Markdown,
+    PlaceMention.configure({
+      suggestion: {
+        char: "@",
+        items: ({ query }) => shared.search(query),
+        render: () => ({
+          onStart: (props) => show(props),
+          onUpdate: (props) => show(props),
+          onKeyDown: (props) => {
+            if (props.event.key === "Escape") { popup.close(); return true; }
+            if (props.event.key === "ArrowDown") { popup.move(1); return true; }
+            if (props.event.key === "ArrowUp") { popup.move(-1); return true; }
+            if (props.event.key === "Enter" || props.event.key === "Tab") {
+              popup.pickActive();
+              return true;
+            }
+            return false;
+          },
+          onExit: () => popup.close()
+        })
+      }
+    })
+  ],
+  content: content,
+  contentType: "markdown",
+  onUpdate: paint
+});
+
+function show(props) {
+  const rect = typeof props.clientRect === "function" ? props.clientRect() : props.clientRect;
+  popup.show(props.items, props.query, rect || { left: 0, top: 0, bottom: 0 }, function (entry) {
+    /* la Mention vuole id e label: gli altri attributi sono i nostri */
+    props.command({
+      id: entry.name,
+      label: entry.name,
+      kind: entry.kind,
+      color: entry.color,
+      href: entry.href
+    });
+  });
+}
+
+function paint() {
+  let markdown = "";
+  try {
+    markdown = editor.getMarkdown();
+  } catch (e) {
+    markdown = "serializzazione non disponibile: " + e.message;
+  }
+  out.textContent = markdown;
+  /* la sintassi custom sopravvive al giro? */
+  out.dataset.roundTrip = markdown.indexOf("@[") >= 0 ? "ok" : "persa";
+}
+
+shared.wireLock(function (locked) {
+  editor.setEditable(!locked);
+});
+
+/* il primo giro: dal Markdown al documento e ritorno */
+editor.commands.setContent(content, { contentType: "markdown" });
+paint();
+</script>
+</body>
+</html>

@@ -115,12 +115,53 @@ Masters and site administrators manage pages; every world member can read them. 
 ## Markdown editing and safety
 
 - Store Markdown source in PostgreSQL and render it at request time.
-- Use the existing CommonMark renderer for the authoritative rendered output.
-- Raw embedded HTML remains disabled.
-- Use the maintained MIT-licensed EasyMDE editor to provide familiar Markdown toolbar, keyboard, and preview usability without introducing a client-side framework.
-- htmx loads and saves the editor fragment; EasyMDE only enhances the underlying textarea. Save, cancel, and validation behavior must still work if enhancement fails.
-- Validation errors are rendered in the editor without discarding the submitted source.
-- Reusable editor assets must load even when the editor first appears in an htmx response.
+- Use the existing CommonMark renderer (`MarkdownIt("commonmark", {"html": False})`
+  in `src/backend/jinja.py`) for the authoritative rendered output.
+- Raw embedded HTML remains disabled. Richer embeds must be expressed as a
+  syntax the server renderer understands, never as raw markup: enabling raw HTML
+  would also let any member store a script that runs on every reader's page.
+- The writing surface is a real editor, not a bare textarea. It is loaded **on
+  demand**, when someone starts editing, and only for users who are allowed to
+  edit. Readers never download it.
+- The editor's live rendering and the server's rendered output must agree. The
+  prototype in `prototypes/devin-prototype/` checks this word by word, block by
+  block and measurement by measurement (`render-compare.html`).
+- Editor choice is still open; `docs/features/frontend.md` records the candidates
+  and what each costs.
+- htmx loads and saves the editor fragment; save, cancel, and validation behavior
+  must still work if the enhancement fails to load.
+- Validation errors are rendered in the editor without discarding the submitted
+  source.
+- Reusable editor assets must load even when the editor first appears in an htmx
+  response.
+
+## References and backlinks
+
+- Writing `@[Name]` in a body links to that content; `@[type:Name]` disambiguates
+  when two items share a name.
+- The link carries the **tint of the referenced content** and the icon of its
+  type, so the kind of thing referenced is legible while reading.
+- A name that matches nothing renders as a marked, non-clickable placeholder
+  rather than a dead link.
+- **Resolution happens on the server.** It is the only place with the database
+  and with the reader's permissions, so it is the only place that can decide
+  whether a reference is visible at all. This is what keeps drafts and future
+  private items from leaking through an index shipped to the browser.
+- The server emits semantics only — destination, type, tint, name. Shape, icon
+  and colours belong to the stylesheet, so the editor and the server cannot
+  render the same reference differently.
+- Every document shows what references it, grouped by type. References are only
+  useful if navigation works in both directions.
+
+## Locking and drafts
+
+- Every content document can be **locked or unlocked**. Unlocked it can be
+  edited; locked it is read-only. The state is explicit and visible, not hidden
+  in a menu.
+- Every content document can be a **draft**: visible only to its author, listed
+  among the drafts of its type rather than among the published content.
+- Creating an item is the same editing surface as editing one, plus the
+  publication state.
 
 ## Images and files
 
@@ -184,7 +225,16 @@ Application-specific components and pages compose common controls and contain on
 ## Language, visual design, and accessibility
 
 - Preserve Material Design 3-inspired interaction and accessibility patterns.
-- Adapt the visual language of <https://github.com/OscarPindaro/OscarPindaro.github.io>: Mondrian/neobrutalist primary colors, thick dark lines, geometric spacing, hard shadows, and monospace typography.
+- The visual language is editorial and Mondrian-derived: warm paper, dark
+  structural rules, flat tints, a serif for reading and a monospace for metadata.
+  `prototypes/devin-prototype/` is the reference for how it is put together;
+  `docs/features/frontend.md` records the decisions behind it.
+- Twelve tints and twelve geometric shapes give places and sessions an identity
+  that survives across lists, timelines and references. Characters are a tint
+  plus an animal; an uploaded image replaces the symbol.
+- A few visual choices are **user preferences**, not fixed design: symbol style
+  (icons or shapes) and accent treatment among them. They belong in a user
+  settings page and are stored on the user, not per world and not in the browser.
 - All user-facing interface text, labels, validation feedback, empty states, and browser-visible errors are Italian in the initial version. Code identifiers, API fields, and structured log event names remain English.
 - A future bilingual implementation should use gettext/Babel message catalogs, Italian as the default locale, an English catalog, and a locale cookie. Do not duplicate templates. The language switcher is deferred until the Italian product flow is complete.
 - Keep semantic HTML, visible focus states, sufficient contrast, labels, and keyboard-operable controls.
@@ -220,6 +270,10 @@ Prefer integration tests over mocked unit tests for database behavior.
 ## Delivery plan
 
 Implementation proceeds in small vertical tickets. Finish and verify one ticket before starting the next. A ticket is complete only when its migration, service behavior, JSON endpoint, HTML/htmx flow, Italian UI copy, authorization checks, and relevant integration/browser checks all agree.
+
+**The first version targets the Master.** A world's master must be able to write
+and read everything before the player experience is built out; the player view
+is designed for (see `docs/features/frontend.md`) but not implemented yet.
 
 ### Phase 0 — Reproducible baseline
 
@@ -262,9 +316,22 @@ Each content type is completed independently in model → migration → schema �
 
 ### Phase 5 — Rich editing and fast navigation
 
-- **P5.1 — EasyMDE component:** package EasyMDE as a reusable JinjaX field. Preserve the underlying textarea and JSON htmx submission, use server-rendered CommonMark as authoritative output, and cover htmx reinitialization and fallback behavior.
-- **P5.2 — Markdown editing flows:** apply the common editor to character, place, session, story, and page forms with Italian validation, save, cancel, and feedback states.
-- **P5.3 — Command palette:** implement `Alt+Space`, touch trigger, accessible search/navigation, authorized create commands, and database-backed results without a process-global index.
+- **P5.0 — Editor decision:** choose between the candidates recorded in
+  `docs/features/frontend.md` (CodeMirror 6 and Milkdown, with TipTap as the
+  heavier option), based on the prototype in `prototypes/devin-prototype/`.
+- **P5.1 — Editor field:** package the chosen editor as a reusable JinjaX field,
+  loaded on demand and only for users who can edit. Preserve the underlying
+  Markdown source, use server-rendered CommonMark as authoritative output, and
+  cover htmx reinitialization and fallback behavior.
+- **P5.2 — Markdown editing flows:** apply the common editor to character, place,
+  session, story, and page forms with Italian validation, save, cancel, and
+  feedback states.
+- **P5.3 — References:** add the `@[Name]` plugin to the server renderer, resolve
+  names with the reader's permissions, emit semantic links, and render the
+  backlinks panel on every document.
+- **P5.4 — Lock and drafts:** add the locked/unlocked state and the draft state,
+  including the drafts listing for each content type.
+- **P5.5 — Command palette:** implement `Alt+Space`, touch trigger, accessible search/navigation, authorized create commands, and database-backed results without a process-global index.
 
 ### Phase 6 — Final verification and hardening
 
@@ -280,9 +347,14 @@ The initial release is done when a Master can create a world, add members, and m
 
 ## Deferred scope
 
+- The player view of a world: the first version is built and verified for the
+  Master.
 - Master-only or per-item content visibility.
 - Additional world roles or granular permissions.
-- Rich-text/WYSIWYG editing.
+- A block-style editor with drag-and-drop blocks, slash commands and embedded
+  objects. The chosen editor must be able to grow into it, but the first version
+  only needs headings, lists, quotes, emphasis, code and references.
 - Full-text search infrastructure or a process-local search index.
 - Cross-world relationships between content items.
 - Object-storage deployment configuration beyond the existing filesystem abstraction.
+- Generated cover art for places and stories (see `desired_features.md`).

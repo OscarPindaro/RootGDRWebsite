@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accedi — Root GDR</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="login">
+
+  <div class="auth">
+    <section class="auth-art">
+      <div>
+        <div class="brand">
+          <button class="brand-mark" data-goto="index.html" aria-label="Root GDR">RG</button>
+          <div class="brand-copy"><strong>ROOT GDR</strong><span>archivio campagne</span></div>
+        </div>
+      </div>
+      <div>
+        <span class="eyebrow" style="color:var(--sidebar-mute)">Diario di campagna</span>
+        <h1>Le tue storie meritano un archivio.</h1>
+        <p>Mondi, personaggi, luoghi, sessioni e racconti. Tutto in un posto, condiviso con chi gioca con te.</p>
+      </div>
+      <p class="small" style="color:var(--sidebar-mute)">Prototipo statico · nessun dato reale</p>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-card">
+        <h2>Accedi</h2>
+        <p class="muted small">Entra nel tuo archivio di campagne.</p>
+
+        <form class="form" onsubmit="event.preventDefault(); location.href='mondi.html';">
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" type="email" autocomplete="email" placeholder="nome@esempio.it" required>
+          </div>
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" type="password" autocomplete="current-password" placeholder="••••••••" required>
+          </div>
+          <button class="btn btn-primary" type="submit" style="justify-content:center">Accedi</button>
+        </form>
+
+        <div class="divider">oppure</div>
+
+        <button class="btn btn-ghost" style="width:100%;justify-content:center" onclick="location.href='mondi.html'">
+          Continua con Google
+        </button>
+
+        <p class="small muted" style="margin-top:1.4rem">
+          Non hai un account? <a href="#" style="color:var(--moss);font-weight:600">Registrati</a>
+        </p>
+        <p class="small muted">
+          Ambiente di sviluppo: <a href="mondi.html" style="color:var(--moss);font-weight:600">accedi come utente di prova</a>
+        </p>
+      </div>
+    </section>
+  </div>
+
+</body>
+</html>

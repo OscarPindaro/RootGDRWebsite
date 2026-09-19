@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mira Vell — Fronte del Tuono</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="personaggi" data-world="fronte-del-tuono" data-nav="personaggi"
+      data-crumbs="I tuoi mondi::mondi.html|Fronte del Tuono::mondo.html|Personaggi::personaggi.html|Mira Vell">
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+
+      <main class="content">
+        <div class="detail">
+          <div>
+            <div class="detail-media">🦊</div>
+            <div style="margin-top:.8rem;display:flex;gap:.5rem">
+              <button class="btn btn-ghost btn-sm">Cambia immagine</button>
+            </div>
+            <ul class="meta-list">
+              <li><span class="k">Mondo</span><span>Fronte del Tuono</span></li>
+              <li><span class="k">Proprietario</span><span>Oscar Píndaro</span></li>
+              <li><span class="k">Creato</span><span>12 feb 2026</span></li>
+              <li><span class="k">Aggiornato</span><span>3 giorni fa</span></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="page-head" style="margin-bottom:1rem">
+              <div>
+                <span class="eyebrow">Personaggio</span>
+                <h1>Mira Vell</h1>
+                <p class="eyebrow" style="margin-top:.3rem">Cartografa dei boschi</p>
+              </div>
+              <div class="spacer"></div>
+              <button class="btn btn-ghost" data-edit="#bio">✎ Modifica</button>
+              <button class="btn btn-danger">Elimina</button>
+            </div>
+
+            <div data-editable id="bio">
+              <div data-view class="prose">
+                <p>Mira è una volpe cartografa cresciuta nei mercati fluviali, dove ha imparato che una mappa è sempre una promessa parziale. Da allora raccoglie frammenti: un guado, una torre caduta, il nome di un ponte che nessuno usa più.</p>
+                <h2>Come appare</h2>
+                <p>Pelo color ruggine, un mantello cerato troppo grande e una sacca piena di rotoli. Tiene una matita dietro l'orecchio anche quando dorme.</p>
+                <h2>Legami</h2>
+                <ul>
+                  <li><strong>Bram Coda-di-Ferro</strong> — gli deve una lama e una spiegazione.</li>
+                  <li><strong>Sora Querciavecchia</strong> — si fidano l'una dell'altra, con cautela.</li>
+                </ul>
+                <blockquote>«Ogni mappa è vera finché non la segui.»</blockquote>
+              </div>
+
+              <div data-src hidden>
+                <div class="editor">
+                  <div class="editor-bar">
+                    <button class="tool" title="Grassetto">B</button>
+                    <button class="tool" title="Corsivo">I</button>
+                    <button class="tool" title="Titolo">H</button>
+                    <button class="tool" title="Elenco">•</button>
+                    <button class="tool" title="Citazione">❝</button>
+                    <span class="spacer"></span>
+                    <span class="small muted">Markdown · anteprima autorevole lato server</span>
+                  </div>
+                  <textarea spellcheck="false">Mira è una volpe cartografa cresciuta nei mercati fluviali, dove ha imparato che una mappa è sempre una promessa parziale. Da allora raccoglie frammenti: un guado, una torre caduta, il nome di un ponte che nessuno usa più.
+
+## Come appare
+
+Pelo color ruggine, un mantello cerato troppo grande e una sacca piena di rotoli. Tiene una matita dietro l'orecchio anche quando dorme.
+
+## Legami
+
+- **Bram Coda-di-Ferro** — gli deve una lama e una spiegazione.
+- **Sora Querciavecchia** — si fidano l'una dell'altra, con cautela.
+
+> «Ogni mappa è vera finché non la segui.»</textarea>
+                </div>
+                <div style="display:flex;gap:.5rem;margin-top:.8rem">
+                  <button class="btn btn-primary">Salva</button>
+                  <button class="btn btn-ghost" data-cancel-edit hidden>Annulla</button>
+                </div>
+              </div>
+            </div>
+
+            <p class="proto-note">Prototipo GLM — l'editor sostituisce il testo renderizzato in-place. Salva/Annulla restano funzionanti anche senza miglioramento JS.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Editor contro server · Le Cronache di Boscochiaro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="editors.css">
+<style>
+  .compare__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    border: var(--rule-ink);
+    border-left: 6px solid var(--line);
+    background: var(--surface);
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.75rem;
+  }
+  .compare__bar[data-state="ok"] { border-left-color: var(--forest); }
+  .compare__bar[data-state="ko"] { border-left-color: var(--vermilion); }
+  .compare__bar b { color: var(--ink); }
+  .compare__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(1.25rem, 3vw, 2.5rem);
+  }
+  .compare__side { border-top: 3px solid var(--ink); padding-top: 1rem; }
+  .compare__side > .eyebrow { display: block; margin-bottom: 1rem; }
+  .compare__side .prose { font-size: 1.06rem; }
+  .compare__source {
+    margin-top: 2.5rem;
+    border: var(--rule-ink);
+    background: var(--surface);
+  }
+  .compare__source summary {
+    cursor: pointer;
+    padding: 0.6rem 0.9rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .compare__source pre {
+    margin: 0;
+    padding: 0 0.9rem 0.9rem;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    line-height: 1.55;
+    color: var(--ink-soft);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  @media (max-width: 900px) {
+    .compare__grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body data-page="luogo" data-world="boscochiaro">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container">
+
+        <div class="masthead">
+          <div class="masthead__body">
+            <nav class="crumbs">
+              <a href="index.html">Mondi</a>
+              <span class="crumbs__sep">/</span>
+              <a href="editor.html">Motori</a>
+              <span class="crumbs__sep">/</span>
+              <span>Editor contro server</span>
+            </nav>
+            <h1 class="display">Le due rese, una accanto all'altra</h1>
+            <div class="rule-accent"></div>
+            <p class="lede">Lo stesso Markdown, reso due volte: dall'editor mentre scrivi e dal renderer del server mentre si legge. Sotto, il confronto parola per parola, blocco per blocco e misura per misura.</p>
+          </div>
+          <div class="masthead__aside">
+            <span class="eyebrow">Stesso testo, stesso foglio di stile</span>
+          </div>
+        </div>
+
+        <div class="compare__bar" data-compare-result>
+          <span class="mono muted">Confronto in corso…</span>
+        </div>
+
+        <div class="compare__grid">
+          <section class="compare__side">
+            <span class="eyebrow">Chi scrive · editor (Milkdown)</span>
+            <div class="prose" data-editor-render></div>
+          </section>
+          <section class="compare__side">
+            <span class="eyebrow">Chi legge · server (markdown-it)</span>
+            <div class="prose" data-server-render></div>
+          </section>
+        </div>
+
+        <details class="compare__source">
+          <summary>Markdown sorgente, identico per entrambi</summary>
+          <pre data-source-out></pre>
+        </details>
+
+        <details class="compare__source">
+          <summary>HTML che il server manda al browser</summary>
+          <pre data-html-out></pre>
+        </details>
+
+        <section class="section">
+          <div class="section__head">
+            <div>
+              <span class="eyebrow">Perché combaciano</span>
+              <h2>Il confine</h2>
+            </div>
+          </div>
+          <div class="grid grid--two">
+            <div class="prose">
+              <ul>
+                <li>Il server risolve <code>@[Nome]</code> perché è l'unico che ha il database e i permessi di chi legge.</li>
+                <li>Emette <b>solo semantica</b>: <code>data-kind</code>, <code>data-color</code>, <code>href</code> e il nome. Niente stile, niente icone, niente HTML grezzo.</li>
+                <li>L'editor emette <b>lo stesso identico markup</b>: le pillole qui sopra sono lo stesso elemento.</li>
+                <li>Forma, icona e colori stanno in un foglio di stile solo, quindi i due rendering non possono divergere per costruzione.</li>
+              </ul>
+            </div>
+            <div class="stack">
+              <div class="engine-note">
+                <b>Come è prodotto l'HTML di destra</b>
+                <p style="margin: 0.5rem 0 0">
+                  Da <code>tools/render_server_side.py</code>, con la stessa configurazione
+                  dell'applicazione (<code>MarkdownIt("commonmark", {"html": False})</code>)
+                  più il plugin per le reference. Rigenerabile con
+                  <code>uv run python prototypes/devin-prototype/tools/render_server_side.py</code>.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="marks.js"></script>
+<script src="entities.js"></script>
+<script src="shell.js"></script>
+<script src="editor-shared.js"></script>
+<script type="module">
+import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from "https://esm.sh/@milkdown/kit@7/core";
+import { commonmark } from "https://esm.sh/@milkdown/kit@7/preset/commonmark";
+import { listener, listenerCtx } from "https://esm.sh/@milkdown/kit@7/plugin/listener";
+import { $prose } from "https://esm.sh/@milkdown/kit@7/utils";
+import { Plugin, PluginKey } from "https://esm.sh/@milkdown/kit@7/prose/state";
+import { Decoration, DecorationSet } from "https://esm.sh/@milkdown/kit@7/prose/view";
+
+const shared = window.EditorShared;
+const SAMPLE = `Roccianera non si vede da fuori. L'ingresso è una fenditura a mezza costa sopra @[Il Guado Spezzato], e da lì si scende per tre livelli senza incontrare una sola finestra.
+
+## I tre livelli
+
+Il primo è il mercato: banchi di pietra, turni di lampade ogni sei ore. Il secondo è la corte, dove @[Barone Talpa] riceve chi ha qualcosa da offrire.
+
+> «Chi scende al terzo livello non torna a raccontarlo. Chi torna, non era al terzo livello.»
+
+- Il pozzo centrale scende più in basso del terzo livello.
+- Le porte del secondo livello si chiudono dall'interno, mai dall'esterno.
+- Nessuno paga in moneta: si paga secondo @[Le regole della Casa], in favori registrati.
+
+## Aperto
+
+La porta che i giocatori non hanno ancora aperto è al secondo livello, dietro la corte. @[Madre Civetta] sostiene di sapere cosa c'è dietro; non lo dirà gratis. E @[Nessuno Sa Chi Sono] resta un nome che non esiste.
+`;
+
+/* la stessa decorazione della pagina Milkdown: la sorgente sparisce,
+   al suo posto la pillola con lo stesso markup del server */
+const MENTION = /@\[([^\]]+)\]/g;
+
+function pillWidget(label, entry) {
+  return function () {
+    const wrap = document.createElement("span");
+    wrap.innerHTML = shared.pill(entry, label);
+    return wrap.firstChild;
+  };
+}
+
+function buildDecorations(state) {
+  const decos = [];
+  state.doc.descendants((node, pos) => {
+    if (!node.isText || !node.text) return;
+    MENTION.lastIndex = 0;
+    let match;
+    while ((match = MENTION.exec(node.text))) {
+      const start = pos + match.index;
+      const end = start + match[0].length;
+      decos.push(Decoration.inline(start, end, { class: "mention-hidden" }));
+      decos.push(Decoration.widget(start, pillWidget(match[1], window.ENTITIES.find(match[1])), {
+        side: -1,
+        key: "mention-" + match[1]
+      }));
+    }
+  });
+  return DecorationSet.create(state.doc, decos);
+}
+
+const pillPlugin = new Plugin({
+  key: new PluginKey("mentions"),
+  props: { decorations: (state) => buildDecorations(state) }
+});
+
+/* ---------- i due rendering ---------- */
+const editorHost = document.querySelector("[data-editor-render]");
+const serverHost = document.querySelector("[data-server-render]");
+
+const html = await (await fetch("server-render.html")).text();
+serverHost.innerHTML = html;
+document.querySelector("[data-html-out]").textContent = html.trim();
+document.querySelector("[data-source-out]").textContent = SAMPLE;
+
+await Editor.make()
+  .config((ctx) => {
+    ctx.set(rootCtx, editorHost);
+    ctx.set(defaultValueCtx, SAMPLE);
+  })
+  .use(commonmark)
+  .use(listener)
+  .use($prose(() => pillPlugin))
+  .create();
+
+/* ---------- confronto ---------- */
+function words(el) {
+  return el.innerText.replace(/\s+/g, " ").trim().split(" ").filter(Boolean);
+}
+
+/* la struttura che conta è quella dei blocchi. Due differenze note e
+   innocue vengono normalizzate:
+   - i nodi inline delle reference (l'editor ha anche la sorgente nascosta)
+   - il paragrafo che ProseMirror mette dentro ogni voce di lista */
+const BLOCKS = ["p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li", "blockquote", "pre", "hr"];
+
+function tags(el) {
+  return Array.from(el.querySelectorAll("*"))
+    .filter((n) => !(n.tagName === "P" && n.parentElement && n.parentElement.tagName === "LI"))
+    .map((n) => n.tagName.toLowerCase())
+    .filter((t) => BLOCKS.indexOf(t) >= 0);
+}
+
+function firstDiff(a, b) {
+  const n = Math.max(a.length, b.length);
+  for (let i = 0; i < n; i++) {
+    if (a[i] !== b[i]) return { i, a: a[i], b: b[i] };
+  }
+  return null;
+}
+
+/* la geometria: se il foglio di stile non copre anche i blocchi
+   dell'editor, le altezze divergono anche a testo identico */
+function boxes(root) {
+  return Array.from(root.querySelectorAll("p, h1, h2, h3, h4, h5, h6, ul, ol, li, blockquote, pre"))
+    .filter((n) => !(n.tagName === "P" && n.parentElement && n.parentElement.tagName === "LI"))
+    .map((n) => {
+      const s = getComputedStyle(n);
+      return n.tagName + "|" + Math.round(n.getBoundingClientRect().height) +
+        "|" + s.marginTop + "|" + s.marginBottom;
+    });
+}
+
+function report() {
+  const bar = document.querySelector("[data-compare-result]");
+  const editorBody = editorHost.querySelector(".ProseMirror") || editorHost;
+  const wA = words(editorBody);
+  const wB = words(serverHost);
+  const diff = firstDiff(wA, wB);
+  /* la struttura si confronta dal contenuto in giù, non dal contenitore */
+  const tA = tags(editorBody);
+  const tB = tags(serverHost);
+  const tagDiff = firstDiff(tA, tB);
+  const gA = boxes(editorBody);
+  const gB = boxes(serverHost);
+  const geoDiff = firstDiff(gA, gB);
+
+  const parts = [];
+  if (!diff) {
+    parts.push("<b>Testo identico</b> — " + wB.length + " parole, le stesse in entrambe le rese.");
+  } else {
+    parts.push("<b>Testo diverso</b> alla parola " + (diff.i + 1) +
+      " — editor: «" + (diff.a || "∅") + "», server: «" + (diff.b || "∅") + "».");
+  }
+  if (!tagDiff) {
+    parts.push("Struttura identica (" + tB.length + " blocchi).");
+  } else {
+    parts.push("Struttura diversa al blocco " + (tagDiff.i + 1) +
+      " — editor: &lt;" + (tagDiff.a || "∅") + "&gt;, server: &lt;" + (tagDiff.b || "∅") + "&gt;.");
+  }
+  if (!geoDiff) {
+    parts.push("Geometria identica (" + gB.length + " elementi, stessa altezza e stessi margini).");
+  } else {
+    parts.push("<b>Geometria diversa</b> all'elemento " + (geoDiff.i + 1) +
+      " — editor: " + (geoDiff.a || "∅") + ", server: " + (geoDiff.b || "∅") + ".");
+  }
+  bar.innerHTML = '<span class="mono">' + parts.join(" ") + "</span>";
+  bar.dataset.state = !diff && !tagDiff && !geoDiff ? "ok" : "ko";
+}
+
+/* Milkdown monta in modo asincrono: aspetto un giro di frame */
+requestAnimationFrame(() => requestAnimationFrame(report));
+</script>
+</body>
+</html>

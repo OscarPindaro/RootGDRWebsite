@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuovo luogo · Le Cronache di Boscochiaro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="luoghi" data-world="boscochiaro">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container">
+
+        <nav class="crumbs" style="margin-bottom: 1.25rem">
+          <a href="index.html">Mondi</a>
+          <span class="crumbs__sep">/</span>
+          <a href="mondo.html">Boscochiaro</a>
+          <span class="crumbs__sep">/</span>
+          <a href="luoghi.html">Luoghi</a>
+          <span class="crumbs__sep">/</span>
+          <span>Nuovo</span>
+        </nav>
+
+        <div data-doc data-locked="false" data-published="false">
+
+          <div class="docbar">
+            <span class="eyebrow">Nuovo luogo</span>
+            <div class="docbar__actions">
+              <span class="pill pill--draft" data-publish-state>Bozza</span>
+              <button class="btn btn--ghost btn--sm" type="button" data-doc-publish>Pubblica</button>
+              <a class="btn btn--primary btn--sm" href="luoghi.html">Fine</a>
+            </div>
+          </div>
+
+          <div class="docpage">
+            <div>
+              <div class="document">
+
+                <div class="document__head">
+                  <label class="document__face face face--editable" data-preview-face style="--c: var(--p5)">
+                    <input class="filefield__input" type="file" accept="image/*" data-image-input>
+                    <span class="face__shape" data-preview-shape data-shape="goccia" aria-hidden="true"></span>
+                    <span class="face__hint" data-face-hint>Carica un'immagine</span>
+                    <button class="face__remove" type="button" data-image-clear hidden aria-label="Togli l'immagine">×</button>
+                  </label>
+                  <div class="document__id">
+                    <input class="docfield docfield--name" type="text" value="Bosco dei Sussurri" aria-label="Nome del luogo" data-field="nome">
+                    <input class="docfield docfield--short" type="text" value="Dove gli alberi ripetono ciò che hanno sentito." aria-label="Descrizione breve" data-field="sintesi">
+                  </div>
+                </div>
+
+                <div class="document__controls">
+                  <div class="field">
+                    <span class="field__label" id="luogo-forma">Forma</span>
+                    <div class="swatches swatches--shape" role="group" aria-labelledby="luogo-forma">
+                      <button class="shapebtn" type="button" data-shape-pick="cerchio" aria-pressed="false" aria-label="Cerchio"><span data-shape="cerchio"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="quadrato" aria-pressed="false" aria-label="Quadrato"><span data-shape="quadrato"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="triangolo" aria-pressed="false" aria-label="Triangolo"><span data-shape="triangolo"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="rombo" aria-pressed="false" aria-label="Rombo"><span data-shape="rombo"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="esagono" aria-pressed="false" aria-label="Esagono"><span data-shape="esagono"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="pentagono" aria-pressed="false" aria-label="Pentagono"><span data-shape="pentagono"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="stella" aria-pressed="false" aria-label="Stella"><span data-shape="stella"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="croce" aria-pressed="false" aria-label="Croce"><span data-shape="croce"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="ottagono" aria-pressed="false" aria-label="Ottagono"><span data-shape="ottagono"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="semicerchio" aria-pressed="false" aria-label="Semicerchio"><span data-shape="semicerchio"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="goccia" aria-pressed="true" aria-label="Goccia"><span data-shape="goccia"></span></button>
+                      <button class="shapebtn" type="button" data-shape-pick="anello" aria-pressed="false" aria-label="Anello"><span data-shape="anello"></span></button>
+                    </div>
+                  </div>
+
+                  <div class="field">
+                    <span class="field__label" id="luogo-tinta">Tinta della radura</span>
+                    <div class="swatches" role="group" aria-labelledby="luogo-tinta" data-color-picker>
+                      <button class="swatch" type="button" data-color="--p1" style="--c: var(--p1)" aria-pressed="false" aria-label="Vermiglio"></button>
+                      <button class="swatch" type="button" data-color="--p2" style="--c: var(--p2)" aria-pressed="false" aria-label="Arancio"></button>
+                      <button class="swatch" type="button" data-color="--p3" style="--c: var(--p3)" aria-pressed="false" aria-label="Ocra"></button>
+                      <button class="swatch" type="button" data-color="--p4" style="--c: var(--p4)" aria-pressed="false" aria-label="Oliva"></button>
+                      <button class="swatch" type="button" data-color="--p5" style="--c: var(--p5)" aria-pressed="true" aria-label="Bosco"></button>
+                      <button class="swatch" type="button" data-color="--p6" style="--c: var(--p6)" aria-pressed="false" aria-label="Turchese"></button>
+                      <button class="swatch" type="button" data-color="--p7" style="--c: var(--p7)" aria-pressed="false" aria-label="Cielo"></button>
+                      <button class="swatch" type="button" data-color="--p8" style="--c: var(--p8)" aria-pressed="false" aria-label="Cobalto"></button>
+                      <button class="swatch" type="button" data-color="--p9" style="--c: var(--p9)" aria-pressed="false" aria-label="Indaco"></button>
+                      <button class="swatch" type="button" data-color="--p10" style="--c: var(--p10)" aria-pressed="false" aria-label="Prugna"></button>
+                      <button class="swatch" type="button" data-color="--p11" style="--c: var(--p11)" aria-pressed="false" aria-label="Rosa"></button>
+                      <button class="swatch" type="button" data-color="--p12" style="--c: var(--p12)" aria-pressed="false" aria-label="Argilla"></button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="document__page">
+                  <span class="eyebrow">Descrizione · doppio clic per scrivere · Ctrl+Invio per il risultato</span>
+                  <div class="docedit" data-md-live>
+                    <div class="docedit__view prose" data-md-out tabindex="0" aria-label="Descrizione resa. Doppio clic per modificare."></div>
+                    <textarea class="docfield docfield--long docedit__input" aria-label="Descrizione del luogo in Markdown" data-field="lunga" data-md-source hidden>Un tratto di bosco dove il vento porta le voci di chi è passato prima. Gli alberi non rispondono, ripetono: chi entra sente la propria frase tornare indietro con parole diverse.
+
+## Come si entra
+
+Non c'è un sentiero. Si entra dal @[Il Guado Spezzato] risalendo il canale secco per mezza giornata, oppure dal lato di @[Rovine di Forteverde] se si ha il permesso dei Custodi.
+
+## Cosa si sente
+
+- Le frasi dette ad alta voce tornano indietro dopo qualche ora.
+- Chi resta più di un giorno sente ripetere cose che non ha detto.
+- @[Foglia di Ferro] ci viene a pensare; non ci porta nessuno.</textarea>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <aside class="stack">
+              <div class="callout callout--cobalt">
+                <span class="callout__label">Bozza</span>
+                Finché non pubblichi, la radura compare fra le <b>bozze</b> in fondo all'atlante e non fra i luoghi ufficiali. È la stessa pagina degli altri luoghi, con in più lo stato di pubblicazione.
+              </div>
+              <div class="callout">
+                <span class="callout__label">Come si scrive una reference</span>
+                <code>@[Nome]</code> diventa un link con il colore del contenuto citato. Con il tipo quando il nome è ambiguo: <code>@[luogo:Il Guado Spezzato]</code>.
+              </div>
+            </aside>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+<script src="marks.js"></script>
+<script src="entities.js"></script>
+<script src="markdown.js"></script>
+<script src="shell.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

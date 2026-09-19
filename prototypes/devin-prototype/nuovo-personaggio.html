@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nuovo personaggio · Le Cronache di Boscochiaro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="personaggi" data-world="boscochiaro">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container">
+
+        <nav class="crumbs" style="margin-bottom: 1.25rem">
+          <a href="index.html">Mondi</a>
+          <span class="crumbs__sep">/</span>
+          <a href="mondo.html">Boscochiaro</a>
+          <span class="crumbs__sep">/</span>
+          <a href="personaggi.html">Personaggi</a>
+          <span class="crumbs__sep">/</span>
+          <span>Nuovo</span>
+        </nav>
+
+        <div class="masthead">
+          <div class="masthead__body">
+            <span class="eyebrow">Nuova scheda</span>
+            <h1 class="display">Nuovo personaggio</h1>
+            <div class="rule-accent"></div>
+            <p class="lede">Il volto non è una fotografia: è una tinta e un animale, oppure un'immagine caricata. Il Markdown si rende mentre lo scrivi.</p>
+          </div>
+          <div class="masthead__aside">
+            <span class="eyebrow">Bozza non salvata</span>
+            <div class="masthead__actions">
+              <a class="btn btn--primary" href="personaggi.html">Crea scheda</a>
+              <a class="btn btn--ghost" href="personaggi.html">Annulla</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="kindnote only-modulo">
+          <span class="kindnote__text"><b>Editor a modulo.</b> Campi etichettati, anteprima della scheda a destra. La descrizione lunga ha due schede, come su GitHub: si scrive il Markdown e si guarda il risultato senza lasciare il campo.</span>
+          <button class="btn--text" type="button" data-set-pref="editor" data-set-value="documento">Confronta con il documento →</button>
+        </div>
+
+        <div class="kindnote only-documento">
+          <span class="kindnote__text"><b>Editor a documento.</b> Nessun riquadro: si scrive direttamente sulla pagina, come in un file. La descrizione si mostra già resa e si apre in scrittura con un doppio clic. Sotto restano campi separati.</span>
+          <button class="btn--text" type="button" data-set-pref="editor" data-set-value="modulo">Confronta con il modulo →</button>
+        </div>
+
+        <div data-doc data-locked="false">
+
+          <!-- ---------- Versione A: modulo ---------- -->
+          <div class="grid grid--two only-modulo">
+            <form class="form">
+              <div class="field">
+                <label class="field__label" for="a-nome">Nome completo</label>
+                <input class="input" id="a-nome" type="text" value="Rugginosa" data-field="nome">
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="a-titolo">Titolo</label>
+                <input class="input" id="a-titolo" type="text" value="La Senza Tana" data-field="titolo">
+                <span class="field__hint">Opzionale. Appare sotto il nome, in corsivo.</span>
+              </div>
+
+              <div class="field">
+                <span class="field__label" id="a-emoji-label">Animale</span>
+                <div class="emojigrid" role="group" aria-labelledby="a-emoji-label" data-emoji-picker>
+                  <button class="emojibtn" type="button" data-emoji="🐈" aria-pressed="true" aria-label="Gatto">🐈</button>
+                  <button class="emojibtn" type="button" data-emoji="🦫" aria-pressed="false" aria-label="Castoro">🦫</button>
+                  <button class="emojibtn" type="button" data-emoji="🦌" aria-pressed="false" aria-label="Cervo">🦌</button>
+                  <button class="emojibtn" type="button" data-emoji="🐦‍⬛" aria-pressed="false" aria-label="Corvo">🐦‍⬛</button>
+                  <button class="emojibtn" type="button" data-emoji="🦡" aria-pressed="false" aria-label="Tasso">🦡</button>
+                  <button class="emojibtn" type="button" data-emoji="🦎" aria-pressed="false" aria-label="Lucertola">🦎</button>
+                  <button class="emojibtn" type="button" data-emoji="🐿️" aria-pressed="false" aria-label="Scoiattolo">🐿️</button>
+                  <button class="emojibtn" type="button" data-emoji="🦉" aria-pressed="false" aria-label="Gufo">🦉</button>
+                  <button class="emojibtn" type="button" data-emoji="🐺" aria-pressed="false" aria-label="Lupo">🐺</button>
+                  <button class="emojibtn" type="button" data-emoji="🦊" aria-pressed="false" aria-label="Volpe">🦊</button>
+                  <button class="emojibtn" type="button" data-emoji="🐍" aria-pressed="false" aria-label="Serpente">🐍</button>
+                  <button class="emojibtn" type="button" data-emoji="🐢" aria-pressed="false" aria-label="Tartaruga">🐢</button>
+                  <button class="emojibtn" type="button" data-emoji="🐝" aria-pressed="false" aria-label="Ape">🐝</button>
+                  <button class="emojibtn" type="button" data-emoji="🦇" aria-pressed="false" aria-label="Pipistrello">🦇</button>
+                  <button class="emojibtn" type="button" data-emoji="🐸" aria-pressed="false" aria-label="Rana">🐸</button>
+                  <button class="emojibtn" type="button" data-emoji="🐁" aria-pressed="false" aria-label="Topo">🐁</button>
+                </div>
+              </div>
+
+              <div class="field">
+                <span class="field__label" id="a-colore-label">Tinta della scheda</span>
+                <div class="swatches" role="group" aria-labelledby="a-colore-label" data-color-picker>
+                  <button class="swatch" type="button" data-color="--p1" style="--c: var(--p1)" aria-pressed="true" aria-label="Vermiglio"></button>
+                  <button class="swatch" type="button" data-color="--p2" style="--c: var(--p2)" aria-pressed="false" aria-label="Arancio"></button>
+                  <button class="swatch" type="button" data-color="--p3" style="--c: var(--p3)" aria-pressed="false" aria-label="Ocra"></button>
+                  <button class="swatch" type="button" data-color="--p4" style="--c: var(--p4)" aria-pressed="false" aria-label="Oliva"></button>
+                  <button class="swatch" type="button" data-color="--p5" style="--c: var(--p5)" aria-pressed="false" aria-label="Bosco"></button>
+                  <button class="swatch" type="button" data-color="--p6" style="--c: var(--p6)" aria-pressed="false" aria-label="Turchese"></button>
+                  <button class="swatch" type="button" data-color="--p7" style="--c: var(--p7)" aria-pressed="false" aria-label="Cielo"></button>
+                  <button class="swatch" type="button" data-color="--p8" style="--c: var(--p8)" aria-pressed="false" aria-label="Cobalto"></button>
+                  <button class="swatch" type="button" data-color="--p9" style="--c: var(--p9)" aria-pressed="false" aria-label="Indaco"></button>
+                  <button class="swatch" type="button" data-color="--p10" style="--c: var(--p10)" aria-pressed="false" aria-label="Prugna"></button>
+                  <button class="swatch" type="button" data-color="--p11" style="--c: var(--p11)" aria-pressed="false" aria-label="Rosa"></button>
+                  <button class="swatch" type="button" data-color="--p12" style="--c: var(--p12)" aria-pressed="false" aria-label="Argilla"></button>
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field__label" for="a-sintesi">Descrizione breve</label>
+                <input class="input" id="a-sintesi" type="text" value="Una gatta randagia che ha imparato a leggere le mappe prima delle persone." data-field="sintesi">
+              </div>
+
+              <div class="field" data-md-tabs>
+                <div class="field__bar">
+                  <label class="field__label" for="a-lunga">Descrizione lunga</label>
+                  <div class="tabs" role="tablist" aria-label="Descrizione lunga">
+                    <button class="tab" type="button" role="tab" aria-selected="true" data-md-tab="scrivi">Scrivi</button>
+                    <button class="tab" type="button" role="tab" aria-selected="false" data-md-tab="anteprima">Anteprima</button>
+                  </div>
+                </div>
+                <textarea class="textarea" id="a-lunga" data-field="lunga" data-md-source>Rugginosa non ricorda il proprio nome di cucciola. Ricorda il fumo, il rumore delle assi che cedono e la sensazione di essere l'unica cosa che in quella radura non aveva una casa.
+
+## Come è arrivata a Muschioverde
+
+Nella primavera del terzo anno attraversò il **Guado Spezzato** con un carico di mappe rubate a un corriere della Marchesa.
+
+> «Non servo nessuno. Vendo informazioni e, se il prezzo è buono, dimentico di averle vendute.»
+
+- *Barone Talpa* — le deve due favori e una barca.
+- *Foglia di Ferro* — l'unica che le ha offerto una casa.
+- *Corvinus* — socio occasionale, mai alleato.</textarea>
+                <div class="md-panel prose" data-md-out hidden tabindex="0" aria-label="Anteprima della descrizione. Ctrl più Invio per tornare a scrivere."></div>
+                <span class="field__hint">Ctrl+Invio passa da Scrivi ad Anteprima e torna indietro.</span>
+              </div>
+            </form>
+
+            <aside class="stack">
+              <div class="section__head">
+                <div>
+                  <span class="eyebrow">Anteprima</span>
+                  <h2>Come apparirà</h2>
+                </div>
+              </div>
+              <div class="preview">
+                <div class="preview__face card__media">
+                  <label class="face face--editable" data-preview-face style="--c: var(--p1)">
+                    <input class="filefield__input" type="file" accept="image/*" data-image-input>
+                    <span class="face__emoji" data-preview-emoji role="img" aria-label="Gatto">🐈</span>
+                    <span class="face__tag">Vagabonda · Gatto</span>
+                    <span class="face__hint" data-face-hint>Carica un'immagine</span>
+                    <button class="face__remove" type="button" data-image-clear hidden aria-label="Togli l'immagine">×</button>
+                  </label>
+                </div>
+                <div class="card__body">
+                  <h3 class="card__name" data-out="nome">Rugginosa</h3>
+                  <p class="card__title" data-out="titolo">La Senza Tana</p>
+                  <p class="card__owner" data-out="sintesi" style="border-top: 0; padding-top: 0; margin-top: 0.4rem; color: var(--ink-soft)">Una gatta randagia che ha imparato a leggere le mappe prima delle persone.</p>
+                  <div class="card__faction"><span class="pill pill--plain">Vagabondo</span></div>
+                  <span class="card__owner">Giocato da Giulia</span>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <!-- ---------- Versione B: documento ---------- -->
+          <div class="document only-documento">
+
+            <div class="document__head">
+              <label class="document__face face face--editable" data-preview-face style="--c: var(--p1)">
+                <input class="filefield__input" type="file" accept="image/*" data-image-input>
+                <span class="face__emoji" data-preview-emoji role="img" aria-label="Gatto">🐈</span>
+                <span class="face__tag">Vagabonda · Gatto</span>
+                <span class="face__hint" data-face-hint>Carica un'immagine</span>
+                <button class="face__remove" type="button" data-image-clear hidden aria-label="Togli l'immagine">×</button>
+              </label>
+              <div class="document__id">
+                <input class="docfield docfield--name" type="text" value="Rugginosa" aria-label="Nome completo" data-field="nome">
+                <input class="docfield docfield--title" type="text" value="La Senza Tana" aria-label="Titolo" data-field="titolo">
+                <hr class="document__rule">
+                <input class="docfield docfield--short" type="text" value="Una gatta randagia che ha imparato a leggere le mappe prima delle persone." aria-label="Descrizione breve" data-field="sintesi">
+              </div>
+            </div>
+
+            <div class="document__controls">
+              <div class="field">
+                <span class="field__label" id="b-emoji-label">Animale</span>
+                <div class="emojigrid" role="group" aria-labelledby="b-emoji-label" data-emoji-picker>
+                  <button class="emojibtn" type="button" data-emoji="🐈" aria-pressed="true" aria-label="Gatto">🐈</button>
+                  <button class="emojibtn" type="button" data-emoji="🦫" aria-pressed="false" aria-label="Castoro">🦫</button>
+                  <button class="emojibtn" type="button" data-emoji="🦌" aria-pressed="false" aria-label="Cervo">🦌</button>
+                  <button class="emojibtn" type="button" data-emoji="🐦‍⬛" aria-pressed="false" aria-label="Corvo">🐦‍⬛</button>
+                  <button class="emojibtn" type="button" data-emoji="🦡" aria-pressed="false" aria-label="Tasso">🦡</button>
+                  <button class="emojibtn" type="button" data-emoji="🦎" aria-pressed="false" aria-label="Lucertola">🦎</button>
+                  <button class="emojibtn" type="button" data-emoji="🐿️" aria-pressed="false" aria-label="Scoiattolo">🐿️</button>
+                  <button class="emojibtn" type="button" data-emoji="🦉" aria-pressed="false" aria-label="Gufo">🦉</button>
+                  <button class="emojibtn" type="button" data-emoji="🐺" aria-pressed="false" aria-label="Lupo">🐺</button>
+                  <button class="emojibtn" type="button" data-emoji="🦊" aria-pressed="false" aria-label="Volpe">🦊</button>
+                  <button class="emojibtn" type="button" data-emoji="🐍" aria-pressed="false" aria-label="Serpente">🐍</button>
+                  <button class="emojibtn" type="button" data-emoji="🐢" aria-pressed="false" aria-label="Tartaruga">🐢</button>
+                  <button class="emojibtn" type="button" data-emoji="🐝" aria-pressed="false" aria-label="Ape">🐝</button>
+                  <button class="emojibtn" type="button" data-emoji="🦇" aria-pressed="false" aria-label="Pipistrello">🦇</button>
+                  <button class="emojibtn" type="button" data-emoji="🐸" aria-pressed="false" aria-label="Rana">🐸</button>
+                  <button class="emojibtn" type="button" data-emoji="🐁" aria-pressed="false" aria-label="Topo">🐁</button>
+                </div>
+              </div>
+
+              <div class="field">
+                <span class="field__label" id="b-colore-label">Tinta della scheda</span>
+                <div class="swatches" role="group" aria-labelledby="b-colore-label" data-color-picker>
+                  <button class="swatch" type="button" data-color="--p1" style="--c: var(--p1)" aria-pressed="true" aria-label="Vermiglio"></button>
+                  <button class="swatch" type="button" data-color="--p2" style="--c: var(--p2)" aria-pressed="false" aria-label="Arancio"></button>
+                  <button class="swatch" type="button" data-color="--p3" style="--c: var(--p3)" aria-pressed="false" aria-label="Ocra"></button>
+                  <button class="swatch" type="button" data-color="--p4" style="--c: var(--p4)" aria-pressed="false" aria-label="Oliva"></button>
+                  <button class="swatch" type="button" data-color="--p5" style="--c: var(--p5)" aria-pressed="false" aria-label="Bosco"></button>
+                  <button class="swatch" type="button" data-color="--p6" style="--c: var(--p6)" aria-pressed="false" aria-label="Turchese"></button>
+                  <button class="swatch" type="button" data-color="--p7" style="--c: var(--p7)" aria-pressed="false" aria-label="Cielo"></button>
+                  <button class="swatch" type="button" data-color="--p8" style="--c: var(--p8)" aria-pressed="false" aria-label="Cobalto"></button>
+                  <button class="swatch" type="button" data-color="--p9" style="--c: var(--p9)" aria-pressed="false" aria-label="Indaco"></button>
+                  <button class="swatch" type="button" data-color="--p10" style="--c: var(--p10)" aria-pressed="false" aria-label="Prugna"></button>
+                  <button class="swatch" type="button" data-color="--p11" style="--c: var(--p11)" aria-pressed="false" aria-label="Rosa"></button>
+                  <button class="swatch" type="button" data-color="--p12" style="--c: var(--p12)" aria-pressed="false" aria-label="Argilla"></button>
+                </div>
+              </div>
+
+            </div>
+
+            <div class="document__page">
+              <span class="eyebrow">Descrizione lunga · clicca per scrivere · Ctrl+Invio per il risultato e per rientrare</span>
+              <div class="docedit" data-md-live>
+                <div class="docedit__view prose" data-md-out tabindex="0" aria-label="Descrizione resa. Ctrl più Invio per modificare."></div>
+                <textarea class="docfield docfield--long docedit__input" aria-label="Descrizione lunga in Markdown" data-field="lunga" data-md-source hidden>Rugginosa non ricorda il proprio nome di cucciola. Ricorda il fumo, il rumore delle assi che cedono e la sensazione di essere l'unica cosa che in quella radura non aveva una casa.
+
+## Come è arrivata a Muschioverde
+
+Nella primavera del terzo anno attraversò il **Guado Spezzato** con un carico di mappe rubate a un corriere della Marchesa.
+
+> «Non servo nessuno. Vendo informazioni e, se il prezzo è buono, dimentico di averle vendute.»
+
+- *Barone Talpa* — le deve due favori e una barca.
+- *Foglia di Ferro* — l'unica che le ha offerto una casa.
+- *Corvinus* — socio occasionale, mai alleato.</textarea>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+<script src="marks.js"></script>
+<script src="entities.js"></script>
+<script src="markdown.js"></script>
+<script src="shell.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

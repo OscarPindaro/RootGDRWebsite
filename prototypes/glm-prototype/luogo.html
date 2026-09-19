@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bracken — Fronte del Tuono</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="luoghi" data-world="fronte-del-tuono" data-nav="luoghi"
+      data-crumbs="I tuoi mondi::mondi.html|Fronte del Tuono::mondo.html|Luoghi::luoghi.html|Bracken">
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+
+      <main class="content">
+        <div class="detail">
+          <div>
+            <div class="detail-media">🏘️</div>
+            <div style="margin-top:.8rem"><button class="btn btn-ghost btn-sm">Cambia immagine</button></div>
+            <ul class="meta-list">
+              <li><span class="k">Mondo</span><span>Fronte del Tuono</span></li>
+              <li><span class="k">Creato</span><span>3 gen 2026</span></li>
+              <li><span class="k">Aggiornato</span><span>5 giorni fa</span></li>
+            </ul>
+          </div>
+
+          <div>
+            <div class="page-head" style="margin-bottom:1rem">
+              <div>
+                <span class="eyebrow">Luogo</span>
+                <h1>Bracken</h1>
+                <p class="muted small" style="margin-top:.3rem">Villaggio-mercato sul fiume</p>
+              </div>
+              <div class="spacer"></div>
+              <button class="btn btn-ghost" data-edit="#descrizione">✎ Modifica</button>
+              <button class="btn btn-danger">Elimina</button>
+            </div>
+
+            <div data-editable id="descrizione">
+              <div data-view class="prose">
+                <p>Bracken esiste perché il fiume rallenta. Qui le chiatte si fermano, le merci cambiano mano e le notizie arrivano prima delle persone. Chi controlla Bracken controlla ciò che entra e ciò che esce dal fronte.</p>
+                <h2>Da sapere</h2>
+                <ul>
+                  <li>Tre moli, due dogane, un ponte pedonale sempre in riparazione.</li>
+                  <li>La gilda dei barcaioli non prende posizione, ma prende nota.</li>
+                  <li>Di notte le lanterne vengono spente a turno: è un segnale, non un risparmio.</li>
+                </ul>
+                <blockquote>«A Bracken nessuno mente, ma nessuno dice tutto.»</blockquote>
+              </div>
+              <div data-src hidden>
+                <div class="editor">
+                  <div class="editor-bar">
+                    <button class="tool">B</button><button class="tool">I</button><button class="tool">H</button><button class="tool">•</button>
+                    <span class="spacer"></span><span class="small muted">Markdown</span>
+                  </div>
+                  <textarea spellcheck="false">Bracken esiste perché il fiume rallenta. Qui le chiatte si fermano, le merci cambiano mano e le notizie arrivano prima delle persone. Chi controlla Bracken controlla ciò che entra e ciò che esce dal fronte.
+
+## Da sapere
+
+- Tre moli, due dogane, un ponte pedonale sempre in riparazione.
+- La gilda dei barcaioli non prende posizione, ma prende nota.
+- Di notte le lanterne vengono spente a turno: è un segnale, non un risparmio.
+
+> «A Bracken nessuno mente, ma nessuno dice tutto.»</textarea>
+                </div>
+                <div style="display:flex;gap:.5rem;margin-top:.8rem">
+                  <button class="btn btn-primary">Salva</button>
+                  <button class="btn btn-ghost" data-cancel-edit hidden>Annulla</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

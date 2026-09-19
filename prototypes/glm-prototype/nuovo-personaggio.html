@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nuovo personaggio — Fronte del Tuono</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="personaggi" data-world="fronte-del-tuono" data-nav="personaggi"
+      data-crumbs="I tuoi mondi::mondi.html|Fronte del Tuono::mondo.html|Personaggi::personaggi.html|Nuovo personaggio">
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+
+      <main class="content" style="max-width:760px">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Personaggi</span>
+            <h1>Nuovo personaggio</h1>
+            <p>Puoi sempre modificarlo dopo. L'immagine e il testo lungo sono opzionali.</p>
+          </div>
+        </div>
+
+        <form class="form" onsubmit="event.preventDefault(); location.href='personaggio.html';">
+          <div class="field">
+            <label for="nome">Nome completo</label>
+            <input id="nome" required placeholder="es. Mira Vell">
+          </div>
+          <div class="field">
+            <label for="titolo">Titolo <span class="muted small">(opzionale)</span></label>
+            <input id="titolo" placeholder="es. Cartografa dei boschi">
+          </div>
+          <div class="field">
+            <label for="breve">Descrizione breve</label>
+            <input id="breve" placeholder="Una riga che lo riassume">
+            <span class="hint">Compare negli elenchi e nelle card.</span>
+          </div>
+          <div class="field">
+            <label for="img">Immagine <span class="muted small">(opzionale)</span></label>
+            <input id="img" type="file" accept="image/*">
+            <span class="hint">Solo immagini, entro il limite di dimensione.</span>
+          </div>
+
+          <div class="field">
+            <label for="bio">Biografia</label>
+            <div class="editor">
+              <div class="editor-bar">
+                <button type="button" class="tool">B</button>
+                <button type="button" class="tool">I</button>
+                <button type="button" class="tool">H</button>
+                <button type="button" class="tool">•</button>
+                <button type="button" class="tool">❝</button>
+                <span class="spacer"></span>
+                <span class="small muted">Markdown</span>
+              </div>
+              <textarea id="bio" spellcheck="false" placeholder="## Origini&#10;&#10;Scrivi qui la storia del personaggio…"></textarea>
+            </div>
+          </div>
+
+          <div class="field invalid">
+            <label for="demo">Campo di esempio con errore</label>
+            <input id="demo" value="valore non valido">
+            <span class="error">Questo campo mostra come appare un errore di validazione senza perdere il testo inserito.</span>
+          </div>
+
+          <div style="display:flex;gap:.5rem">
+            <button class="btn btn-primary" type="submit">Salva personaggio</button>
+            <a class="btn btn-ghost" href="personaggi.html">Annulla</a>
+          </div>
+        </form>
+
+        <p class="proto-note">Prototipo GLM — l'invio simula un form htmx con JSON; in caso di errore il testo inviato non viene scartato.</p>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

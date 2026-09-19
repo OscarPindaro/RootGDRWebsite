@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>I tuoi mondi — Root GDR</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="mondi" data-title="I tuoi mondi">
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Archivio personale</span>
+            <h1>I tuoi mondi</h1>
+            <p>Le campagne che stai costruendo o a cui partecipi.</p>
+          </div>
+          <div class="spacer"></div>
+          <button class="btn btn-primary">＋ Nuovo mondo</button>
+        </div>
+
+        <div class="grid cols-2">
+          <a class="card card-link" href="mondo.html">
+            <div class="card-cover" style="background:linear-gradient(160deg,#e6f0e8,#cfe3d5)">🐻</div>
+            <div class="card-body">
+              <div class="pill master">Master</div>
+              <h3 style="margin-top:.6rem">Fronte del Tuono</h3>
+              <p class="muted small">Le foreste del nord si preparano alla guerra. Quattro fazioni, una vecchia promessa e un confine che ogni giorno si sposta.</p>
+              <div class="stat-row">
+                <span>12 personaggi</span><span>8 luoghi</span><span>24 sessioni</span>
+              </div>
+              <div class="foot"><span class="small muted">Attività ieri</span><span class="small" style="color:var(--moss);font-weight:600">Apri →</span></div>
+            </div>
+          </a>
+
+          <a class="card card-link" href="mondo.html">
+            <div class="card-cover" style="background:linear-gradient(160deg,#e7ecfb,#ccd6f5)">🐙</div>
+            <div class="card-body">
+              <div class="pill player">Giocatore</div>
+              <h3 style="margin-top:.6rem">Le Maree di Nacre</h3>
+              <p class="muted small">Un arcipelago in movimento e mappe che non raccontano mai la stessa storia.</p>
+              <div class="stat-row">
+                <span>5 personaggi</span><span>11 luoghi</span><span>9 sessioni</span>
+              </div>
+              <div class="foot"><span class="small muted">Attività 3 settimane fa</span><span class="small" style="color:var(--moss);font-weight:600">Apri →</span></div>
+            </div>
+          </a>
+
+          <div class="card" style="border-style:dashed;display:grid;place-items:center;min-height:220px;background:var(--surface-2)">
+            <div style="text-align:center;padding:1.4rem">
+              <div style="font-size:1.8rem">＋</div>
+              <h3>Crea un nuovo mondo</h3>
+              <p class="muted small">Inizia a raccogliere personaggi, luoghi e storie.</p>
+              <button class="btn btn-ghost">Nuovo mondo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="page-head" style="margin-top:2.4rem">
+          <div><span class="eyebrow">Cronologia</span><h2>Attività recente</h2></div>
+        </div>
+        <ul class="timeline">
+          <li><span class="eyebrow" style="margin:0">Sessione · ieri</span><h3><a href="sessione.html" style="text-decoration:none">La strada per Bracken</a></h3><p class="muted small">Fronte del Tuono — sessione 24</p></li>
+          <li><span class="eyebrow" style="margin:0">Personaggio · 3 giorni fa</span><h3><a href="personaggio.html" style="text-decoration:none">Mira Vell è entrata nella storia</a></h3><p class="muted small">Fronte del Tuono — nuovo personaggio</p></li>
+          <li><span class="eyebrow" style="margin:0">Storia · 1 settimana fa</span><h3><a href="storia.html" style="text-decoration:none">Il patto delle quattro querce</a></h3><p class="muted small">Fronte del Tuono — nuova storia</p></li>
+        </ul>
+
+        <p class="proto-note">Prototipo GLM — navigazione multipagina reale. Prova <kbd>Alt+Spazio</kbd> per la command palette e il pulsante ☰ su schermo stretto.</p>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

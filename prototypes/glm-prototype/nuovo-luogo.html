@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nuovo luogo — Fronte del Tuono</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="luoghi" data-world="fronte-del-tuono" data-nav="luoghi"
+      data-crumbs="I tuoi mondi::mondi.html|Fronte del Tuono::mondo.html|Luoghi::luoghi.html|Nuovo luogo">
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+
+      <main class="content" style="max-width:760px">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Luoghi · solo Master</span>
+            <h1>Nuovo luogo</h1>
+            <p>Descrivi il posto in Markdown. Tutti i membri del mondo potranno leggerlo.</p>
+          </div>
+        </div>
+
+        <form class="form" onsubmit="event.preventDefault(); location.href='luogo.html';">
+          <div class="field">
+            <label for="nome">Nome</label>
+            <input id="nome" required placeholder="es. Ponte di cenere">
+          </div>
+          <div class="field">
+            <label for="img">Immagine <span class="muted small">(opzionale)</span></label>
+            <input id="img" type="file" accept="image/*">
+          </div>
+          <div class="field">
+            <label for="desc">Descrizione</label>
+            <div class="editor">
+              <div class="editor-bar">
+                <button type="button" class="tool">B</button>
+                <button type="button" class="tool">I</button>
+                <button type="button" class="tool">H</button>
+                <button type="button" class="tool">•</button>
+                <span class="spacer"></span><span class="small muted">Markdown</span>
+              </div>
+              <textarea id="desc" spellcheck="false" placeholder="Dove si trova, chi lo controlla, cosa è successo qui…"></textarea>
+            </div>
+          </div>
+          <div style="display:flex;gap:.5rem">
+            <button class="btn btn-primary" type="submit">Salva luogo</button>
+            <a class="btn btn-ghost" href="luoghi.html">Annulla</a>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

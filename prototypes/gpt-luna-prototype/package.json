@@ -1,0 +1,15 @@
+{
+  "name": "gpt-luna-prototype",
+  "version": "1.0.0",
+  "description": "Static Root GDR visual prototype",
+  "main": "app.js",
+  "scripts": {
+    "test": "playwright test --config=playwright.config.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.55.1"
+  }
+}

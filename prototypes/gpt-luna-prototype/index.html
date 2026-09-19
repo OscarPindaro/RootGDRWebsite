@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Root GDR — Prototipo</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand-row">
+        <button class="brand-mark" data-view="home" aria-label="Torna ai mondi">RG</button>
+        <div class="brand-copy"><strong>ROOT GDR</strong><span>archivio campagne</span></div>
+        <button class="icon-button sidebar-close" id="sidebar-close" aria-label="Chiudi menu">×</button>
+      </div>
+      <div class="sidebar-world">
+        <div class="world-mini-cover cover-copper">FT</div>
+        <div><span class="eyebrow">Mondo attivo</span><strong>Fronte del Tuono</strong></div>
+        <button class="icon-button" data-view="home" aria-label="Cambia mondo">↗</button>
+      </div>
+      <nav class="nav-list" aria-label="Navigazione principale">
+        <button class="nav-item active" data-view="world"><span>◈</span> Overview</button>
+        <button class="nav-item" data-view="characters"><span>♙</span> Personaggi <small>12</small></button>
+        <button class="nav-item" data-view="places"><span>◇</span> Luoghi <small>8</small></button>
+        <button class="nav-item" data-view="sessions"><span>◷</span> Sessioni <small>24</small></button>
+        <button class="nav-item" data-view="stories"><span>▤</span> Storie <small>6</small></button>
+        <div class="nav-divider"></div>
+        <button class="nav-item" data-view="lore"><span>☷</span> Il mondo di gioco</button>
+        <button class="nav-item" data-view="rules"><span>☷</span> Regole e riferimenti</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="nav-item" id="sidebar-search"><span>⌕</span> Cerca tutto <kbd>⌥ Space</kbd></button>
+        <button class="profile"><span class="avatar">OP</span><span><strong>Oscar Pindaro</strong><small>Master</small></span><span>⋮</span></button>
+      </div>
+    </aside>
+    <div class="scrim" id="scrim"></div>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="icon-button menu-toggle" id="menu-toggle" aria-label="Apri menu">☰</button>
+        <div class="breadcrumb"><button data-view="home">I tuoi mondi</button><span>/</span><strong id="crumb">Fronte del Tuono</strong></div>
+        <div class="top-actions"><button class="search-trigger" id="palette-trigger"><span>⌕</span> Cerca <kbd>⌥ Space</kbd></button><button class="avatar avatar-top">OP</button></div>
+      </header>
+
+      <section class="view" id="home-view" hidden>
+        <div class="page-heading heading-home"><div><span class="eyebrow">Archivio personale</span><h1>I tuoi mondi</h1><p>Le campagne che stai esplorando o costruendo.</p></div><button class="button button-dark">＋ Nuovo mondo</button></div>
+        <div class="world-grid">
+          <button class="world-card featured" data-view="world"><div class="card-cover cover-copper"><span class="cover-animal">🐻</span><b>FT</b></div><div class="card-body"><div class="card-meta"><span class="status-dot"></span> Ultima attività ieri <span class="role-chip">MASTER</span></div><h2>Fronte del Tuono</h2><p>Le foreste del nord si preparano alla guerra. Quattro fazioni, una vecchia promessa.</p><div class="card-footer"><span>12 personaggi</span><span>→ Apri mondo</span></div></div></button>
+          <button class="world-card" data-view="world"><div class="card-cover cover-blue"><span class="cover-animal">🐟</span><b>MN</b></div><div class="card-body"><div class="card-meta"><span class="status-dot blue"></span> Attività 3 settimane fa <span class="role-chip player">PLAYER</span></div><h2>Le Maree di Nacre</h2><p>Un arcipelago in movimento e le mappe che non raccontano mai la stessa storia.</p><div class="card-footer"><span>5 personaggi</span><span>→ Apri mondo</span></div></div></button>
+          <button class="world-card new-world"><div class="plus-block">＋</div><div><h2>Crea un nuovo mondo</h2><p>Inizia a raccogliere personaggi, luoghi e storie.</p></div></button>
+        </div>
+        <div class="section-heading"><div><span class="eyebrow">Cronologia</span><h2>Attività recente</h2></div><button class="text-button">Vedi tutto →</button></div>
+        <div class="activity-list"><div class="activity-item"><span class="activity-icon coral">◷</span><div><strong>Sessione 24 — La strada per Bracken</strong><p>Fronte del Tuono · modificata ieri</p></div><span class="activity-arrow">→</span></div><div class="activity-item"><span class="activity-icon yellow">♙</span><div><strong>Nuovo personaggio: Mira Vell</strong><p>Fronte del Tuono · modificato 3 giorni fa</p></div><span class="activity-arrow">→</span></div><div class="activity-item"><span class="activity-icon blue">▤</span><div><strong>La città sommersa</strong><p>Le Maree di Nacre · modificata 3 settimane fa</p></div><span class="activity-arrow">→</span></div></div>
+      </section>
+
+      <section class="view" id="world-view">
+        <div class="world-hero"><div class="hero-cover cover-copper"><span class="cover-animal">🐻</span><b>FT</b></div><div class="hero-copy"><span class="eyebrow">Mondo · Master</span><h1>Fronte del Tuono</h1><p>Le foreste del nord si preparano alla guerra. Quattro fazioni, una vecchia promessa e un confine che ogni giorno si sposta.</p><div class="hero-actions"><button class="button button-dark">＋ Nuova sessione</button><button class="button button-outline">Gestisci mondo</button></div></div><button class="icon-button hero-menu" aria-label="Altre azioni">⋮</button></div>
+        <div class="quick-grid"><button class="quick-card quick-coral" data-view="characters"><span class="quick-symbol">♙</span><span><strong>Personaggi</strong><small>12 nel mondo</small></span><b>→</b></button><button class="quick-card quick-yellow" data-view="places"><span class="quick-symbol">◇</span><span><strong>Luoghi</strong><small>8 luoghi esplorati</small></span><b>→</b></button><button class="quick-card quick-blue" data-view="sessions"><span class="quick-symbol">◷</span><span><strong>Sessioni</strong><small>24 sessioni giocate</small></span><b>→</b></button><button class="quick-card quick-green" data-view="stories"><span class="quick-symbol">▤</span><span><strong>Storie</strong><small>6 racconti</small></span><b>→</b></button></div>
+        <div class="content-columns"><div><div class="section-heading"><div><span class="eyebrow">Diario della campagna</span><h2>Attività recente</h2></div><button class="text-button">Vedi archivio →</button></div><div class="timeline"><article class="timeline-item"><span class="timeline-mark coral"></span><div><div class="timeline-meta">SESSIONE 24 <span>·</span> IERI</div><h3>La strada per Bracken</h3><p>La compagnia ha attraversato il passo prima dell'alba. A sud, le torri della Marchesa sono finalmente visibili.</p></div></article><article class="timeline-item"><span class="timeline-mark yellow"></span><div><div class="timeline-meta">PERSONAGGIO <span>·</span> 3 GIORNI FA</div><h3>Mira Vell è entrata nella storia</h3><p>Una volpe cartografa con una mappa incompleta e troppe domande.</p></div></article><article class="timeline-item"><span class="timeline-mark blue"></span><div><div class="timeline-meta">STORIA <span>·</span> 1 SETTIMANA FA</div><h3>Il patto delle quattro querce</h3><p>Prima che ci fossero confini, c'era una promessa.</p></div></article></div></div><aside class="side-panel"><div class="section-heading"><div><span class="eyebrow">In evidenza</span><h2>Da ricordare</h2></div></div><div class="note-card"><span class="note-label">PROSSIMA SESSIONE</span><strong>Il ponte di cenere</strong><p>Sabato 28 · 21:00</p><button class="text-button">Apri dettaglio →</button></div><div class="note-card plain"><span class="note-label">MEMBRI</span><div class="member-stack"><span class="avatar small">OP</span><span class="avatar small alt">GS</span><span class="avatar small blue-avatar">LV</span><span class="avatar small more">+4</span></div><p>7 persone nel mondo</p></div></aside></div>
+      </section>
+
+      <section class="view" id="characters-view" hidden>
+        <div class="page-heading"><div><span class="eyebrow">Fronte del Tuono · Archivio</span><h1>Personaggi</h1><p>Le persone, gli animali e le leggende che abitano questo mondo.</p></div><button class="button button-dark">＋ Nuovo personaggio</button></div><div class="filter-row"><button class="filter active">Tutti <span>12</span></button><button class="filter">I miei personaggi <span>4</span></button><button class="filter">Fazioni</button><button class="filter search-filter">⌕ Cerca personaggi</button></div><div class="character-grid"><article class="character-card"><div class="character-art art-mira"><span class="animal-art">🦊</span><b>MV</b></div><div class="character-info"><div class="card-meta">VOLPE · ALLEANZA</div><h2>Mira Vell</h2><p>Cartografa, contrabbandiera e testimone improbabile.</p><div class="card-footer"><span>Oscar Pindaro</span><span>→</span></div></div></article><article class="character-card"><div class="character-art art-oren"><span class="animal-art">🐻</span><b>OR</b></div><div class="character-info"><div class="card-meta">ORSO · MARCHESA</div><h2>Oren Quercia</h2><p>Un capitano che non ha mai imparato a perdere.</p><div class="card-footer"><span>Giulia Serra</span><span>→</span></div></div></article><article class="character-card"><div class="character-art art-nilo"><span class="animal-art">🐱</span><b>NS</b></div><div class="character-info"><div class="card-meta">GATTO · COMPAGNIA</div><h2>Nilo Settevite</h2><p>Mercante, informatore, pessimo bugiardo.</p><div class="card-footer"><span>Luca Verdi</span><span>→</span></div></div></article><article class="character-card character-add"><div class="plus-block">＋</div><h2>Aggiungi un personaggio</h2><p>Dai un volto alla prossima storia.</p></article></div></section>
+      <section class="view archive-view" id="places-view" hidden>
+        <div class="page-heading"><div><span class="eyebrow">Fronte del Tuono · Archivio</span><h1>Luoghi</h1><p>Le radure, le roccaforti e i luoghi dove la storia lascia tracce.</p></div><button class="button button-dark">＋ Nuovo luogo</button></div>
+        <div class="archive-layout"><div class="place-feature"><div class="place-art place-forest"><span>♧</span></div><div class="archive-card-body"><div class="card-meta">LUOGO · FORESTA</div><h2>La foresta di Bracken</h2><p>Un confine naturale che nessuna fazione controlla davvero. Di notte, le querce sembrano muoversi.</p><div class="card-footer"><span>Modificato 2 giorni fa</span><span>Apri luogo →</span></div></div></div><div class="place-list"><article><span class="list-color yellow"></span><div><div class="card-meta">ROCCAFORTE</div><h2>La torre della Marchesa</h2><p>Ultimo avamposto a sud.</p></div><b>→</b></article><article><span class="list-color blue"></span><div><div class="card-meta">VILLAGGIO</div><h2>Rivafredda</h2><p>Case basse, acqua alta.</p></div><b>→</b></article><article><span class="list-color green"></span><div><div class="card-meta">ROVINE</div><h2>Le quattro querce</h2><p>Il luogo del patto.</p></div><b>→</b></article></div></div>
+      </section>
+      <section class="view archive-view" id="sessions-view" hidden>
+        <div class="page-heading"><div><span class="eyebrow">Fronte del Tuono · Diario</span><h1>Sessioni</h1><p>La cronaca ordinata delle partite giocate nel mondo.</p></div><button class="button button-dark">＋ Nuova sessione</button></div>
+        <div class="session-list"><article class="session-item session-current"><div class="session-number">24</div><div class="session-date">SABATO 21 · IERI</div><div class="session-copy"><h2>La strada per Bracken</h2><p>La compagnia attraversa il passo prima dell'alba. Le torri della Marchesa sono finalmente visibili.</p></div><span>→</span></article><article class="session-item"><div class="session-number">23</div><div class="session-date">SABATO 14 · 7 GIORNI FA</div><div class="session-copy"><h2>Un messaggio nella corteccia</h2><p>Una mappa incompleta conduce la compagnia verso nord.</p></div><span>→</span></article><article class="session-item"><div class="session-number">22</div><div class="session-date">SABATO 07 · 14 GIORNI FA</div><div class="session-copy"><h2>Il mercato delle promesse</h2><p>Ogni informazione ha un prezzo, ma non sempre è in denaro.</p></div><span>→</span></article></div>
+      </section>
+      <section class="view archive-view" id="stories-view" hidden>
+        <div class="page-heading"><div><span class="eyebrow">Fronte del Tuono · Archivio</span><h1>Storie</h1><p>Gli eventi più grandi della campagna, oltre il singolo tavolo.</p></div><button class="button button-dark">＋ Nuova storia</button></div>
+        <div class="story-grid"><article class="story-card story-red"><span class="eyebrow">ATTO I · 3 MESI FA</span><h2>Il patto delle quattro querce</h2><p>Prima che ci fossero confini, c'era una promessa. Ora qualcuno l'ha infranta.</p><button class="text-button">Leggi storia →</button></article><article class="story-card story-blue"><span class="eyebrow">ATTO II · 1 MESE FA</span><h2>La città sotto la brughiera</h2><p>Le mappe più antiche indicano una città dove oggi cresce solo muschio.</p><button class="text-button">Leggi storia →</button></article><article class="story-card story-yellow"><span class="eyebrow">INTERLUDIO · 2 SETTIMANE FA</span><h2>Mira e la mappa spezzata</h2><p>Una cartografa, tre frammenti e una strada che non dovrebbe esistere.</p><button class="text-button">Leggi storia →</button></article></div>
+      </section>
+      <section class="view reading-view" id="lore-view" hidden>
+        <div class="reading-header"><span class="eyebrow">Pagina del mondo</span><h1>Il mondo di gioco</h1><p>Una guida essenziale al Fronte del Tuono.</p></div><article class="prose"><h2>La foresta contesa</h2><p>Il Fronte del Tuono si estende dalle brughiere occidentali fino ai passi di Bracken. Non esiste una sola mappa affidabile: sentieri, confini e alleanze cambiano con le stagioni.</p><h2>Le quattro fazioni</h2><p>La Marchesa controlla le strade principali, l'Alleanza si muove attraverso la foresta e le compagnie indipendenti mantengono aperti i commerci. La quarta fazione non ha ancora rivelato il proprio nome.</p><blockquote>Nel bosco, ogni promessa mette radici.</blockquote><h2>Il patto</h2><p>Le quattro querce segnano il luogo in cui fu stabilita la pace. Oggi una delle querce è stata abbattuta e nessuno ne rivendica la responsabilità.</p></article>
+      </section>
+      <section class="view reading-view" id="rules-view" hidden>
+        <div class="reading-header"><span class="eyebrow">Pagina del mondo</span><h1>Regole e riferimenti</h1><p>Le convenzioni usate durante la campagna.</p></div><article class="prose"><h2>Al tavolo</h2><ul><li>Descrivi prima l'intenzione, poi scegli la mossa.</li><li>Le conseguenze devono cambiare la situazione.</li><li>Ogni fazione agisce anche fuori scena.</li></ul><h2>Segnalini narrativi</h2><p>I segnalini rossi indicano un pericolo immediato; quelli gialli una promessa o un debito; quelli blu un'informazione ancora incompleta.</p><div class="rule-callout"><strong>Regola d'oro</strong><p>Quando la fiction e la procedura sembrano divergere, torniamo alla fiction.</p></div></article>
+      </section>
+    </main>
+  </div>
+  <div class="palette" id="palette" hidden><div class="palette-box"><div class="palette-search"><span>⌕</span><input id="palette-input" placeholder="Cerca nel mondo..." autofocus><kbd>ESC</kbd></div><div class="palette-label">Navigazione</div><button data-view="world"><span>◈</span><strong>Apri overview</strong><small>↵</small></button><button data-view="characters"><span>♙</span><strong>Vai ai personaggi</strong><small>↵</small></button><button data-view="home"><span>⌂</span><strong>Torna ai tuoi mondi</strong><small>↵</small></button><div class="palette-label">Azioni</div><button><span>＋</span><strong>Crea nuovo contenuto</strong><small>↵</small></button></div></div>
+  <script src="app.js"></script>
+</body>
+</html>

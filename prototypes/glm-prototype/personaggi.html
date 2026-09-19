@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Personaggi — Fronte del Tuono</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="personaggi" data-world="fronte-del-tuono" data-nav="personaggi"
+      data-crumbs="I tuoi mondi::mondi.html|Fronte del Tuono::mondo.html|Personaggi">
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+
+      <main class="content">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Fronte del Tuono</span>
+            <h1>Personaggi</h1>
+            <p>Chi abita il mondo. Ogni giocatore gestisce i propri; il Master gestisce tutti.</p>
+          </div>
+          <div class="spacer"></div>
+          <a class="btn btn-primary" href="nuovo-personaggio.html">＋ Nuovo personaggio</a>
+        </div>
+
+        <div style="display:flex;gap:.4rem;margin-bottom:1rem">
+          <button class="btn btn-ghost btn-sm" style="background:var(--moss-2);border-color:transparent;color:var(--moss)">Tutti</button>
+          <button class="btn btn-ghost btn-sm">Miei</button>
+          <button class="btn btn-ghost btn-sm">Senza immagine</button>
+        </div>
+
+        <div class="grid cols-2">
+          <a class="card card-link" href="personaggio.html">
+            <div class="card-cover" style="background:linear-gradient(160deg,#f6e7dc,#eed3bf)">🦊</div>
+            <div class="card-body">
+              <div style="display:flex;gap:.4rem;align-items:center"><span class="pill master">Mio</span><span class="pill">Volpe</span></div>
+              <h3 style="margin-top:.6rem">Mira Vell</h3>
+              <p class="eyebrow" style="margin:0 0 .4rem">Cartografa dei boschi</p>
+              <p class="muted small">Porta una mappa incompleta e troppe domande. Sa leggere il terreno meglio di chiunque altro.</p>
+              <div class="foot"><span class="small muted">Aggiornato 3 giorni fa</span><span class="small" style="color:var(--moss);font-weight:600">Apri →</span></div>
+            </div>
+          </a>
+
+          <a class="card card-link" href="personaggio.html">
+            <div class="card-cover" style="background:linear-gradient(160deg,#e7ecfb,#ccd6f5)">🦡</div>
+            <div class="card-body">
+              <div style="display:flex;gap:.4rem;align-items:center"><span class="pill">Tasso</span></div>
+              <h3 style="margin-top:.6rem">Bram Coda-di-Ferro</h3>
+              <p class="eyebrow" style="margin:0 0 .4rem">Fabbro del passo</p>
+              <p class="muted small">Ha forgiato la maggior parte delle lame usate contro di lui. Non se ne pente.</p>
+              <div class="foot"><span class="small muted">Aggiornato 2 settimane fa</span><span class="small" style="color:var(--moss);font-weight:600">Apri →</span></div>
+            </div>
+          </a>
+
+          <a class="card card-link" href="personaggio.html">
+            <div class="card-cover" style="background:linear-gradient(160deg,#e6f0e8,#cfe3d5)">🐿️</div>
+            <div class="card-body">
+              <div style="display:flex;gap:.4rem;align-items:center"><span class="pill player">Di Luca</span><span class="pill">Scoiattolo</span></div>
+              <h3 style="margin-top:.6rem">Sora Querciavecchia</h3>
+              <p class="eyebrow" style="margin:0 0 .4rem">Voce dell'Alleanza</p>
+              <p class="muted small">Parla per la foresta, anche quando la foresta non è d'accordo.</p>
+              <div class="foot"><span class="small muted">Aggiornato 1 mese fa</span><span class="small" style="color:var(--moss);font-weight:600">Apri →</span></div>
+            </div>
+          </a>
+
+          <div class="card" style="border-style:dashed;display:grid;place-items:center;min-height:220px;background:var(--surface-2)">
+            <div style="text-align:center;padding:1.4rem">
+              <div style="font-size:1.8rem">＋</div>
+              <h3>Nuovo personaggio</h3>
+              <p class="muted small">Anche i giocatori possono crearne uno.</p>
+              <a class="btn btn-ghost" href="nuovo-personaggio.html">Crea</a>
+            </div>
+          </div>
+        </div>
+
+        <p class="proto-note">Prototipo GLM — stati vuoti, filtri e card riutilizzabili.</p>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

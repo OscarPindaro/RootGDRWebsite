@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fronte del Tuono — Root GDR</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="mondo" data-world="fronte-del-tuono" data-nav="mondo"
+      data-crumbs="I tuoi mondi::mondi.html|Fronte del Tuono">
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+
+      <main class="content">
+        <div class="card" style="display:grid;grid-template-columns:180px 1fr;gap:1.4rem;align-items:center;padding:1.4rem">
+          <div style="aspect-ratio:1;border-radius:var(--r-md);display:grid;place-items:center;font-size:3.4rem;background:linear-gradient(160deg,#e6f0e8,#cfe3d5)">🐻</div>
+          <div>
+            <span class="eyebrow">Mondo · Master</span>
+            <h1>Fronte del Tuono</h1>
+            <p class="muted">Le foreste del nord si preparano alla guerra. Quattro fazioni, una vecchia promessa e un confine che ogni giorno si sposta.</p>
+            <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+              <a class="btn btn-primary" href="nuova-sessione.html">＋ Nuova sessione</a>
+              <button class="btn btn-ghost">Gestisci mondo</button>
+              <button class="btn btn-ghost">Membri</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid cols-3" style="margin-top:1.4rem">
+          <a class="card card-link" href="personaggi.html"><div class="card-body"><span class="eyebrow" style="margin:0">12 nel mondo</span><h3>♟ Personaggi</h3></div></a>
+          <a class="card card-link" href="luoghi.html"><div class="card-body"><span class="eyebrow" style="margin:0">8 mappati</span><h3>◇ Luoghi</h3></div></a>
+          <a class="card card-link" href="sessioni.html"><div class="card-body"><span class="eyebrow" style="margin:0">24 giocate</span><h3>◷ Sessioni</h3></div></a>
+          <a class="card card-link" href="storie.html"><div class="card-body"><span class="eyebrow" style="margin:0">6 racconti</span><h3>▤ Storie</h3></div></a>
+        </div>
+
+        <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:2rem;align-items:start">
+          <div>
+            <div class="page-head" style="margin-bottom:.6rem">
+              <div><span class="eyebrow">Diario della campagna</span><h2>Attività recente</h2></div>
+            </div>
+            <ul class="timeline">
+              <li><span class="eyebrow" style="margin:0">Sessione 24 · ieri</span><h3><a href="sessione.html" style="text-decoration:none">La strada per Bracken</a></h3><p class="muted small">La compagnia ha attraversato il passo prima dell'alba. A sud, le torri della Marchesa sono finalmente visibili.</p></li>
+              <li><span class="eyebrow" style="margin:0">Personaggio · 3 giorni fa</span><h3><a href="personaggio.html" style="text-decoration:none">Mira Vell</a></h3><p class="muted small">Una volpe cartografa con una mappa incompleta e troppe domande.</p></li>
+              <li><span class="eyebrow" style="margin:0">Luogo · 5 giorni fa</span><h3><a href="luogo.html" style="text-decoration:none">Bracken</a></h3><p class="muted small">Il villaggio-mercato sul fiume, ultimo avamposto prima del confine conteso.</p></li>
+              <li><span class="eyebrow" style="margin:0">Storia · 1 settimana fa</span><h3><a href="storia.html" style="text-decoration:none">Il patto delle quattro querce</a></h3><p class="muted small">Prima che ci fossero confini, c'era una promessa.</p></li>
+            </ul>
+          </div>
+
+          <aside>
+            <div class="page-head" style="margin-bottom:.6rem"><div><span class="eyebrow">In evidenza</span><h2>Da ricordare</h2></div></div>
+            <div class="card"><div class="card-body">
+              <span class="eyebrow" style="margin:0">Prossima sessione</span>
+              <h3>Il ponte di cenere</h3>
+              <p class="muted small">Sabato 28 · 21:00</p>
+              <a class="btn btn-ghost btn-sm" href="sessione.html">Apri dettaglio →</a>
+            </div></div>
+            <div class="card" style="margin-top:1rem"><div class="card-body">
+              <span class="eyebrow" style="margin:0">Membri</span>
+              <div style="display:flex;gap:.4rem;margin:.6rem 0">
+                <span class="avatar">OP</span><span class="avatar">GS</span><span class="avatar">LV</span><span class="avatar">+4</span>
+              </div>
+              <p class="muted small">7 persone nel mondo</p>
+            </div></div>
+          </aside>
+        </div>
+
+        <p class="proto-note">Prototipo GLM — la sidebar è cambiata nel contesto del mondo. Su schermo stretto diventa un drawer con ☰.</p>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

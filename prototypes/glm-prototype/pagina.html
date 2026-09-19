@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Il mondo di gioco — Fronte del Tuono</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body data-page="pagine" data-world="fronte-del-tuono" data-nav="pagine"
+      data-crumbs="I tuoi mondi::mondi.html|Fronte del Tuono::mondo.html|Pagine::pagine.html|Il mondo di gioco">
+
+  <div class="shell">
+    <aside class="sidebar" id="sidebar"></aside>
+    <div class="scrim" id="scrim"></div>
+
+    <div class="main">
+      <header class="topbar" id="topbar"></header>
+
+      <main class="content" style="max-width:820px">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">Pagina · posizione 1</span>
+            <h1>Il mondo di gioco</h1>
+            <p class="muted small" style="margin-top:.3rem">/il-mondo-di-gioco</p>
+          </div>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost" data-edit="#contenuto">✎ Modifica</button>
+          <button class="btn btn-danger">Elimina</button>
+        </div>
+
+        <div data-editable id="contenuto">
+          <div data-view class="prose">
+            <p>Il Fronte del Tuono è una regione di foreste temperate attraversata da un fiume lento e da una frontiera che nessuna mappa ufficiale riconosce. Qui le fazioni non si combattono tanto per il territorio quanto per il diritto di raccontarlo.</p>
+            <h2>Geografia essenziale</h2>
+            <ul>
+              <li><strong>Nord</strong> — il Passo dell'Alba e le alte foreste.</li>
+              <li><strong>Centro</strong> — il fiume, i mercati, le chiatte.</li>
+              <li><strong>Sud</strong> — le torri della Marchesa e la pianura coltivata.</li>
+            </ul>
+            <h2>Tono della campagna</h2>
+            <p>Politica, sopravvivenza e piccoli tradimenti. Il combattimento esiste, ma raramente è la soluzione più economica.</p>
+            <blockquote>«Nessuno vince una foresta. Si può solo abitarla meglio.»</blockquote>
+          </div>
+          <div data-src hidden>
+            <div class="editor">
+              <div class="editor-bar">
+                <button class="tool">B</button><button class="tool">I</button><button class="tool">H</button><button class="tool">•</button>
+                <span class="spacer"></span><span class="small muted">Markdown</span>
+              </div>
+              <textarea spellcheck="false">Il Fronte del Tuono è una regione di foreste temperate attraversata da un fiume lento e da una frontiera che nessuna mappa ufficiale riconosce. Qui le fazioni non si combattono tanto per il territorio quanto per il diritto di raccontarlo.
+
+## Geografia essenziale
+
+- **Nord** — il Passo dell'Alba e le alte foreste.
+- **Centro** — il fiume, i mercati, le chiatte.
+- **Sud** — le torri della Marchesa e la pianura coltivata.
+
+## Tono della campagna
+
+Politica, sopravvivenza e piccoli tradimenti. Il combattimento esiste, ma raramente è la soluzione più economica.
+
+> «Nessuno vince una foresta. Si può solo abitarla meglio.»</textarea>
+            </div>
+            <div style="display:flex;gap:.5rem;margin-top:.8rem">
+              <button class="btn btn-primary">Salva</button>
+              <button class="btn btn-ghost" data-cancel-edit hidden>Annulla</button>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+</body>
+</html>

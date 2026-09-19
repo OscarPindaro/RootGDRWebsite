@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NPC · Le Cronache di Boscochiaro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="npc" data-world="boscochiaro">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container">
+
+        <div class="masthead">
+          <div class="masthead__body">
+            <nav class="crumbs">
+              <a href="index.html">Mondi</a>
+              <span class="crumbs__sep">/</span>
+              <a href="mondo.html">Boscochiaro</a>
+              <span class="crumbs__sep">/</span>
+              <span>NPC</span>
+            </nav>
+            <h1 class="display">NPC</h1>
+            <div class="rule-accent"></div>
+            <p class="lede">Schede scritte e mantenute dal Master. I giocatori le leggono; qui stanno anche i segreti che non devono ancora sapere.</p>
+          </div>
+          <div class="masthead__aside">
+            <span class="eyebrow">8 schede · solo Master</span>
+            <div class="masthead__actions">
+              <a class="btn btn--primary" href="nuovo-personaggio.html">Nuovo NPC</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="kindnote only-separate">
+          <span class="kindnote__text"><b>Modello separato — quello scelto.</b> Gli NPC hanno una voce propria in navigazione e un elenco proprio: <a href="personaggi.html">Personaggi</a> resta ai giocatori.</span>
+          <button class="btn--text" type="button" data-set-pref="viste" data-set-value="unite">Confronta con l'elenco unico →</button>
+        </div>
+
+        <div class="kindnote only-unite">
+          <span class="kindnote__text"><b>Modello unito — alternativa scartata.</b> Qui gli NPC non hanno una voce in navigazione: sono una sezione dentro <a href="personaggi.html">Personaggi</a>. Questa pagina resta raggiungibile solo da un link diretto.</span>
+          <a class="btn--text" href="personaggi.html">Vai a Personaggi →</a>
+        </div>
+
+        <div class="grid grid--cards">
+
+          <a class="card card--npc" href="npc.html" data-kind="npc">
+            <div class="card__media">
+              <span class="face" style="--c: var(--p8)">
+                <span class="face__emoji" role="img" aria-label="Gatto nero">🐈‍⬛</span>
+                <span class="face__tag">Marchesa · Gatta</span>
+              </span>
+            </div>
+            <div class="card__body">
+              <h2 class="card__name">La Marchesa</h2>
+              <p class="card__title">Comandante delle truppe feline</p>
+              <div class="card__faction"><span class="pill pill--plain">Marchesa</span></div>
+              <span class="card__owner">NPC del Master</span>
+            </div>
+          </a>
+
+          <a class="card card--npc" href="npc.html" data-kind="npc">
+            <div class="card__media">
+              <span class="face" style="--c: var(--p2)">
+                <span class="face__emoji" role="img" aria-label="Aquila">🦅</span>
+                <span class="face__tag">Dinastie · Aquila</span>
+              </span>
+            </div>
+            <div class="card__body">
+              <h2 class="card__name">Lord Aquila</h2>
+              <p class="card__title">Ultimo signore delle Dinastie</p>
+              <div class="card__faction"><span class="pill pill--plain">Dinastie</span></div>
+              <span class="card__owner">NPC del Master</span>
+            </div>
+          </a>
+
+          <a class="card card--npc" href="npc.html" data-kind="npc">
+            <div class="card__media">
+              <span class="face" style="--c: var(--p3)">
+                <span class="face__emoji" role="img" aria-label="Coniglio">🐇</span>
+                <span class="face__tag">Neutrale · Coniglio</span>
+              </span>
+            </div>
+            <div class="card__body">
+              <h2 class="card__name">Il Corriere</h2>
+              <p class="card__title">Porta ordini fra le fazioni</p>
+              <div class="card__faction"><span class="pill pill--plain">Neutrale</span></div>
+              <span class="card__owner">NPC del Master</span>
+            </div>
+          </a>
+
+          <a class="card card--npc" href="npc.html" data-kind="npc">
+            <div class="card__media">
+              <span class="face" style="--c: var(--p12)">
+                <span class="face__emoji" role="img" aria-label="Cinghiale">🐗</span>
+                <span class="face__tag">Fuorilegge · Cinghiale</span>
+              </span>
+            </div>
+            <div class="card__body">
+              <h2 class="card__name">Vecchio Cinghiale</h2>
+              <p class="card__title">Capo dei bracconieri di Muschioverde</p>
+              <div class="card__faction"><span class="pill pill--plain">Fuorilegge</span></div>
+              <span class="card__owner">NPC del Master</span>
+            </div>
+          </a>
+
+          <a class="card card--npc" href="npc.html" data-kind="npc">
+            <div class="card__media">
+              <span class="face" style="--c: var(--p6)">
+                <span class="face__emoji" role="img" aria-label="Serpente">🐍</span>
+                <span class="face__tag">Culto · Serpente</span>
+              </span>
+            </div>
+            <div class="card__body">
+              <h2 class="card__name">La Sacerdotessa</h2>
+              <p class="card__title">Custode dei riti del Cerchio di Pietre</p>
+              <div class="card__faction"><span class="pill pill--plain">Culto</span></div>
+              <span class="card__owner">NPC del Master</span>
+            </div>
+          </a>
+
+          <a class="card card--npc" href="npc.html" data-kind="npc">
+            <div class="card__media">
+              <span class="face" style="--c: var(--p4)">
+                <span class="face__emoji" role="img" aria-label="Riccio">🦔</span>
+                <span class="face__tag">Compagnia · Riccio</span>
+              </span>
+            </div>
+            <div class="card__body">
+              <h2 class="card__name">Capitano Riccio</h2>
+              <p class="card__title">Guardia del Mercato Galleggiante</p>
+              <div class="card__faction"><span class="pill pill--plain">Compagnia</span></div>
+              <span class="card__owner">NPC del Master</span>
+            </div>
+          </a>
+
+          <a class="card card--npc" href="npc.html" data-kind="npc">
+            <div class="card__media">
+              <span class="face" style="--c: var(--p9)">
+                <span class="face__emoji" role="img" aria-label="Lupo">🐺</span>
+                <span class="face__tag">Sconosciuto · Lupo</span>
+              </span>
+            </div>
+            <div class="card__body">
+              <h2 class="card__name">Il Vagabondo Grigio</h2>
+              <p class="card__title">Nessuno sa da dove venga</p>
+              <div class="card__faction"><span class="pill pill--plain">Sconosciuto</span></div>
+              <span class="card__owner">NPC del Master</span>
+            </div>
+          </a>
+
+          <a class="card card--npc" href="npc.html" data-kind="npc">
+            <div class="card__media">
+              <span class="face" style="--c: var(--p7)">
+                <span class="face__emoji" role="img" aria-label="Civetta">🦉</span>
+                <span class="face__tag">Muschioverde · Civetta</span>
+              </span>
+            </div>
+            <div class="card__body">
+              <h2 class="card__name">Madre Civetta</h2>
+              <p class="card__title">Insegnante e archivista del villaggio</p>
+              <div class="card__faction"><span class="pill pill--plain">Muschioverde</span></div>
+              <span class="card__owner">NPC del Master</span>
+            </div>
+          </a>
+
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+<script src="marks.js"></script>
+<script src="shell.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motori di scrittura · Le Cronache di Boscochiaro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="editors.css">
+</head>
+<body data-page="luogo" data-world="boscochiaro">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container">
+
+        <div class="masthead">
+          <div class="masthead__body">
+            <nav class="crumbs">
+              <a href="index.html">Mondi</a>
+              <span class="crumbs__sep">/</span>
+              <a href="luogo.html">Roccianera</a>
+              <span class="crumbs__sep">/</span>
+              <span>Motori</span>
+            </nav>
+            <h1 class="display">Tre motori, la stessa pagina</h1>
+            <div class="rule-accent"></div>
+            <p class="lede">Stesso documento, stessa impaginazione, stesso menu <code>@</code>, stesso blocco. Cambia solo il motore sotto: così si vede cosa costa ciascuno.</p>
+          </div>
+          <div class="masthead__aside">
+            <span class="eyebrow">Prova, non decisione</span>
+            <div class="masthead__actions">
+              <a class="btn btn--primary" href="render-compare.html">Editor contro server</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid--stories">
+
+          <a class="story" href="editor-codemirror.html">
+            <div class="story__band" style="background: var(--p5); color: var(--surface)">
+              <span>CodeMirror 6</span>
+              <span>MIT · nessun modello</span>
+            </div>
+            <div class="story__body">
+              <h2 class="story__title">Il documento resta testo</h2>
+              <p class="story__sum">Quello che salvi è esattamente quello che vedi nella sorgente. Titoli, liste, citazioni, grassetto e reference si rendono come in Obsidian, e sulla riga del cursore riappare il Markdown. Riga attiva e cursore sono nativi: le decorazioni sono scritte a mano, ma non toccano mai il testo.</p>
+              <div class="story__foot"><span>Da provare se conta il formato</span><span>Apri →</span></div>
+            </div>
+          </a>
+
+          <a class="story" href="editor-milkdown.html">
+            <div class="story__band" style="background: var(--p10); color: var(--surface)">
+              <span>Milkdown</span>
+              <span>MIT · WYSIWYG markdown</span>
+            </div>
+            <div class="story__body">
+              <h2 class="story__title">Il markdown si scrive già reso</h2>
+              <p class="story__sum">Nessuna anteprima a fianco: si edita il testo reso, come in Typora. Nessuna mention pronta, quindi la pillola è un plugin ProseMirror scritto a mano — e il serializzatore CommonMark escappa ancora le parentesi.</p>
+              <div class="story__foot"><span>Da provare se piace Typora</span><span>Apri →</span></div>
+            </div>
+          </a>
+
+          <a class="story" href="editor-tiptap.html">
+            <div class="story__band" style="background: var(--p8); color: var(--surface)">
+              <span>TipTap</span>
+              <span>MIT core · albero JSON</span>
+            </div>
+            <div class="story__body">
+              <h2 class="story__title">Blocchi, come Notion</h2>
+              <p class="story__sum">Il contenuto vive come albero JSON. Il nodo mention è pronto, il menu è nostro. La sintassi <code>@[Nome]</code> va dichiarata tre volte — tokenizer, parser, serializzatore — ma poi il salvataggio è pulito.</p>
+              <div class="story__foot"><span>Da provare se servono i blocchi</span><span>Apri →</span></div>
+            </div>
+          </a>
+
+        </div>
+
+        <section class="section">
+          <div class="section__head">
+            <div>
+              <span class="eyebrow">La prova che conta</span>
+              <h2>Editor contro server</h2>
+            </div>
+            <a class="btn--text" href="render-compare.html">Apri il confronto →</a>
+          </div>
+          <div class="grid grid--two">
+            <div class="prose">
+              <p>
+                Lo stesso Markdown reso due volte: dall'editor mentre scrivi e dal renderer del
+                server mentre si legge. La pagina confronta le due rese <b>parola per parola</b> e
+                blocco per blocco, e dice se divergono.
+              </p>
+              <p>
+                È il test che serve prima di scegliere: se il testo esce diverso, il confine tra
+                server e frontend non è ancora quello giusto.
+              </p>
+            </div>
+            <div class="stack">
+              <div class="engine-note" style="border-left-color: var(--forest)">
+                <b>Esito attuale</b>
+                <p style="margin: 0.5rem 0 0">
+                  Testo identico (151 parole) e struttura identica. L'HTML di destra lo produce
+                  <code>tools/render_server_side.py</code> con il renderer vero dell'applicazione
+                  più il plugin per le reference.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section__head">
+            <div>
+              <span class="eyebrow">Uguale in tutte e tre</span>
+              <h2>Cosa non cambia</h2>
+            </div>
+          </div>
+          <div class="grid grid--two">
+            <div class="prose">
+              <ul>
+                <li>L'impaginazione della pagina: titolo, sottotitolo e corpo restano campi separati, e la scrittura avviene <b>dentro la sezione</b>, non in un documento a parte.</li>
+                <li>Il menu <code>@</code> con ricerca fuzzy, con l'icona del tipo accanto al nome.</li>
+                <li>La pillola della reference, con la tinta del contenuto citato.</li>
+                <li>Il blocco: da bloccato il documento è di sola lettura.</li>
+                <li>Il pannello a destra con il Markdown che verrebbe salvato.</li>
+              </ul>
+            </div>
+            <div class="stack">
+              <div class="engine-note" style="border-left-color: var(--ochre)">
+                <b>Nota tecnica</b>
+                <p style="margin: 0.5rem 0 0">
+                  Queste tre pagine caricano i motori da un CDN come moduli ES: è un modo per
+                  provarli senza un passo di build. Nel progetto vero diventerebbero dipendenze
+                  installate e impacchettate.
+                </p>
+              </div>
+              <div class="engine-note">
+                <b>Cosa resta da decidere</b>
+                <p style="margin: 0.5rem 0 0">
+                  Se il documento salvato resta Markdown, se l'editor diventa la sorgente,
+                  e se la sintassi delle reference è <code>@[Nome]</code> o qualcosa che
+                  il Markdown non deve imparare a conoscere.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+</div>
+<script src="marks.js"></script>
+<script src="shell.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

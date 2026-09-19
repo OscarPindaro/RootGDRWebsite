@@ -1,0 +1,198 @@
+/* ============================================================
+   editors.css — pagine di confronto dei motori di scrittura.
+   Stessa impaginazione, stessa tipografia, stesso documento:
+   cambia solo il motore sotto.
+   ============================================================ */
+
+/* ---------- struttura comune ---------- */
+.engine {
+  border-left: 3px solid transparent;
+  padding: 0.15rem 0 0.15rem 0.7rem;
+  margin-left: -0.7rem;
+  min-height: 12rem;
+}
+.engine:focus-within { border-left-color: var(--vermilion); }
+
+.engine-title {
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  line-height: 1.04;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.engine-sub {
+  display: block;
+  font-family: var(--sans);
+  font-size: 1rem;
+  color: var(--ink-soft);
+  margin-top: 0.5rem;
+}
+
+.engine-note {
+  border: var(--rule-ink);
+  border-left: 6px solid var(--cobalt);
+  background: var(--surface);
+  padding: 0.9rem 1rem;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+}
+.engine-note b { color: var(--ink); }
+.engine-note ul { padding-left: 1.1rem; margin-top: 0.55rem; }
+.engine-note li + li { margin-top: 0.3rem; }
+.engine-note code { font-family: var(--mono); font-size: 0.85em; }
+
+.engine-source { border: var(--rule-ink); background: var(--surface); }
+.engine-source > .eyebrow {
+  display: block;
+  padding: 0.6rem 0.9rem;
+  border-bottom: var(--rule);
+}
+.engine-source pre {
+  margin: 0;
+  padding: 0.8rem 0.9rem;
+  max-height: 18rem;
+  overflow: auto;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.55;
+  color: var(--ink-soft);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.engine-hint { font-size: 0.82rem; color: var(--muted); }
+
+/* ---------- la superficie di scrittura segue la tipografia della resa ---------- */
+.engine .ProseMirror {
+  font-family: var(--serif);
+  font-size: 1.12rem;
+  line-height: 1.68;
+  color: var(--ink-soft);
+  outline: none;
+}
+.engine .ProseMirror:focus { outline: none; }
+.engine .ProseMirror p { margin: 0 0 1.15rem; }
+.engine .ProseMirror h1,
+.engine .ProseMirror h2 {
+  font-family: var(--serif);
+  font-size: 1.7rem;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.15;
+  margin: 2rem 0 0.6rem;
+  padding-top: 0.9rem;
+  border-top: var(--rule-ink);
+}
+.engine .ProseMirror h3 {
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin: 1.6rem 0 0.5rem;
+}
+.engine .ProseMirror blockquote {
+  border-left: 3px solid var(--vermilion);
+  padding-left: 1.1rem;
+  margin: 0 0 1.15rem;
+  font-style: italic;
+  color: var(--ink);
+}
+.engine .ProseMirror ul,
+.engine .ProseMirror ol { padding-left: 1.3rem; margin: 0 0 1.15rem; }
+.engine .ProseMirror li { margin-bottom: 0.35rem; }
+.engine .ProseMirror code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--surface-sunk);
+  padding: 0.1em 0.35em;
+}
+.engine .ProseMirror a { color: var(--ink); }
+.engine .ProseMirror p.is-empty::before,
+.engine .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* ---------- CodeMirror: senza numeri di riga, testo come la resa ---------- */
+.engine .cm-editor { background: transparent; }
+.engine .cm-editor.cm-focused { outline: none; }
+.engine .cm-gutters { display: none; }
+.engine .cm-editor .cm-scroller {
+  font-family: var(--serif);
+  font-size: 1.12rem;
+  line-height: 1.68;
+}
+.engine .cm-editor .cm-content { padding: 0; caret-color: transparent; }
+.engine .cm-editor .cm-line { padding: 0; }
+.engine .cm-editor .cm-activeLine {
+  background: rgba(23, 21, 15, 0.055);
+  outline: 1px solid rgba(23, 21, 15, 0.055);
+}
+.engine .cm-editor .cm-selectionBackground,
+.engine .cm-editor.cm-focused .cm-selectionBackground { background: var(--ochre); }
+.engine .cm-editor .cm-cursor {
+  border-left: 2px solid var(--vermilion);
+  margin-left: -1px;
+}
+.engine .cm-tooltip {
+  border: var(--rule-ink);
+  background: var(--surface);
+  box-shadow: 5px 5px 0 rgba(23, 21, 15, 0.8);
+  font-family: var(--sans);
+}
+.engine .cm-tooltip-autocomplete ul li {
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  padding: 0.35rem 0.6rem;
+}
+.engine .cm-tooltip-autocomplete ul li[aria-selected] {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+.engine .cm-tooltip-autocomplete .cm-completionLabel { font-family: var(--sans); }
+.engine .cm-tooltip-autocomplete .cm-completionDetail {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-style: normal;
+}
+
+/* ---------- resa in stile Obsidian dentro CodeMirror ----------
+   Classi applicate dalle decorazioni: il testo sotto non cambia. */
+.engine .md-h1 { font-family: var(--serif); font-size: 2.1rem; line-height: 1.15; color: var(--ink); }
+.engine .md-h2 { font-family: var(--serif); font-size: 1.7rem; line-height: 1.2; color: var(--ink); }
+.engine .md-h3 { font-family: var(--serif); font-size: 1.35rem; line-height: 1.25; color: var(--ink); }
+.engine .md-h4,
+.engine .md-h5,
+.engine .md-h6 {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+}
+.engine .md-strong { font-weight: 600; color: var(--ink); }
+.engine .md-em { font-style: italic; }
+.engine .md-code {
+  font-family: var(--mono);
+  font-size: 0.86em;
+  background: var(--surface-sunk);
+  padding: 0.1em 0.35em;
+}
+.engine .md-quote { font-style: italic; color: var(--ink); }
+.engine .md-bullet { color: var(--vermilion); font-weight: 600; padding-right: 0.5em; }
+
+/* ---------- Milkdown ---------- */
+.engine .milkdown { background: transparent; }
+.engine .milkdown .ProseMirror { padding: 0; }
+.engine .ProseMirror { position: relative; word-wrap: break-word; white-space: pre-wrap; }
+
+/* ---------- menu dei suggerimenti, in coordinate di viewport ---------- */
+.mention-menu--floating { position: fixed; }
