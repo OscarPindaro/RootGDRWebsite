@@ -7,7 +7,7 @@ from .auth.routes.auth import router as auth_router
 from .auth.routes.invitations import router as invitation_router
 from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
-from .log import setup_logging
+from .log import RequestContextMiddleware, setup_logging
 from .users.routes import router as users_router
 from .worlds.routes import router as worlds_router
 from fastapi.staticfiles import StaticFiles
@@ -33,6 +33,10 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.config = config
+
+    # Outermost middleware: bind correlation ids for the whole request and
+    # echo the request id back in the response headers.
+    app.add_middleware(RequestContextMiddleware)
 
     app.add_middleware(
         CORSMiddleware,

@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import AppConfig, get_app_config
+from ..correlation import set_user_id
 from ..dependencies import get_db_session
 from ..db.enums import UserRole
 from ..users.models import UserModel
@@ -80,6 +81,7 @@ async def _try_refresh_from_cookie(
     new_access = create_access_token(user_model.id, user_model.email, user_model.role)
     new_refresh = create_refresh_token(user_model.id)
     set_auth_cookies(response, new_access, new_refresh, config)
+    set_user_id(str(user_model.id))
     return User.model_validate(user_model)
 
 
@@ -145,6 +147,7 @@ async def get_current_user(
         raise InvalidToken("User not found")
     if not user_model.is_active:
         raise InvalidToken("User is inactive")
+    set_user_id(str(user_model.id))
     return User.model_validate(user_model)
 
 
