@@ -1,0 +1,87 @@
+"""Navigation view-models built on the server.
+
+The rail is server-rendered, so the active item, the marks and the counts are
+decided here rather than in the browser. Values are typed models, not dicts.
+"""
+
+from pydantic import BaseModel
+
+
+class NavItem(BaseModel):
+    id: str
+    label: str
+    href: str
+    mark: str
+    count: int | None = None
+    style: str | None = None
+
+
+class PageLink(BaseModel):
+    label: str
+    href: str
+
+
+class WorldContext(BaseModel):
+    """The world identity shown at the top of the rail."""
+
+    id: str
+    name: str
+    role: str
+
+
+def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
+    """Navigation shown outside a world."""
+    items = [
+        NavItem(id="home", label="Home", href="/", mark="mondo"),
+        NavItem(id="worlds", label="Mondi", href="/worlds", mark="mondi"),
+    ]
+    if is_admin:
+        items.append(
+            NavItem(
+                id="admin-users", label="Utenti", href="/admin/users", mark="profilo"
+            )
+        )
+        if env == "dev":
+            items.append(
+                NavItem(
+                    id="showcase", label="Componenti", href="/components", mark="pagina"
+                )
+            )
+    return items
+
+
+WORLD_SECTIONS: tuple[tuple[str, str, str], ...] = (
+    ("mondo", "Panoramica", "mondo"),
+    ("personaggi", "Personaggi", "personaggi"),
+    ("npc", "NPC", "npc"),
+    ("luoghi", "Luoghi", "luoghi"),
+    ("sessioni", "Sessioni", "sessioni"),
+    ("storie", "Storie", "storie"),
+    ("pagine", "Pagine", "pagine"),
+)
+
+
+def world_nav(
+    world_id: str,
+    active: str | None,
+    counts: dict[str, int] | None = None,
+) -> list[NavItem]:
+    """Navigation shown inside a world, with per-section counts when known."""
+    counts = counts or {}
+    items = []
+    for section_id, label, mark in WORLD_SECTIONS:
+        href = (
+            f"/worlds/{world_id}"
+            if section_id == "mondo"
+            else f"/worlds/{world_id}/{section_id}"
+        )
+        items.append(
+            NavItem(
+                id=section_id,
+                label=label,
+                href=href,
+                mark=mark,
+                count=counts.get(section_id),
+            )
+        )
+    return items

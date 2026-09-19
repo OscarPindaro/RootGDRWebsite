@@ -21,6 +21,9 @@ from markupsafe import Markup
 import jinjax
 from fastapi.templating import Jinja2Templates
 
+from .content.marks import kind_svg, mark_svg, shape_mark
+from .navigation import global_nav, world_nav
+
 
 def _money(value: float | None) -> str:
     """Jinja filter: ``{{ view.cost.total_cost | money }}`` -> ``"$0.42"``.
@@ -121,4 +124,9 @@ def get_catalog(
     catalog.jinja_env.filters["cat_index"] = _cat_index
     catalog.jinja_env.filters["time"] = _time
     catalog.jinja_env.filters["markdown"] = _markdown
+    catalog.jinja_env.globals["mark"] = mark_svg
+    catalog.jinja_env.globals["kind_mark"] = kind_svg
+    catalog.jinja_env.globals["shape"] = shape_mark
+    catalog.jinja_env.globals["global_nav"] = global_nav
+    catalog.jinja_env.globals["world_nav"] = world_nav
     return catalog

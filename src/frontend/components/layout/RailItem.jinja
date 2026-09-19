@@ -1,0 +1,6 @@
+{#def item, active=None, style="icons" #}
+<a class="navitem" href="{{ item.href }}" {% if item.id == active %}aria-current="page"{% endif %}>
+  <common.Mark :role="item.mark" :style="style" class="navitem__mark" />
+  <span class="navitem__text">{{ item.label }}</span>
+  {% if item.count is not none %}<span class="navitem__count">{{ item.count }}</span>{% endif %}
+</a>

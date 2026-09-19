@@ -1,10 +1,17 @@
-{#def title, current_user=None, active=None #}
-{#css common/Avatar.css, common/Button.css, common/Menu.css, common/Tooltip.css, layout/Sidebar.css, layout/UserMenu.css #}
-{# Pass values through with `:prop="expr"`. A quoted "{{ title }}" is handed to
-   the child component as that literal string, not as the variable's value. #}
+{#def title, current_user=None, active=None, world=None, nav=None, pages=None, symbol_style="icons", wide=False #}
+{#css common/Avatar.css, common/Button.css, common/Menu.css, common/Tooltip.css, layout/UserMenu.css #}
+{% set resolved_nav = nav if nav is not none else global_nav(active, (current_user.role == 'admin') if current_user else False, env) %}
 <layout.BlankPage :title="title">
-  <layout.Sidebar :current_user="current_user" :active="active" />
-  <main class="page-main">
-    {{ content }}
-  </main>
+  <div class="shell">
+    <layout.Rail :current_user="current_user" :active="active" :world="world" :nav="resolved_nav" :pages="pages" :symbol_style="symbol_style" />
+    <div class="scrim" id="scrim"></div>
+    <div class="main">
+      <layout.Topbar :title="title" />
+      <main id="main">
+        <div class="container{{ ' container--wide' if wide else '' }}">
+          {{ content }}
+        </div>
+      </main>
+    </div>
+  </div>
 </layout.BlankPage>
