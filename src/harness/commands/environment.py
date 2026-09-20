@@ -24,6 +24,10 @@ def up(
         bool,
         typer.Option("--reload/--no-reload", help="Reload the backend on change."),
     ] = False,
+    recreate: Annotated[
+        bool,
+        typer.Option("--recreate", help="Recreate the environment containers."),
+    ] = False,
 ) -> None:
     """Start an isolated environment using .env.test and config.test.yaml."""
     try:
@@ -32,6 +36,7 @@ def up(
             database_port=database_port,
             backend_port=backend_port,
             reload=reload,
+            recreate=recreate,
         )
     except environment.EnvironmentError as error:
         err_console.print(f"[bold red]{error}[/bold red]")

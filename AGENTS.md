@@ -151,6 +151,9 @@ uv run harness env up --mode local        # database only, for integration tests
 uv run harness test integration           # uses the active environment
 uv run harness env up --mode docker       # database + backend container
 uv run harness test e2e --fresh           # reset only the test DB/uploads, then run E2E
+uv run harness doctor                     # environment, ports, DB, browser, replay checks
+uv run harness smoke                      # authenticated main-page checks
+uv run harness logs --request-id <id>     # filter structured compose logs
 uv run harness screenshot /worlds --email e2e-admin@example.com --name worlds
 uv run harness compare /worlds/<id>       # app vs prototype report + pixel diff
 uv run harness env teardown

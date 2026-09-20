@@ -116,9 +116,18 @@ def _run(environment_state: EnvironmentState, *args: str) -> str:
     return result.stdout.strip()
 
 
-def up(environment_state: EnvironmentState, *, build: bool = True) -> None:
+def up(
+    environment_state: EnvironmentState,
+    *,
+    build: bool = True,
+    recreate: bool = False,
+) -> None:
     _prepare_recordings()
-    _run(environment_state, "up", "--detach", "--wait", "db")
+    database_args = ["up", "--detach", "--wait"]
+    if recreate:
+        database_args.append("--force-recreate")
+    database_args.append("db")
+    _run(environment_state, *database_args)
     _wait_for_database(environment_state)
     _run_migrations(environment_state)
     if environment_state.mode == EnvironmentMode.LOCAL:
@@ -126,6 +135,8 @@ def up(environment_state: EnvironmentState, *, build: bool = True) -> None:
     args = ["up", "--detach"]
     if build:
         args.append("--build")
+    if recreate:
+        args.append("--force-recreate")
     _run(environment_state, *args)
     assert environment_state.ports.backend is not None
     _wait_for_http(

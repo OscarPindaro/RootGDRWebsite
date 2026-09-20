@@ -14,11 +14,14 @@ from .commands.browsers import register_commands as register_browser_commands
 from .commands.compare import register_command as register_compare_command
 from .commands.content import register_commands as register_content_commands
 from .commands.dev import register_commands as register_dev_commands
+from .commands.doctor import register_command as register_doctor_command
 from .commands.environment import env_app
 from .commands.install import register_commands as register_install_commands
+from .commands.logs import register_command as register_logs_command
 from .commands.prototype import register_commands as register_prototype_commands
 from .commands.replay import register_commands as register_replay_commands
 from .commands.screenshot import register_command as register_screenshot_command
+from .commands.smoke import register_command as register_smoke_command
 from .commands.test import test_app
 
 err_console = Console(stderr=True)
@@ -95,6 +98,9 @@ register_prototype_commands(app)
 register_replay_commands(app)
 register_compare_command(app)
 register_screenshot_command(app)
+register_doctor_command(app)
+register_smoke_command(app)
+register_logs_command(app)
 
 
 def cli() -> None:

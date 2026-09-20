@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from harness.commands import environment as environment_commands
 from harness.commands import test as test_commands
 from harness.test import environment, state
 
@@ -56,7 +57,104 @@ def test_up_reconfigures_an_active_environment_when_reload_changes(
 
     assert result is existing
     assert existing.reload is True
-    assert calls == [{"build": False}]
+    assert calls == [{"build": False, "recreate": False}]
+
+
+def test_env_up_threads_recreate(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    existing = _environment_state(tmp_path, reload=False)
+    calls = []
+    monkeypatch.setattr(
+        environment_commands.environment,
+        "up",
+        lambda mode, **kwargs: calls.append((mode, kwargs)) or existing,
+    )
+
+    environment_commands.up(
+        mode=state.EnvironmentMode.DOCKER,
+        database_port=5432,
+        backend_port=8000,
+        reload=False,
+        recreate=True,
+    )
+
+    assert calls == [
+        (
+            state.EnvironmentMode.DOCKER,
+            {
+                "database_port": 5432,
+                "backend_port": 8000,
+                "reload": False,
+                "recreate": True,
+            },
+        )
+    ]
+
+
+def test_up_recreates_an_active_environment(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    existing = _environment_state(tmp_path, reload=False)
+    monkeypatch.setattr(state, "worktree_root", lambda: tmp_path)
+    monkeypatch.setattr(state, "read", lambda root=None: existing)
+    calls = []
+    monkeypatch.setattr(
+        environment.compose, "up", lambda state_, **kwargs: calls.append(kwargs)
+    )
+
+    result = environment.up(state.EnvironmentMode.DOCKER, recreate=True)
+
+    assert result is existing
+    assert calls == [{"build": False, "recreate": True}]
+
+
+def test_failed_startup_retains_state_and_config(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    active_config = state.ConfigState(
+        backup=tmp_path / "backup.yaml",
+        local=tmp_path / "local.yaml",
+        docker=tmp_path / "docker.yaml",
+        env=tmp_path / "test.env",
+    )
+    writes = []
+    monkeypatch.setattr(state, "worktree_root", lambda: tmp_path)
+    monkeypatch.setattr(state, "read", lambda root=None: None)
+    monkeypatch.setattr(state, "write", lambda value, root=None: writes.append(value))
+    monkeypatch.setattr(
+        environment.ports,
+        "allocate",
+        lambda mode, database, backend: state.PortState(database=5432, backend=8000),
+    )
+    monkeypatch.setattr(environment.config, "prepare", lambda *args: active_config)
+    monkeypatch.setattr(
+        environment.compose,
+        "up",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            environment.compose.ComposeError("startup failed")
+        ),
+    )
+    monkeypatch.setattr(
+        environment.compose,
+        "down",
+        lambda *args: pytest.fail("failed startup must not stop containers"),
+    )
+    monkeypatch.setattr(
+        environment.config,
+        "restore",
+        lambda *args: pytest.fail("failed startup must not restore config"),
+    )
+    monkeypatch.setattr(
+        state,
+        "clear",
+        lambda *args: pytest.fail("failed startup must not clear state"),
+    )
+
+    with pytest.raises(environment.EnvironmentError, match="startup failed"):
+        environment.up(state.EnvironmentMode.DOCKER)
+
+    assert len(writes) == 1
+    assert writes[0].status == "starting"
+    assert writes[0].config is active_config
 
 
 def test_environment_sets_the_reload_flag(tmp_path) -> None:

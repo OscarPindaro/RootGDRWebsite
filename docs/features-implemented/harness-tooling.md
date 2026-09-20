@@ -17,6 +17,14 @@ change" answerable without guessing.
   upload volume before running, so browser tests do not depend on an earlier run.
 - Browser journeys use `BrowserSession.expect_api(...)` after writes to assert
   persisted server state instead of trusting optimistic text in the page.
+- `harness doctor` checks state, ports, Postgres readiness and connection usage,
+  backend health, Playwright, and forgotten replay recording without exposing
+  environment values.
+- `harness smoke` authenticates and visits the main and world pages, failing on
+  HTTP or browser errors. `harness logs` filters Compose output by structured
+  request/trace id in Python.
+- `harness env up --recreate` repairs changed containers without discarding
+  failed-start state; `harness dev up --no-build` skips an unnecessary rebuild.
 
 ## How it is built
 

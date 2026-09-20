@@ -78,3 +78,25 @@ def test_compose_command_uses_selected_engine(
     assert compose._run(environment, "ps") == "ready"
     assert calls[0][0][:2] == ["podman-compose", "--env-file"]
     assert "--project-name" in calls[0][0]
+
+
+def test_up_force_recreates_database_and_backend(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    environment = SimpleNamespace(
+        mode=EnvironmentMode.DOCKER,
+        ports=SimpleNamespace(backend=8000),
+    )
+    calls = []
+    monkeypatch.setattr(compose, "_prepare_recordings", lambda: None)
+    monkeypatch.setattr(compose, "_run", lambda state, *args: calls.append(args))
+    monkeypatch.setattr(compose, "_wait_for_database", lambda state: None)
+    monkeypatch.setattr(compose, "_run_migrations", lambda state: None)
+    monkeypatch.setattr(compose, "_wait_for_http", lambda *args, **kwargs: None)
+
+    compose.up(environment, build=False, recreate=True)
+
+    assert calls == [
+        ("up", "--detach", "--wait", "--force-recreate", "db"),
+        ("up", "--detach", "--force-recreate"),
+    ]

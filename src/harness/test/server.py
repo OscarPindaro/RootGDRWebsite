@@ -7,6 +7,8 @@ import asyncio
 from fastmcp import FastMCP
 from pydantic import Field
 
+from ..commands.doctor import DoctorReport, inspect as inspect_doctor
+from ..commands.smoke import SmokeResult, run_smoke
 from . import environment, runner, state
 from .browser import ScreenshotResult, capture_screenshots as _capture_screenshots
 
@@ -109,6 +111,24 @@ async def test_e2e(
 ) -> runner.TestResult | str:
     """Run E2E tests against the active Docker test environment."""
     return await _run_tests(runner.TestSuite.E2E, selectors, options)
+
+
+@server.tool()
+async def doctor() -> DoctorReport:
+    """Inspect harness dependencies and active environment health."""
+    return await asyncio.to_thread(inspect_doctor)
+
+
+@server.tool()
+async def smoke(
+    email: str = "e2e-admin@example.com",
+    base_url: str | None = None,
+) -> SmokeResult | str:
+    """Check the main authenticated pages for HTTP and browser errors."""
+    try:
+        return await asyncio.to_thread(run_smoke, email=email, base_url=base_url)
+    except (OSError, RuntimeError, ValueError) as error:
+        return str(error)
 
 
 @server.tool()

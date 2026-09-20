@@ -16,6 +16,7 @@ def up(
     database_port: int = 0,
     backend_port: int = 0,
     reload: bool = False,
+    recreate: bool = False,
 ) -> state.EnvironmentState:
     root = state.worktree_root()
     existing = state.read(root)
@@ -24,11 +25,13 @@ def up(
             raise EnvironmentError(
                 f"A {existing.mode.value} environment is already active for this worktree."
             )
-        if existing.reload != reload:
+        reload_changed = existing.reload != reload
+        if reload_changed:
             existing.reload = reload
             state.write(existing, root)
+        if reload_changed or recreate:
             try:
-                compose.up(existing, build=False)
+                compose.up(existing, build=False, recreate=recreate)
             except compose.ComposeError as error:
                 raise EnvironmentError(str(error)) from error
         return existing
@@ -49,14 +52,8 @@ def up(
     )
     state.write(environment_state, root)
     try:
-        compose.up(environment_state)
+        compose.up(environment_state, recreate=recreate)
     except compose.ComposeError as error:
-        try:
-            compose.down(environment_state)
-        except compose.ComposeError:
-            pass
-        config.restore(environment_state)
-        state.clear(root)
         raise EnvironmentError(str(error)) from error
     environment_state.status = "ready"
     state.write(environment_state, root)

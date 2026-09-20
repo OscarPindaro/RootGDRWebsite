@@ -100,6 +100,9 @@ def up(
     reload: Annotated[
         bool, typer.Option("--reload/--no-reload", help="Reload the apps on change.")
     ] = True,
+    build: Annotated[
+        bool, typer.Option("--build/--no-build", help="Build the app image.")
+    ] = True,
     work_port: Annotated[int, typer.Option("--work-port", min=1, max=65535)] = (
         state.DEFAULT_WORK_PORT
     ),
@@ -123,7 +126,7 @@ def up(
         )
         state.write(dev, root)
     try:
-        compose.up(dev, reload=reload)
+        compose.up(dev, reload=reload, build=build)
     except compose.ComposeError as error:
         err_console.print(f"[bold red]{error}[/bold red]")
         raise typer.Exit(1) from error

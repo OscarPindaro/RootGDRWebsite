@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from harness.commands import dev as dev_commands
 from harness.dev import compose as dev_compose
 from harness.dev import state as dev_state
@@ -58,3 +60,49 @@ def test_environment_sets_ports_reload_and_env_values(
         dev_compose.environment(_dev(tmp_path), reload=False)["HARNESS_DEV_RELOAD"]
         == ""
     )
+
+
+@pytest.mark.parametrize(
+    ("build", "expected"),
+    [
+        (True, ("up", "--detach", "--build")),
+        (False, ("up", "--detach")),
+    ],
+)
+def test_compose_up_controls_image_build(
+    tmp_path: Path, monkeypatch, build: bool, expected: tuple[str, ...]
+) -> None:
+    calls = []
+    monkeypatch.setattr(dev_compose, "_REPO_ROOT", tmp_path)
+    monkeypatch.setattr(
+        dev_compose,
+        "run",
+        lambda dev, *args, reload: calls.append((args, reload)),
+    )
+    monkeypatch.setattr(dev_compose, "_wait_for_http", lambda *args, **kwargs: None)
+
+    dev_compose.up(_dev(tmp_path), reload=False, build=build)
+
+    assert calls == [(expected, False)]
+
+
+def test_dev_up_threads_no_build(tmp_path: Path, monkeypatch) -> None:
+    dev = _dev(tmp_path)
+    calls = []
+    monkeypatch.setattr(dev_commands.test_state, "worktree_root", lambda: tmp_path)
+    monkeypatch.setattr(dev_commands.state, "read", lambda root: dev)
+    monkeypatch.setattr(
+        dev_commands.compose,
+        "up",
+        lambda value, **kwargs: calls.append((value, kwargs)),
+    )
+
+    dev_commands.up(
+        reload=True,
+        build=False,
+        work_port=8001,
+        show_port=8002,
+        db_port=5435,
+    )
+
+    assert calls == [(dev, {"reload": True, "build": False})]
