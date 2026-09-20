@@ -1,0 +1,8 @@
+{#def title, eyebrow=None #}
+<div class="section__head">
+  <div>
+    {% if eyebrow %}<span class="eyebrow">{{ eyebrow }}</span>{% endif %}
+    <h2>{{ title }}</h2>
+  </div>
+  {{ content }}
+</div>

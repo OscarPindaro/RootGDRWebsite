@@ -78,6 +78,20 @@ async def is_master(db: AsyncSession, world: WorldModel, user: User) -> bool:
     return await get_world_role(db, world, user) == WorldRole.MASTER
 
 
+def role_for_world(world: WorldModel, user: User) -> WorldRole:
+    """Effective role using the world's already-loaded memberships.
+
+    Use this when a list of worlds was fetched with ``include_members`` so the
+    role can be resolved without one query per world.
+    """
+    if _is_admin(user) or world.created_by_id == user.id:
+        return WorldRole.MASTER
+    for membership in world.memberships:
+        if membership.user_id == user.id:
+            return membership.role
+    return WorldRole.PLAYER
+
+
 async def update_world(
     db: AsyncSession,
     world_id: uuid.UUID,

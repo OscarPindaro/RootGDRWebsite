@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Annotated
 
 from pydantic import Field
@@ -90,3 +91,15 @@ class WorldResponse(AppBaseModel, TimestampMixin):
         list[WorldMemberResponse] | None,
         Field(default=None, description="World members, when requested"),
     ]
+
+
+class WorldSummary(AppBaseModel):
+    """A world as shown on a cover card."""
+
+    id: Annotated[UUIDField, Field(description="World ID")]
+    name: Annotated[str, Field(description="World name")]
+    description: Annotated[str, Field(description="Short description")]
+    image_url: Annotated[str | None, Field(default=None)]
+    role: Annotated[WorldRole, Field(description="The viewer's role in the world")]
+    volume: Annotated[int, Field(description="Position in the viewer's list")]
+    updated_at: Annotated[datetime, Field(description="Last update timestamp")]

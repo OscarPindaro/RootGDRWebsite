@@ -1,0 +1,7 @@
+{#def items #}
+<nav class="crumbs" aria-label="Percorso">
+  {% for crumb in items %}
+  {% if not loop.first %}<span class="crumbs__sep">/</span>{% endif %}
+  {% if crumb.href %}<a href="{{ crumb.href }}">{{ crumb.label }}</a>{% else %}<span>{{ crumb.label }}</span>{% endif %}
+  {% endfor %}
+</nav>

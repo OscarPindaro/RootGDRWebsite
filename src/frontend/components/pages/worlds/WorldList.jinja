@@ -1,34 +1,35 @@
 {#def worlds, total, page, page_size, current_user=None #}
-{#css common/Avatar.css, common/Button.css, common/Card.css, common/Grid.css, common/HStack.css, common/Menu.css, common/Tooltip.css, common/VStack.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, pages/worlds/WorldList.css #}
-<layout.Page title="Mondi" current_user={{ current_user }} active="worlds">
-  <div class="world-list">
-    <common.VStack gap=8>
-      <header class="world-list-header">
-        <h1>I tuoi mondi</h1>
-        <p>Esplora i mondi che hai creato o che altri avventurieri hanno condiviso con te.</p>
-      </header>
-      {% if worlds %}
-      <pages.worlds.WorldGrid worlds={{ worlds }} />
-      {% else %}
-      <common.Card variant="outlined" class="world-list-empty">
-        <common.VStack gap=2 align="center">
-          <common.Icon name="map" size=32 />
-          <h2>Nessun mondo</h2>
-          <p>Crea un mondo per cominciare a documentare le tue avventure.</p>
-        </common.VStack>
-      </common.Card>
-      {% endif %}
-      {% if total > page_size %}
-      <nav class="world-pagination" aria-label="Pagine dei mondi">
-        {% if page > 1 %}
-        <a href="/worlds?page={{ page - 1 }}&amp;page_size={{ page_size }}">Precedente</a>
-        {% endif %}
-        <span>Pagina {{ page }}</span>
-        {% if page * page_size < total %}
-        <a href="/worlds?page={{ page + 1 }}&amp;page_size={{ page_size }}">Successiva</a>
-        {% endif %}
-      </nav>
-      {% endif %}
+{#css common/Button.css, common/Card.css, common/Grid.css, common/VStack.css, layout/UserMenu.css #}
+{% set eyebrow_text = "Archivio · " ~ total ~ (" mondo" if total == 1 else " mondi") %}
+<layout.Page title="I tuoi mondi" current_user={{ current_user }} active="worlds">
+  <editorial.Masthead
+    title="I tuoi mondi"
+    :eyebrow="eyebrow_text"
+    lede="Ogni mondo è un volume a sé: personaggi, luoghi, sessioni, storie e pagine di riferimento raccolti sotto un'unica copertina.">
+    <a class="btn btn--primary" href="/worlds/new">Nuovo mondo</a>
+  </editorial.Masthead>
+
+  {% if worlds %}
+  <pages.worlds.WorldGrid worlds={{ worlds }} />
+  {% else %}
+  <common.Card variant="outlined" class="world-list-empty">
+    <common.VStack gap=2 align="center">
+      <common.Icon name="map" size=32 />
+      <h2>Nessun mondo</h2>
+      <p>Crea un mondo per cominciare a documentare le tue avventure.</p>
     </common.VStack>
-  </div>
+  </common.Card>
+  {% endif %}
+
+  {% if total > page_size %}
+  <nav class="world-pagination" aria-label="Pagine dei mondi" style="margin-top: 2rem">
+    {% if page > 1 %}
+    <a href="/worlds?page={{ page - 1 }}&amp;page_size={{ page_size }}">Precedente</a>
+    {% endif %}
+    <span>Pagina {{ page }}</span>
+    {% if page * page_size < total %}
+    <a href="/worlds?page={{ page + 1 }}&amp;page_size={{ page_size }}">Successiva</a>
+    {% endif %}
+  </nav>
+  {% endif %}
 </layout.Page>

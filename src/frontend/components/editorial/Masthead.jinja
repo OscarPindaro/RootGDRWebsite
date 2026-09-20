@@ -1,0 +1,15 @@
+{#def title, eyebrow=None, lede=None, crumbs=None #}
+<div class="masthead">
+  <div class="masthead__body">
+    {% if crumbs %}<editorial.Crumbs :items="crumbs" />{% endif %}
+    {% if eyebrow %}<span class="eyebrow">{{ eyebrow }}</span>{% endif %}
+    <h1 class="display">{{ title }}</h1>
+    <div class="rule-accent"></div>
+    {% if lede %}<p class="lede">{{ lede }}</p>{% endif %}
+  </div>
+  {% if content %}
+  <div class="masthead__aside">
+    {{ content }}
+  </div>
+  {% endif %}
+</div>

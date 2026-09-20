@@ -29,6 +29,34 @@ class WorldContext(BaseModel):
     role: str
 
 
+class Crumb(BaseModel):
+    """One step in a breadcrumb trail."""
+
+    label: str
+    href: str | None = None
+
+
+class TimelineEntry(BaseModel):
+    """One event in a timeline (diary, activity)."""
+
+    when: str
+    title: str
+    href: str
+    text: str = ""
+    tint: str | None = None
+
+
+class QuickEntry(BaseModel):
+    """An entry point to a content section on the world overview."""
+
+    label: str
+    href: str
+    mark: str
+    foot: str
+    count: int
+    accent: str
+
+
 def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
     """Navigation shown outside a world."""
     items = [

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Composizione astratta">
+  <rect width="400" height="300" fill="#f3efe4"/>
+  <rect x="0" y="0" width="148" height="188" fill="#d1402a"/>
+  <rect x="148" y="0" width="252" height="92" fill="#e0a327"/>
+  <rect x="252" y="92" width="148" height="208" fill="#2c46a8"/>
+  <rect x="0" y="188" width="148" height="112" fill="#fffdf6"/>
+  <rect x="148" y="92" width="104" height="208" fill="#f3efe4"/>
+  <g stroke="#17150f" stroke-width="6">
+    <line x1="148" y1="0" x2="148" y2="300"/>
+    <line x1="252" y1="92" x2="252" y2="300"/>
+    <line x1="0" y1="188" x2="148" y2="188"/>
+    <line x1="148" y1="92" x2="400" y2="92"/>
+  </g>
+</svg>

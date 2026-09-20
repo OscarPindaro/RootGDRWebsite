@@ -1,0 +1,23 @@
+{#def world #}
+<a class="cover" href="/worlds/{{ world.id }}">
+  <div class="cover__media">
+    {% if world.image_url %}
+    <img src="{{ world.image_url }}" alt="">
+    {% else %}
+    <img src="/static/img/plate-{{ (world.volume - 1) % 8 + 1 }}.svg" alt="">
+    {% endif %}
+    <span class="cover__badge">Volume {{ world.volume }}</span>
+  </div>
+  <div class="cover__body">
+    <span class="eyebrow">Aggiornato {{ world.updated_at | time }}</span>
+    <h2 class="cover__title">{{ world.name }}</h2>
+    <p class="cover__desc">{{ world.description }}</p>
+    <div class="cover__foot">
+      {% if world.role == 'master' %}
+      <span class="pill pill--master">Master</span>
+      {% else %}
+      <span class="pill pill--player">Giocatore</span>
+      {% endif %}
+    </div>
+  </div>
+</a>

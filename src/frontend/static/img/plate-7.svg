@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Composizione astratta">
+  <rect width="400" height="300" fill="#17150f"/>
+  <rect x="0" y="0" width="400" height="212" fill="#f3efe4"/>
+  <rect x="0" y="212" width="400" height="88" fill="#e0a327"/>
+  <rect x="44" y="44" width="118" height="124" fill="#d1402a"/>
+  <rect x="186" y="44" width="170" height="124" fill="#fffdf6"/>
+  <g stroke="#17150f" stroke-width="6">
+    <line x1="0" y1="212" x2="400" y2="212"/>
+    <line x1="44" y1="44" x2="44" y2="168"/>
+    <line x1="162" y1="44" x2="162" y2="168"/>
+    <line x1="186" y1="44" x2="186" y2="168"/>
+    <line x1="356" y1="44" x2="356" y2="168"/>
+    <line x1="44" y1="44" x2="356" y2="44"/>
+    <line x1="44" y1="168" x2="356" y2="168"/>
+  </g>
+</svg>
