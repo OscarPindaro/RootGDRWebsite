@@ -30,6 +30,18 @@ repos:
       - id: telegram-token-guard
   - repo: local
     hooks:
+      - id: jinjax-css-dependencies
+        name: Sync JinjaX CSS dependencies
+        entry: uv run python -m pre_commits.jinjax_css_dependencies
+        language: system
+        files: \.jinja$
+        pass_filenames: false
+      - id: jinja-globals
+        name: Check JinjaX globals, props and component references
+        entry: uv run python -m pre_commits.jinja_globals
+        language: system
+        files: \.jinja$
+        pass_filenames: false
       - id: model-registry
         name: Sync db/registry.py with model classes
         entry: uv run python -m pre_commits.model_registry
