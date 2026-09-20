@@ -1,7 +1,8 @@
 """Content harness — `harness content ...`.
 
 Deterministic operations on a real database: export/import a whole world as
-YAML or JSON, seed a demo world, and rebuild the references index.
+YAML or JSON, seed the committed reference world, and rebuild the references
+index.
 """
 
 from __future__ import annotations
@@ -18,13 +19,6 @@ from sqlalchemy import select
 
 from backend.config import get_app_config
 from backend.content.bulk import (
-    BundleCharacter,
-    BundleNpc,
-    BundlePage,
-    BundlePlace,
-    BundleSession,
-    BundleStory,
-    BundleWorld,
     WorldBundle,
     export_world,
     import_world,
@@ -40,6 +34,9 @@ err_console = Console(stderr=True)
 content_app = typer.Typer(
     no_args_is_help=True, help="Content import/export and repair."
 )
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+DEFAULT_BUNDLE = REPO_ROOT / "seed" / "boschetto-di-smeraldo.yaml"
 
 
 def _dump(bundle: WorldBundle, path: Path, fmt: str) -> None:
@@ -153,11 +150,13 @@ def rebuild(
 
 def seed_reference(email: str, source: Path | None = None) -> None:
     """Create or update the reference world. Idempotent by natural key."""
+    bundle_path = source or DEFAULT_BUNDLE
+    if not bundle_path.is_file():
+        raise FileNotFoundError(f"reference bundle not found: {bundle_path}")
 
     async def work(db) -> None:
         actor = await _actor(db, email)
-        bundle = _load(source, "yaml") if source else _demo_bundle()
-        world = await import_world(db, bundle, actor)
+        world = await import_world(db, _load(bundle_path, "yaml"), actor)
         console.print(f"[green]Seeded[/green] {world.name} ({world.id})")
 
     _run(work)
@@ -166,135 +165,21 @@ def seed_reference(email: str, source: Path | None = None) -> None:
 @content_app.command()
 def seed(
     email: Annotated[str, typer.Option("--email", help="Owner email")],
-    source: Annotated[Path | None, typer.Option("--file", exists=True)] = None,
-) -> None:
-    """Create the demo world (Boscochiaro) with a small, deterministic dataset."""
-    seed_reference(email, source)
-
-
-def _demo_bundle() -> WorldBundle:
-    """A small Boscochiaro sample, built in code so it ships with the package."""
-    return WorldBundle(
-        world=BundleWorld(
-            name="Le Cronache di Boscochiaro",
-            description="Un bosco diviso fra quattro pretendenti.",
+    source: Annotated[
+        Path | None,
+        typer.Option(
+            "--file",
+            exists=True,
+            help="Bundle to import (default: the committed reference world).",
         ),
-        characters=[
-            BundleCharacter(
-                name="Rugginosa",
-                title="La Senza Tana",
-                short_description="Una gatta randagia che legge le mappe.",
-                tint="p1",
-                animal="🐈",
-                body="Rugginosa non ricorda il proprio nome di cucciola.\n\n"
-                "## Come è arrivata\n\nAttraversò il @[Il Guado Spezzato] con un carico di mappe rubate.",
-            ),
-            BundleCharacter(
-                name="Barone Talpa",
-                title="Duca di Roccianera",
-                tint="p8",
-                animal="🦫",
-                body="Ha offerto asilo nel livello basso dopo l'incendio del @[Il Mercato Galleggiante].",
-            ),
-            BundleCharacter(
-                name="Foglia di Ferro",
-                title="Custode del Bosco Antico",
-                tint="p5",
-                animal="🦌",
-                body="Cammina piano e ascolta molto.",
-            ),
-        ],
-        npcs=[
-            BundleNpc(
-                name="La Marchesa",
-                title="Comandante delle truppe feline",
-                tint="p8",
-                animal="🐈‍⬛",
-                body="Presidia @[Muschioverde] e vuole il pedaggio.",
-            )
-        ],
-        places=[
-            BundlePlace(
-                name="Il Guado Spezzato",
-                short_description="Ponte conteso sul fiume, pedaggio in natura.",
-                tint="p8",
-                shape="triangolo",
-                body="Il ponte è l'unico passaggio a valle.",
-            ),
-            BundlePlace(
-                name="Muschioverde",
-                short_description="Villaggio di frontiera, oggi presidio della Marchesa.",
-                tint="p3",
-                shape="quadrato",
-                body="Duecento soldati sono entrati senza incontrare resistenza.",
-            ),
-            BundlePlace(
-                name="Roccianera",
-                short_description="Città sotterranea del Ducato, tre livelli e nessuna finestra.",
-                tint="p9",
-                shape="rombo",
-                body="L'ingresso è una fenditura a mezza costa sopra @[Il Guado Spezzato].",
-            ),
-            BundlePlace(
-                name="Il Mercato Galleggiante",
-                short_description="Zattere della Compagnia del Fiume.",
-                tint="p10",
-                shape="esagono",
-                body="Bruciato durante l'inverno dei corvi.",
-            ),
-        ],
-        sessions=[
-            BundleSession(
-                title="Il risveglio della Marchesa",
-                in_world_date="Primavera, 3° anno",
-                tint="p1",
-                short_description="Duecento soldati entrano a Muschioverde.",
-                body="Il bosco scopre di avere un nuovo padrone.",
-            ),
-            BundleSession(
-                title="Il patto del Guado",
-                in_world_date="Autunno, 3° anno",
-                tint="p5",
-                short_description="Tre fazioni firmano una tregua di una stagione.",
-                body="La quarta firma e non la rispetta.",
-            ),
-            BundleSession(
-                title="L'inverno dei corvi",
-                in_world_date="Inverno, 4° anno",
-                tint="p8",
-                short_description="Il mercato brucia e la tregua muore con lui.",
-                body="@[Corvinus] consegna alla Marchesa l'elenco dei firmatari.",
-            ),
-        ],
-        stories=[
-            BundleStory(
-                title="L'inverno dei corvi",
-                short_description="Il gelo chiude il fiume e nessuno resta neutrale.",
-                period_label="Inverno, 4° anno",
-                tint="p8",
-                session_titles=["Il patto del Guado", "L'inverno dei corvi"],
-                body="Ogni campagna ha un momento in cui le regole smettono di bastare.",
-            )
-        ],
-        pages=[
-            BundlePage(
-                title="Le regole della Casa",
-                slug="le-regole-della-casa",
-                menu_position=1,
-                tint="p3",
-                short_description="Regolamento e patti di tavolo.",
-                body="Il manuale di Root resta il riferimento.\n\n## Principi generali\n\nNessuna regola si applica retroattivamente.",
-            ),
-            BundlePage(
-                title="Le fazioni di Boscochiaro",
-                slug="le-fazioni-di-boscochiaro",
-                menu_position=2,
-                tint="p8",
-                short_description="Chi conta nel bosco.",
-                body="Marchesa, Ducato, Compagnia del Fiume, Congiura dei Corvi.",
-            ),
-        ],
-    )
+    ] = None,
+) -> None:
+    """Create or update the reference world from the committed YAML bundle."""
+    try:
+        seed_reference(email, source)
+    except FileNotFoundError as error:
+        err_console.print(f"[bold red]{error}[/bold red]")
+        raise typer.Exit(1) from error
 
 
 def register_commands(app: typer.Typer) -> None:

@@ -1,0 +1,196 @@
+version: 1
+world:
+  name: Il Boschetto di Smeraldo
+  current_place: Radura della Grande Quercia
+  description: >-
+    Un bosco di frontiera conteso da quattro fazioni. Le radure cambiano
+    padrone a ogni stagione, e il fiume porta a valle le notizie prima dei
+    corrieri.
+characters:
+  - name: Rugginosa
+    title: La Senza Tana
+    animal: "🐈"
+    tint: p1
+    short_description: Una gatta randagia che legge le mappe meglio dei cartografi.
+    body: |
+      Rugginosa non ricorda il proprio nome di cucciola. Ricorda il fiume, e
+      ricorda di aver attraversato il @[Il Guado Spezzato] con un carico di
+      mappe rubate.
+
+      ## Come è arrivata
+
+      - Ha lasciato la città bassa dopo l'incendio del mercato.
+      - Conosce ogni sentiero che porta a @[Radura della Grande Quercia].
+      - Non chiede mai il permesso prima di entrare in una radura.
+  - name: Fiamma Rossa
+    title: Mercante del Guado
+    animal: "🦊"
+    tint: p8
+    short_description: Vende tutto, comprese le informazioni sulle altre fazioni.
+    body: |
+      Fiamma Rossa ha imparato a contare prima di imparare a leggere, e non ha
+      mai smesso di farlo.
+
+      ## Affari in corso
+
+      Porta sale a @[Il Cerchio di Pietre] e riporta indietro lana. Sostiene di
+      non aver mai pagato il pedaggio a @[La Marchesa].
+  - name: Topo Grigio
+    title: Scrivano della Congiura
+    animal: "🐁"
+    tint: p3
+    short_description: Tiene i conti di chi deve cosa a chi, e non li perde mai.
+    body: |
+      Il suo registro è l'unico documento che le quattro fazioni leggono con la
+      stessa attenzione.
+
+      ## Metodo
+
+      1. Annota ogni promessa con la data e il testimone.
+      2. Non cancella mai una riga: la barra.
+      3. Presta il registro a chi lo chiede, mai la sua memoria.
+  - name: Mastro Tasso
+    title: Custode del Bosco Antico
+    animal: "🦡"
+    tint: p5
+    short_description: Cammina piano e ascolta molto.
+    body: |
+      Mastro Tasso conosce il bosco da prima che le fazioni gli dessero un
+      nome. Dice che @[Il Guado Spezzato] si chiamava altrimenti, ma non
+      ricorda come.
+  - name: Lo Scoiattolo Smemorato
+    animal: "🐿️"
+    tint: p11
+    is_draft: true
+    short_description: Personaggio ancora in lavorazione.
+    body: |
+      Bozza: deve ancora trovare una ragione per restare nel bosco.
+npcs:
+  - name: La Marchesa
+    title: Comandante delle truppe feline
+    animal: "🦉"
+    tint: p8
+    short_description: Presidia la radura e vuole il pedaggio.
+    body: |
+      La Marchesa è entrata nel bosco in primavera con duecento soldati e non
+      ha ancora trovato chi le tenga testa.
+
+      Ha promesso a @[Topo Grigio] che il registro resterà privato.
+  - name: Il Corriere
+    title: Porta parole fra le fazioni
+    animal: "🐦‍⬛"
+    tint: p3
+    short_description: Consegna messaggi e, a volte, li ricorda.
+    body: |
+      Nessuno lo ferma, e questo lo rende più utile di quanto sia leale.
+  - name: Il Vagabondo Grigio
+    title: Nessuno sa da dove venga
+    animal: "🦇"
+    tint: p9
+    short_description: Compare dove c'è un accordo da rompere.
+    body: |
+      È stato visto per la prima volta a @[Il Cerchio di Pietre], la notte in
+      cui la tregua fu firmata.
+places:
+  - name: Radura della Grande Quercia
+    shape: triangolo
+    tint: p1
+    short_description: Dove il bosco si apre e le fazioni si incontrano.
+    body: |
+      La quercia segna il centro del bosco. Sotto le sue fronde si sono tenuti
+      tutti i patti, compresi quelli traditi.
+  - name: Il Guado Spezzato
+    shape: rombo
+    tint: p8
+    short_description: Ponte conteso sul fiume, pedaggio in natura.
+    body: |
+      Il ponte è l'unico passaggio a valle. Chi lo controlla decide chi entra
+      e chi resta fuori dalla stagione.
+  - name: Il Cerchio di Pietre
+    shape: cerchio
+    tint: p7
+    short_description: Dodici pietre in fila, nessuno ricorda chi le ha posate.
+    body: |
+      Ci si viene per parlare senza essere ascoltati. Dicono che il suono non
+      esca dal cerchio.
+sessions:
+  - title: Il risveglio della Marchesa
+    in_world_date: Primavera, 3° anno
+    tint: p1
+    short_description: Duecento soldati entrano nella radura senza incontrare resistenza.
+    body: |
+      Il bosco scopre di avere un nuovo padrone. Le truppe feline occupano
+      @[Radura della Grande Quercia] e piantano le tende sotto la quercia.
+
+      ## Cosa è cambiato
+
+      - Il pedaggio sul @[Il Guado Spezzato] raddoppia.
+      - @[Fiamma Rossa] sposta il banco più a monte.
+      - Il registro di @[Topo Grigio] guadagna tre pagine in una notte.
+  - title: Il pedaggio del Guado
+    in_world_date: Autunno, 3° anno
+    tint: p5
+    short_description: Tre fazioni firmano una tregua di una stagione.
+    body: |
+      Al guado si presentano in tre. La quarta firma e non la rispetta.
+
+      > Una tregua vale quanto il testimone che la ricorda.
+
+      **Mastro Tasso** assiste senza parlare, come sempre. Il @[Il Corriere]
+      porta la notizia a valle prima di sera.
+  - title: L'inverno dei corvi
+    in_world_date: Inverno, 4° anno
+    tint: p8
+    short_description: Il gelo chiude il fiume e nessuno resta neutrale.
+    body: |
+      Il fiume gela e il guado smette di valere qualcosa. Chi è rimasto a nord
+      non può più scendere, e chi è a sud non può più salire.
+
+      ## Ordine degli eventi
+
+      1. Il @[Il Guado Spezzato] si chiude per il gelo.
+      2. @[La Marchesa] ordina di bruciare le zattere del mercato.
+      3. @[Il Vagabondo Grigio] compare al @[Il Cerchio di Pietre].
+
+      Il comando `segna la riga` nel registro di @[Topo Grigio] resta senza
+      spiegazione.
+stories:
+  - title: L'inverno dei corvi
+    period_label: Inverno, 4° anno
+    status: in_corso
+    tint: p8
+    short_description: Il gelo chiude il fiume e nessuno resta neutrale.
+    session_titles:
+      - Il risveglio della Marchesa
+      - Il pedaggio del Guado
+      - L'inverno dei corvi
+    body: |
+      Ogni campagna ha un momento in cui le regole smettono di bastare. Qui è
+      l'inverno in cui il fiume si chiude e le fazioni scoprono di aver
+      bisogno l'una dell'altra.
+pages:
+  - title: Le regole della Casa
+    slug: le-regole-della-casa
+    menu_position: 1
+    tint: p3
+    short_description: Regolamento e patti di tavolo.
+    body: |
+      Il manuale di Root resta il riferimento. Questa pagina raccoglie solo le
+      regole che il tavolo ha aggiunto.
+
+      ## Principi generali
+
+      - Nessuna regola si applica retroattivamente.
+      - Una promessa fatta in gioco vale quanto una meccanica scritta.
+  - title: Le fazioni del Boschetto
+    slug: le-fazioni-del-boschetto
+    menu_position: 2
+    tint: p8
+    short_description: Chi conta nel bosco.
+    body: |
+      Quattro pretendenti, nessuno dei quali controlla davvero il bosco.
+
+      - **La Marchesa** — le truppe feline e il pedaggio.
+      - **Il Ducato** — le gallerie sotto @[Il Cerchio di Pietre].
+      - **La Compagnia del Fiume** — le zattere e il mercato.
+      - **La Congiura** — il registro di @[Topo Grigio].

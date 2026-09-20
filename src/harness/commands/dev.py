@@ -44,8 +44,10 @@ def _seed(environment_state: state.EnvironmentState, email: str) -> None:
         raise RuntimeError(
             process.stderr.strip() or "could not seed the reference world"
         )
-    if process.stdout.strip():
-        console.print(process.stdout.strip())
+    # The seed CLI logs every SQL statement; only its final summary is useful.
+    summary = [line for line in process.stdout.splitlines() if line.strip()]
+    if summary:
+        console.print(summary[-1])
 
 
 def register_commands(app: typer.Typer) -> None:

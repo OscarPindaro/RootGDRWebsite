@@ -177,7 +177,9 @@ uv run harness content import /tmp/bundle.yaml --email <email>
 uv run harness content rebuild --email <email> [--world <world-id>]
 ```
 
-- `seed` builds the demo Boscochiaro world in code (no data files to package).
+- `seed` imports the committed reference world (`seed/boschetto-di-smeraldo.yaml`)
+  by default; `--file` imports another bundle. The YAML is the shared dataset for
+  screenshots, the visual comparison and e2e tests.
 - Export/import are idempotent: the world matches by name, content by its
   natural key (name, or slug for pages), so a round trip updates instead of
   duplicating. In dev, the same bundle is available over the API at

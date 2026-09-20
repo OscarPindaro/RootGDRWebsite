@@ -42,6 +42,7 @@ class BundleMember(AppBaseModel):
 class BundleWorld(AppBaseModel):
     name: str
     description: str = ""
+    current_place: str | None = None
     members: list[BundleMember] = Field(default_factory=list)
 
 
@@ -182,6 +183,9 @@ async def export_world(db: AsyncSession, world: WorldModel) -> WorldBundle:
         world=BundleWorld(
             name=world.name,
             description=world.description,
+            current_place=next(
+                (p.name for p in places if p.id == world.current_place_id), None
+            ),
             members=[
                 BundleMember(email=emails.get(m.user_id, ""), role=m.role)
                 for m in memberships
@@ -315,11 +319,28 @@ async def import_world(
     await _import_characters(db, world, bundle, actor)
     await _import_npcs(db, world, bundle, actor)
     await _import_places(db, world, bundle, actor)
+    await _import_current_place(db, world, bundle)
     await _import_sessions(db, world, bundle, actor)
     await _import_stories(db, world, bundle, actor)
     await _import_pages(db, world, bundle, actor)
     await db.flush()
     return world
+
+
+async def _import_current_place(db, world, bundle) -> None:
+    """Point the world at the bundle's current clearing, if it names one."""
+    name = bundle.world.current_place
+    if not name:
+        return
+    place = (
+        await db.scalars(
+            select(PlaceModel).where(
+                PlaceModel.world_id == world.id, PlaceModel.name == name
+            )
+        )
+    ).one_or_none()
+    if place is not None:
+        world.current_place_id = place.id
 
 
 def actor_schema(actor: UserModel) -> User:
