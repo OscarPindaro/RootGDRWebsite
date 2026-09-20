@@ -1,6 +1,6 @@
-{#def world, members, world_context, nav, crumbs, error=None, current_user=None #}
+{#def world, members, world_context, nav, crumbs, error=None, pages=None, current_user=None #}
 {#css common/Alert.css, common/Button.css, common/Field.css, common/Pill.css, layout/UserMenu.css, pages/worlds/WorldSettings.css #}
-<layout.Page title="Impostazioni" current_user={{ current_user }} :world="world_context" :nav="nav" active="mondo">
+<layout.Page title="Impostazioni" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="mondo">
   <editorial.Masthead title="Impostazioni" :eyebrow="world.name" :crumbs="crumbs">
     <a class="btn btn--ghost" href="/worlds/{{ world.id }}">Torna al mondo</a>
   </editorial.Masthead>

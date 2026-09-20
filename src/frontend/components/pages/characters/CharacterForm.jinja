@@ -1,4 +1,4 @@
-{#def world, world_context, nav, character, animals, tints, crumbs, current_user=None #}
+{#def world, world_context, nav, character, animals, tints, crumbs, pages=None, current_user=None #}
 {#css common/Button.css, common/Field.css, layout/UserMenu.css #}
 {% if character %}
 {% set title = "Modifica personaggio" %}
@@ -7,7 +7,7 @@
 {% set title = "Nuovo personaggio" %}
 {% set action = "/worlds/" ~ world.id ~ "/characters/new" %}
 {% endif %}
-<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" active="personaggi">
+<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="personaggi">
   <editorial.Masthead :title="title"
     eyebrow="Scheda"
     lede="Il volto è una tinta e un animale, oppure un'immagine caricata. La descrizione è in Markdown."

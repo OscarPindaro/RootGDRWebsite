@@ -7,6 +7,7 @@ from .auth.routes.auth import router as auth_router
 from .auth.routes.invitations import router as invitation_router
 from .characters.routes import router as characters_router
 from .npcs.routes import router as npcs_router
+from .pages.routes import router as pages_router
 from .places.routes import router as places_router
 from .sessions.routes import router as sessions_router
 from .stories.routes import router as stories_router
@@ -72,6 +73,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(characters_router)
     app.include_router(npcs_router)
     app.include_router(places_router)
+    app.include_router(pages_router)
     app.include_router(sessions_router)
     app.include_router(stories_router)
 
@@ -79,6 +81,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     # overview stays a view over the features instead of reaching into them.
     from .characters.service import count_characters  # noqa: PLC0415
     from .npcs.service import count_npcs  # noqa: PLC0415
+    from .pages.service import count_pages  # noqa: PLC0415
     from .places.service import count_places  # noqa: PLC0415
     from .sessions.service import count_sessions  # noqa: PLC0415
     from .stories.service import count_stories  # noqa: PLC0415
@@ -87,6 +90,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     register_counter("personaggi", count_characters)
     register_counter("npc", count_npcs)
     register_counter("luoghi", count_places)
+    register_counter("pagine", count_pages)
     register_counter("sessioni", count_sessions)
     register_counter("storie", count_stories)
 
@@ -100,6 +104,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         from .auth.views import router as auth_views_router  # noqa: PLC0415
         from .characters.views import router as characters_views_router  # noqa: PLC0415
         from .npcs.views import router as npcs_views_router  # noqa: PLC0415
+        from .pages.views import router as pages_views_router  # noqa: PLC0415
         from .places.views import router as places_views_router  # noqa: PLC0415
         from .sessions.views import router as sessions_views_router  # noqa: PLC0415
         from .stories.views import router as stories_views_router  # noqa: PLC0415
@@ -111,6 +116,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         app.include_router(characters_views_router)
         app.include_router(npcs_views_router)
         app.include_router(places_views_router)
+        app.include_router(pages_views_router)
         app.include_router(sessions_views_router)
         app.include_router(stories_views_router)
         app.include_router(users_views_router)

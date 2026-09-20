@@ -1,0 +1,39 @@
+{#def world, world_context, nav, pages, rows, can_manage=False, crumbs, current_user=None #}
+{#css common/Button.css, layout/UserMenu.css #}
+{% set count = rows | length %}
+{% set eyebrow_text = count ~ (' pagina' if count == 1 else ' pagine') %}
+<layout.Page title="Pagine" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
+  <editorial.Masthead
+    title="Pagine di riferimento"
+    :eyebrow="eyebrow_text"
+    lede="Materiale statico: regole di casa, fazioni, calendario e storia. L'ordine è quello con cui compaiono nella navigazione."
+    :crumbs="crumbs">
+    {% if can_manage %}
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/pagine/new">Nuova pagina</a>
+    {% endif %}
+  </editorial.Masthead>
+
+  {% if rows %}
+  <div class="ledger">
+    <div class="ledger__head">
+      <span class="eyebrow">Pos.</span>
+      <span class="eyebrow">Slug</span>
+      <span class="eyebrow">Titolo</span>
+      <span class="eyebrow">Aggiornata</span>
+    </div>
+    {% for number, page in rows %}
+    <a class="ledger__row" href="/worlds/{{ world.id }}/pagine/{{ page.slug }}" style="--c: var(--{{ page.tint }})">
+      <span class="ledger__num">{{ '%02d' | format(page.menu_position) }}</span>
+      <span class="ledger__date">{{ page.slug }}</span>
+      <span class="ledger__main">
+        <span class="ledger__title">{{ page.title }}</span>
+        <span class="ledger__sum">{{ page.short_description }}</span>
+      </span>
+      <span class="ledger__tag">{{ page.updated_at | time }}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">Nessuna pagina di riferimento.</div>
+  {% endif %}
+</layout.Page>

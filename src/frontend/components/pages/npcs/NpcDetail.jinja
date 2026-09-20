@@ -1,6 +1,6 @@
-{#def world, world_context, nav, npc, can_manage, crumbs, current_user=None #}
+{#def world, world_context, nav, npc, can_manage, crumbs, pages=None, current_user=None #}
 {#css common/Button.css, common/Pill.css, layout/UserMenu.css #}
-<layout.Page :title="npc.name" current_user={{ current_user }} :world="world_context" :nav="nav" active="npc">
+<layout.Page :title="npc.name" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="npc">
   <editorial.Crumbs :items="crumbs" />
 
   <div class="docbar">

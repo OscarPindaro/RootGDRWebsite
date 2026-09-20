@@ -50,13 +50,14 @@ async def stories_page(
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "storie")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "storie")
     stories = await list_stories(db, world_id, user)
     return catalog.render(
         "pages.stories.StoryList",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         stories=stories,
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world),
@@ -65,7 +66,7 @@ async def stories_page(
 
 
 async def _form_context(db, world_id, user, story):
-    world, context, nav = await world_page(db, world_id, user, "storie")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "storie")
     await master_world(db, world_id, user)
     sessions = await list_sessions(db, world_id, user)
     options = [
@@ -74,7 +75,7 @@ async def _form_context(db, world_id, user, story):
         )
         for session in sessions
     ]
-    return world, context, nav, options
+    return world, context, nav, rail_pages, options
 
 
 @router.get("/worlds/{world_id}/storie/new", response_class=HTMLResponse)
@@ -85,12 +86,15 @@ async def story_new_page(
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav, session_options = await _form_context(db, world_id, user, None)
+    world, context, nav, rail_pages, session_options = await _form_context(
+        db, world_id, user, None
+    )
     return catalog.render(
         "pages.stories.StoryForm",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         story=None,
         tints=tint_options(),
         statuses=_STATUS_OPTIONS,
@@ -120,13 +124,14 @@ async def story_detail_page(
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "storie")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "storie")
     story = await get_story(db, world_id, story_id, user)
     return catalog.render(
         "pages.stories.StoryDetail",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         story=story,
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world, Crumb(label=story.title)),
@@ -152,6 +157,7 @@ async def story_edit_page(
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         story=story,
         tints=tint_options(),
         statuses=_STATUS_OPTIONS,

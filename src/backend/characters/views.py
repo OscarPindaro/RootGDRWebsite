@@ -60,13 +60,14 @@ async def characters_page(
 ) -> HTMLResponse:
     """List the characters of a world."""
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "personaggi")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
     characters = await list_characters(db, world_id, user)
     return catalog.render(
         "pages.characters.CharacterList",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         cards=[_card(c, world_id) for c in characters],
         crumbs=_crumbs(world),
         current_user=user,
@@ -82,12 +83,13 @@ async def character_new_page(
 ) -> HTMLResponse:
     """Render the create-character form."""
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "personaggi")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
     return catalog.render(
         "pages.characters.CharacterForm",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         character=None,
         animals=animal_options(),
         tints=tint_options(),
@@ -118,7 +120,7 @@ async def character_detail_page(
 ) -> HTMLResponse:
     """Render one character."""
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "personaggi")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
     character = await get_character(db, world_id, character_id, user)
     can_manage = character.owner_id == user.id or await is_master(db, world, user)
     return catalog.render(
@@ -126,6 +128,7 @@ async def character_detail_page(
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         character=character,
         can_manage=can_manage,
         crumbs=_crumbs(world, Crumb(label=character.name)),
@@ -146,13 +149,14 @@ async def character_edit_page(
 ) -> HTMLResponse:
     """Render the edit-character form."""
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "personaggi")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
     character = await get_character(db, world_id, character_id, user)
     return catalog.render(
         "pages.characters.CharacterForm",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         character=character,
         animals=animal_options(),
         tints=tint_options(),

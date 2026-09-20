@@ -1,0 +1,37 @@
+{#def world, world_context, nav, pages, page, tints, crumbs, current_user=None #}
+{#css common/Button.css, common/Field.css, layout/UserMenu.css #}
+{% if page %}
+{% set title = "Modifica pagina" %}
+{% set action = "/worlds/" ~ world.id ~ "/pagine/" ~ page.id %}
+{% else %}
+{% set title = "Nuova pagina" %}
+{% set action = "/worlds/" ~ world.id ~ "/pagine/new" %}
+{% endif %}
+<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
+  <editorial.Masthead :title="title" eyebrow="Pagina di riferimento" :crumbs="crumbs" />
+
+  <form class="form" hx-post="{{ action }}" hx-swap="none">
+    <common.Field label="Titolo" name="title" type="text" required maxlength=255
+                  :value="page.title if page else None" />
+    <common.Field label="Slug" name="slug" type="text" maxlength=255
+                  helper="Identificatore nell'URL. Lasciato vuoto, viene ricavato dal titolo."
+                  :value="page.slug if page else None" />
+    <common.Field label="Posizione nel menu" name="menu_position" type="number" min=0
+                  :value="page.menu_position if page else 0" />
+    <common.Field label="Descrizione breve" name="short_description" type="text" maxlength=1000
+                  :value="page.short_description if page else None" />
+    <common.Field label="Tinta" name="tint" type="select" :options="tints"
+                  :value="page.tint if page else 'p3'" />
+    <common.Field label="Testo" name="body" type="textarea"
+                  helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :value="page.body if page else ''" />
+    <div class="row-inline">
+      <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+      {% if page %}
+      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/pagine/{{ page.slug }}">Annulla</a>
+      {% else %}
+      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/pagine">Annulla</a>
+      {% endif %}
+    </div>
+  </form>
+</layout.Page>

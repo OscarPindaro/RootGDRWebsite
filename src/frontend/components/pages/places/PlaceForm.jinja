@@ -1,4 +1,4 @@
-{#def world, world_context, nav, place, shapes, tints, crumbs, current_user=None #}
+{#def world, world_context, nav, place, shapes, tints, crumbs, pages=None, current_user=None #}
 {#css common/Button.css, common/Field.css, layout/UserMenu.css #}
 {% if place %}
 {% set title = "Modifica Luogo" %}
@@ -7,7 +7,7 @@
 {% set title = "Nuovo Luogo" %}
 {% set action = "/worlds/" ~ world.id ~ "/luoghi/new" %}
 {% endif %}
-<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" active="luoghi">
+<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="luoghi">
   <editorial.Masthead :title="title"
     eyebrow="Scheda"
     lede="La radura ha una forma e una tinta, oppure un'immagine caricata."

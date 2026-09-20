@@ -59,13 +59,14 @@ async def places_page(
 ) -> HTMLResponse:
     """List the Luogos of a world."""
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "luoghi")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
     places = await list_places(db, world_id, user)
     return catalog.render(
         "pages.places.PlaceList",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         places=places,
         current_place_id=world.current_place_id,
         can_manage=await is_master(db, world, user),
@@ -83,13 +84,14 @@ async def place_new_page(
 ) -> HTMLResponse:
     """Render the create-Luogo form (master only)."""
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "luoghi")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
     await master_world(db, world_id, user)
     return catalog.render(
         "pages.places.PlaceForm",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         place=None,
         shapes=shape_options(),
         tints=tint_options(),
@@ -118,13 +120,14 @@ async def place_detail_page(
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "luoghi")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
     place = await get_place(db, world_id, place_id, user)
     return catalog.render(
         "pages.places.PlaceDetail",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         place=place,
         is_current=world.current_place_id == place.id,
         can_manage=await is_master(db, world, user),
@@ -142,13 +145,14 @@ async def place_edit_page(
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "luoghi")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
     place = await get_place(db, world_id, place_id, user)
     return catalog.render(
         "pages.places.PlaceForm",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         place=place,
         shapes=shape_options(),
         tints=tint_options(),

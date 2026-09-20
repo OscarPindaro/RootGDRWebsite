@@ -13,10 +13,11 @@ from ..db.enums import WorldRole
 from ..dependencies import get_catalog_dep, get_db_session
 from ..filesystem.base import FileSystem
 from ..filesystem.dependencies import get_filesystem
-from ..navigation import Crumb, WorldContext, build_quicks, world_nav
+from ..navigation import Crumb, PageLink, WorldContext, build_quicks, world_nav
 from ..users.schemas import User
 from .models import WorldModel
 from .overview import build_overview
+from ..pages.service import rail_pages
 from .schemas import (
     WorldCreate,
     WorldMemberInput,
@@ -119,11 +120,16 @@ async def world_overview_page(
     world = await readable_world(db, world_id, user, include_members=True)
     role = role_for_world(world, user)
     overview = await build_overview(db, world)
+    pages = [
+        PageLink(label=page.title, href=f"/worlds/{world.id}/pagine/{page.slug}")
+        for page in await rail_pages(db, world.id)
+    ]
     return catalog.render(
         "pages.worlds.WorldOverview",
         world=world,
         world_context=_world_context(world, role),
         nav=world_nav(str(world.id), "mondo", overview.counts),
+        pages=pages,
         quicks=build_quicks(str(world.id), overview.counts),
         overview=overview,
         crumbs=[Crumb(label="Mondi", href="/worlds"), Crumb(label=world.name)],
@@ -142,12 +148,17 @@ async def world_settings_page(
     """Render the world management page (owner only)."""
     set_world_id(str(world_id))
     world = await owner_world(db, world_id, user, include_members=True)
+    pages = [
+        PageLink(label=page.title, href=f"/worlds/{world.id}/pagine/{page.slug}")
+        for page in await rail_pages(db, world.id)
+    ]
     return catalog.render(
         "pages.worlds.WorldSettings",
         world=world,
         members=_member_responses(world),
         world_context=_world_context(world, role_for_world(world, user)),
         nav=world_nav(str(world.id), None),
+        pages=pages,
         error=error,
         crumbs=[
             Crumb(label="Mondi", href="/worlds"),

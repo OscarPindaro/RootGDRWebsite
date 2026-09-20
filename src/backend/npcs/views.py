@@ -59,13 +59,14 @@ async def npcs_page(
 ) -> HTMLResponse:
     """List the NPCs of a world."""
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "npc")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
     npcs = await list_npcs(db, world_id, user)
     return catalog.render(
         "pages.npcs.NpcList",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         cards=[_card(n, world_id) for n in npcs],
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world),
@@ -82,13 +83,14 @@ async def npc_new_page(
 ) -> HTMLResponse:
     """Render the create-NPC form (master only)."""
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "npc")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
     await master_world(db, world_id, user)
     return catalog.render(
         "pages.npcs.NpcForm",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         npc=None,
         animals=animal_options(),
         tints=tint_options(),
@@ -117,13 +119,14 @@ async def npc_detail_page(
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "npc")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
     npc = await get_npc(db, world_id, npc_id, user)
     return catalog.render(
         "pages.npcs.NpcDetail",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         npc=npc,
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world, Crumb(label=npc.name)),
@@ -140,13 +143,14 @@ async def npc_edit_page(
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav = await world_page(db, world_id, user, "npc")
+    world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
     npc = await get_npc(db, world_id, npc_id, user)
     return catalog.render(
         "pages.npcs.NpcForm",
         world=world,
         world_context=context,
         nav=nav,
+        pages=rail_pages,
         npc=npc,
         animals=animal_options(),
         tints=tint_options(),

@@ -1,4 +1,4 @@
-{#def world, world_context, nav, story, tints, statuses, sessions, crumbs, current_user=None #}
+{#def world, world_context, nav, story, tints, statuses, sessions, crumbs, pages=None, current_user=None #}
 {#css common/Button.css, common/Field.css, layout/UserMenu.css #}
 {% if story %}
 {% set title = "Modifica storia" %}
@@ -7,7 +7,7 @@
 {% set title = "Nuova storia" %}
 {% set action = "/worlds/" ~ world.id ~ "/storie/new" %}
 {% endif %}
-<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" active="storie">
+<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
   <editorial.Masthead :title="title" eyebrow="Arco narrativo" :crumbs="crumbs" />
 
   <form class="form" hx-post="{{ action }}" hx-swap="none">

@@ -1,4 +1,4 @@
-{#def world, world_context, nav, session, tints, crumbs, current_user=None #}
+{#def world, world_context, nav, session, tints, crumbs, pages=None, current_user=None #}
 {#css common/Button.css, common/Field.css, layout/UserMenu.css #}
 {% if session %}
 {% set title = "Modifica sessione" %}
@@ -7,7 +7,7 @@
 {% set title = "Nuova sessione" %}
 {% set action = "/worlds/" ~ world.id ~ "/sessioni/new" %}
 {% endif %}
-<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" active="sessioni">
+<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="sessioni">
   <editorial.Masthead :title="title" eyebrow="Sessione" :crumbs="crumbs" />
 
   <form class="form" hx-post="{{ action }}" hx-swap="none">

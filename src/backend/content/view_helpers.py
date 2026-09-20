@@ -5,7 +5,8 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.enums import WorldRole
-from ..navigation import NavItem, Option, WorldContext, world_nav
+from ..navigation import NavItem, Option, PageLink, WorldContext, world_nav
+from ..pages.service import rail_pages
 from ..users.schemas import User
 from ..worlds.models import WorldModel
 from ..worlds.service import role_for_world
@@ -31,13 +32,17 @@ async def world_page(
     user: User,
     active: str | None,
     counts: dict[str, int] | None = None,
-) -> tuple[WorldModel, WorldContext, list[NavItem]]:
-    """Load the world plus the rail context and navigation for a page."""
+) -> tuple[WorldModel, WorldContext, list[NavItem], list[PageLink]]:
+    """Load the world plus the rail context, navigation and static pages."""
     world = await readable_world(db, world_id, user, include_members=True)
     role = role_for_world(world, user)
     label = "Master" if role == WorldRole.MASTER else "Giocatore"
     context = WorldContext(id=str(world.id), name=world.name, role=label)
-    return world, context, world_nav(str(world.id), active, counts)
+    pages = [
+        PageLink(label=page.title, href=f"/worlds/{world.id}/pagine/{page.slug}")
+        for page in await rail_pages(db, world.id)
+    ]
+    return world, context, world_nav(str(world.id), active, counts), pages
 
 
 def owner_label(owner_name: str, is_master: bool = False) -> str:

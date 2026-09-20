@@ -1,7 +1,7 @@
-{#def world, world_context, nav, cards, crumbs, current_user=None #}
+{#def world, world_context, nav, cards, crumbs, pages=None, current_user=None #}
 {#css common/Button.css, common/Grid.css, layout/UserMenu.css #}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
-<layout.Page title="Personaggi" current_user={{ current_user }} :world="world_context" :nav="nav" active="personaggi">
+<layout.Page title="Personaggi" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="personaggi">
   <editorial.Masthead
     title="Personaggi"
     :eyebrow="eyebrow_text"

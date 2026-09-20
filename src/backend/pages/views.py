@@ -14,165 +14,160 @@ from ..navigation import Crumb
 from ..users.schemas import User
 from ..worlds.service import is_master
 from ..worlds.views import _htmx_redirect
-from .schemas import SessionCreate, SessionUpdate
+from .exceptions import PageSlugConflictException
+from .schemas import PageCreate, PageUpdate, slugify
 from .service import (
-    create_session,
-    delete_session,
-    get_neighbours,
-    get_session,
-    list_sessions,
-    update_session,
+    create_page,
+    delete_page,
+    get_page,
+    get_page_by_slug,
+    list_pages,
+    update_page,
 )
 
-router = APIRouter(tags=["session-views"])
+router = APIRouter(tags=["page-views"])
 
 
 def _crumbs(world, *extra: Crumb) -> list[Crumb]:
     return [
         Crumb(label="Mondi", href="/worlds"),
         Crumb(label=world.name, href=f"/worlds/{world.id}"),
-        Crumb(label="Sessioni", href=f"/worlds/{world.id}/sessioni"),
+        Crumb(label="Pagine", href=f"/worlds/{world.id}/pagine"),
         *extra,
     ]
 
 
-@router.get("/worlds/{world_id}/sessioni", response_class=HTMLResponse)
-async def sessions_page(
+@router.get("/worlds/{world_id}/pagine", response_class=HTMLResponse)
+async def pages_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
-    """Render the session ledger, newest first."""
     set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "sessioni")
-    sessions = await list_sessions(db, world_id, user)
-    numbered = list(enumerate(sessions, start=1))
+    world, context, nav, rail = await world_page(db, world_id, user, "pagine")
+    pages = await list_pages(db, world_id, user)
     return catalog.render(
-        "pages.sessions.SessionList",
+        "pages.pages.PageList",
         world=world,
         world_context=context,
         nav=nav,
-        pages=rail_pages,
-        rows=list(reversed(numbered)),
+        pages=rail,
+        rows=list(enumerate(pages, start=1)),
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world),
         current_user=user,
     )
 
 
-@router.get("/worlds/{world_id}/sessioni/new", response_class=HTMLResponse)
-async def session_new_page(
+@router.get("/worlds/{world_id}/pagine/new", response_class=HTMLResponse)
+async def page_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
-    """Render the create-session form (master only)."""
     set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "sessioni")
+    world, context, nav, rail = await world_page(db, world_id, user, "pagine")
     await master_world(db, world_id, user)
     return catalog.render(
-        "pages.sessions.SessionForm",
+        "pages.pages.PageForm",
         world=world,
         world_context=context,
         nav=nav,
-        pages=rail_pages,
-        session=None,
+        pages=rail,
+        page=None,
         tints=tint_options(),
         crumbs=_crumbs(world, Crumb(label="Nuova")),
         current_user=user,
     )
 
 
-@router.post("/worlds/{world_id}/sessioni/new")
-async def session_new_submit(
+@router.post("/worlds/{world_id}/pagine/new")
+async def page_new_submit(
     world_id: uuid.UUID,
-    data: SessionCreate,
+    data: PageCreate,
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ) -> Response:
-    session = await create_session(db, world_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/sessioni/{session.id}")
+    page = await create_page(db, world_id, data, user)
+    return _htmx_redirect(f"/worlds/{world_id}/pagine/{page.slug}")
 
 
-@router.get("/worlds/{world_id}/sessioni/{session_id}", response_class=HTMLResponse)
-async def session_detail_page(
+@router.get("/worlds/{world_id}/pagine/{slug}", response_class=HTMLResponse)
+async def page_detail_page(
     world_id: uuid.UUID,
-    session_id: uuid.UUID,
+    slug: str,
     catalog: Catalog = Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "sessioni")
-    session = await get_session(db, world_id, session_id, user)
-    previous, following = await get_neighbours(db, world_id, session_id, user)
+    world, context, nav, rail = await world_page(db, world_id, user, "pagine")
+    page = await get_page_by_slug(db, world_id, slug, user)
+    others = [
+        other for other in await list_pages(db, world_id, user) if other.id != page.id
+    ]
     return catalog.render(
-        "pages.sessions.SessionDetail",
+        "pages.pages.PageDetail",
         world=world,
         world_context=context,
         nav=nav,
-        pages=rail_pages,
-        session=session,
-        previous=previous,
-        following=following,
+        pages=rail,
+        page=page,
+        others=others,
         can_manage=await is_master(db, world, user),
-        crumbs=_crumbs(world, Crumb(label=session.title)),
+        crumbs=_crumbs(world, Crumb(label=page.slug)),
         current_user=user,
     )
 
 
-@router.get(
-    "/worlds/{world_id}/sessioni/{session_id}/edit", response_class=HTMLResponse
-)
-async def session_edit_page(
+@router.get("/worlds/{world_id}/pagine/{page_id}/edit", response_class=HTMLResponse)
+async def page_edit_page(
     world_id: uuid.UUID,
-    session_id: uuid.UUID,
+    page_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "sessioni")
-    session = await get_session(db, world_id, session_id, user)
+    world, context, nav, rail = await world_page(db, world_id, user, "pagine")
+    page = await get_page(db, world_id, page_id, user)
     return catalog.render(
-        "pages.sessions.SessionForm",
+        "pages.pages.PageForm",
         world=world,
         world_context=context,
         nav=nav,
-        pages=rail_pages,
-        session=session,
+        pages=rail,
+        page=page,
         tints=tint_options(),
         crumbs=_crumbs(
             world,
-            Crumb(
-                label=session.title, href=f"/worlds/{world_id}/sessioni/{session_id}"
-            ),
+            Crumb(label=page.slug, href=f"/worlds/{world_id}/pagine/{page.slug}"),
             Crumb(label="Modifica"),
         ),
         current_user=user,
     )
 
 
-@router.post("/worlds/{world_id}/sessioni/{session_id}")
-async def session_edit_submit(
+@router.post("/worlds/{world_id}/pagine/{page_id}")
+async def page_edit_submit(
     world_id: uuid.UUID,
-    session_id: uuid.UUID,
-    data: SessionUpdate,
+    page_id: uuid.UUID,
+    data: PageUpdate,
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ) -> Response:
-    await update_session(db, world_id, session_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/sessioni/{session_id}")
+    page = await update_page(db, world_id, page_id, data, user)
+    return _htmx_redirect(f"/worlds/{world_id}/pagine/{page.slug}")
 
 
-@router.delete("/worlds/{world_id}/sessioni/{session_id}")
-async def session_delete(
+@router.delete("/worlds/{world_id}/pagine/{page_id}")
+async def page_delete(
     world_id: uuid.UUID,
-    session_id: uuid.UUID,
+    page_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
     user: User = Depends(get_current_user),
 ) -> Response:
-    await delete_session(db, world_id, session_id, user)
-    return _htmx_redirect(f"/worlds/{world_id}/sessioni")
+    await delete_page(db, world_id, page_id, user)
+    return _htmx_redirect(f"/worlds/{world_id}/pagine")

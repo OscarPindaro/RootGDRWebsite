@@ -1,8 +1,8 @@
-{#def world, world_context, nav, rows, can_manage=False, crumbs, current_user=None #}
+{#def world, world_context, nav, rows, can_manage=False, crumbs, pages=None, current_user=None #}
 {#css common/Button.css, layout/UserMenu.css #}
 {% set count = rows | length %}
 {% set eyebrow_text = count ~ (' sessione' if count == 1 else ' sessioni') %}
-<layout.Page title="Sessioni" current_user={{ current_user }} :world="world_context" :nav="nav" active="sessioni">
+<layout.Page title="Sessioni" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="sessioni">
   <editorial.Masthead
     title="Registro delle sessioni"
     :eyebrow="eyebrow_text"
