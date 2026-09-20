@@ -1,5 +1,5 @@
 {#def world, world_context, nav, place, shapes, tints, crumbs, pages=None, current_user=None #}
-{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/ChoiceGrid.css #}
 {% if place %}
 {% set title = "Modifica Luogo" %}
 {% set action = "/worlds/" ~ world.id ~ "/places/" ~ place.id %}
@@ -18,10 +18,12 @@
                   :value="place.name if place else None" />
     <common.Field label="Descrizione breve" name="short_description" type="text" maxlength=1000
                   :value="place.short_description if place else None" />
-    <common.Field label="Forma" name="shape" type="select" :options="shapes"
-                  :value="place.shape if place else 'cerchio'" />
-    <common.Field label="Tinta della scheda" name="tint" type="select" :options="tints"
-                  :value="place.tint if place else 'p1'" />
+    <div class="form-pair">
+      <common.ChoiceGrid label="Forma" name="shape" kind="shape" :options="shapes"
+                         :columns="6" :value="place.shape if place else 'cerchio'" />
+      <common.ChoiceGrid label="Tinta della scheda" name="tint" kind="tint" :options="tints"
+                         :columns="6" :value="place.tint if place else 'p1'" />
+    </div>
     <common.MarkdownField label="Descrizione lunga" name="body"
                   helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
                   :world_id="world.id"

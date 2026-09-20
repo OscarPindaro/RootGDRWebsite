@@ -1,0 +1,18 @@
+{#def label, name, options, value=None, kind="emoji", columns=None, helper=None #}
+<fieldset class="choice-grid choice-grid--{{ kind }}">
+  <legend class="choice-grid__legend">{{ label }}</legend>
+  <div class="choice-grid__options"{% if columns %} style="--columns: {{ columns }};"{% endif %}>
+    {% for option in options %}
+    <label class="choice-grid__option" title="{{ option.label }}">
+      <input class="choice-grid__input" type="radio" name="{{ name }}" value="{{ option.value }}"
+             {% if option.value == value %}checked{% endif %}>
+      <span class="choice-grid__mark"{% if kind == "tint" %} style="--c: var(--{{ option.value }});"{% endif %}>
+        {%- if kind == "emoji" -%}{{ option.value }}
+        {%- elif kind == "shape" -%}{{ shape_mark(option.value) }}
+        {%- endif -%}
+      </span>
+    </label>
+    {% endfor %}
+  </div>
+  {% if helper %}<span class="choice-grid__helper">{{ helper }}</span>{% endif %}
+</fieldset>

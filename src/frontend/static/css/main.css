@@ -1415,6 +1415,8 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
 
 /* ---------- 29. Moduli ---------- */
 .form { display: grid; gap: 1.5rem; max-width: 720px; }
+.form-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+@media (max-width: 700px) { .form-pair { grid-template-columns: 1fr; } }
 .field { display: grid; gap: 0.4rem; }
 .field__label {
   font-family: var(--mono);

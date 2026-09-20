@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_optional_user
+from ..content.view_helpers import animal_options, shape_options, tint_options
 from ..dependencies import get_catalog_dep, get_db_session
 from ..users.schemas import User
 from ..users.service import get_all_users
@@ -22,4 +23,7 @@ async def showcase(
         "pages.showcase.Showcase",
         users=users,
         current_user=user,
+        animals=animal_options(),
+        tints=tint_options(),
+        shapes=shape_options(),
     )

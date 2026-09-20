@@ -8,6 +8,7 @@ render the showcase and the small shared components for real.
 from pathlib import Path
 from types import SimpleNamespace
 
+from backend.content.view_helpers import animal_options, shape_options, tint_options
 from backend.jinja import get_catalog
 
 COMPONENTS_DIR = Path(__file__).parents[3] / "src" / "frontend" / "components"
@@ -17,12 +18,25 @@ def _catalog():
     return get_catalog(str(COMPONENTS_DIR), app_name="Root GDR")
 
 
+def _showcase(**extra):
+    return str(
+        _catalog().render(
+            "pages.showcase.Showcase",
+            animals=animal_options(),
+            tints=tint_options(),
+            shapes=shape_options(),
+            **extra,
+        )
+    )
+
+
 def test_showcase_renders_every_section() -> None:
     """The showcase is the living spec; if it 500s, the design system is broken."""
-    html = str(_catalog().render("pages.showcase.Showcase", users=[]))
+    html = _showcase(users=[])
     assert "Design Kit" in html
     assert "Role marks" in html
     assert "Shapes" in html
+    assert "Choice grids" in html
 
 
 def test_showcase_renders_with_a_signed_in_user() -> None:
@@ -33,9 +47,7 @@ def test_showcase_renders_with_a_signed_in_user() -> None:
         avatar_url=None,
         symbol_style="shapes",
     )
-    html = str(
-        _catalog().render("pages.showcase.Showcase", users=[], current_user=user)
-    )
+    html = _showcase(users=[], current_user=user)
     assert "Design Kit" in html
 
 

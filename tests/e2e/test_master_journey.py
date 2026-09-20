@@ -201,6 +201,24 @@ def test_settings_menu_is_dark_on_the_rail(session: _Session) -> None:
     assert max(channels[:3]) < 80, background
 
 
+def test_character_form_uses_face_pickers(session: _Session) -> None:
+    """The face is chosen from an emoji grid and a tint strip, not dropdowns,
+    and both reach the server through the JSON-encoded htmx form."""
+    world_id, _ = _seed_world(session, "Mondo Picker")
+    session.goto(f"/worlds/{world_id}/characters/new")
+    session.page.fill('input[name="name"]', "Picker Test")
+    session.page.check('input[name="animal"][value="🦊"]', force=True)
+    session.page.check('input[name="tint"][value="p8"]', force=True)
+    session.submit('button[type="submit"]', expect_url=r"/characters/[0-9a-f-]{36}$")
+
+    character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
+    payload = session.context.request.get(
+        f"{session.base_url}/api/worlds/{world_id}/characters/{character_id}"
+    ).json()
+    assert payload["animal"] == "🦊"
+    assert payload["tint"] == "p8"
+
+
 def test_command_palette_opens_and_searches(session: _Session) -> None:
     session.goto("/worlds")
     session.page.keyboard.press("Alt+Space")

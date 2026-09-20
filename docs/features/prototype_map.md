@@ -42,7 +42,7 @@ side-by-side.
 | `.btn`, `.btn--primary/ghost/sm` | `common.Button` | faithful |
 | `.pill` | `common.Pill` | faithful |
 | popovers / menus | `common.Menu`, `layout.UserMenu` | faithful — dark on the rail (T8) |
-| animal / tint pickers | — | missing — `<select>` instead of a grid (T9) |
+| animal / tint / shape pickers | `common.ChoiceGrid` | faithful |
 
 "faithful" means it reads the same; "adapted" means it renders but diverges and
 the ticket named in the row closes the gap.

@@ -1,0 +1,69 @@
+/* ---------- ChoiceGrid (radio group as an attached grid) ---------- */
+.choice-grid {
+  display: grid;
+  gap: var(--sp-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.choice-grid__legend {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--clr-text-secondary);
+  padding: 0;
+}
+
+.choice-grid__options {
+  display: grid;
+  grid-template-columns: repeat(var(--columns, 6), minmax(0, 1fr));
+  border: var(--rule-ink);
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.choice-grid__option {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  border-right: var(--rule-ink);
+  border-bottom: var(--rule-ink);
+  cursor: pointer;
+}
+
+.choice-grid--tint .choice-grid__option { aspect-ratio: 3 / 2; }
+
+.choice-grid__input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.choice-grid__mark {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  font-size: var(--text-lg);
+  line-height: 1;
+}
+
+.choice-grid--shape .choice-grid__mark svg { width: 60%; height: 60%; }
+
+.choice-grid--tint .choice-grid__mark { background: var(--c); }
+
+.choice-grid__input:checked + .choice-grid__mark {
+  box-shadow: inset 0 0 0 3px var(--ink);
+}
+
+.choice-grid__input:focus-visible + .choice-grid__mark {
+  box-shadow: inset 0 0 0 3px var(--vermilion);
+}
+
+.choice-grid__helper {
+  font-size: var(--text-xs);
+  color: var(--clr-text-muted);
+}
