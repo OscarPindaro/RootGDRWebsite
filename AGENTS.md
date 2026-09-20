@@ -12,6 +12,15 @@ Do not use `getattr` or `setattr`. Use explicit typed attributes.
 Use Pydantic models instead of untyped dictionaries for domain data and internal boundaries.
 DO NOT COAUTHOR THE COMMITS
 
+## Working process
+
+- Plan in tickets, even for a large change: split it into sub-tickets and finish
+  each one — implement, test, commit — before starting the next.
+- After a context compaction, re-read `docs/features/*.md` before continuing.
+- All source is English, including URL paths and endpoints. Only the UI copy is
+  Italian.
+- A ticket is done only with a passing test and a desktop + phone screenshot
+  compared against `prototypes/devin-prototype/`.
 
 ## Tools
 If available in your environemnt, use
