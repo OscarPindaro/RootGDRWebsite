@@ -1,0 +1,23 @@
+{% set ns = namespace(total=0) %}
+{#def groups #}
+{% for items in groups.values() %}{% set ns.total = ns.total + (items | length) %}{% endfor %}
+{% if ns.total %}
+<aside class="stack">
+  <div class="links">
+    <div class="links__head">
+      <span class="eyebrow">Collegamenti</span>
+      <span class="mono muted">{{ ns.total }}</span>
+    </div>
+    {% for kind, items in groups.items() %}
+    <div class="links__group">
+      <span class="links__label">{{ kind_label(kind.value) }}</span>
+      {% for item in items %}
+      <a class="links__item" href="{{ item.href }}" style="--c: var(--{{ item.tint }})">
+        <span class="links__dot"></span> {{ item.name }}
+      </a>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</aside>
+{% endif %}

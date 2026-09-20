@@ -9,6 +9,8 @@ from ..access import is_admin, readable_world
 from ..files.models import FileModel
 from ..filesystem.base import FileSystem
 from ..images import ImageNotFoundError, read_image, store_image
+from ..content.constants import ContentKind
+from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.models import UserModel
 from ..users.schemas import User
@@ -80,6 +82,9 @@ async def create_character(
     )
     reloaded = await _get(db, world_id, character.id)
     assert reloaded is not None
+    await refresh_references(
+        db, world_id, ContentKind.CHARACTER, reloaded.id, reloaded.body
+    )
     return reloaded
 
 
@@ -138,6 +143,9 @@ async def update_character(
     if data.is_draft is not None:
         character.is_draft = data.is_draft
     await db.flush()
+    await refresh_references(
+        db, world_id, ContentKind.CHARACTER, character.id, character.body
+    )
     return character
 
 

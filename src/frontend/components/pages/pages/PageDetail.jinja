@@ -1,4 +1,4 @@
-{#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, current_user=None #}
+{#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, body_html=None, links=None, current_user=None #}
 {#css common/Button.css, common/Pill.css, layout/UserMenu.css #}
 <layout.Page :title="page.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
   <editorial.Crumbs :items="crumbs" />
@@ -17,7 +17,7 @@
 
   <div class="article">
     <article class="prose">
-      {{ page.body | markdown }}
+      {{ body_html }}
     </article>
     <aside class="stack">
       <div class="toc">
@@ -28,4 +28,5 @@
       </div>
     </aside>
   </div>
+    {% if links %}<editorial.Links :groups="links" />{% endif %}
 </layout.Page>

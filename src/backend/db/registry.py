@@ -15,6 +15,7 @@ from ..auth.models import (  # noqa: F401
     UserPasswordModel,
 )
 from ..characters.models import CharacterModel  # noqa: F401
+from ..content.models import ReferenceModel  # noqa: F401
 from ..files.models import FileModel  # noqa: F401
 from ..npcs.models import NpcModel  # noqa: F401
 from ..pages.models import PageModel  # noqa: F401
@@ -35,6 +36,7 @@ __all__ = [
     "NpcModel",
     "PageModel",
     "PlaceModel",
+    "ReferenceModel",
     "SessionModel",
     "StoryModel",
     "TaskModel",

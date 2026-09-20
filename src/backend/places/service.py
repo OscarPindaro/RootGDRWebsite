@@ -9,6 +9,8 @@ from ..access import master_world, readable_world
 from ..files.models import FileModel
 from ..filesystem.base import FileSystem
 from ..images import ImageNotFoundError, read_image, store_image
+from ..content.constants import ContentKind
+from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.schemas import User
 from .exceptions import PlaceNotFoundException
@@ -52,6 +54,9 @@ async def create_place(
     logger.info("Place created", world_id=world_id, place_id=place.id)
     reloaded = await _get(db, world_id, place.id)
     assert reloaded is not None
+    await refresh_references(
+        db, world_id, ContentKind.PLACE, reloaded.id, reloaded.body
+    )
     return reloaded
 
 
@@ -101,6 +106,7 @@ async def update_place(
     if data.is_draft is not None:
         place.is_draft = data.is_draft
     await db.flush()
+    await refresh_references(db, world_id, ContentKind.PLACE, place.id, place.body)
     return place
 
 

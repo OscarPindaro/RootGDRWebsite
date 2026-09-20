@@ -7,7 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import readable_world
 from ..auth.dependencies import get_current_user
+from ..content.constants import ContentKind
 from ..content.view_helpers import (
+    render_document,
     animal_options,
     split_published_drafts,
     tint_options,
@@ -129,6 +131,9 @@ async def character_detail_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
     character = await get_character(db, world_id, character_id, user)
+    body_html, links = await render_document(
+        db, world_id, ContentKind.CHARACTER, character
+    )
     can_manage = character.owner_id == user.id or await is_master(db, world, user)
     return catalog.render(
         "pages.characters.CharacterDetail",
@@ -137,6 +142,8 @@ async def character_detail_page(
         nav=nav,
         pages=rail_pages,
         character=character,
+        body_html=body_html,
+        links=links,
         can_manage=can_manage,
         crumbs=_crumbs(world, Crumb(label=character.name)),
         current_user=user,

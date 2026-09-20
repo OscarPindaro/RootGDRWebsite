@@ -7,7 +7,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
+from ..content.constants import ContentKind
 from ..content.view_helpers import (
+    render_document,
     shape_options,
     split_published_drafts,
     tint_options,
@@ -129,6 +131,7 @@ async def place_detail_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
     place = await get_place(db, world_id, place_id, user)
+    body_html, links = await render_document(db, world_id, ContentKind.PLACE, place)
     return catalog.render(
         "pages.places.PlaceDetail",
         world=world,
@@ -136,6 +139,8 @@ async def place_detail_page(
         nav=nav,
         pages=rail_pages,
         place=place,
+        body_html=body_html,
+        links=links,
         is_current=world.current_place_id == place.id,
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world, Crumb(label=place.name)),

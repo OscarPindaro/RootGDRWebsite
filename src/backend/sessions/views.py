@@ -7,7 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
-from ..content.view_helpers import split_published_drafts, tint_options, world_page
+from ..content.constants import ContentKind
+from ..content.view_helpers import (
+    split_published_drafts,
+    tint_options,
+    world_page,
+    render_document,
+)
 from ..correlation import set_world_id
 from ..dependencies import get_catalog_dep, get_db_session
 from ..navigation import Crumb
@@ -109,6 +115,7 @@ async def session_detail_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "sessioni")
     session = await get_session(db, world_id, session_id, user)
+    body_html, links = await render_document(db, world_id, ContentKind.SESSION, session)
     previous, following = await get_neighbours(db, world_id, session_id, user)
     return catalog.render(
         "pages.sessions.SessionDetail",
@@ -117,6 +124,8 @@ async def session_detail_page(
         nav=nav,
         pages=rail_pages,
         session=session,
+        body_html=body_html,
+        links=links,
         previous=previous,
         following=following,
         can_manage=await is_master(db, world, user),

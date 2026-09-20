@@ -7,7 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
-from ..content.view_helpers import split_published_drafts, tint_options, world_page
+from ..content.constants import ContentKind
+from ..content.view_helpers import (
+    split_published_drafts,
+    tint_options,
+    world_page,
+    render_document,
+)
 from ..correlation import set_world_id
 from ..dependencies import get_catalog_dep, get_db_session
 from ..navigation import Crumb
@@ -107,6 +113,7 @@ async def page_detail_page(
     set_world_id(str(world_id))
     world, context, nav, rail = await world_page(db, world_id, user, "pagine")
     page = await get_page_by_slug(db, world_id, slug, user)
+    body_html, links = await render_document(db, world_id, ContentKind.PAGE, page)
     others = [
         other for other in await list_pages(db, world_id, user) if other.id != page.id
     ]
@@ -117,6 +124,8 @@ async def page_detail_page(
         nav=nav,
         pages=rail,
         page=page,
+        body_html=body_html,
+        links=links,
         others=others,
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world, Crumb(label=page.slug)),

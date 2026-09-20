@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..access import master_world, readable_world
+from ..content.constants import ContentKind
+from ..content.references import refresh_references
 from ..log import get_logger
 from ..sessions.models import SessionModel
 from ..users.schemas import User
@@ -71,6 +73,9 @@ async def create_story(
     logger.info("Story created", world_id=world_id, story_id=story.id)
     reloaded = await _get(db, world_id, story.id)
     assert reloaded is not None
+    await refresh_references(
+        db, world_id, ContentKind.STORY, reloaded.id, reloaded.body
+    )
     return reloaded
 
 
@@ -133,6 +138,7 @@ async def update_story(
     if data.is_draft is not None:
         story.is_draft = data.is_draft
     await db.flush()
+    await refresh_references(db, world_id, ContentKind.STORY, story.id, story.body)
     return story
 
 

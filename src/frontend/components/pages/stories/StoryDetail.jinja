@@ -1,4 +1,4 @@
-{#def world, world_context, nav, story, can_manage=False, crumbs, pages=None, current_user=None #}
+{#def world, world_context, nav, story, can_manage=False, crumbs, pages=None, body_html=None, links=None, current_user=None #}
 {#css common/Button.css, common/Pill.css, layout/UserMenu.css #}
 <layout.Page :title="story.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
   <editorial.Crumbs :items="crumbs" />
@@ -30,7 +30,7 @@
         </div>
         <div class="document__page">
           <span class="eyebrow">Testo</span>
-          <div class="prose">{{ story.body | markdown }}</div>
+          <div class="prose">{{ body_html }}</div>
         </div>
       </div>
     </div>
@@ -52,5 +52,6 @@
       </div>
     </aside>
     {% endif %}
+    {% if links %}<editorial.Links :groups="links" />{% endif %}
   </div>
 </layout.Page>

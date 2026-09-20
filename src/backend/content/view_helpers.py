@@ -2,6 +2,7 @@
 
 import uuid
 
+from markupsafe import Markup
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db.enums import WorldRole
@@ -11,7 +12,16 @@ from ..users.schemas import User
 from ..worlds.models import WorldModel
 from ..worlds.service import role_for_world
 from ..access import readable_world
-from .constants import ANIMALS, SHAPE_LABELS, SHAPE_NAMES, TINT_LABELS, TINTS
+from .constants import (
+    ANIMALS,
+    SHAPE_LABELS,
+    SHAPE_NAMES,
+    TINT_LABELS,
+    TINTS,
+    ContentKind,
+)
+from .markdown import render_markdown
+from .references import backlinks, resolve_body
 
 
 def tint_options() -> list[Option]:
@@ -65,3 +75,13 @@ def split_published_drafts(
         elif getattr(item, author_attr, None) == user.id:
             drafts.append(item)
     return published, drafts
+
+
+async def render_document(
+    db: AsyncSession, world_id: uuid.UUID, kind: ContentKind, item
+) -> tuple[Markup, dict]:
+    """Render a document body with resolved references and fetch its backlinks."""
+    mentions = await resolve_body(db, world_id, item.body)
+    body_html = render_markdown(item.body, mentions)
+    links = await backlinks(db, world_id, kind, item.id)
+    return body_html, links

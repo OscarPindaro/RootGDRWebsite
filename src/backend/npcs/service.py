@@ -9,6 +9,8 @@ from ..access import master_world, readable_world
 from ..files.models import FileModel
 from ..filesystem.base import FileSystem
 from ..images import ImageNotFoundError, read_image, store_image
+from ..content.constants import ContentKind
+from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.schemas import User
 from .exceptions import NpcNotFoundException
@@ -53,6 +55,7 @@ async def create_npc(
     logger.info("NPC created", world_id=world_id, npc_id=npc.id)
     reloaded = await _get(db, world_id, npc.id)
     assert reloaded is not None
+    await refresh_references(db, world_id, ContentKind.NPC, reloaded.id, reloaded.body)
     return reloaded
 
 
@@ -102,6 +105,7 @@ async def update_npc(
     if data.is_draft is not None:
         npc.is_draft = data.is_draft
     await db.flush()
+    await refresh_references(db, world_id, ContentKind.NPC, npc.id, npc.body)
     return npc
 
 

@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..access import master_world, readable_world
+from ..content.constants import ContentKind
+from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.schemas import User
 from .exceptions import PageNotFoundException, PageSlugConflictException
@@ -60,6 +62,7 @@ async def create_page(
     logger.info("Page created", world_id=world_id, page_id=page.id, slug=slug)
     reloaded = await _get(db, world_id, page.id)
     assert reloaded is not None
+    await refresh_references(db, world_id, ContentKind.PAGE, reloaded.id, reloaded.body)
     return reloaded
 
 
@@ -136,6 +139,7 @@ async def update_page(
     if data.is_draft is not None:
         page.is_draft = data.is_draft
     await db.flush()
+    await refresh_references(db, world_id, ContentKind.PAGE, page.id, page.body)
     return page
 
 

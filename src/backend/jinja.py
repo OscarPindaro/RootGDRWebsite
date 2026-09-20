@@ -21,8 +21,17 @@ from markupsafe import Markup
 import jinjax
 from fastapi.templating import Jinja2Templates
 
+from .content.constants import KIND_LABELS, ContentKind
 from .content.marks import kind_svg, mark_svg, shape_mark
 from .navigation import global_nav, world_nav
+
+
+def kind_label(kind: object) -> str:
+    """Italian label for a content kind (``personaggio`` → ``Personaggio``)."""
+    try:
+        return KIND_LABELS[ContentKind(kind)]
+    except ValueError, KeyError:
+        return str(kind)
 
 
 def _money(value: float | None) -> str:
@@ -127,6 +136,7 @@ def get_catalog(
     catalog.jinja_env.globals["mark"] = mark_svg
     catalog.jinja_env.globals["kind_mark"] = kind_svg
     catalog.jinja_env.globals["shape_mark"] = shape_mark
+    catalog.jinja_env.globals["kind_label"] = kind_label
     catalog.jinja_env.globals["global_nav"] = global_nav
     catalog.jinja_env.globals["world_nav"] = world_nav
     return catalog

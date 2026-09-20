@@ -5,6 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from ..access import master_world, readable_world
+from ..content.constants import ContentKind
+from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.schemas import User
 from .exceptions import SessionNotFoundException
@@ -55,6 +57,9 @@ async def create_session(
     logger.info("Session created", world_id=world_id, session_id=session.id)
     reloaded = await _get(db, world_id, session.id)
     assert reloaded is not None
+    await refresh_references(
+        db, world_id, ContentKind.SESSION, reloaded.id, reloaded.body
+    )
     return reloaded
 
 
@@ -122,6 +127,9 @@ async def update_session(
     if data.is_draft is not None:
         session.is_draft = data.is_draft
     await db.flush()
+    await refresh_references(
+        db, world_id, ContentKind.SESSION, session.id, session.body
+    )
     return session
 
 
