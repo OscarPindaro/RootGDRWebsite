@@ -54,6 +54,12 @@ repos:
         language: system
         files: ^src/frontend/components/.*\.css$
         pass_filenames: false
+      - id: template-types
+        name: Check JinjaX components against the models their routes pass
+        entry: uv run python -m pre_commits.template_types
+        language: system
+        files: ^(src/frontend/components/.*\.jinja|src/backend/.*\.py)$
+        pass_filenames: false
       - id: model-registry
         name: Sync db/registry.py with model classes
         entry: uv run python -m pre_commits.model_registry

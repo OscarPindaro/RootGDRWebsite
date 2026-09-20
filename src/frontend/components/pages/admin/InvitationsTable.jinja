@@ -11,7 +11,7 @@
       <common.Pill variant="role-member">Membro</common.Pill>
       {% endif %}
     </td>
-    <td>{{ inv.invited_by_name or inv.invited_by }}</td>
+    <td>{{ inv.invited_by_name }}</td>
     <td><em>{{ inv.expires_at | time }}</em></td>
     <td>
       {% if inv.accepted_at %}

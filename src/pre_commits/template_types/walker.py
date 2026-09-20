@@ -141,6 +141,11 @@ class TemplateChecker:
             self._ast_cache[name] = self.env.parse(self.source(name), name=name)
         return self._ast_cache[name]
 
+    def add_template(self, name: str, source: str) -> None:
+        """Register a template the loader does not serve (a JinjaX component)."""
+        self._source_cache[name] = source
+        self._ast_cache[name] = self.env.parse(source, name=name)
+
     # -- entry point ---------------------------------------------------------
 
     def check(self, template: str, context: dict[str, TypeRef]) -> CheckResult:
@@ -233,10 +238,12 @@ class TemplateChecker:
 
         if isinstance(node, nodes.If):
             self._eval(node.test, scope, frame, path)
-            self._walk_body(node.body, dict(scope), frame, path)
+            # Jinja's `if` does not create a scope: a `{% set %}` in either
+            # branch is visible after it, so both branches share the scope.
+            self._walk_body(node.body, scope, frame, path)
             for elif_ in node.elif_:
-                self._walk_stmt(elif_, dict(scope), frame, path)
-            self._walk_body(node.else_, dict(scope), frame, path)
+                self._walk_stmt(elif_, scope, frame, path)
+            self._walk_body(node.else_, scope, frame, path)
             return
 
         if isinstance(node, nodes.For):
@@ -309,6 +316,17 @@ class TemplateChecker:
 
         if isinstance(node, nodes.ExprStmt):
             self._eval(node.node, scope, frame, path)
+            return
+
+        if isinstance(node, nodes.CallBlock):
+            # JinjaX compiles `<Component ...>slot</Component>` to a call block.
+            # The callee is a component, not a template, so walk its arguments
+            # and the slot body instead of reporting it as unsupported.
+            for arg in node.call.args:
+                self._eval(arg, scope, frame, path)
+            for keyword in node.call.kwargs:
+                self._eval(keyword.value, scope, frame, path)
+            self._walk_body(node.body, scope, frame, path)
             return
 
         self._report(

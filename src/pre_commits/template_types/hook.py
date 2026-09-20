@@ -35,6 +35,7 @@ from rich.console import Console
 
 from .diagnostics import WARNING_CODES, Diagnostic, scan_suppressions
 from .discovery import find_bindings
+from .jinjax import run_jinjax_check
 from .resolver import ResolutionError, Resolver
 from .typerefs import TypeRef, normalize
 from .walker import TemplateChecker
@@ -281,6 +282,22 @@ def main(
             "Defaults to 'testdata'.",
         ),
     ] = None,
+    components_dir: Annotated[
+        Path,
+        typer.Option(
+            "--components-dir",
+            help="Root of the JinjaX components. The HTML check is skipped when "
+            "it is absent and this directory exists instead.",
+        ),
+    ] = Path("src/frontend/components"),
+    jinjax_env_factory: Annotated[
+        str,
+        typer.Option(
+            "--jinjax-env-factory",
+            help="'module:callable' taking a components dir and returning the "
+            "JinjaX catalog, so the component globals are honoured.",
+        ),
+    ] = "backend.jinja:get_catalog",
     strict: Annotated[
         bool,
         typer.Option(
@@ -297,9 +314,6 @@ def main(
     _use_color = color
 
     repo_root = Path.cwd()
-    if not templates_dir.is_dir():
-        print_error(f"{templates_dir}: templates directory not found")
-        raise typer.Exit(EXIT_USAGE)
     if not source_root.is_dir():
         print_error(f"{source_root}: source root not found")
         raise typer.Exit(EXIT_USAGE)
@@ -307,30 +321,57 @@ def main(
     if str(source_root.resolve()) not in sys.path:
         sys.path.insert(0, str(source_root.resolve()))
 
-    try:
-        diagnostics, warnings = run_check(
-            templates_dir=templates_dir,
-            source_root=source_root,
-            views_glob=views_glob,
-            repo_root=repo_root,
-            env_factory=env_factory,
-            exclude_view_dirs=tuple(exclude_view_dir or ["testdata"]),
-        )
-    except ResolutionError as exc:
-        print_error(str(exc))
-        raise typer.Exit(EXIT_USAGE)
+    diagnostics: list[Diagnostic] = []
+    warnings: list[str] = []
+
+    if templates_dir.is_dir():
+        try:
+            found, notes = run_check(
+                templates_dir=templates_dir,
+                source_root=source_root,
+                views_glob=views_glob,
+                repo_root=repo_root,
+                env_factory=env_factory,
+                exclude_view_dirs=tuple(exclude_view_dir or ["testdata"]),
+            )
+        except ResolutionError as exc:
+            print_error(str(exc))
+            raise typer.Exit(EXIT_USAGE)
+        diagnostics.extend(found)
+        warnings.extend(notes)
+    else:
+        warnings.append(f"{templates_dir}: no templates directory, HTML check skipped")
+
+    jinjax_diagnostics: list[Diagnostic] = []
+    if components_dir.is_dir():
+        try:
+            jinjax_diagnostics, jinjax_warnings = run_jinjax_check(
+                components_dir=components_dir,
+                source_root=source_root,
+                views_glob=views_glob,
+                repo_root=repo_root,
+                env_factory=jinjax_env_factory,
+            )
+        except Exception as exc:  # noqa: BLE001 - report and fail the commit
+            print_error(f"could not build the JinjaX environment: {exc}")
+            raise typer.Exit(EXIT_USAGE) from exc
+        warnings.extend(jinjax_warnings)
 
     errors = [d for d in diagnostics if d.code not in WARNING_CODES]
+    jinjax_errors = [d for d in jinjax_diagnostics if d.code not in WARNING_CODES]
 
     for diag in errors:
         for line in diag.render(templates_dir):
             print_error(line)
+    for diag in jinjax_errors:
+        for line in diag.render(None):
+            print_error(line)
 
-    if warnings and (strict or errors):
+    if warnings and (strict or errors or jinjax_errors):
         for warning in warnings:
             print_warning(f"warning: {warning}")
 
-    if errors or (strict and warnings):
+    if errors or jinjax_errors or (strict and warnings):
         raise typer.Exit(EXIT_ERROR)
 
     # Silent success.
