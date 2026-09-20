@@ -3,19 +3,17 @@
 <layout.Page :title="story.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
   <editorial.Crumbs :items="crumbs" />
 
-  <div class="docbar">
-    <span class="eyebrow">Storia · {{ 'in corso' if story.status == 'in_corso' else 'chiusa' }}</span>
-    <div class="docbar__actions">
-      {% if story.locked %}<span class="pill pill--plain">Bloccato</span>{% endif %}
-      {% if story.is_draft %}<span class="pill pill--draft">Bozza</span>{% endif %}
-      {% if can_manage %}
-      <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/storie/{{ story.id }}/edit">Modifica</a>
-      <button class="btn btn--ghost btn--sm" type="button"
-              hx-delete="/worlds/{{ world.id }}/storie/{{ story.id }}"
-              hx-confirm="Eliminare «{{ story.title }}»?" hx-swap="none">Elimina</button>
-      {% endif %}
-    </div>
-  </div>
+  <editorial.Docbar
+    base="/worlds/{{ world.id }}/storie/{{ story.id }}"
+    eyebrow="Storia · {{ 'in corso' if story.status == 'in_corso' else 'chiusa' }}"
+    :locked="story.locked"
+    :is_draft="story.is_draft"
+    :can_manage="can_manage">
+    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/storie/{{ story.id }}/edit">Modifica</a>
+    <button class="btn btn--ghost btn--sm" type="button"
+            hx-delete="/worlds/{{ world.id }}/storie/{{ story.id }}"
+            hx-confirm="Eliminare «{{ story.title }}»?" hx-swap="none">Elimina</button>
+  </editorial.Docbar>
 
   <div class="docpage">
     <div>

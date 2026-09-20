@@ -47,3 +47,21 @@ async def world_page(
 
 def owner_label(owner_name: str, is_master: bool = False) -> str:
     return f"NPC del Master" if is_master else f"Giocato da {owner_name}"
+
+
+def split_published_drafts(
+    items: list, user: User, author_attr: str = "created_by_id"
+) -> tuple[list, list]:
+    """Split items into (published, drafts the user authored).
+
+    A draft is visible only to its author, so someone else's draft disappears
+    entirely rather than showing up in either list.
+    """
+    published: list = []
+    drafts: list = []
+    for item in items:
+        if not item.is_draft:
+            published.append(item)
+        elif getattr(item, author_attr, None) == user.id:
+            drafts.append(item)
+    return published, drafts

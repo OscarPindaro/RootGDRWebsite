@@ -3,20 +3,18 @@
 <layout.Page :title="character.name" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="personaggi">
   <editorial.Crumbs :items="crumbs" />
 
-  <div class="docbar">
-    <span class="eyebrow">Personaggio</span>
-    <div class="docbar__actions">
-      <span class="pill pill--plain">Giocato da {{ character.owner.name }}</span>
-      {% if character.locked %}<span class="pill pill--plain">Bloccato</span>{% endif %}
-      {% if character.is_draft %}<span class="pill pill--draft">Bozza</span>{% endif %}
-      {% if can_manage %}
-      <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/characters/{{ character.id }}/edit">Modifica</a>
-      <button class="btn btn--ghost btn--sm" type="button"
-              hx-delete="/worlds/{{ world.id }}/characters/{{ character.id }}"
-              hx-confirm="Eliminare {{ character.name }}?" hx-swap="none">Elimina</button>
-      {% endif %}
-    </div>
-  </div>
+  <editorial.Docbar
+    base="/worlds/{{ world.id }}/characters/{{ character.id }}"
+    eyebrow="Personaggio"
+    :locked="character.locked"
+    :is_draft="character.is_draft"
+    :can_manage="can_manage">
+    <span class="pill pill--plain">Giocato da {{ character.owner.name }}</span>
+    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/characters/{{ character.id }}/edit">Modifica</a>
+    <button class="btn btn--ghost btn--sm" type="button"
+            hx-delete="/worlds/{{ world.id }}/characters/{{ character.id }}"
+            hx-confirm="Eliminare {{ character.name }}?" hx-swap="none">Elimina</button>
+  </editorial.Docbar>
 
   <div class="docpage">
     <div>

@@ -3,19 +3,17 @@
 <layout.Page :title="session.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="sessioni">
   <editorial.Crumbs :items="crumbs" />
 
-  <div class="docbar">
-    <span class="eyebrow">{{ session.in_world_date }}{% if session.real_date %} · {{ session.real_date }}{% endif %}</span>
-    <div class="docbar__actions">
-      {% if session.locked %}<span class="pill pill--plain">Bloccato</span>{% endif %}
-      {% if session.is_draft %}<span class="pill pill--draft">Bozza</span>{% endif %}
-      {% if can_manage %}
-      <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}/edit">Modifica</a>
-      <button class="btn btn--ghost btn--sm" type="button"
-              hx-delete="/worlds/{{ world.id }}/sessioni/{{ session.id }}"
-              hx-confirm="Eliminare «{{ session.title }}»?" hx-swap="none">Elimina</button>
-      {% endif %}
-    </div>
-  </div>
+  <editorial.Docbar
+    base="/worlds/{{ world.id }}/sessioni/{{ session.id }}"
+    eyebrow="{{ session.in_world_date }}{% if session.real_date %} · {{ session.real_date }}{% endif %}"
+    :locked="session.locked"
+    :is_draft="session.is_draft"
+    :can_manage="can_manage">
+    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}/edit">Modifica</a>
+    <button class="btn btn--ghost btn--sm" type="button"
+            hx-delete="/worlds/{{ world.id }}/sessioni/{{ session.id }}"
+            hx-confirm="Eliminare «{{ session.title }}»?" hx-swap="none">Elimina</button>
+  </editorial.Docbar>
 
   <div class="document">
     <div class="document__head document__head--plain">

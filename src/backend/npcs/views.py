@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
-from ..content.view_helpers import animal_options, tint_options, world_page
+from ..content.view_helpers import (
+    animal_options,
+    split_published_drafts,
+    tint_options,
+    world_page,
+)
 from ..correlation import set_world_id
 from ..dependencies import get_catalog_dep, get_db_session
 from ..filesystem.base import FileSystem
@@ -61,13 +66,15 @@ async def npcs_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
     npcs = await list_npcs(db, world_id, user)
+    published, drafts = split_published_drafts(npcs, user)
     return catalog.render(
         "pages.npcs.NpcList",
         world=world,
         world_context=context,
         nav=nav,
         pages=rail_pages,
-        cards=[_card(n, world_id) for n in npcs],
+        cards=[_card(n, world_id) for n in published],
+        drafts=[_card(n, world_id) for n in drafts],
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world),
         current_user=user,

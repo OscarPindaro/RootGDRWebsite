@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
-from ..content.view_helpers import tint_options, world_page
+from ..content.view_helpers import split_published_drafts, tint_options, world_page
 from ..correlation import set_world_id
 from ..dependencies import get_catalog_dep, get_db_session
 from ..navigation import Crumb
@@ -47,7 +47,8 @@ async def sessions_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "sessioni")
     sessions = await list_sessions(db, world_id, user)
-    numbered = list(enumerate(sessions, start=1))
+    published, drafts = split_published_drafts(sessions, user)
+    numbered = list(enumerate(published, start=1))
     return catalog.render(
         "pages.sessions.SessionList",
         world=world,
@@ -55,6 +56,7 @@ async def sessions_page(
         nav=nav,
         pages=rail_pages,
         rows=list(reversed(numbered)),
+        drafts=drafts,
         can_manage=await is_master(db, world, user),
         crumbs=_crumbs(world),
         current_user=user,

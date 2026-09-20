@@ -7,7 +7,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import readable_world
 from ..auth.dependencies import get_current_user
-from ..content.view_helpers import animal_options, tint_options, world_page
+from ..content.view_helpers import (
+    animal_options,
+    split_published_drafts,
+    tint_options,
+    world_page,
+)
 
 from ..correlation import set_world_id
 from ..dependencies import get_catalog_dep, get_db_session
@@ -62,13 +67,15 @@ async def characters_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
     characters = await list_characters(db, world_id, user)
+    published, drafts = split_published_drafts(characters, user, author_attr="owner_id")
     return catalog.render(
         "pages.characters.CharacterList",
         world=world,
         world_context=context,
         nav=nav,
         pages=rail_pages,
-        cards=[_card(c, world_id) for c in characters],
+        cards=[_card(c, world_id) for c in published],
+        drafts=[_card(c, world_id) for c in drafts],
         crumbs=_crumbs(world),
         current_user=user,
     )

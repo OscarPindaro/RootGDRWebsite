@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .auth.routes.auth import router as auth_router
 from .auth.routes.invitations import router as invitation_router
 from .characters.routes import router as characters_router
+from .content.actions import router as content_actions_router
 from .npcs.routes import router as npcs_router
 from .pages.routes import router as pages_router
 from .places.routes import router as places_router
@@ -71,6 +72,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(invitation_router)
     app.include_router(worlds_router)
     app.include_router(characters_router)
+    app.include_router(content_actions_router)
     app.include_router(npcs_router)
     app.include_router(places_router)
     app.include_router(pages_router)

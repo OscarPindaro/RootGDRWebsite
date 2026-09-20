@@ -1,4 +1,4 @@
-{#def world, world_context, nav, pages, rows, can_manage=False, crumbs, current_user=None #}
+{#def world, world_context, nav, pages, rows, can_manage=False, crumbs, drafts=None, current_user=None #}
 {#css common/Button.css, layout/UserMenu.css #}
 {% set count = rows | length %}
 {% set eyebrow_text = count ~ (' pagina' if count == 1 else ' pagine') %}
@@ -36,4 +36,18 @@
   {% else %}
   <div class="empty">Nessuna pagina di riferimento.</div>
   {% endif %}
+
+{% if drafts %}
+<section class="section">
+  <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
+  <div class="rowlist">
+    {% for draft in drafts %}
+    <a class="row" href="/worlds/{{ world.id }}/pagine/{{ draft.slug }}" style="--c: var(--{{ draft.tint }})">
+      <span><span class="row__name">{{ draft.title }}</span><br><span class="row__desc">{{ draft.slug }}</span></span>
+      <span class="row__meta"><span class="pill pill--draft">Bozza</span></span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 </layout.Page>

@@ -1,4 +1,4 @@
-{#def world, world_context, nav, cards, crumbs, pages=None, current_user=None #}
+{#def world, world_context, nav, cards, crumbs, pages=None, drafts=None, current_user=None #}
 {#css common/Button.css, common/Grid.css, layout/UserMenu.css #}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
 <layout.Page title="Personaggi" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="personaggi">
@@ -17,4 +17,13 @@
   {% else %}
   <div class="empty">Nessun personaggio. Creane uno per cominciare.</div>
   {% endif %}
+
+{% if drafts %}
+<section class="section">
+  <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
+  <div class="grid grid--cards">
+    {% for card in drafts %}<editorial.Card :item="card" />{% endfor %}
+  </div>
+</section>
+{% endif %}
 </layout.Page>

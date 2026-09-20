@@ -1,20 +1,19 @@
 {#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, current_user=None #}
 {#css common/Button.css, common/Pill.css, layout/UserMenu.css #}
 <layout.Page :title="page.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
-  <editorial.Masthead
-    :title="page.title"
-    :eyebrow="'Pagina · posizione ' ~ '%02d' | format(page.menu_position) ~ ' · slug ' ~ page.slug"
-    :lede="page.short_description"
-    :crumbs="crumbs">
-    {% if can_manage %}
-    <div class="masthead__actions">
-      <a class="btn btn--ghost btn--sm" href="/worlds/{{ world.id }}/pagine/{{ page.id }}/edit">Modifica</a>
-      <button class="btn btn--ghost btn--sm" type="button"
-              hx-delete="/worlds/{{ world.id }}/pagine/{{ page.id }}"
-              hx-confirm="Eliminare «{{ page.title }}»?" hx-swap="none">Elimina</button>
-    </div>
-    {% endif %}
-  </editorial.Masthead>
+  <editorial.Crumbs :items="crumbs" />
+
+  <editorial.Docbar
+    base="/worlds/{{ world.id }}/pagine/{{ page.id }}"
+    eyebrow="Pagina · posizione {{ '%02d' | format(page.menu_position) }} · slug {{ page.slug }}"
+    :locked="page.locked"
+    :is_draft="page.is_draft"
+    :can_manage="can_manage">
+    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/pagine/{{ page.id }}/edit">Modifica</a>
+    <button class="btn btn--ghost btn--sm" type="button"
+            hx-delete="/worlds/{{ world.id }}/pagine/{{ page.id }}"
+            hx-confirm="Eliminare «{{ page.title }}»?" hx-swap="none">Elimina</button>
+  </editorial.Docbar>
 
   <div class="article">
     <article class="prose">

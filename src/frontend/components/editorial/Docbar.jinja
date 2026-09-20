@@ -1,0 +1,21 @@
+{#def base, eyebrow=None, locked=False, is_draft=False, can_manage=False #}
+<div class="docbar">
+  <span class="eyebrow">{{ eyebrow }}</span>
+  <div class="docbar__actions">
+    {% if is_draft %}
+    <span class="pill pill--draft">Bozza</span>
+    {% else %}
+    <span class="pill pill--plain">Pubblicato</span>
+    {% endif %}
+    {% if can_manage %}
+    <button class="btn btn--ghost btn--sm" type="button"
+            aria-pressed="{{ 'true' if locked else 'false' }}"
+            hx-post="{{ base }}/toggle/locked?value={{ 'false' if locked else 'true' }}"
+            hx-swap="none">{{ 'Bloccato' if locked else 'Sbloccato' }}</button>
+    <button class="btn btn--ghost btn--sm" type="button"
+            hx-post="{{ base }}/toggle/is_draft?value={{ 'false' if is_draft else 'true' }}"
+            hx-swap="none">{{ 'Pubblica' if is_draft else 'Riporta a bozza' }}</button>
+    {{ content }}
+    {% endif %}
+  </div>
+</div>
