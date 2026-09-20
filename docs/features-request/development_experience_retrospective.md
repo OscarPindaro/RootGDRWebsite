@@ -16,7 +16,7 @@ preso io e che nessuno mi ha chiesto di prendere**: ho tenuto la libreria di
 componenti Material già presente (`common/*`, token `--clr-*`) e ho "ricoperto"
 il prototipo sopra di essa mappando i token.
 
-`docs/features/starting_description.md` dice che il prototipo è il riferimento
+`docs/features-request/starting_description.md` dice che il prototipo è il riferimento
 per il linguaggio visivo, ma non dice dove finisce il riferimento e comincia
 l'adattamento. Le due strade possibili erano:
 
@@ -179,7 +179,7 @@ piccola a JinjaX (o un wrapper): varrebbe la pena proporla a monte.
    overflow orizzontale della rail.
 7. **Ciclo di sviluppo con reload** (4.3).
 8. **Regola in `AGENTS.md`**: dopo ogni ricompattazione di contesto, rileggere
-   `docs/features/*.md`; e un *definition of done* per ticket che includa
+   `docs/features-request/*.md`; e un *definition of done* per ticket che includa
    screenshot di confronto.
 
 ---

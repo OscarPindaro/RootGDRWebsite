@@ -1,7 +1,7 @@
 # Boscochiaro — prototipo editoriale (Devin)
 
 Prototipo statico **multipagina** per l'applicazione descritta in
-`docs/features/high_level_starting_description.md`. Ogni vista è un file HTML
+`docs/features-request/high_level_starting_description.md`. Ogni vista è un file HTML
 reale, collegato agli altri da link reali: la navigazione non dipende da
 JavaScript e l'URL cambia davvero.
 
@@ -55,7 +55,7 @@ il cursore mostra il suo Markdown mentre il resto è reso. Milkdown è stato
 prototipato per intero ed è stato scartato: riscrive il documento a ogni
 salvataggio, e il modello di scrittura che si voleva è quello di CodeMirror. Il
 ragionamento completo, con quello che accettiamo scegliendolo, è in
-`docs/features/frontend.md`.
+`docs/features-request/frontend.md`.
 
 Le tre pagine restano come documentazione della scelta: montano lo **stesso
 documento** (la scheda di Roccianera) dentro la stessa impaginazione, cambiando
@@ -228,7 +228,7 @@ architetture possibili.
 
 **Deciso: nella master view sono separati.** Il prototipo parte quindi in
 modalità `Separate`; lo switch resta per confrontare le due architetture sullo
-stesso contenuto. Vedi `docs/features/frontend.md`.
+stesso contenuto. Vedi `docs/features-request/frontend.md`.
 
 | Modello | Navigazione | Elenco |
 |---|---|---|

@@ -123,7 +123,7 @@ Masters and site administrators manage pages; every world member can read them. 
 - The writing surface is a real editor, not a bare textarea. **CodeMirror 6** is
   the choice: the document stays the Markdown string, and the line under the
   cursor shows its Markdown while the rest is rendered. The reasoning, including
-  why Milkdown was considered and rejected, is in `docs/features/frontend.md`.
+  why Milkdown was considered and rejected, is in `docs/features-request/frontend.md`.
 - It is loaded **on demand**, when someone starts editing, and only for users who
   are allowed to edit. Readers never download it.
 - The editor's live rendering and the server's rendered output must agree. The
@@ -233,7 +233,7 @@ Application-specific components and pages compose common controls and contain on
 - The visual language is editorial and Mondrian-derived: warm paper, dark
   structural rules, flat tints, a serif for reading and a monospace for metadata.
   `prototypes/devin-prototype/` is the reference for how it is put together;
-  `docs/features/frontend.md` records the decisions behind it.
+  `docs/features-request/frontend.md` records the decisions behind it.
 - Twelve tints and twelve geometric shapes give places and sessions an identity
   that survives across lists, timelines and references. Characters are a tint
   plus an animal; an uploaded image replaces the symbol.
@@ -278,7 +278,7 @@ Implementation proceeds in small vertical tickets. Finish and verify one ticket 
 
 **The first version targets the Master.** A world's master must be able to write
 and read everything before the player experience is built out; the player view
-is designed for (see `docs/features/frontend.md`) but not implemented yet.
+is designed for (see `docs/features-request/frontend.md`) but not implemented yet.
 
 ### Phase 0 — Reproducible baseline
 
@@ -322,7 +322,7 @@ Each content type is completed independently in model → migration → schema �
 ### Phase 5 — Rich editing and fast navigation
 
 - **P5.0 — Editor decision:** settled on **CodeMirror 6** (see
-  `docs/features/frontend.md` for the alternatives considered and what was
+  `docs/features-request/frontend.md` for the alternatives considered and what was
   accepted).
 - **P5.1 — Editor field:** package CodeMirror 6 as a reusable JinjaX field,
   loaded on demand and only for users who can edit. Preserve the underlying

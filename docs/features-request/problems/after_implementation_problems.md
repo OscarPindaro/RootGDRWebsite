@@ -1,9 +1,9 @@
 
 Sources di riferimento
-docs/features/desired_features.md
-docs/features/frontend.md
-docs/features/starting_description.md
-docs/features/high_level_starting_description.md
+docs/features-request/desired_features.md
+docs/features-request/frontend.md
+docs/features-request/starting_description.md
+docs/features-request/high_level_starting_description.md
 prototypes/devin-prototype
 
 Il tasto impostazioni non ha un bordo

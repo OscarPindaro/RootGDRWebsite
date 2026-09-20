@@ -126,7 +126,7 @@ Four groups:
   Markdown string, so a card is a **view over a syntax**, not an editable node
   with its own interface. Changing what the card points at means editing the
   syntax. If that ever becomes unacceptable, the escape hatch is the editor
-  component, not the whole application — see `docs/features/frontend.md`.
+  component, not the whole application — see `docs/features-request/frontend.md`.
 
 ### Random tables
 
@@ -182,3 +182,22 @@ Four groups:
 - Statblocks, character sheets for external systems, VTT integration, a DM
   screen, virtual handouts. Out of scope: the site documents the campaign, it
   does not run it.
+
+
+## Jinjax
+do you now we can create custom filter or cusom is_admin properties that are automatically injected in the jinja environment? in this way we don't nneed to add a lot of parameters and can be easy to read a page that has an if for a role and an else for another role like
+"if is_admin --> do something
+else do else
+"
+
+## Technical New Features
+It would be cool to have
+
+### Very good osservability
+I guess either some easy to filter logs. we already have json logging, is it enough to look at logs from a file and filter those.
+Is it better to have prometheus (so opentelemetry compliant logging solution) and then you can query it. i don't really know how it works, i used logfire in the past, but i don't want to create an ad hoc account.
+
+
+### Replay of actions
+let's say i'm testing the application and i found some bugs. it would be cool if the system could, after a command, record either my clicks for playwrigth tests (or i guess it's better to understand WHAT i clicked), or the sequence of requests i did.
+In this way, an integration / e2e test can be generated from my normal usage so what i do and what i try can be reproduce and i don't need to write you anything.

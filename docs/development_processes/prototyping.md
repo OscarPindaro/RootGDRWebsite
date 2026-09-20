@@ -175,9 +175,9 @@ Rules for building one:
 - Every open question is either decided in the document or explicitly listed as
   open.
 - Decisions taken during prototyping are promoted into the feature documents
-  (`docs/features/`), because that is what the implementation reads.
+  (`docs/features-request/`), because that is what the implementation reads.
 - Anything discovered that is worth doing but not now goes to
-  `docs/features/desired_features.md`, with the constraint that would shape it.
+  `docs/features-request/desired_features.md`, with the constraint that would shape it.
 - Commit the prototype. It is the record of *why*, and it is cheap to keep.
 
 ---

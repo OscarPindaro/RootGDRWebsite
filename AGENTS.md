@@ -16,11 +16,15 @@ DO NOT COAUTHOR THE COMMITS
 
 - Plan in tickets, even for a large change: split it into sub-tickets and finish
   each one — implement, test, commit — before starting the next.
-- After a context compaction, re-read `docs/features/*.md` before continuing.
+- After a context compaction, re-read `docs/features-request/*.md` before continuing.
 - All source is English, including URL paths and endpoints. Only the UI copy is
   Italian.
 - A ticket is done only with a passing test and a desktop + phone screenshot
   compared against `prototypes/devin-prototype/`.
+- Document what is built: one short file per feature in
+  `docs/features-implemented/` — what it does, how it is built, its limits.
+  Human-sized, not a changelog. Specs and problem lists live in
+  `docs/features-request/`.
 
 ## Tools
 If available in your environemnt, use
@@ -163,7 +167,7 @@ uv run harness env teardown
 - `.env` (gitignored) holds the dev database names and `AUTH__JWT_SECRET`; copy
   `.env.example` and add a dev secret if it is missing.
 - `harness compare` pairs an application page with its prototype page (see
-  `seed/prototype_map.yaml` and `docs/features/prototype_map.md`) and writes
+  `seed/prototype_map.yaml` and `docs/features-request/prototype_map.md`) and writes
   `harness-artifacts/compare/report.html`. The pixel percentage is a signal, not
   a gate (`--fail-on-diff` makes it one).
 
