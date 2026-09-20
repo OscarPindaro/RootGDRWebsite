@@ -66,7 +66,7 @@ async def toggle_document(
     field: str,
     value: bool = Query(...),
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> Response:
     """Lock/unlock or publish/draft a document (owner or master, per feature)."""
     if kind not in _UPDATERS or field not in _FIELDS:
@@ -96,7 +96,7 @@ async def mention_suggestions(
     world_id: uuid.UUID,
     q: Annotated[str, Query(max_length=255)] = "",
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[MentionSuggestion]:
     """Fuzzy-enough suggestions for the editor's ``@`` menu."""
     await readable_world(db, world_id, user)
@@ -124,7 +124,7 @@ async def preview_body(
     world_id: uuid.UUID,
     data: PreviewRequest,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> HTMLResponse:
     """Render a body with the server's renderer, for the editor preview tab."""
     await readable_world(db, world_id, user)

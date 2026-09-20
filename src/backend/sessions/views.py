@@ -46,7 +46,7 @@ def _crumbs(world, *extra: Crumb) -> list[Crumb]:
 async def sessions_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render the session ledger, newest first."""
@@ -73,7 +73,7 @@ async def sessions_page(
 async def session_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render the create-session form (master only)."""
@@ -97,7 +97,7 @@ async def session_new_page(
 async def session_new_submit(
     world_id: uuid.UUID,
     data: SessionCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     session = await create_session(db, world_id, data, user)
@@ -109,7 +109,7 @@ async def session_detail_page(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -141,7 +141,7 @@ async def session_edit_page(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -171,7 +171,7 @@ async def session_edit_submit(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
     data: SessionUpdate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await update_session(db, world_id, session_id, data, user)
@@ -182,7 +182,7 @@ async def session_edit_submit(
 async def session_delete(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_session(db, world_id, session_id, user)

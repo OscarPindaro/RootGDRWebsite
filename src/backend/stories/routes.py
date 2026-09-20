@@ -29,7 +29,7 @@ async def create_story_route(
     world_id: uuid.UUID,
     data: StoryCreate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> StoryResponse:
     """Create a story (master only)."""
     return _to_response(await create_story(db, world_id, data, user))
@@ -39,7 +39,7 @@ async def create_story_route(
 async def list_stories_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[StorySummary]:
     """List the stories of an accessible world, in creation order."""
     stories = await list_stories(db, world_id, user)
@@ -51,7 +51,7 @@ async def get_story_route(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> StoryResponse:
     """Return one story."""
     return _to_response(await get_story(db, world_id, story_id, user))
@@ -63,7 +63,7 @@ async def update_story_route(
     story_id: uuid.UUID,
     data: StoryUpdate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> StoryResponse:
     """Update a story (master only)."""
     return _to_response(await update_story(db, world_id, story_id, data, user))
@@ -74,7 +74,7 @@ async def delete_story_route(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete a story (master only)."""
     await delete_story(db, world_id, story_id, user)

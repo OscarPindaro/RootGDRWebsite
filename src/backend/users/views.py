@@ -51,7 +51,7 @@ async def _build_invitations(db: AsyncSession) -> list[InvitationView]:
 @router.get("/admin/users", response_class=HTMLResponse)
 async def admin_users(
     catalog=Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_admin_user),
 ):
     """Admin users page — users and invitations from DB."""
@@ -81,7 +81,7 @@ async def invite_user_form(
 async def invite_user_submit(
     body: InvitationCreate,
     catalog=Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
     user: User = Depends(get_current_admin_user),
 ):
@@ -122,7 +122,7 @@ async def invite_user_submit(
 async def revoke_invitation_confirm(
     invitation_id: int,
     catalog=Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     _: User = Depends(get_current_admin_user),
 ):
     """Return a confirm dialog for revoking an invitation."""
@@ -144,7 +144,7 @@ async def revoke_invitation_confirm(
 async def revoke_invitation(
     invitation_id: int,
     catalog=Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     _: User = Depends(get_current_admin_user),
 ):
     """Revoke (delete) an invitation via htmx — returns the updated table."""
@@ -173,7 +173,7 @@ async def settings_page(
 async def settings_submit(
     symbol_style: SymbolStyle = Form(SymbolStyle.ICONS),
     catalog=Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ):
     """Save the symbol-style preference and re-render the page."""

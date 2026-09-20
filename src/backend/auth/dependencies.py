@@ -88,7 +88,7 @@ async def _try_refresh_from_cookie(
 async def get_current_user(
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ) -> User:
     """Extract and validate the JWT, returning the authenticated user as a Pydantic model.
@@ -163,7 +163,7 @@ async def get_current_admin_user(
 async def get_optional_user(
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ) -> User | None:
     """Like ``get_current_user`` but returns ``None`` instead of raising 401.

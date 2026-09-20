@@ -35,7 +35,7 @@ async def create_npc_route(
     world_id: uuid.UUID,
     data: NpcCreate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> NpcResponse:
     """Create an NPC (master only)."""
     return _to_response(await create_npc(db, world_id, data, user))
@@ -45,7 +45,7 @@ async def create_npc_route(
 async def list_npcs_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[NpcSummary]:
     """List the NPCs of an accessible world."""
     return ListResponse(
@@ -60,7 +60,7 @@ async def upload_npc_image_route(
     image: UploadFile = File(...),
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> NpcResponse:
     """Replace an NPC image (master only)."""
     return _to_response(
@@ -74,7 +74,7 @@ async def get_npc_image_route(
     npc_id: uuid.UUID,
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> Response:
     """Return an NPC image for a readable world."""
     image, content = await read_npc_image(db, world_id, npc_id, user, filesystem)
@@ -94,7 +94,7 @@ async def get_npc_route(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> NpcResponse:
     """Return one NPC."""
     return _to_response(await get_npc(db, world_id, npc_id, user))
@@ -106,7 +106,7 @@ async def update_npc_route(
     npc_id: uuid.UUID,
     data: NpcUpdate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> NpcResponse:
     """Update an NPC (master only)."""
     return _to_response(await update_npc(db, world_id, npc_id, data, user))
@@ -117,7 +117,7 @@ async def delete_npc_route(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete an NPC (master only)."""
     await delete_npc(db, world_id, npc_id, user)

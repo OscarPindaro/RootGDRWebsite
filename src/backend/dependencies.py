@@ -1,15 +1,16 @@
-from typing import AsyncGenerator
+from typing import Annotated, AsyncGenerator
+
+from fastapi import Depends, Request
 from jinjax.catalog import Catalog
 from sqlalchemy.ext.asyncio import AsyncSession
-from .config import get_app_config, AppConfig
+
+from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
-from .jinja import get_catalog, _build_templates
-from fastapi import Depends
+from .jinja import _build_templates, get_catalog
 
 
-def get_db_manager(config: AppConfig = Depends(get_app_config)) -> DatabaseManager:
-    db_manager = DatabaseManager(config.database)
-    return db_manager
+def get_db_manager(request: Request) -> DatabaseManager:
+    return request.app.state.db_manager
 
 
 async def get_db_session(
@@ -28,6 +29,9 @@ async def get_db_session(
         raise
     finally:
         await session.close()
+
+
+DatabaseSession = Annotated[AsyncSession, Depends(get_db_session, scope="function")]
 
 
 async def get_config() -> AppConfig:

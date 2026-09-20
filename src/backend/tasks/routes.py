@@ -23,7 +23,7 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 )
 async def get_task(
     task_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     _: User = Depends(get_current_user),
 ):
     """Poll a task's status/completion — e.g. after POST /projects."""

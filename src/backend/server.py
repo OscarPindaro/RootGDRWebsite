@@ -27,8 +27,11 @@ async def lifespan(app: FastAPI):
     if config is None:
         config = get_app_config()
     db_manager = DatabaseManager(config.database)
-    yield
-    await db_manager.close()
+    app.state.db_manager = db_manager
+    try:
+        yield
+    finally:
+        await db_manager.close()
 
 
 def create_app(config: AppConfig | None = None) -> FastAPI:

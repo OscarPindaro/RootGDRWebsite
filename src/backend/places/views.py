@@ -61,7 +61,7 @@ def _card(place, world_id: uuid.UUID) -> CardItem:
 async def places_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """List the Luogos of a world."""
@@ -88,7 +88,7 @@ async def places_page(
 async def place_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render the create-Luogo form (master only)."""
@@ -113,7 +113,7 @@ async def place_new_page(
 async def place_new_submit(
     world_id: uuid.UUID,
     data: PlaceCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     place = await create_place(db, world_id, data, user)
@@ -125,7 +125,7 @@ async def place_detail_page(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -153,7 +153,7 @@ async def place_edit_page(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -182,7 +182,7 @@ async def place_edit_submit(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
     data: PlaceUpdate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await update_place(db, world_id, place_id, data, user)
@@ -193,7 +193,7 @@ async def place_edit_submit(
 async def place_delete(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_place(db, world_id, place_id, user)
@@ -205,7 +205,7 @@ async def place_image_submit(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
     image: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:
@@ -217,7 +217,7 @@ async def place_image_submit(
 async def place_set_current(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Mark this clearing as where the party currently is."""
@@ -228,7 +228,7 @@ async def place_set_current(
 @router.post("/worlds/{world_id}/places/current/clear")
 async def place_clear_current(
     world_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Clear the current clearing."""

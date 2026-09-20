@@ -47,7 +47,7 @@ def _crumbs(world, *extra: Crumb) -> list[Crumb]:
 async def pages_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -72,7 +72,7 @@ async def pages_page(
 async def page_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -95,7 +95,7 @@ async def page_new_page(
 async def page_new_submit(
     world_id: uuid.UUID,
     data: PageCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     page = await create_page(db, world_id, data, user)
@@ -107,7 +107,7 @@ async def page_detail_page(
     world_id: uuid.UUID,
     slug: str,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -138,7 +138,7 @@ async def page_edit_page(
     world_id: uuid.UUID,
     page_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -166,7 +166,7 @@ async def page_edit_submit(
     world_id: uuid.UUID,
     page_id: uuid.UUID,
     data: PageUpdate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     page = await update_page(db, world_id, page_id, data, user)
@@ -177,7 +177,7 @@ async def page_edit_submit(
 async def page_delete(
     world_id: uuid.UUID,
     page_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_page(db, world_id, page_id, user)

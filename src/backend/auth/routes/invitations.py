@@ -43,7 +43,7 @@ def _to_response(invitation) -> InvitationResponse:
 )
 async def create_invitation(
     body: InvitationCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
     admin: User = Depends(get_current_admin_user),
 ):
@@ -66,7 +66,7 @@ async def create_invitation(
     },
 )
 async def list_invitations(
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     admin: User = Depends(get_current_admin_user),
 ):
     """List all invitations (pending and accepted)."""
@@ -84,7 +84,7 @@ async def list_invitations(
 )
 async def revoke_invitation(
     invitation_id: int,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     admin: User = Depends(get_current_admin_user),
 ):
     """Revoke (delete) an invitation by ID."""

@@ -61,7 +61,7 @@ def _card(npc, world_id: uuid.UUID) -> CardItem:
 async def npcs_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """List the NPCs of a world."""
@@ -87,7 +87,7 @@ async def npcs_page(
 async def npc_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render the create-NPC form (master only)."""
@@ -112,7 +112,7 @@ async def npc_new_page(
 async def npc_new_submit(
     world_id: uuid.UUID,
     data: NpcCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     npc = await create_npc(db, world_id, data, user)
@@ -124,7 +124,7 @@ async def npc_detail_page(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -151,7 +151,7 @@ async def npc_edit_page(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -180,7 +180,7 @@ async def npc_edit_submit(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
     data: NpcUpdate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await update_npc(db, world_id, npc_id, data, user)
@@ -191,7 +191,7 @@ async def npc_edit_submit(
 async def npc_delete(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_npc(db, world_id, npc_id, user)
@@ -203,7 +203,7 @@ async def npc_image_submit(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
     image: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:

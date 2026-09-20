@@ -57,7 +57,7 @@ async def worlds_page(
     page: int = Query(1, ge=1),
     page_size: int = Query(12, ge=1, le=60),
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render a paginated grid of worlds accessible to the current user."""
@@ -100,7 +100,7 @@ async def world_new_page(
 @router.post("/worlds/new")
 async def world_new_submit(
     data: WorldCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Create a world from the htmx form and redirect to it."""
@@ -112,7 +112,7 @@ async def world_new_submit(
 async def world_overview_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render the overview of one world."""
@@ -142,7 +142,7 @@ async def world_settings_page(
     world_id: uuid.UUID,
     error: str | None = Query(None),
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render the world management page (owner only)."""
@@ -173,7 +173,7 @@ async def world_settings_page(
 async def world_settings_submit(
     world_id: uuid.UUID,
     data: WorldUpdate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Update name and description from the settings form."""
@@ -185,7 +185,7 @@ async def world_settings_submit(
 async def world_image_submit(
     world_id: uuid.UUID,
     image: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:
@@ -199,7 +199,7 @@ async def world_member_add(
     world_id: uuid.UUID,
     email: str = Form(...),
     role: WorldRole = Form(WorldRole.PLAYER),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Add a member by email."""
@@ -218,7 +218,7 @@ async def world_member_add(
 async def world_member_remove(
     world_id: uuid.UUID,
     member_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Remove a member (the owner cannot be removed)."""

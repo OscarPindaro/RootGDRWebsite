@@ -35,7 +35,7 @@ async def create_place_route(
     world_id: uuid.UUID,
     data: PlaceCreate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PlaceResponse:
     """Create an Luogo (master only)."""
     return _to_response(await create_place(db, world_id, data, user))
@@ -45,7 +45,7 @@ async def create_place_route(
 async def list_places_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[PlaceSummary]:
     """List the Luogos of an accessible world."""
     return ListResponse(
@@ -63,7 +63,7 @@ async def upload_place_image_route(
     image: UploadFile = File(...),
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PlaceResponse:
     """Replace an Luogo image (master only)."""
     return _to_response(
@@ -77,7 +77,7 @@ async def get_place_image_route(
     place_id: uuid.UUID,
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> Response:
     """Return an Luogo image for a readable world."""
     image, content = await read_place_image(db, world_id, place_id, user, filesystem)
@@ -97,7 +97,7 @@ async def get_place_route(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PlaceResponse:
     """Return one Luogo."""
     return _to_response(await get_place(db, world_id, place_id, user))
@@ -109,7 +109,7 @@ async def update_place_route(
     place_id: uuid.UUID,
     data: PlaceUpdate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PlaceResponse:
     """Update an Luogo (master only)."""
     return _to_response(await update_place(db, world_id, place_id, data, user))
@@ -120,7 +120,7 @@ async def delete_place_route(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete an Luogo (master only)."""
     await delete_place(db, world_id, place_id, user)

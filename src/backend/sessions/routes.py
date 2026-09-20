@@ -29,7 +29,7 @@ async def create_session_route(
     world_id: uuid.UUID,
     data: SessionCreate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> SessionResponse:
     """Create a session (master only)."""
     return _to_response(await create_session(db, world_id, data, user))
@@ -39,7 +39,7 @@ async def create_session_route(
 async def list_sessions_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[SessionSummary]:
     """List the sessions of an accessible world, oldest first."""
     sessions = await list_sessions(db, world_id, user)
@@ -58,7 +58,7 @@ async def get_session_route(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> SessionResponse:
     """Return one session."""
     return _to_response(await get_session(db, world_id, session_id, user))
@@ -70,7 +70,7 @@ async def update_session_route(
     session_id: uuid.UUID,
     data: SessionUpdate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> SessionResponse:
     """Update a session (master only)."""
     return _to_response(await update_session(db, world_id, session_id, data, user))
@@ -81,7 +81,7 @@ async def delete_session_route(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete a session (master only)."""
     await delete_session(db, world_id, session_id, user)

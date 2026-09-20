@@ -57,7 +57,7 @@ async def auth_google(config: AppConfig = Depends(get_app_config)):
 async def auth_refresh(
     body: RefreshRequest,
     response: Response,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
     """Exchange a valid refresh token for a new access + refresh token pair.
@@ -107,7 +107,7 @@ async def auth_refresh(
 async def auth_callback(
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
     """Google OAuth callback — verify the code, issue JWT tokens.
@@ -171,7 +171,7 @@ async def auth_callback(
 async def auth_login(
     body: LoginRequest,
     response: Response,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
     """Password-based login — verify credentials, issue JWT tokens."""
@@ -198,7 +198,7 @@ async def auth_login(
 async def auth_register(
     body: RegisterRequest,
     response: Response,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
     """Password-based registration — create a user, issue JWT tokens.
@@ -240,7 +240,7 @@ async def auth_logout():
 async def auth_dev_login(
     request: Request,
     response: Response,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
     """Dev-only login: mint JWTs for an existing user or pending invitation

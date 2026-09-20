@@ -52,7 +52,7 @@ def _crumbs(world, *extra: Crumb) -> list[Crumb]:
 async def stories_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -90,7 +90,7 @@ async def _form_context(db, world_id, user, story):
 async def story_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -116,7 +116,7 @@ async def story_new_page(
 async def story_new_submit(
     world_id: uuid.UUID,
     data: StoryCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     story = await create_story(db, world_id, data, user)
@@ -128,7 +128,7 @@ async def story_detail_page(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -155,7 +155,7 @@ async def story_edit_page(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     set_world_id(str(world_id))
@@ -187,7 +187,7 @@ async def story_edit_submit(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
     data: StoryUpdate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await update_story(db, world_id, story_id, data, user)
@@ -198,7 +198,7 @@ async def story_edit_submit(
 async def story_delete(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_story(db, world_id, story_id, user)

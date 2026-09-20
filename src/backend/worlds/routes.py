@@ -34,7 +34,7 @@ def _to_response(world: WorldModel) -> WorldResponse:
 async def create_world_route(
     data: WorldCreate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> WorldResponse:
     """Create a private world owned by the current user."""
     return _to_response(await create_world(db, data, user))
@@ -46,7 +46,7 @@ async def list_worlds(
     page_size: int = Query(20, ge=1, le=100),
     include_members: bool = Query(False),
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PagedResponse[WorldResponse]:
     """List the worlds accessible to the current user."""
     worlds, total = await get_worlds(db, user, page, page_size, include_members)
@@ -64,7 +64,7 @@ async def upload_world_image_route(
     image: UploadFile = File(...),
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> WorldResponse:
     """Replace a world image when the current user owns it or is an administrator."""
     return _to_response(await upload_world_image(db, world_id, image, user, filesystem))
@@ -75,7 +75,7 @@ async def get_world_image_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> Response:
     """Return an image for an accessible world."""
     image, content = await read_world_image(db, world_id, user, filesystem)
@@ -95,7 +95,7 @@ async def get_world_route(
     world_id: uuid.UUID,
     include_members: bool = Query(False),
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> WorldResponse:
     """Return one accessible world."""
     return _to_response(await get_world(db, world_id, user, include_members))
@@ -107,7 +107,7 @@ async def update_world_route(
     data: WorldUpdate,
     include_members: bool = Query(False),
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> WorldResponse:
     """Update a world when the current user owns it or is an administrator."""
     return _to_response(await update_world(db, world_id, data, user, include_members))
@@ -117,7 +117,7 @@ async def update_world_route(
 async def delete_world_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete a world when the current user owns it or is an administrator."""
     await delete_world(db, world_id, user)

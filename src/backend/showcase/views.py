@@ -14,7 +14,7 @@ router = APIRouter(tags=["showcase"])
 @router.get("/components", response_class=HTMLResponse)
 async def showcase(
     catalog=Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User | None = Depends(get_optional_user),
 ):
     """Component showcase — living style guide."""

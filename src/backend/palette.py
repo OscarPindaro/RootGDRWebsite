@@ -42,7 +42,7 @@ async def palette(
     q: Annotated[str, Query(max_length=255)] = "",
     world_id: Annotated[uuid.UUID | None, Query()] = None,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[PaletteItem]:
     """Search worlds, the current world's content, and allowed create actions."""
     items: list[PaletteItem] = []

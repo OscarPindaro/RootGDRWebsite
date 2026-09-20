@@ -51,7 +51,7 @@ async def login_page(
 @router.post("/auth/login-form")
 async def login_form(
     body: LoginRequest,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
     """Browser form-based login (JSON body) — sets cookies and redirects to /."""
@@ -71,7 +71,7 @@ async def login_form(
 @router.post("/auth/register-form")
 async def register_form(
     body: RegisterRequest,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
     """Browser form-based registration (JSON body) — sets cookies and redirects to /."""

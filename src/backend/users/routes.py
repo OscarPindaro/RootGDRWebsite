@@ -33,7 +33,7 @@ def _ensure_self_or_admin(user_id: uuid.UUID, current_user: User) -> None:
 )
 async def create_user_endpoint(
     user_data: UserCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     _: User = Depends(get_current_admin_user),
 ):
     """Create a new user (administrator only)."""
@@ -51,7 +51,7 @@ async def create_user_endpoint(
 )
 async def get_user_endpoint(
     user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     current_user: User = Depends(get_current_user),
 ):
     """Retrieve a single user: yourself, or anyone as an administrator."""
@@ -71,7 +71,7 @@ async def get_user_endpoint(
     },
 )
 async def get_all_users_endpoint(
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     _: User = Depends(get_current_admin_user),
 ):
     """Retrieve all users in the system (administrator only)."""
@@ -91,7 +91,7 @@ async def get_all_users_endpoint(
 async def update_user_endpoint(
     user_id: uuid.UUID,
     user_data: UserUpdate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     current_user: User = Depends(get_current_user),
 ):
     """Update a user's name: yourself, or anyone as an administrator."""
@@ -113,7 +113,7 @@ async def update_user_endpoint(
 )
 async def delete_user_endpoint(
     user_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     _: User = Depends(get_current_admin_user),
 ):
     """Delete a user by their ID (administrator only)."""

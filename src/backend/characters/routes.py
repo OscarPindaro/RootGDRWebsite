@@ -40,7 +40,7 @@ async def create_character_route(
     world_id: uuid.UUID,
     data: CharacterCreate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> CharacterResponse:
     """Create a character in an accessible world."""
     return _to_response(await create_character(db, world_id, data, user))
@@ -50,7 +50,7 @@ async def create_character_route(
 async def list_characters_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[CharacterSummary]:
     """List the characters of an accessible world."""
     characters = await list_characters(db, world_id, user)
@@ -64,7 +64,7 @@ async def upload_character_image_route(
     image: UploadFile = File(...),
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> CharacterResponse:
     """Replace a character image (owner or master)."""
     character = await upload_character_image(
@@ -79,7 +79,7 @@ async def get_character_image_route(
     character_id: uuid.UUID,
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> Response:
     """Return a character image for a readable world."""
     image, content = await read_character_image(
@@ -101,7 +101,7 @@ async def get_character_route(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> CharacterResponse:
     """Return one character."""
     return _to_response(await get_character(db, world_id, character_id, user))
@@ -113,7 +113,7 @@ async def update_character_route(
     character_id: uuid.UUID,
     data: CharacterUpdate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> CharacterResponse:
     """Update a character (owner or master)."""
     return _to_response(await update_character(db, world_id, character_id, data, user))
@@ -124,7 +124,7 @@ async def delete_character_route(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete a character (owner or master)."""
     await delete_character(db, world_id, character_id, user)

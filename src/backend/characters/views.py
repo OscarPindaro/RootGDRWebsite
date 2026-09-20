@@ -62,7 +62,7 @@ def _card(character, world_id: uuid.UUID) -> CardItem:
 async def characters_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """List the characters of a world."""
@@ -87,7 +87,7 @@ async def characters_page(
 async def character_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render the create-character form."""
@@ -111,7 +111,7 @@ async def character_new_page(
 async def character_new_submit(
     world_id: uuid.UUID,
     data: CharacterCreate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Create a character and redirect to it."""
@@ -124,7 +124,7 @@ async def character_detail_page(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render one character."""
@@ -158,7 +158,7 @@ async def character_edit_page(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> HTMLResponse:
     """Render the edit-character form."""
@@ -191,7 +191,7 @@ async def character_edit_submit(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
     data: CharacterUpdate,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Update a character and redirect to it."""
@@ -203,7 +203,7 @@ async def character_edit_submit(
 async def character_delete(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
     """Delete a character and redirect to the list."""
@@ -216,7 +216,7 @@ async def character_image_submit(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
     image: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
     filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:

@@ -29,7 +29,7 @@ async def create_page_route(
     world_id: uuid.UUID,
     data: PageCreate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PageResponse:
     """Create a page (master only)."""
     return _to_response(await create_page(db, world_id, data, user))
@@ -39,7 +39,7 @@ async def create_page_route(
 async def list_pages_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[PageSummary]:
     """List the pages of an accessible world in menu order."""
     return ListResponse(
@@ -54,7 +54,7 @@ async def get_page_route(
     world_id: uuid.UUID,
     page_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PageResponse:
     """Return one page."""
     return _to_response(await get_page(db, world_id, page_id, user))
@@ -66,7 +66,7 @@ async def update_page_route(
     page_id: uuid.UUID,
     data: PageUpdate,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PageResponse:
     """Update a page (master only)."""
     return _to_response(await update_page(db, world_id, page_id, data, user))
@@ -77,7 +77,7 @@ async def delete_page_route(
     world_id: uuid.UUID,
     page_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete a page (master only)."""
     await delete_page(db, world_id, page_id, user)

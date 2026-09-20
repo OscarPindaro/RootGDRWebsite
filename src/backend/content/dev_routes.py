@@ -41,7 +41,7 @@ def _require_dev(config: AppConfig) -> None:
 async def dev_export(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ) -> WorldBundle:
     """Export a world and its content as a bundle (dev only)."""
@@ -54,7 +54,7 @@ async def dev_export(
 async def dev_import(
     bundle: WorldBundle,
     user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db_session),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ) -> ImportResult:
     """Import (or update) a world from a bundle (dev only)."""
