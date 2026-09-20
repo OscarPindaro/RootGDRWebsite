@@ -9,14 +9,14 @@
     lede="Archi narrativi che riassumono la campagna a un livello più alto delle singole partite."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/storie/new">Nuova storia</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/stories/new">Nuova storia</a>
     {% endif %}
   </editorial.Masthead>
 
   {% if stories %}
   <div class="grid grid--stories">
     {% for story in stories %}
-    <a class="story" href="/worlds/{{ world.id }}/storie/{{ story.id }}">
+    <a class="story" href="/worlds/{{ world.id }}/stories/{{ story.id }}">
       <div class="story__band" style="background: var(--{{ story.tint }}); color: var(--surface)">
         <span>{{ 'In corso' if story.status == 'in_corso' else 'Chiusa' }}</span>
         {% if story.period_label %}<span>{{ story.period_label }}</span>{% endif %}
@@ -41,7 +41,7 @@
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
   <div class="rowlist">
     {% for draft in drafts %}
-    <a class="row" href="/worlds/{{ world.id }}/storie/{{ draft.id }}" style="--c: var(--{{ draft.tint }})">
+    <a class="row" href="/worlds/{{ world.id }}/stories/{{ draft.id }}" style="--c: var(--{{ draft.tint }})">
       <span><span class="row__name">{{ draft.title }}</span><br><span class="row__desc">{{ draft.short_description }}</span></span>
       <span class="row__meta"><span class="pill pill--draft">Bozza</span></span>
     </a>

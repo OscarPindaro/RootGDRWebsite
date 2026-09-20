@@ -4,14 +4,14 @@
   <editorial.Crumbs :items="crumbs" />
 
   <editorial.Docbar
-    :base="'/worlds/' ~ world.id ~ '/pagine/' ~ page.id"
+    :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
     :eyebrow="'Pagina · posizione ' ~ '%02d'|format(page.menu_position) ~ ' · slug ' ~ page.slug"
     :locked="page.locked"
     :is_draft="page.is_draft"
     :can_manage="can_manage">
-    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/pagine/{{ page.id }}/edit">Modifica</a>
+    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/pages/{{ page.id }}/edit">Modifica</a>
     <button class="btn btn--ghost btn--sm" type="button"
-            hx-delete="/worlds/{{ world.id }}/pagine/{{ page.id }}"
+            hx-delete="/worlds/{{ world.id }}/pages/{{ page.id }}"
             hx-confirm="Eliminare «{{ page.title }}»?" hx-swap="none">Elimina</button>
   </editorial.Docbar>
 
@@ -23,7 +23,7 @@
       <div class="toc">
         <div class="toc__label">Altre pagine</div>
         {% for other in others %}
-        <a href="/worlds/{{ world.id }}/pagine/{{ other.slug }}">{{ other.title }}</a>
+        <a href="/worlds/{{ world.id }}/pages/{{ other.slug }}">{{ other.title }}</a>
         {% endfor %}
       </div>
     </aside>

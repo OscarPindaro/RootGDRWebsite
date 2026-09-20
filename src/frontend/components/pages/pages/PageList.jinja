@@ -9,7 +9,7 @@
     lede="Materiale statico: regole di casa, fazioni, calendario e storia. L'ordine è quello con cui compaiono nella navigazione."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/pagine/new">Nuova pagina</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/pages/new">Nuova pagina</a>
     {% endif %}
   </editorial.Masthead>
 
@@ -22,7 +22,7 @@
       <span class="eyebrow">Aggiornata</span>
     </div>
     {% for number, page in rows %}
-    <a class="ledger__row" href="/worlds/{{ world.id }}/pagine/{{ page.slug }}" style="--c: var(--{{ page.tint }})">
+    <a class="ledger__row" href="/worlds/{{ world.id }}/pages/{{ page.slug }}" style="--c: var(--{{ page.tint }})">
       <span class="ledger__num">{{ '%02d' | format(page.menu_position) }}</span>
       <span class="ledger__date">{{ page.slug }}</span>
       <span class="ledger__main">
@@ -42,7 +42,7 @@
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
   <div class="rowlist">
     {% for draft in drafts %}
-    <a class="row" href="/worlds/{{ world.id }}/pagine/{{ draft.slug }}" style="--c: var(--{{ draft.tint }})">
+    <a class="row" href="/worlds/{{ world.id }}/pages/{{ draft.slug }}" style="--c: var(--{{ draft.tint }})">
       <span><span class="row__name">{{ draft.title }}</span><br><span class="row__desc">{{ draft.slug }}</span></span>
       <span class="row__meta"><span class="pill pill--draft">Bozza</span></span>
     </a>

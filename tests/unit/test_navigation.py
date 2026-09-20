@@ -17,10 +17,10 @@ def test_world_nav_uses_the_real_html_paths() -> None:
         "mondo": f"/worlds/{WORLD}",
         "personaggi": f"/worlds/{WORLD}/characters",
         "npc": f"/worlds/{WORLD}/npcs",
-        "luoghi": f"/worlds/{WORLD}/luoghi",
-        "sessioni": f"/worlds/{WORLD}/sessioni",
-        "storie": f"/worlds/{WORLD}/storie",
-        "pagine": f"/worlds/{WORLD}/pagine",
+        "luoghi": f"/worlds/{WORLD}/places",
+        "sessioni": f"/worlds/{WORLD}/sessions",
+        "storie": f"/worlds/{WORLD}/stories",
+        "pagine": f"/worlds/{WORLD}/pages",
     }
 
 
@@ -30,9 +30,9 @@ def test_quick_entries_use_the_real_html_paths() -> None:
     assert hrefs == [
         f"/worlds/{WORLD}/characters",
         f"/worlds/{WORLD}/npcs",
-        f"/worlds/{WORLD}/luoghi",
-        f"/worlds/{WORLD}/sessioni",
-        f"/worlds/{WORLD}/storie",
+        f"/worlds/{WORLD}/places",
+        f"/worlds/{WORLD}/sessions",
+        f"/worlds/{WORLD}/stories",
     ]
 
 

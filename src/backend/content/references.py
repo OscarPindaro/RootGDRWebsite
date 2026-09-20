@@ -22,10 +22,10 @@ from .models import ReferenceModel
 KIND_MODELS = {
     ContentKind.CHARACTER: (CharacterModel, "characters"),
     ContentKind.NPC: (NpcModel, "npcs"),
-    ContentKind.PLACE: (PlaceModel, "luoghi"),
-    ContentKind.SESSION: (SessionModel, "sessioni"),
-    ContentKind.STORY: (StoryModel, "storie"),
-    ContentKind.PAGE: (PageModel, "pagine"),
+    ContentKind.PLACE: (PlaceModel, "places"),
+    ContentKind.SESSION: (SessionModel, "sessions"),
+    ContentKind.STORY: (StoryModel, "stories"),
+    ContentKind.PAGE: (PageModel, "pages"),
 }
 
 _NAME_FIELD = {
@@ -41,7 +41,7 @@ _NAME_FIELD = {
 def _href(kind: ContentKind, world_id: uuid.UUID, item) -> str:
     _, section = KIND_MODELS[kind]
     if kind == ContentKind.PAGE:
-        return f"/worlds/{world_id}/pagine/{item.slug}"
+        return f"/worlds/{world_id}/pages/{item.slug}"
     return f"/worlds/{world_id}/{section}/{item.id}"
 
 

@@ -2,10 +2,10 @@
 {#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 {% if page %}
 {% set title = "Modifica pagina" %}
-{% set action = "/worlds/" ~ world.id ~ "/pagine/" ~ page.id %}
+{% set action = "/worlds/" ~ world.id ~ "/pages/" ~ page.id %}
 {% else %}
 {% set title = "Nuova pagina" %}
-{% set action = "/worlds/" ~ world.id ~ "/pagine/new" %}
+{% set action = "/worlds/" ~ world.id ~ "/pages/new" %}
 {% endif %}
 <layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
   <editorial.Masthead :title="title" eyebrow="Pagina di riferimento" :crumbs="crumbs" />
@@ -29,9 +29,9 @@
     <div class="row-inline">
       <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
       {% if page %}
-      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/pagine/{{ page.slug }}">Annulla</a>
+      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/pages/{{ page.slug }}">Annulla</a>
       {% else %}
-      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/pagine">Annulla</a>
+      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/pages">Annulla</a>
       {% endif %}
     </div>
   </form>

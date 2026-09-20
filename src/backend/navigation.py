@@ -100,17 +100,16 @@ def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
 
 
 # section id (used for the active state and counts), label, mark, URL path.
-# The path is explicit because the HTML routes are not always the Italian
-# section name (characters/npcs are English paths); deriving it from the id is
-# what produced 404 links from the rail and the overview.
+# The path is always English while the section id stays Italian; the two are
+# separate so deriving an href from the id cannot produce a 404.
 WORLD_SECTIONS: tuple[tuple[str, str, str, str | None], ...] = (
     ("mondo", "Panoramica", "mondo", None),
     ("personaggi", "Personaggi", "personaggi", "characters"),
     ("npc", "NPC", "npc", "npcs"),
-    ("luoghi", "Luoghi", "luoghi", "luoghi"),
-    ("sessioni", "Sessioni", "sessioni", "sessioni"),
-    ("storie", "Storie", "storie", "storie"),
-    ("pagine", "Pagine", "pagine", "pagine"),
+    ("luoghi", "Luoghi", "luoghi", "places"),
+    ("sessioni", "Sessioni", "sessioni", "sessions"),
+    ("storie", "Storie", "storie", "stories"),
+    ("pagine", "Pagine", "pagine", "pages"),
 )
 
 
@@ -140,9 +139,9 @@ def world_nav(
 QUICK_SECTIONS: tuple[tuple[str, str, str, str, str, str], ...] = (
     ("personaggi", "Personaggi", "personaggi", "Schede", "vermilion", "characters"),
     ("npc", "NPC", "npc", "Solo Master", "plum", "npcs"),
-    ("luoghi", "Luoghi", "luoghi", "Atlante", "forest", "luoghi"),
-    ("sessioni", "Sessioni", "sessioni", "Registro", "cobalt", "sessioni"),
-    ("storie", "Storie", "storie", "Archi", "ochre", "storie"),
+    ("luoghi", "Luoghi", "luoghi", "Atlante", "forest", "places"),
+    ("sessioni", "Sessioni", "sessioni", "Registro", "cobalt", "sessions"),
+    ("storie", "Storie", "storie", "Archi", "ochre", "stories"),
 )
 
 

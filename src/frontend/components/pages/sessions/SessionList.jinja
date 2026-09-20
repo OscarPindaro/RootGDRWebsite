@@ -9,7 +9,7 @@
     lede="Dalla più recente. Ogni sessione ha un colore che la segue anche nelle timeline e nelle schede dei personaggi."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessioni/new">Nuova sessione</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessions/new">Nuova sessione</a>
     {% endif %}
   </editorial.Masthead>
 
@@ -22,7 +22,7 @@
       <span class="eyebrow"></span>
     </div>
     {% for number, session in rows %}
-    <a class="ledger__row" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}" style="--c: var(--{{ session.tint }})">
+    <a class="ledger__row" href="/worlds/{{ world.id }}/sessions/{{ session.id }}" style="--c: var(--{{ session.tint }})">
       <span class="ledger__num"><span class="sdot"></span>{{ '%02d' | format(number) }}</span>
       <span class="ledger__date">{{ session.in_world_date }}{% if session.real_date %}<br>{{ session.real_date }}{% endif %}</span>
       <span class="ledger__main">
@@ -42,7 +42,7 @@
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
   <div class="rowlist">
     {% for draft in drafts %}
-    <a class="row" href="/worlds/{{ world.id }}/sessioni/{{ draft.id }}" style="--c: var(--{{ draft.tint }})">
+    <a class="row" href="/worlds/{{ world.id }}/sessions/{{ draft.id }}" style="--c: var(--{{ draft.tint }})">
       <span><span class="row__name">{{ draft.title }}</span><br><span class="row__desc">{{ draft.in_world_date }}</span></span>
       <span class="row__meta"><span class="pill pill--draft">Bozza</span></span>
     </a>

@@ -121,7 +121,7 @@ async def world_overview_page(
     role = role_for_world(world, user)
     overview = await build_overview(db, world)
     pages = [
-        PageLink(label=page.title, href=f"/worlds/{world.id}/pagine/{page.slug}")
+        PageLink(label=page.title, href=f"/worlds/{world.id}/pages/{page.slug}")
         for page in await rail_pages(db, world.id)
     ]
     return catalog.render(
@@ -149,7 +149,7 @@ async def world_settings_page(
     set_world_id(str(world_id))
     world = await owner_world(db, world_id, user, include_members=True)
     pages = [
-        PageLink(label=page.title, href=f"/worlds/{world.id}/pagine/{page.slug}")
+        PageLink(label=page.title, href=f"/worlds/{world.id}/pages/{page.slug}")
         for page in await rail_pages(db, world.id)
     ]
     return catalog.render(

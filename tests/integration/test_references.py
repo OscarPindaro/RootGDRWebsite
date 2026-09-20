@@ -48,7 +48,7 @@ async def test_resolution_resolves_typed_and_plain_names(
 
     assert plain is not None and plain.kind == ContentKind.PLACE
     assert typed is not None and typed.id == place.id
-    assert typed.href == f"/worlds/{world.id}/luoghi/{place.id}"
+    assert typed.href == f"/worlds/{world.id}/places/{place.id}"
 
 
 async def test_unknown_and_ambiguous_names_do_not_resolve(

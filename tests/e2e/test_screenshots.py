@@ -54,7 +54,7 @@ def test_capture_important_pages() -> None:
     pages = [
         "/worlds",
         f"/worlds/{world_id}",
-        f"/worlds/{world_id}/luoghi",
+        f"/worlds/{world_id}/places",
         "/settings",
     ]
     if character_id:

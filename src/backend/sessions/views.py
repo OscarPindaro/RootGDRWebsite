@@ -37,12 +37,12 @@ def _crumbs(world, *extra: Crumb) -> list[Crumb]:
     return [
         Crumb(label="Mondi", href="/worlds"),
         Crumb(label=world.name, href=f"/worlds/{world.id}"),
-        Crumb(label="Sessioni", href=f"/worlds/{world.id}/sessioni"),
+        Crumb(label="Sessioni", href=f"/worlds/{world.id}/sessions"),
         *extra,
     ]
 
 
-@router.get("/worlds/{world_id}/sessioni", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/sessions", response_class=HTMLResponse)
 async def sessions_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
@@ -69,7 +69,7 @@ async def sessions_page(
     )
 
 
-@router.get("/worlds/{world_id}/sessioni/new", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/sessions/new", response_class=HTMLResponse)
 async def session_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
@@ -93,7 +93,7 @@ async def session_new_page(
     )
 
 
-@router.post("/worlds/{world_id}/sessioni/new")
+@router.post("/worlds/{world_id}/sessions/new")
 async def session_new_submit(
     world_id: uuid.UUID,
     data: SessionCreate,
@@ -101,10 +101,10 @@ async def session_new_submit(
     user: User = Depends(get_current_user),
 ) -> Response:
     session = await create_session(db, world_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/sessioni/{session.id}")
+    return _htmx_redirect(f"/worlds/{world_id}/sessions/{session.id}")
 
 
-@router.get("/worlds/{world_id}/sessioni/{session_id}", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/sessions/{session_id}", response_class=HTMLResponse)
 async def session_detail_page(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
@@ -135,7 +135,7 @@ async def session_detail_page(
 
 
 @router.get(
-    "/worlds/{world_id}/sessioni/{session_id}/edit", response_class=HTMLResponse
+    "/worlds/{world_id}/sessions/{session_id}/edit", response_class=HTMLResponse
 )
 async def session_edit_page(
     world_id: uuid.UUID,
@@ -158,7 +158,7 @@ async def session_edit_page(
         crumbs=_crumbs(
             world,
             Crumb(
-                label=session.title, href=f"/worlds/{world_id}/sessioni/{session_id}"
+                label=session.title, href=f"/worlds/{world_id}/sessions/{session_id}"
             ),
             Crumb(label="Modifica"),
         ),
@@ -166,7 +166,7 @@ async def session_edit_page(
     )
 
 
-@router.post("/worlds/{world_id}/sessioni/{session_id}")
+@router.post("/worlds/{world_id}/sessions/{session_id}")
 async def session_edit_submit(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
@@ -175,10 +175,10 @@ async def session_edit_submit(
     user: User = Depends(get_current_user),
 ) -> Response:
     await update_session(db, world_id, session_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/sessioni/{session_id}")
+    return _htmx_redirect(f"/worlds/{world_id}/sessions/{session_id}")
 
 
-@router.delete("/worlds/{world_id}/sessioni/{session_id}")
+@router.delete("/worlds/{world_id}/sessions/{session_id}")
 async def session_delete(
     world_id: uuid.UUID,
     session_id: uuid.UUID,
@@ -186,4 +186,4 @@ async def session_delete(
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_session(db, world_id, session_id, user)
-    return _htmx_redirect(f"/worlds/{world_id}/sessioni")
+    return _htmx_redirect(f"/worlds/{world_id}/sessions")

@@ -4,14 +4,14 @@
   <editorial.Crumbs :items="crumbs" />
 
   <editorial.Docbar
-    :base="'/worlds/' ~ world.id ~ '/sessioni/' ~ session.id"
+    :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
     :eyebrow="session.in_world_date ~ (' · ' ~ session.real_date|string if session.real_date else '')"
     :locked="session.locked"
     :is_draft="session.is_draft"
     :can_manage="can_manage">
-    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}/edit">Modifica</a>
+    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/sessions/{{ session.id }}/edit">Modifica</a>
     <button class="btn btn--ghost btn--sm" type="button"
-            hx-delete="/worlds/{{ world.id }}/sessioni/{{ session.id }}"
+            hx-delete="/worlds/{{ world.id }}/sessions/{{ session.id }}"
             hx-confirm="Eliminare «{{ session.title }}»?" hx-swap="none">Elimina</button>
   </editorial.Docbar>
 
@@ -31,7 +31,7 @@
     {% if links %}<editorial.Links :groups="links" />{% endif %}
   <nav class="pager" aria-label="Navigazione fra sessioni" style="margin-top: 2.5rem">
     {% if previous %}
-    <a href="/worlds/{{ world.id }}/sessioni/{{ previous[1].id }}">
+    <a href="/worlds/{{ world.id }}/sessions/{{ previous[1].id }}">
       <span class="pager__dir">← Sessione precedente</span>
       <span class="pager__title">{{ '%02d' | format(previous[0]) }} · {{ previous[1].title }}</span>
     </a>
@@ -42,7 +42,7 @@
     </a>
     {% endif %}
     {% if following %}
-    <a href="/worlds/{{ world.id }}/sessioni/{{ following[1].id }}">
+    <a href="/worlds/{{ world.id }}/sessions/{{ following[1].id }}">
       <span class="pager__dir">Sessione successiva →</span>
       <span class="pager__title">{{ '%02d' | format(following[0]) }} · {{ following[1].title }}</span>
     </a>

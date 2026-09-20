@@ -62,7 +62,7 @@ async def _diary(db: AsyncSession, world: WorldModel) -> list[TimelineEntry]:
         TimelineEntry(
             when=session.in_world_date,
             title=session.title,
-            href=f"/worlds/{world.id}/sessioni/{session.id}",
+            href=f"/worlds/{world.id}/sessions/{session.id}",
             text=session.short_description,
             tint=session.tint,
         )
@@ -77,7 +77,7 @@ async def _open_story(db: AsyncSession, world: WorldModel) -> Teaser | None:
     return Teaser(
         kind="In corso" if story.period_label is None else story.period_label,
         title=story.title,
-        href=f"/worlds/{world.id}/storie/{story.id}",
+        href=f"/worlds/{world.id}/stories/{story.id}",
         description=story.short_description,
         tint=story.tint,
     )
@@ -93,7 +93,7 @@ async def _current_place(db: AsyncSession, world: WorldModel) -> Teaser | None:
     return Teaser(
         kind="Luogo",
         title=place.name,
-        href=f"/worlds/{world.id}/luoghi/{place.id}",
+        href=f"/worlds/{world.id}/places/{place.id}",
         description=place.short_description,
         tint=place.tint,
     )

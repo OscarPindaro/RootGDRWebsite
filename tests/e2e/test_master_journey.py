@@ -216,7 +216,7 @@ def test_player_cannot_manage_places() -> None:
 
                 page = player.new_page()
                 page.goto(
-                    f"{base_url}/worlds/{world_id}/luoghi", wait_until="networkidle"
+                    f"{base_url}/worlds/{world_id}/places", wait_until="networkidle"
                 )
                 assert "Atlante" in page.content()
                 assert page.locator('a:has-text("Nuovo luogo")').count() == 0

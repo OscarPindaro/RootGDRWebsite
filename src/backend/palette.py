@@ -33,7 +33,7 @@ class PaletteItem(AppBaseModel):
 def _href(world_id: uuid.UUID, kind: ContentKind, item) -> str:
     _, section = KIND_MODELS[kind]
     if kind == ContentKind.PAGE:
-        return f"/worlds/{world_id}/pagine/{item.slug}"
+        return f"/worlds/{world_id}/pages/{item.slug}"
     return f"/worlds/{world_id}/{section}/{item.id}"
 
 
@@ -77,12 +77,12 @@ async def palette(
                     PaletteItem(
                         kind="Azione",
                         name="Nuova sessione",
-                        href=f"/worlds/{world_id}/sessioni/new",
+                        href=f"/worlds/{world_id}/sessions/new",
                     ),
                     PaletteItem(
                         kind="Azione",
                         name="Nuovo luogo",
-                        href=f"/worlds/{world_id}/luoghi/new",
+                        href=f"/worlds/{world_id}/places/new",
                     ),
                     PaletteItem(
                         kind="Azione",
@@ -97,12 +97,12 @@ async def palette(
                     PaletteItem(
                         kind="Azione",
                         name="Nuova storia",
-                        href=f"/worlds/{world_id}/storie/new",
+                        href=f"/worlds/{world_id}/stories/new",
                     ),
                     PaletteItem(
                         kind="Azione",
                         name="Nuova pagina",
-                        href=f"/worlds/{world_id}/pagine/new",
+                        href=f"/worlds/{world_id}/pages/new",
                     ),
                 ]
             )

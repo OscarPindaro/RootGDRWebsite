@@ -49,7 +49,7 @@ async def world_page(
     label = "Master" if role == WorldRole.MASTER else "Giocatore"
     context = WorldContext(id=str(world.id), name=world.name, role=label)
     pages = [
-        PageLink(label=page.title, href=f"/worlds/{world.id}/pagine/{page.slug}")
+        PageLink(label=page.title, href=f"/worlds/{world.id}/pages/{page.slug}")
         for page in await rail_pages(db, world.id)
     ]
     return world, context, world_nav(str(world.id), active, counts), pages

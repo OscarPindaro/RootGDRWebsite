@@ -4,14 +4,14 @@
   <editorial.Crumbs :items="crumbs" />
 
   <editorial.Docbar
-    :base="'/worlds/' ~ world.id ~ '/storie/' ~ story.id"
+    :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
     :eyebrow="'Storia · ' ~ ('in corso' if story.status == 'in_corso' else 'chiusa')"
     :locked="story.locked"
     :is_draft="story.is_draft"
     :can_manage="can_manage">
-    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/storie/{{ story.id }}/edit">Modifica</a>
+    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/stories/{{ story.id }}/edit">Modifica</a>
     <button class="btn btn--ghost btn--sm" type="button"
-            hx-delete="/worlds/{{ world.id }}/storie/{{ story.id }}"
+            hx-delete="/worlds/{{ world.id }}/stories/{{ story.id }}"
             hx-confirm="Eliminare «{{ story.title }}»?" hx-swap="none">Elimina</button>
   </editorial.Docbar>
 
@@ -44,7 +44,7 @@
         </div>
         <div class="links__group">
           {% for session in story.sessions %}
-          <a class="links__item" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}" style="--c: var(--{{ session.tint }})">
+          <a class="links__item" href="/worlds/{{ world.id }}/sessions/{{ session.id }}" style="--c: var(--{{ session.tint }})">
             <span class="links__dot"></span> {{ session.in_world_date }} · {{ session.title }}
           </a>
           {% endfor %}

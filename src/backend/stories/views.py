@@ -43,12 +43,12 @@ def _crumbs(world, *extra: Crumb) -> list[Crumb]:
     return [
         Crumb(label="Mondi", href="/worlds"),
         Crumb(label=world.name, href=f"/worlds/{world.id}"),
-        Crumb(label="Storie", href=f"/worlds/{world.id}/storie"),
+        Crumb(label="Storie", href=f"/worlds/{world.id}/stories"),
         *extra,
     ]
 
 
-@router.get("/worlds/{world_id}/storie", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/stories", response_class=HTMLResponse)
 async def stories_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
@@ -86,7 +86,7 @@ async def _form_context(db, world_id, user, story):
     return world, context, nav, rail_pages, options
 
 
-@router.get("/worlds/{world_id}/storie/new", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/stories/new", response_class=HTMLResponse)
 async def story_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
@@ -112,7 +112,7 @@ async def story_new_page(
     )
 
 
-@router.post("/worlds/{world_id}/storie/new")
+@router.post("/worlds/{world_id}/stories/new")
 async def story_new_submit(
     world_id: uuid.UUID,
     data: StoryCreate,
@@ -120,10 +120,10 @@ async def story_new_submit(
     user: User = Depends(get_current_user),
 ) -> Response:
     story = await create_story(db, world_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/storie/{story.id}")
+    return _htmx_redirect(f"/worlds/{world_id}/stories/{story.id}")
 
 
-@router.get("/worlds/{world_id}/storie/{story_id}", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/stories/{story_id}", response_class=HTMLResponse)
 async def story_detail_page(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
@@ -150,7 +150,7 @@ async def story_detail_page(
     )
 
 
-@router.get("/worlds/{world_id}/storie/{story_id}/edit", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/stories/{story_id}/edit", response_class=HTMLResponse)
 async def story_edit_page(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
@@ -175,14 +175,14 @@ async def story_edit_page(
         sessions=session_options,
         crumbs=_crumbs(
             world,
-            Crumb(label=story.title, href=f"/worlds/{world_id}/storie/{story_id}"),
+            Crumb(label=story.title, href=f"/worlds/{world_id}/stories/{story_id}"),
             Crumb(label="Modifica"),
         ),
         current_user=user,
     )
 
 
-@router.post("/worlds/{world_id}/storie/{story_id}")
+@router.post("/worlds/{world_id}/stories/{story_id}")
 async def story_edit_submit(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
@@ -191,10 +191,10 @@ async def story_edit_submit(
     user: User = Depends(get_current_user),
 ) -> Response:
     await update_story(db, world_id, story_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/storie/{story_id}")
+    return _htmx_redirect(f"/worlds/{world_id}/stories/{story_id}")
 
 
-@router.delete("/worlds/{world_id}/storie/{story_id}")
+@router.delete("/worlds/{world_id}/stories/{story_id}")
 async def story_delete(
     world_id: uuid.UUID,
     story_id: uuid.UUID,
@@ -202,4 +202,4 @@ async def story_delete(
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_story(db, world_id, story_id, user)
-    return _htmx_redirect(f"/worlds/{world_id}/storie")
+    return _htmx_redirect(f"/worlds/{world_id}/stories")

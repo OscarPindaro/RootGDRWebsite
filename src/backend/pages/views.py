@@ -38,12 +38,12 @@ def _crumbs(world, *extra: Crumb) -> list[Crumb]:
     return [
         Crumb(label="Mondi", href="/worlds"),
         Crumb(label=world.name, href=f"/worlds/{world.id}"),
-        Crumb(label="Pagine", href=f"/worlds/{world.id}/pagine"),
+        Crumb(label="Pagine", href=f"/worlds/{world.id}/pages"),
         *extra,
     ]
 
 
-@router.get("/worlds/{world_id}/pagine", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/pages", response_class=HTMLResponse)
 async def pages_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
@@ -68,7 +68,7 @@ async def pages_page(
     )
 
 
-@router.get("/worlds/{world_id}/pagine/new", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/pages/new", response_class=HTMLResponse)
 async def page_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
@@ -91,7 +91,7 @@ async def page_new_page(
     )
 
 
-@router.post("/worlds/{world_id}/pagine/new")
+@router.post("/worlds/{world_id}/pages/new")
 async def page_new_submit(
     world_id: uuid.UUID,
     data: PageCreate,
@@ -99,10 +99,10 @@ async def page_new_submit(
     user: User = Depends(get_current_user),
 ) -> Response:
     page = await create_page(db, world_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/pagine/{page.slug}")
+    return _htmx_redirect(f"/worlds/{world_id}/pages/{page.slug}")
 
 
-@router.get("/worlds/{world_id}/pagine/{slug}", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/pages/{slug}", response_class=HTMLResponse)
 async def page_detail_page(
     world_id: uuid.UUID,
     slug: str,
@@ -133,7 +133,7 @@ async def page_detail_page(
     )
 
 
-@router.get("/worlds/{world_id}/pagine/{page_id}/edit", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/pages/{page_id}/edit", response_class=HTMLResponse)
 async def page_edit_page(
     world_id: uuid.UUID,
     page_id: uuid.UUID,
@@ -154,14 +154,14 @@ async def page_edit_page(
         tints=tint_options(),
         crumbs=_crumbs(
             world,
-            Crumb(label=page.slug, href=f"/worlds/{world_id}/pagine/{page.slug}"),
+            Crumb(label=page.slug, href=f"/worlds/{world_id}/pages/{page.slug}"),
             Crumb(label="Modifica"),
         ),
         current_user=user,
     )
 
 
-@router.post("/worlds/{world_id}/pagine/{page_id}")
+@router.post("/worlds/{world_id}/pages/{page_id}")
 async def page_edit_submit(
     world_id: uuid.UUID,
     page_id: uuid.UUID,
@@ -170,10 +170,10 @@ async def page_edit_submit(
     user: User = Depends(get_current_user),
 ) -> Response:
     page = await update_page(db, world_id, page_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/pagine/{page.slug}")
+    return _htmx_redirect(f"/worlds/{world_id}/pages/{page.slug}")
 
 
-@router.delete("/worlds/{world_id}/pagine/{page_id}")
+@router.delete("/worlds/{world_id}/pages/{page_id}")
 async def page_delete(
     world_id: uuid.UUID,
     page_id: uuid.UUID,
@@ -181,4 +181,4 @@ async def page_delete(
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_page(db, world_id, page_id, user)
-    return _htmx_redirect(f"/worlds/{world_id}/pagine")
+    return _htmx_redirect(f"/worlds/{world_id}/pages")

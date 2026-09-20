@@ -20,7 +20,7 @@ def test_render_markdown_resolves_a_target_to_semantic_markup() -> None:
         id="1",
         kind=ContentKind.PLACE,
         tint="p8",
-        href="/worlds/w/luoghi/1",
+        href="/worlds/w/places/1",
         name="Il Guado Spezzato",
     )
     html = str(
@@ -29,7 +29,7 @@ def test_render_markdown_resolves_a_target_to_semantic_markup() -> None:
     assert 'class="mention"' in html
     assert 'data-kind="luogo"' in html
     assert 'data-color="p8"' in html
-    assert 'href="/worlds/w/luoghi/1"' in html
+    assert 'href="/worlds/w/places/1"' in html
 
 
 def test_render_markdown_marks_a_missing_reference() -> None:

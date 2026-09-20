@@ -43,18 +43,18 @@ UpdateFn = Callable[..., Awaitable[Any]]
 _UPDATERS: dict[str, tuple[UpdateFn, type]] = {
     "characters": (update_character, CharacterUpdate),
     "npcs": (update_npc, NpcUpdate),
-    "luoghi": (update_place, PlaceUpdate),
-    "sessioni": (update_session, SessionUpdate),
-    "storie": (update_story, StoryUpdate),
-    "pagine": (update_page, PageUpdate),
+    "places": (update_place, PlaceUpdate),
+    "sessions": (update_session, SessionUpdate),
+    "stories": (update_story, StoryUpdate),
+    "pages": (update_page, PageUpdate),
 }
 
 _FIELDS = {"locked", "is_draft"}
 
 
 def _detail_url(kind: str, world_id: uuid.UUID, item: Any) -> str:
-    if kind == "pagine":
-        return f"/worlds/{world_id}/pagine/{item.slug}"
+    if kind == "pages":
+        return f"/worlds/{world_id}/pages/{item.slug}"
     return f"/worlds/{world_id}/{kind}/{item.id}"
 
 

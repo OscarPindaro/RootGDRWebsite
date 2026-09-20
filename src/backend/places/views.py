@@ -41,7 +41,7 @@ def _crumbs(world, *extra: Crumb) -> list[Crumb]:
     return [
         Crumb(label="Mondi", href="/worlds"),
         Crumb(label=world.name, href=f"/worlds/{world.id}"),
-        Crumb(label="Luoghi", href=f"/worlds/{world.id}/luoghi"),
+        Crumb(label="Luoghi", href=f"/worlds/{world.id}/places"),
         *extra,
     ]
 
@@ -49,7 +49,7 @@ def _crumbs(world, *extra: Crumb) -> list[Crumb]:
 def _card(place, world_id: uuid.UUID) -> CardItem:
     return CardItem(
         name=place.name,
-        href=f"/worlds/{world_id}/luoghi/{place.id}",
+        href=f"/worlds/{world_id}/places/{place.id}",
         tint=place.tint,
         shape=place.shape,
         image_url=place.image_url,
@@ -57,7 +57,7 @@ def _card(place, world_id: uuid.UUID) -> CardItem:
     )
 
 
-@router.get("/worlds/{world_id}/luoghi", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/places", response_class=HTMLResponse)
 async def places_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
@@ -84,7 +84,7 @@ async def places_page(
     )
 
 
-@router.get("/worlds/{world_id}/luoghi/new", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/places/new", response_class=HTMLResponse)
 async def place_new_page(
     world_id: uuid.UUID,
     catalog: Catalog = Depends(get_catalog_dep),
@@ -109,7 +109,7 @@ async def place_new_page(
     )
 
 
-@router.post("/worlds/{world_id}/luoghi/new")
+@router.post("/worlds/{world_id}/places/new")
 async def place_new_submit(
     world_id: uuid.UUID,
     data: PlaceCreate,
@@ -117,10 +117,10 @@ async def place_new_submit(
     user: User = Depends(get_current_user),
 ) -> Response:
     place = await create_place(db, world_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/luoghi/{place.id}")
+    return _htmx_redirect(f"/worlds/{world_id}/places/{place.id}")
 
 
-@router.get("/worlds/{world_id}/luoghi/{place_id}", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/places/{place_id}", response_class=HTMLResponse)
 async def place_detail_page(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
@@ -148,7 +148,7 @@ async def place_detail_page(
     )
 
 
-@router.get("/worlds/{world_id}/luoghi/{place_id}/edit", response_class=HTMLResponse)
+@router.get("/worlds/{world_id}/places/{place_id}/edit", response_class=HTMLResponse)
 async def place_edit_page(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
@@ -170,14 +170,14 @@ async def place_edit_page(
         tints=tint_options(),
         crumbs=_crumbs(
             world,
-            Crumb(label=place.name, href=f"/worlds/{world_id}/luoghi/{place_id}"),
+            Crumb(label=place.name, href=f"/worlds/{world_id}/places/{place_id}"),
             Crumb(label="Modifica"),
         ),
         current_user=user,
     )
 
 
-@router.post("/worlds/{world_id}/luoghi/{place_id}")
+@router.post("/worlds/{world_id}/places/{place_id}")
 async def place_edit_submit(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
@@ -186,10 +186,10 @@ async def place_edit_submit(
     user: User = Depends(get_current_user),
 ) -> Response:
     await update_place(db, world_id, place_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/luoghi/{place_id}")
+    return _htmx_redirect(f"/worlds/{world_id}/places/{place_id}")
 
 
-@router.delete("/worlds/{world_id}/luoghi/{place_id}")
+@router.delete("/worlds/{world_id}/places/{place_id}")
 async def place_delete(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
@@ -197,10 +197,10 @@ async def place_delete(
     user: User = Depends(get_current_user),
 ) -> Response:
     await delete_place(db, world_id, place_id, user)
-    return _htmx_redirect(f"/worlds/{world_id}/luoghi")
+    return _htmx_redirect(f"/worlds/{world_id}/places")
 
 
-@router.post("/worlds/{world_id}/luoghi/{place_id}/image")
+@router.post("/worlds/{world_id}/places/{place_id}/image")
 async def place_image_submit(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
@@ -210,10 +210,10 @@ async def place_image_submit(
     filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:
     await upload_place_image(db, world_id, place_id, image, user, filesystem)
-    return _htmx_redirect(f"/worlds/{world_id}/luoghi/{place_id}")
+    return _htmx_redirect(f"/worlds/{world_id}/places/{place_id}")
 
 
-@router.post("/worlds/{world_id}/luoghi/{place_id}/current")
+@router.post("/worlds/{world_id}/places/{place_id}/current")
 async def place_set_current(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
@@ -222,10 +222,10 @@ async def place_set_current(
 ) -> Response:
     """Mark this clearing as where the party currently is."""
     await set_current_place(db, world_id, place_id, user)
-    return _htmx_redirect(f"/worlds/{world_id}/luoghi/{place_id}")
+    return _htmx_redirect(f"/worlds/{world_id}/places/{place_id}")
 
 
-@router.post("/worlds/{world_id}/luoghi/current/clear")
+@router.post("/worlds/{world_id}/places/current/clear")
 async def place_clear_current(
     world_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),

@@ -8,13 +8,13 @@
     lede="Ogni radura ha un simbolo e un colore, così si riconosce a colpo d'occhio in una mappa, in una sessione o in un elenco."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/luoghi/new">Nuovo luogo</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/places/new">Nuovo luogo</a>
     {% endif %}
   </editorial.Masthead>
 
   {% if places %}
   {% set featured = places[0] %}
-  <a class="feature" href="/worlds/{{ world.id }}/luoghi/{{ featured.id }}" style="margin-bottom: 2.5rem">
+  <a class="feature" href="/worlds/{{ world.id }}/places/{{ featured.id }}" style="margin-bottom: 2.5rem">
     <div class="feature__media" style="display: grid; place-items: center; background: var(--surface)">
       {% if featured.image_url %}
       <img src="{{ featured.image_url }}" alt="">
@@ -33,7 +33,7 @@
   <editorial.SectionHead title="Le altre radure" eyebrow="Resto dell'atlante" />
   <div class="rowlist">
     {% for place in places[1:] %}
-    <a class="row" href="/worlds/{{ world.id }}/luoghi/{{ place.id }}" style="--c: var(--{{ place.tint }})">
+    <a class="row" href="/worlds/{{ world.id }}/places/{{ place.id }}" style="--c: var(--{{ place.tint }})">
       <editorial.Plogo :tint="place.tint" :shape="place.shape" />
       <span>
         <span class="row__name">{{ place.name }}</span><br>
