@@ -143,25 +143,31 @@ def test_player_cannot_manage_places() -> None:
         browser = playwright.chromium.launch(headless=True)
         context = browser.new_context()
         try:
-            # Create the player and add them to the admin's first world.
-            context.request.post(
-                f"{base_url}/users/", data={"name": "Player", "email": email}
+            # Invite the player (admin only), then sign them in via the
+            # development login, which accepts a pending invitation.
+            authenticate_context(context, base_url, ADMIN)
+            invite = context.request.post(
+                f"{base_url}/admin/users/invite",
+                data={"email": email, "role": "member"},
+                headers={"HX-Request": "true"},
             )
-            admin_context = context
-            authenticate_context(admin_context, base_url, ADMIN)
+            assert invite.ok, invite.text()
             worlds = context.request.get(f"{base_url}/api/worlds/").json()["data"]
             assert worlds, "expected at least one world from the seed"
             world_id = worlds[0]["id"]
-            context.request.post(
-                f"{base_url}/worlds/{world_id}/members",
-                form={"email": email, "role": "player"},
-                headers={"HX-Request": "true"},
-            )
 
-            # A player sees the places list but not the master-only action.
+            # Sign the player in first (this creates their user from the
+            # invitation), then add them to the world by email.
             player = browser.new_context()
             try:
                 authenticate_context(player, base_url, email)
+                member = context.request.post(
+                    f"{base_url}/worlds/{world_id}/members",
+                    form={"email": email, "role": "player"},
+                    headers={"HX-Request": "true"},
+                )
+                assert member.ok, member.text()
+
                 page = player.new_page()
                 page.goto(
                     f"{base_url}/worlds/{world_id}/luoghi", wait_until="networkidle"

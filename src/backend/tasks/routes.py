@@ -3,7 +3,9 @@ import uuid
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..auth.dependencies import get_current_user
 from ..dependencies import get_db_session
+from ..users.schemas import User
 from .exceptions import TaskNotFound
 from .repository import TaskRepository
 from .schemas import TaskResponse
@@ -22,6 +24,7 @@ router = APIRouter(prefix="/tasks", tags=["tasks"])
 async def get_task(
     task_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session),
+    _: User = Depends(get_current_user),
 ):
     """Poll a task's status/completion — e.g. after POST /projects."""
     task = await TaskRepository(db).get(task_id)
