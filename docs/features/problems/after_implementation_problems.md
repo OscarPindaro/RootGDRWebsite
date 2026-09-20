@@ -53,3 +53,12 @@ Li organizzerei magari in due griglie adiacenti così sono organizzati un po' me
 ![tua implemntazione personaggio](image-8.png)
 ![prototipo creazione personaggio in alto](image-6.png)
 ![prototipo creazione personaggio in basso](image-7.png)
+
+Regarding the retrospective:
+> Chiarimenti che mi avrebbero evitato errori: la regola URL italiano/inglese (il 404 di Personaggi/NPC nasce solo da lì: ho indovinato invece di confrontare col registro delle route); se il prototipo è il contratto di markup e classi o solo un riferimento; un definition of done per ticket che includa uno screenshot di confronto.
+- Se possibvile, ti darò gli screenshot così puoi fare il paragone. riguardo la lingua, scriviamo nell'agent.md che tutto il sorgente deve essere in inglese, anceh endpoints. La lingua della UI è in italiano perchè io sono in italiano.
+
+Aggiungiamo in Agents.md il fatto di rileggere tutte le source dopo una ricompattazione.
+
+> Ciclo con reload — il mio era modifica → restart container (6 s) → screenshot; --reload nel harness di test lo porta sotto il secondo.
+Importantissimo, abbassiamo al minimo i tempi di iterazione se no non finiamo più-

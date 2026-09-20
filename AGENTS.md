@@ -1,7 +1,10 @@
 # Project Guidelines
 
 This file is reserved for coding agents.
-Be concise, both when talking and writing code.
+Be concise, both when talking and writing code. In general. LLMs tend to use a lot of justapoxitions when talking:
+- it's not (only) X, it's Y
+- it's this thing that should be done with a explicit decision, not with other patches
+Please, avoid this unless it makes sense to write like this. the second example especially could have stopped at the comma, you are adding useless words that don't say anything new.
 Every line of code is a potential liablity, so a solution should not add useless complexity.
 A change done in a file in general should not have a ripple effect on a very distant unrelated file.
 If there is a bug, the bug should be as much as possible local to the place where it happened.
