@@ -47,6 +47,9 @@ class WorldModel(Base, UUIDv7PrimaryKeyMixin, TimestampMixin):
     created_by: Mapped[UserModel] = relationship(
         foreign_keys=[created_by_id], lazy="select"
     )
+    current_place_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("places.id", ondelete="SET NULL"), nullable=True
+    )
     memberships: Mapped[list[WorldMembershipModel]] = relationship(
         back_populates="world",
         lazy="select",

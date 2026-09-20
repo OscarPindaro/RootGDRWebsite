@@ -1,0 +1,50 @@
+{#def world, world_context, nav, places, current_place_id=None, can_manage=False, crumbs, current_user=None #}
+{#css common/Button.css, layout/UserMenu.css #}
+{% set eyebrow_text = (places | length) ~ (' luogo' if (places | length) == 1 else ' luoghi') %}
+<layout.Page title="Luoghi" current_user={{ current_user }} :world="world_context" :nav="nav" active="luoghi">
+  <editorial.Masthead
+    title="Atlante dei luoghi"
+    :eyebrow="eyebrow_text"
+    lede="Ogni radura ha un simbolo e un colore, così si riconosce a colpo d'occhio in una mappa, in una sessione o in un elenco."
+    :crumbs="crumbs">
+    {% if can_manage %}
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/luoghi/new">Nuovo luogo</a>
+    {% endif %}
+  </editorial.Masthead>
+
+  {% if places %}
+  {% set featured = places[0] %}
+  <a class="feature" href="/worlds/{{ world.id }}/luoghi/{{ featured.id }}" style="margin-bottom: 2.5rem">
+    <div class="feature__media" style="display: grid; place-items: center; background: var(--surface)">
+      {% if featured.image_url %}
+      <img src="{{ featured.image_url }}" alt="">
+      {% else %}
+      <editorial.Plogo :tint="featured.tint" :shape="featured.shape" class="plogo plogo--lg" />
+      {% endif %}
+    </div>
+    <div class="feature__body">
+      <span class="eyebrow">{{ 'Scena corrente' if featured.id == current_place_id else 'In evidenza' }}</span>
+      <h2 class="feature__title">{{ featured.name }}</h2>
+      <p class="lede">{{ featured.short_description }}</p>
+    </div>
+  </a>
+
+  {% if (places | length) > 1 %}
+  <editorial.SectionHead title="Le altre radure" eyebrow="Resto dell'atlante" />
+  <div class="rowlist">
+    {% for place in places[1:] %}
+    <a class="row" href="/worlds/{{ world.id }}/luoghi/{{ place.id }}" style="--c: var(--{{ place.tint }})">
+      <editorial.Plogo :tint="place.tint" :shape="place.shape" />
+      <span>
+        <span class="row__name">{{ place.name }}</span><br>
+        <span class="row__desc">{{ place.short_description }}</span>
+      </span>
+      <span class="row__meta">{% if place.id == current_place_id %}Scena corrente{% endif %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty">Nessun luogo. L'atlante è vuoto.</div>
+  {% endif %}
+</layout.Page>

@@ -12,6 +12,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..navigation import TimelineEntry
+from ..places.models import PlaceModel
 from .models import WorldModel
 
 CountFn = Callable[[AsyncSession, uuid.UUID], Awaitable[int]]
@@ -62,4 +63,16 @@ async def _open_story(db: AsyncSession, world: WorldModel) -> Teaser | None:
 
 
 async def _current_place(db: AsyncSession, world: WorldModel) -> Teaser | None:
-    return None
+    """The clearing the party is currently in, if the master set one."""
+    if world.current_place_id is None:
+        return None
+    place = await db.get(PlaceModel, world.current_place_id)
+    if place is None or place.world_id != world.id:
+        return None
+    return Teaser(
+        kind="Luogo",
+        title=place.name,
+        href=f"/worlds/{world.id}/luoghi/{place.id}",
+        description=place.short_description,
+        tint=place.tint,
+    )

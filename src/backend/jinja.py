@@ -126,7 +126,7 @@ def get_catalog(
     catalog.jinja_env.filters["markdown"] = _markdown
     catalog.jinja_env.globals["mark"] = mark_svg
     catalog.jinja_env.globals["kind_mark"] = kind_svg
-    catalog.jinja_env.globals["shape"] = shape_mark
+    catalog.jinja_env.globals["shape_mark"] = shape_mark
     catalog.jinja_env.globals["global_nav"] = global_nav
     catalog.jinja_env.globals["world_nav"] = world_nav
     return catalog

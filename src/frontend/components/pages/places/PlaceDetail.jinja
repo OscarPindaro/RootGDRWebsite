@@ -1,0 +1,47 @@
+{#def world, world_context, nav, place, is_current=False, can_manage=False, crumbs, current_user=None #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css #}
+<layout.Page :title="place.name" current_user={{ current_user }} :world="world_context" :nav="nav" active="luoghi">
+  <editorial.Crumbs :items="crumbs" />
+
+  <div class="docbar">
+    <span class="eyebrow">Luogo</span>
+    <div class="docbar__actions">
+      {% if is_current %}<span class="pill pill--forest">Scena corrente</span>{% endif %}
+      {% if place.locked %}<span class="pill pill--plain">Bloccato</span>{% endif %}
+      {% if place.is_draft %}<span class="pill pill--draft">Bozza</span>{% endif %}
+      {% if can_manage %}
+      {% if is_current %}
+      <button class="btn btn--ghost btn--sm" type="button"
+              hx-post="/worlds/{{ world.id }}/luoghi/current/clear" hx-swap="none">Rimuovi scena corrente</button>
+      {% else %}
+      <button class="btn btn--ghost btn--sm" type="button"
+              hx-post="/worlds/{{ world.id }}/luoghi/{{ place.id }}/current" hx-swap="none">Scena corrente</button>
+      {% endif %}
+      <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/luoghi/{{ place.id }}/edit">Modifica</a>
+      <button class="btn btn--ghost btn--sm" type="button"
+              hx-delete="/worlds/{{ world.id }}/luoghi/{{ place.id }}"
+              hx-confirm="Eliminare {{ place.name }}?" hx-swap="none">Elimina</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="docpage">
+    <div>
+      <div class="document">
+        <div class="document__head">
+          <div class="document__face">
+            <editorial.Face :tint="place.tint" :shape="place.shape" :image_url="place.image_url" />
+          </div>
+          <div class="document__id">
+            <h1 class="display">{{ place.name }}</h1>
+            {% if place.short_description %}<p class="lede">{{ place.short_description }}</p>{% endif %}
+          </div>
+        </div>
+        <div class="document__page">
+          <span class="eyebrow">Descrizione</span>
+          <div class="prose">{{ place.body | markdown }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</layout.Page>
