@@ -11,6 +11,7 @@ import typer
 from rich.console import Console
 
 from .commands.content import register_commands as register_content_commands
+from .commands.dev import register_commands as register_dev_commands
 from .commands.environment import env_app
 from .commands.install import register_commands as register_install_commands
 from .commands.prototype import register_commands as register_prototype_commands
@@ -85,6 +86,7 @@ app.add_typer(env_app, name="env")
 app.add_typer(test_app, name="test")
 register_install_commands(app, is_dry_run=lambda: _dry_run)
 register_content_commands(app)
+register_dev_commands(app)
 register_prototype_commands(app)
 register_screenshot_command(app)
 

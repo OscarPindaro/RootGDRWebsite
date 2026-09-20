@@ -1,3 +1,4 @@
+import os
 from datetime import UTC, datetime
 
 from . import compose, config, ports, state
@@ -12,6 +13,7 @@ def up(
     *,
     database_port: int = 0,
     backend_port: int = 0,
+    reload: bool = False,
 ) -> state.EnvironmentState:
     root = state.worktree_root()
     existing = state.read(root)
@@ -20,6 +22,13 @@ def up(
             raise EnvironmentError(
                 f"A {existing.mode.value} environment is already active for this worktree."
             )
+        if existing.reload != reload:
+            existing.reload = reload
+            state.write(existing, root)
+            try:
+                compose.up(existing, build=False)
+            except compose.ComposeError as error:
+                raise EnvironmentError(str(error)) from error
         return existing
     try:
         allocated = ports.allocate(mode, database_port, backend_port)
@@ -34,6 +43,7 @@ def up(
         compose_project=state.project_name(root),
         ports=allocated,
         config=active_config,
+        reload=reload,
     )
     state.write(environment_state, root)
     try:
@@ -73,3 +83,18 @@ def status() -> tuple[state.EnvironmentState | None, str]:
         return environment_state, compose.status_text(environment_state)
     except compose.ComposeError as error:
         raise EnvironmentError(str(error)) from error
+
+
+def activate() -> state.EnvironmentState:
+    """Point direct backend imports at the active environment's configuration.
+
+    Commands that touch the database in-process (``content seed``) need
+    ``ENV_FILE`` / ``YAML_CONFIG_FILE`` to name the active environment, the way
+    the documented direct-pytest invocation does.
+    """
+    environment_state = state.read()
+    if environment_state is None:
+        raise EnvironmentError("No active environment for this worktree.")
+    os.environ["ENV_FILE"] = str(environment_state.config.env)
+    os.environ["YAML_CONFIG_FILE"] = str(environment_state.config.local)
+    return environment_state

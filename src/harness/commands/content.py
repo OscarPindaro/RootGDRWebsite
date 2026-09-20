@@ -151,12 +151,8 @@ def rebuild(
     _run(work)
 
 
-@content_app.command()
-def seed(
-    email: Annotated[str, typer.Option("--email", help="Owner email")],
-    source: Annotated[Path | None, typer.Option("--file", exists=True)] = None,
-) -> None:
-    """Create the demo world (Boscochiaro) with a small, deterministic dataset."""
+def seed_reference(email: str, source: Path | None = None) -> None:
+    """Create or update the reference world. Idempotent by natural key."""
 
     async def work(db) -> None:
         actor = await _actor(db, email)
@@ -165,6 +161,15 @@ def seed(
         console.print(f"[green]Seeded[/green] {world.name} ({world.id})")
 
     _run(work)
+
+
+@content_app.command()
+def seed(
+    email: Annotated[str, typer.Option("--email", help="Owner email")],
+    source: Annotated[Path | None, typer.Option("--file", exists=True)] = None,
+) -> None:
+    """Create the demo world (Boscochiaro) with a small, deterministic dataset."""
+    seed_reference(email, source)
 
 
 def _demo_bundle() -> WorldBundle:

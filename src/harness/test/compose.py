@@ -72,6 +72,8 @@ def _environment(environment_state: EnvironmentState) -> dict[str, str]:
         HARNESS_CONFIG_FILE=str(environment_state.config.docker),
         HARNESS_ENV_FILE=str(environment_state.config.env),
         HARNESS_PROJECT=environment_state.compose_project,
+        # Empty when reload is off, so the backend command is unchanged.
+        HARNESS_BACKEND_RELOAD="--reload" if environment_state.reload else "",
         # Compose engines disagree on how relative volume paths are resolved
         # (file-relative vs cwd-relative). Pass the repo root explicitly so
         # bind mounts point at the same place under docker and podman.
@@ -104,12 +106,15 @@ def _run(environment_state: EnvironmentState, *args: str) -> str:
     return result.stdout.strip()
 
 
-def up(environment_state: EnvironmentState) -> None:
+def up(environment_state: EnvironmentState, *, build: bool = True) -> None:
     _run(environment_state, "up", "--detach", "--wait", "db")
     _run_migrations(environment_state)
     if environment_state.mode == EnvironmentMode.LOCAL:
         return
-    _run(environment_state, "up", "--detach", "--build")
+    args = ["up", "--detach"]
+    if build:
+        args.append("--build")
+    _run(environment_state, *args)
     assert environment_state.ports.backend is not None
     _wait_for_http(
         f"http://127.0.0.1:{environment_state.ports.backend}/ping",

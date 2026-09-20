@@ -57,6 +57,7 @@ def test_compose_command_uses_selected_engine(
         mode=EnvironmentMode.LOCAL,
         config=SimpleNamespace(env=env_file, docker=tmp_path / "config.yaml"),
         ports=SimpleNamespace(database=5432, backend=None),
+        reload=False,
     )
     calls = []
     monkeypatch.setattr(compose, "_container_engine", lambda: "podman")

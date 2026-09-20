@@ -139,12 +139,17 @@ The harness drives a real Postgres via docker/podman and is the only supported
 way to run integration tests and browser checks.
 
 ```bash
+uv run harness dev                        # docker + backend with reload + seed
 uv run harness env up --mode local        # database only, for integration tests
 uv run harness test integration           # uses the active environment
 uv run harness env up --mode docker       # database + backend container
 uv run harness screenshot /worlds --email e2e-admin@example.com --name worlds
 uv run harness env teardown
 ```
+
+- `harness dev` is the working loop: it starts the docker environment with the
+  backend reloading on every change and imports the reference world. Reload is
+  on by default; `--no-reload` turns it off. `harness env up` does not reload.
 
 - The committed `test.env` is preferred over `.env.test`; the harness and
   `tests/conftest.py` both read it, so a fresh checkout runs tests without

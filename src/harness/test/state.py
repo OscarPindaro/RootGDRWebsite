@@ -37,6 +37,7 @@ class EnvironmentState(BaseModel):
     compose_project: str
     ports: PortState
     config: ConfigState
+    reload: bool = False
 
 
 def worktree_root() -> Path:
