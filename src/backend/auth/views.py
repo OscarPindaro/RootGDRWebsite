@@ -59,7 +59,7 @@ async def login_form(
         user = await login_with_password(db, body.email, body.password)
     except InvalidCredentials:
         return RedirectResponse(
-            url="/login?error=Invalid email or password", status_code=303
+            url="/login?error=Email o password non validi", status_code=303
         )
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)
@@ -79,7 +79,7 @@ async def register_form(
         user = await register_with_password(db, body, config)
     except NotInvited:
         return RedirectResponse(
-            url="/login?mode=register&error=This email is not invited",
+            url="/login?mode=register&error=Questa email non è invitata",
             status_code=303,
         )
     except AuthError as e:
@@ -101,14 +101,14 @@ async def dev_login_form(
 ):
     """Sign in an invited or bootstrap user without a password in development."""
     if config.env != "dev":
-        return _htmx_redirect("/login?error=Dev login is disabled")
+        return _htmx_redirect("/login?error=Accesso di sviluppo disattivato")
 
     try:
         email = json.loads(await request.body()).get("email", "").strip()
     except AttributeError, json.JSONDecodeError:
         email = ""
     if not email:
-        return _htmx_redirect("/login?error=Email is required")
+        return _htmx_redirect("/login?error=Email obbligatoria")
 
     user = await db.scalar(select(UserModel).where(UserModel.email == email))
     if user is None:
@@ -117,7 +117,7 @@ async def dev_login_form(
             bootstrap_email = config.auth.bootstrap_admin_email if config.auth else None
             if email != bootstrap_email:
                 return _htmx_redirect(
-                    f"/login?error=No user or invitation found for {email}"
+                    f"/login?error=Nessun utente o invito per {email}"
                 )
             role = UserRole.ADMIN
         else:

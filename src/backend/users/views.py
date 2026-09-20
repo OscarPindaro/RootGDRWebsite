@@ -104,7 +104,7 @@ async def invite_user_submit(
             "pages.admin.InviteDialog",
             current_user=user,
             roles=_available_roles(),
-            error=f"An invitation for {body.email} already exists",
+            error=f"Esiste già un invito per {body.email}",
             email=body.email,
             role=body.role,
         )
@@ -131,10 +131,10 @@ async def revoke_invitation_confirm(
         raise HTTPException(status_code=404, detail="Invitation not found")
     return catalog.render(
         "common.ConfirmDialog",
-        title="Revoke invitation",
-        message=f"Revoke the invitation for {invitation.email}? They will no longer be able to register.",
-        confirm_label="Revoke",
-        cancel_label="Cancel",
+        title="Revoca invito",
+        message=f"Revocare l'invito per {invitation.email}? Non potrà più registrarsi.",
+        confirm_label="Revoca",
+        cancel_label="Annulla",
         confirm_variant="danger",
         hx_delete=f"/admin/users/invitations/{invitation_id}",
     )

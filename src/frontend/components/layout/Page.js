@@ -34,4 +34,24 @@
     var rail = document.getElementById("rail");
     if (rail && rail.classList.contains("is-open")) setOpen(false);
   });
+
+  /* Arrow Up/Down and Home/End move through the rail's navigation, so the
+     whole sidebar is keyboard-operable without a mouse. */
+  document.addEventListener("keydown", function (event) {
+    var rail = document.getElementById("rail");
+    if (!rail || !rail.contains(document.activeElement)) return;
+    var keys = ["ArrowDown", "ArrowUp", "Home", "End"];
+    if (keys.indexOf(event.key) === -1) return;
+    var items = Array.prototype.slice.call(
+      rail.querySelectorAll("a[href], button:not([disabled])"),
+    );
+    if (!items.length) return;
+    var index = items.indexOf(document.activeElement);
+    event.preventDefault();
+    if (event.key === "Home") index = 0;
+    else if (event.key === "End") index = items.length - 1;
+    else if (event.key === "ArrowDown") index = (index + 1) % items.length;
+    else index = (index - 1 + items.length) % items.length;
+    items[index].focus();
+  });
 })();
