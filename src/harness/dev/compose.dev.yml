@@ -1,0 +1,86 @@
+# Development stack — `harness dev`.
+#
+# One Postgres container with two databases (scratch + showcase) and one app
+# container per database, so the agent can work while the showcase is browsed.
+# The test environment lives in src/harness/test/compose.docker.test.yml and is
+# a separate stack with its own database.
+services:
+  db:
+    image: postgres:18
+    restart: unless-stopped
+    env_file:
+      - ${HARNESS_ENV_FILE}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?POSTGRES_DB required}
+      POSTGRES_USER: ${POSTGRES_USER:?POSTGRES_USER required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      MIGRATOR_DB_USER: ${MIGRATOR__USER:?MIGRATOR__USER required}
+      MIGRATOR_DB_PASSWORD: ${MIGRATOR__PASSWORD:?MIGRATOR__PASSWORD required}
+      APP_DB_USER: ${DATABASE__USER:?DATABASE__USER required}
+      APP_DB_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD required}
+      DEV_SHOW_DB: ${DEV_SHOW_DB:?DEV_SHOW_DB required}
+    ports:
+      - "${HARNESS_DEV_DB_PORT}:5432"
+    volumes:
+      - rootgdr_dev_pgdata:/var/lib/postgresql
+      - ${HARNESS_REPO_ROOT}/deploy/init_dev_db.sh:/docker-entrypoint-initdb.d/init_dev_db.sh:z
+      - ${HARNESS_REPO_ROOT}/deploy/init_dev_db.sql:/opt/init_dev_db.sql:z
+    healthcheck:
+      test:
+        ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  app-work:
+    build:
+      context: ${HARNESS_REPO_ROOT}
+      dockerfile: Dockerfile
+    env_file:
+      - ${HARNESS_ENV_FILE}
+    environment:
+      DATABASE__DB: ${POSTGRES_DB:?}
+      MIGRATOR__DB: ${POSTGRES_DB:?}
+    ports:
+      - "${HARNESS_DEV_WORK_PORT}:8000"
+    volumes:
+      - ${HARNESS_REPO_ROOT}/src:/app/src:z
+      - ${HARNESS_REPO_ROOT}/alembic:/app/alembic:z
+      - ${HARNESS_REPO_ROOT}/docs:/app/docs:z
+      - ${HARNESS_REPO_ROOT}/config.docker.yaml:/app/config.yaml:ro,z
+    command:
+      - sh
+      - -c
+      - "uv run --no-sync alembic upgrade head && uv run --no-sync uvicorn backend.server:app --host 0.0.0.0 --port 8000 ${HARNESS_DEV_RELOAD}"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  app-show:
+    build:
+      context: ${HARNESS_REPO_ROOT}
+      dockerfile: Dockerfile
+    env_file:
+      - ${HARNESS_ENV_FILE}
+    environment:
+      DATABASE__DB: ${DEV_SHOW_DB:?}
+      MIGRATOR__DB: ${DEV_SHOW_DB:?}
+    ports:
+      - "${HARNESS_DEV_SHOW_PORT}:8000"
+    volumes:
+      - ${HARNESS_REPO_ROOT}/src:/app/src:z
+      - ${HARNESS_REPO_ROOT}/alembic:/app/alembic:z
+      - ${HARNESS_REPO_ROOT}/docs:/app/docs:z
+      - ${HARNESS_REPO_ROOT}/config.docker.yaml:/app/config.yaml:ro,z
+    command:
+      - sh
+      - -c
+      - "uv run --no-sync alembic upgrade head && uv run --no-sync uvicorn backend.server:app --host 0.0.0.0 --port 8000 ${HARNESS_DEV_RELOAD}"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  rootgdr_dev_pgdata:

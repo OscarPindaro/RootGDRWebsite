@@ -139,7 +139,8 @@ The harness drives a real Postgres via docker/podman and is the only supported
 way to run integration tests and browser checks.
 
 ```bash
-uv run harness dev                        # docker + backend with reload + seed
+uv run harness dev up                     # dev stack: scratch 8001 + showcase 8002
+uv run harness dev reset --db show        # recreate the showcase DB + seed it
 uv run harness env up --mode local        # database only, for integration tests
 uv run harness test integration           # uses the active environment
 uv run harness env up --mode docker       # database + backend container
@@ -148,9 +149,19 @@ uv run harness compare /worlds/<id>       # app vs prototype report + pixel diff
 uv run harness env teardown
 ```
 
-- `harness dev` is the working loop: it starts the docker environment with the
-  backend reloading on every change and imports the reference world. Reload is
-  on by default; `--no-reload` turns it off. `harness env up` does not reload.
+- Three environments, never mixed:
+  - **test** — `harness env up` / `harness test`, `config.test.yaml` + `test.env`,
+    database `backend_test`. Tests create and drop worlds here.
+  - **work** — `harness dev up`, `config.yaml`/`config.docker.yaml` + `.env`,
+    database `root_gdr_dev`, app on **8001**. The agent's scratch space.
+  - **showcase** — same stack, database `root_gdr_show`, app on **8002**. What is
+    shown to the user; `harness dev reset --db show` recreates it and seeds only
+    the reference world.
+- `harness dev up` starts both apps with reload on (`--no-reload` turns it off).
+  `harness dev seed --db work|show` migrates and seeds one database; `reset`
+  drops the schema first.
+- `.env` (gitignored) holds the dev database names and `AUTH__JWT_SECRET`; copy
+  `.env.example` and add a dev secret if it is missing.
 - `harness compare` pairs an application page with its prototype page (see
   `seed/prototype_map.yaml` and `docs/features/prototype_map.md`) and writes
   `harness-artifacts/compare/report.html`. The pixel percentage is a signal, not
