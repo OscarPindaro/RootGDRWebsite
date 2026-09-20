@@ -29,6 +29,7 @@ import {
   syntaxHighlighting,
   defaultHighlightStyle,
 } from "@codemirror/language";
+import { livePreview } from "./live-preview.js";
 
 const theme = EditorView.theme({
   "&": {
@@ -54,6 +55,20 @@ const theme = EditorView.theme({
     borderLeftWidth: "2px",
   },
   ".cm-selectionBackground, ::selection": { background: "var(--ochre)" },
+  /* Live preview: markers hidden, the text styled as the reading page. */
+  ".cm-lp-h1": { fontFamily: "var(--serif)", fontSize: "1.9rem", lineHeight: "1.15" },
+  ".cm-lp-h2": { fontFamily: "var(--serif)", fontSize: "1.5rem", lineHeight: "1.2" },
+  ".cm-lp-h3": { fontFamily: "var(--serif)", fontSize: "1.25rem", fontWeight: "600" },
+  ".cm-lp-h4, .cm-lp-h5, .cm-lp-h6": { fontWeight: "600" },
+  ".cm-lp-strong": { fontWeight: "700" },
+  ".cm-lp-emphasis": { fontStyle: "italic" },
+  ".cm-lp-code": {
+    fontFamily: "var(--mono)",
+    background: "var(--paper-deep)",
+    padding: "0 0.15em",
+  },
+  ".cm-lp-link": { color: "var(--cobalt)", textDecoration: "underline" },
+  ".cm-lp-mention": { color: "var(--vermilion)", fontWeight: "600" },
 });
 
 function mentionSource(worldId) {
@@ -90,6 +105,7 @@ function extensions({ worldId, onDocChanged, onModEnter }) {
     highlightActiveLine(),
     markdown(),
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    livePreview,
     autocompletion({ override: [mentionSource(worldId)] }),
     keymap.of([
       {
