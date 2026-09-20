@@ -10,7 +10,7 @@
     :is_draft="character.is_draft"
     :can_manage="can_manage">
     <span class="pill pill--plain">Giocato da {{ character.owner.name }}</span>
-    <button class="btn btn--ghost btn--sm" type="button"
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-character"
             hx-delete="/worlds/{{ world.id }}/characters/{{ character.id }}"
             hx-confirm="Eliminare {{ character.name }}?" hx-swap="none">Elimina</button>
   </editorial.Docbar>

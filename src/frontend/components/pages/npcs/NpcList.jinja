@@ -7,7 +7,7 @@
     lede="Schede scritte e mantenute dal Master. I giocatori le leggono; qui stanno anche i segreti che non devono ancora sapere."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/npcs/new">Nuovo NPC</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/npcs/new" data-testid="create-npc">Nuovo NPC</a>
     {% endif %}
   </editorial.Masthead>
 

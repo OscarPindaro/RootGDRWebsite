@@ -18,6 +18,14 @@ from harness.test.browser import BrowserSession
 pytestmark = pytest.mark.e2e
 
 QUICK_LABELS = ("Personaggi", "NPC", "Luoghi", "Sessioni", "Storie")
+TEST_KINDS = {
+    "characters": "character",
+    "npcs": "npc",
+    "places": "place",
+    "sessions": "session",
+    "stories": "story",
+    "pages": "page",
+}
 
 
 def _quick_count(session: BrowserSession, label: str) -> str:
@@ -38,18 +46,18 @@ def _goto_overview(session: BrowserSession, world_id: str) -> None:
 def _create(
     session: BrowserSession,
     quick_label: str,
-    new_label: str,
     fields: dict[str, str],
     expect_url: str,
     collection: str,
 ) -> dict:
     session.page.click(f'.quick:has-text("{quick_label}")')
     session.page.wait_for_load_state("networkidle")
-    session.page.click(f'a:has-text("{new_label}")')
+    test_kind = TEST_KINDS[collection]
+    session.page.click(f'[data-testid="create-{test_kind}"]')
     session.page.wait_for_load_state("networkidle")
     for name, value in fields.items():
         session.page.fill(f'[name="{name}"]', value)
-    session.submit('button[type="submit"]', expect_url=expect_url)
+    session.submit(f'[data-testid="save-{test_kind}"]', expect_url=expect_url)
     match = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url)
     world_id = match.group(1)
     if collection == "pages":
@@ -78,7 +86,6 @@ def test_master_fills_the_world_and_the_overview_updates(
     _create(
         session,
         "Personaggi",
-        "Nuovo personaggio",
         {"name": "Rugginosa"},
         r"/characters/[0-9a-f-]{36}$",
         "characters",
@@ -89,7 +96,6 @@ def test_master_fills_the_world_and_the_overview_updates(
     _create(
         session,
         "NPC",
-        "Nuovo NPC",
         {"name": "La Marchesa"},
         r"/npcs/[0-9a-f-]{36}$",
         "npcs",
@@ -100,7 +106,6 @@ def test_master_fills_the_world_and_the_overview_updates(
     _create(
         session,
         "Luoghi",
-        "Nuovo luogo",
         {"name": "Radura della Grande Quercia"},
         r"/places/[0-9a-f-]{36}$",
         "places",
@@ -118,7 +123,6 @@ def test_master_fills_the_world_and_the_overview_updates(
     _create(
         session,
         "Sessioni",
-        "Nuova sessione",
         {"title": "Il risveglio della Marchesa", "in_world_date": "Primavera, 3° anno"},
         r"/sessions/[0-9a-f-]{36}$",
         "sessions",
@@ -132,7 +136,6 @@ def test_master_fills_the_world_and_the_overview_updates(
     _create(
         session,
         "Storie",
-        "Nuova storia",
         {"title": "L'inverno dei corvi"},
         r"/stories/[0-9a-f-]{36}$",
         "stories",
@@ -145,10 +148,12 @@ def test_master_fills_the_world_and_the_overview_updates(
     # position blank, which must not be rejected.
     session.page.click('#rail a:has-text("Pagine")')
     session.page.wait_for_load_state("networkidle")
-    session.page.click('a:has-text("Nuova pagina")')
+    session.page.click('[data-testid="create-page"]')
     session.page.wait_for_load_state("networkidle")
     session.page.fill('[name="title"]', "Le regole della Casa")
-    session.submit('button[type="submit"]', expect_url=r"/pages/le-regole-della-casa$")
+    session.submit(
+        '[data-testid="save-page"]', expect_url=r"/pages/le-regole-della-casa$"
+    )
     pages = session.expect_api(f"/api/worlds/{world_id}/pages/").json()["data"]
     assert any(page["title"] == "Le regole della Casa" for page in pages)
     _goto_overview(session, world_id)

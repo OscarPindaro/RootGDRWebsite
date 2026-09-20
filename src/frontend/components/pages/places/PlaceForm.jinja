@@ -29,7 +29,7 @@
                   :world_id="world.id"
                   :value="place.body if place else ''" />
     <div class="row-inline">
-      <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+      <common.Button type="submit" variant="primary" size="md" data-testid="save-place">Salva</common.Button>
       {% if place %}
       <a class="btn btn--ghost" href="/worlds/{{ world.id }}/places/{{ place.id }}">Annulla</a>
       {% else %}

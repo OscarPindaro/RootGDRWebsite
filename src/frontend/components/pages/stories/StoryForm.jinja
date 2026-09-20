@@ -41,7 +41,7 @@
                   :world_id="world.id"
                   :value="story.body if story else ''" />
     <div class="row-inline">
-      <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+      <common.Button type="submit" variant="primary" size="md" data-testid="save-story">Salva</common.Button>
       {% if story %}
       <a class="btn btn--ghost" href="/worlds/{{ world.id }}/stories/{{ story.id }}">Annulla</a>
       {% else %}

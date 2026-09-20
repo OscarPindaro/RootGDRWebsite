@@ -17,7 +17,7 @@
     <button class="btn btn--ghost btn--sm" type="button"
             hx-post="/worlds/{{ world.id }}/places/{{ place.id }}/current" hx-swap="none">Scena corrente</button>
     {% endif %}
-    <button class="btn btn--ghost btn--sm" type="button"
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-place"
             hx-delete="/worlds/{{ world.id }}/places/{{ place.id }}"
             hx-confirm="Eliminare {{ place.name }}?" hx-swap="none">Elimina</button>
   </editorial.Docbar>

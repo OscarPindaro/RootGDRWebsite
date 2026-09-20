@@ -9,7 +9,7 @@
     lede="Dalla più recente. Ogni sessione ha un colore che la segue anche nelle timeline e nelle schede dei personaggi."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessions/new">Nuova sessione</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessions/new" data-testid="create-session">Nuova sessione</a>
     {% endif %}
   </editorial.Masthead>
 

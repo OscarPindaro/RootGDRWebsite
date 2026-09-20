@@ -9,7 +9,7 @@
     lede="Materiale statico: regole di casa, fazioni, calendario e storia. L'ordine è quello con cui compaiono nella navigazione."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/pages/new">Nuova pagina</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/pages/new" data-testid="create-page">Nuova pagina</a>
     {% endif %}
   </editorial.Masthead>
 

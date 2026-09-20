@@ -7,6 +7,20 @@ from pydantic import Field
 from ..schemas import AppBaseModelStripped
 
 StepKind = Literal["goto", "fill", "select", "click"]
+NonEmptyString = Annotated[str, Field(min_length=1)]
+
+
+class RecordingOptions(AppBaseModelStripped):
+    """Options supplied when backend recording starts."""
+
+    read_only: bool = False
+    exclude: list[NonEmptyString] = Field(default_factory=list)
+
+
+class RecordingConfig(RecordingOptions):
+    """Worker-shared state for an active backend recording."""
+
+    session: NonEmptyString
 
 
 class ReplayStep(AppBaseModelStripped):

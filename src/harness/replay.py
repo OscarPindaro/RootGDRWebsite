@@ -9,12 +9,23 @@ from __future__ import annotations
 
 import json
 import re
+from difflib import SequenceMatcher
 from pathlib import Path
+from typing import Literal
 
 from backend.replay.schemas import BackendStep, ReplayStep
 
 RECORDINGS = Path("harness-artifacts/replay")
 BACKEND = RECORDINGS / "backend"
+Mode = Literal["ui", "backend"]
+ReplayRecord = ReplayStep | BackendStep
+UUID_VALUE = re.compile(
+    r"(?<![0-9A-Fa-f])[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[1-8][0-9A-Fa-f]{3}"
+    r"-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}(?![0-9A-Fa-f])"
+)
+TIMESTAMP_VALUE = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$"
+)
 
 
 def sessions() -> list[str]:
@@ -56,6 +67,91 @@ def load_backend(session: str) -> list[BackendStep]:
         BackendStep.model_validate(step)
         for step in json.loads(path.read_text(encoding="utf-8"))
     ]
+
+
+def _normalize_volatile(value: object) -> object:
+    """Normalize only unambiguous UUIDs and complete ISO timestamp values."""
+    if isinstance(value, str):
+        if TIMESTAMP_VALUE.fullmatch(value):
+            return "<timestamp>"
+        return UUID_VALUE.sub("<uuid>", value)
+    if isinstance(value, list):
+        return [_normalize_volatile(item) for item in value]
+    if isinstance(value, dict):
+        return {key: _normalize_volatile(item) for key, item in value.items()}
+    return value
+
+
+def _comparison_key(step: ReplayRecord) -> str:
+    normalized = _normalize_volatile(step.model_dump(exclude_none=True))
+    return json.dumps(normalized, sort_keys=True, separators=(",", ":"))
+
+
+def _describe(step: ReplayRecord, mode: Mode) -> str:
+    if mode == "backend":
+        assert isinstance(step, BackendStep)
+        target = step.path + (f"?{step.query}" if step.query else "")
+        body = f" body={step.body!r}" if step.body is not None else ""
+        return f"{step.method} {target} -> {step.status}{body}"
+    assert isinstance(step, ReplayStep)
+    detail = step.selector or step.url or ""
+    value = f" = {step.value!r}" if step.value is not None else ""
+    return f"{step.kind} {detail}{value}".rstrip()
+
+
+def render_diff(
+    before: list[ReplayRecord], after: list[ReplayRecord], mode: Mode
+) -> str:
+    """Render a structural recording diff with volatile values normalized."""
+    matcher = SequenceMatcher(
+        a=[_comparison_key(step) for step in before],
+        b=[_comparison_key(step) for step in after],
+        autojunk=False,
+    )
+    added: list[str] = []
+    removed: list[str] = []
+    changed: list[str] = []
+    for tag, before_start, before_end, after_start, after_end in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        if tag == "delete":
+            removed.extend(
+                f"  - {index + 1}. {_describe(before[index], mode)}"
+                for index in range(before_start, before_end)
+            )
+            continue
+        if tag == "insert":
+            added.extend(
+                f"  + {index + 1}. {_describe(after[index], mode)}"
+                for index in range(after_start, after_end)
+            )
+            continue
+
+        paired = min(before_end - before_start, after_end - after_start)
+        for offset in range(paired):
+            old_index = before_start + offset
+            new_index = after_start + offset
+            changed.extend(
+                [
+                    f"  ~ {old_index + 1} -> {new_index + 1}",
+                    f"    before: {_describe(before[old_index], mode)}",
+                    f"    after:  {_describe(after[new_index], mode)}",
+                ]
+            )
+        removed.extend(
+            f"  - {index + 1}. {_describe(before[index], mode)}"
+            for index in range(before_start + paired, before_end)
+        )
+        added.extend(
+            f"  + {index + 1}. {_describe(after[index], mode)}"
+            for index in range(after_start + paired, after_end)
+        )
+
+    sections: list[str] = []
+    for title, lines in (("Added", added), ("Removed", removed), ("Changed", changed)):
+        if lines:
+            sections.append("\n".join([f"{title}:", *lines]))
+    return "\n\n".join(sections) if sections else "No differences."
 
 
 def render_backend_test(session: str, steps: list[BackendStep]) -> str:

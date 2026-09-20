@@ -9,7 +9,7 @@
     :locked="page.locked"
     :is_draft="page.is_draft"
     :can_manage="can_manage">
-    <button class="btn btn--ghost btn--sm" type="button"
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-page"
             hx-delete="/worlds/{{ world.id }}/pages/{{ page.id }}"
             hx-confirm="Eliminare «{{ page.title }}»?" hx-swap="none">Elimina</button>
   </editorial.Docbar>

@@ -10,7 +10,7 @@
     :is_draft="npc.is_draft"
     :can_manage="can_manage">
     <span class="pill pill--plain">NPC del Master</span>
-    <button class="btn btn--ghost btn--sm" type="button"
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-npc"
             hx-delete="/worlds/{{ world.id }}/npcs/{{ npc.id }}"
             hx-confirm="Eliminare {{ npc.name }}?" hx-swap="none">Elimina</button>
   </editorial.Docbar>

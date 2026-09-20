@@ -19,19 +19,14 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from ..auth.dependencies import get_current_user
 from ..config import AppConfig, get_app_config
-from ..schemas import AppBaseModelStripped
 from ..users.schemas import User
 from . import middleware
-from .schemas import ReplayBatch
+from .schemas import RecordingConfig, RecordingOptions, ReplayBatch
 
 router = APIRouter(tags=["dev-replay"])
 
 RECORDINGS = Path("harness-artifacts/replay")
 SAFE_SESSION = re.compile(r"^[A-Za-z0-9_-]+$")
-
-
-class Recording(AppBaseModelStripped):
-    session: str
 
 
 def _require_dev(config: AppConfig) -> None:
@@ -42,16 +37,22 @@ def _require_dev(config: AppConfig) -> None:
         )
 
 
-@router.post("/api/dev/replay/start", response_model=Recording)
+@router.post("/api/dev/replay/start", response_model=RecordingConfig)
 async def start_recording(
+    options: RecordingOptions | None = None,
     user: User = Depends(get_current_user),
     config: AppConfig = Depends(get_app_config),
-) -> Recording:
+) -> RecordingConfig:
     """Start recording backend calls into a new session (dev only)."""
     _require_dev(config)
-    session = "b" + datetime.now(UTC).strftime("%y%m%d%H%M%S")
-    middleware.start(session)
-    return Recording(session=session)
+    options = options or RecordingOptions()
+    recording = RecordingConfig(
+        session="b" + datetime.now(UTC).strftime("%y%m%d%H%M%S"),
+        read_only=options.read_only,
+        exclude=options.exclude,
+    )
+    middleware.start(recording)
+    return recording
 
 
 @router.post("/api/dev/replay/stop", status_code=status.HTTP_204_NO_CONTENT)

@@ -15,7 +15,7 @@
           <common.Field label="Nome" name="name" type="text" required :value="world.name" />
           <common.Field label="Descrizione" name="description" type="textarea" required :value="world.description" />
           <div class="row-inline">
-            <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+            <common.Button type="submit" variant="primary" size="md" data-testid="save-world-settings">Salva</common.Button>
           </div>
         </form>
       </section>
@@ -53,7 +53,7 @@
             <option value="player">Giocatore</option>
             <option value="master">Master</option>
           </select>
-          <common.Button type="submit" variant="secondary" size="md">Aggiungi</common.Button>
+          <common.Button type="submit" variant="secondary" size="md" data-testid="add-world-member">Aggiungi</common.Button>
         </form>
       </section>
     </div>
@@ -73,7 +73,7 @@
               hx-swap="none">
           <input class="input" type="file" name="image" accept="image/*" required aria-label="Nuova immagine di copertina">
           <div class="row-inline" style="margin-top: 0.75rem">
-            <common.Button type="submit" variant="secondary" size="sm">Carica immagine</common.Button>
+            <common.Button type="submit" variant="secondary" size="sm" data-testid="upload-world-cover">Carica immagine</common.Button>
           </div>
         </form>
       </section>

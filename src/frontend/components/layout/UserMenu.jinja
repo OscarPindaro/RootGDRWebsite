@@ -1,7 +1,7 @@
 {#def current_user=None #}
 {#css common/Avatar.css, common/Button.css, common/Menu.css #}
 <div class="user-menu" id="user-menu">
-  <common.Button variant="primary" size="md" block type="button" id="user-menu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu-popover" popovertarget="user-menu-popover">
+  <common.Button variant="primary" size="md" block type="button" id="user-menu-trigger" data-testid="user-menu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu-popover" popovertarget="user-menu-popover">
     <common.Avatar name={{ current_user.name }} size=32 :avatar_url="current_user.avatar_url" />
     <span class="user-menu-info">
       <span class="user-menu-name">{{ current_user.name }}</span>
@@ -10,10 +10,10 @@
     <common.Icon name="chevron-up" size=16 />
   </common.Button>
   <common.Menu id="user-menu-popover" labelledby="user-menu-trigger" placement="top-start" class="user-menu-popover">
-    <common.MenuItem icon="settings" label="Impostazioni" href="/settings" />
-    <common.MenuItem icon="log-out" label="Esci" href="/auth/logout-view" variant="danger" />
+    <common.MenuItem icon="settings" label="Impostazioni" href="/settings" data-testid="user-menu-settings" />
+    <common.MenuItem icon="log-out" label="Esci" href="/auth/logout-view" variant="danger" data-testid="user-menu-logout" />
     {% if env == "dev" %}
-    <common.MenuItem icon="circle-dot" label="Registra azioni" data-replay-toggle />
+    <common.MenuItem icon="circle-dot" label="Registra azioni" data-replay-toggle data-testid="replay-toggle" />
     {% endif %}
   </common.Menu>
 </div>

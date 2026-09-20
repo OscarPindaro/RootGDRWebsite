@@ -9,7 +9,7 @@
     :locked="story.locked"
     :is_draft="story.is_draft"
     :can_manage="can_manage">
-    <button class="btn btn--ghost btn--sm" type="button"
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-story"
             hx-delete="/worlds/{{ world.id }}/stories/{{ story.id }}"
             hx-confirm="Eliminare «{{ story.title }}»?" hx-swap="none">Elimina</button>
   </editorial.Docbar>

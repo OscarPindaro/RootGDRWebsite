@@ -103,6 +103,30 @@ def show(
 
 
 @replay_app.command()
+def diff(
+    before: Annotated[str, typer.Argument(help="Earlier recorded session id.")],
+    after: Annotated[str, typer.Argument(help="Later recorded session id.")],
+    mode: Annotated[str, MODE_OPTION] = "ui",
+) -> None:
+    """Compare two recordings, ignoring volatile UUID and timestamp values."""
+    try:
+        if mode == "backend":
+            result = recordings.render_diff(
+                recordings.load_backend(before),
+                recordings.load_backend(after),
+                "backend",
+            )
+        else:
+            result = recordings.render_diff(
+                recordings.load(before), recordings.load(after), "ui"
+            )
+    except FileNotFoundError as error:
+        err_console.print(f"[bold red]{error}[/bold red]")
+        raise typer.Exit(1) from error
+    console.print(result, markup=False)
+
+
+@replay_app.command()
 def export(
     session: Annotated[str, typer.Argument(help="Recorded session id.")],
     mode: Annotated[str, MODE_OPTION] = "ui",
@@ -143,13 +167,24 @@ def start(
     email: Annotated[
         str, typer.Option("--email", help="Dev login email.")
     ] = DEFAULT_EMAIL,
+    read_only: Annotated[
+        bool,
+        typer.Option("--read-only", help="Record GET, HEAD, and OPTIONS only."),
+    ] = False,
+    exclude: Annotated[
+        list[str] | None,
+        typer.Option("--exclude", help="Path prefix to omit; repeat as needed."),
+    ] = None,
 ) -> None:
     """Start recording backend calls."""
     try:
         url = _dev_base_url(base_url)
         client = _client(url, email)
         try:
-            response = client.post("/api/dev/replay/start")
+            response = client.post(
+                "/api/dev/replay/start",
+                json={"read_only": read_only, "exclude": exclude or []},
+            )
             response.raise_for_status()
             session = response.json()["session"]
         finally:

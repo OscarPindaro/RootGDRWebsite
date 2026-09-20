@@ -1,9 +1,9 @@
 """Dev-only middleware that records the backend calls of a session.
 
 Recording is switched on with ``POST /api/dev/replay/start`` (``harness replay
-start``): the session id is written to a flag file, so every worker sees it and
-no process-local state is involved. While it is on, each JSON request the app
-answers is appended to ``harness-artifacts/replay/backend/<session>.json``, and
+start``): a typed JSON config is written to disk, so every worker sees the same
+session and filters without process-local state. While it is on, each JSON request
+the app answers is appended to ``harness-artifacts/replay/backend/<session>.json``, and
 ``harness replay export --mode backend`` turns that file into an httpx test.
 
 Pure ASGI rather than ``BaseHTTPMiddleware``: the body has to be read and handed
@@ -15,28 +15,30 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from .schemas import BackendStep
+from .schemas import BackendStep, RecordingConfig
 
 RECORDINGS = Path("harness-artifacts/replay")
-FLAG = RECORDINGS / ".recording"
+CONFIG = RECORDINGS / ".recording.json"
 SKIP_PREFIXES = ("/static", "/api/dev/replay")
+READ_ONLY_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
 
 
-def recording_session() -> str | None:
-    """The session being recorded, or ``None`` when recording is off."""
-    if not FLAG.is_file():
+def recording_config() -> RecordingConfig | None:
+    """The worker-shared recording config, or ``None`` when recording is off."""
+    if not CONFIG.is_file():
         return None
-    session = FLAG.read_text(encoding="utf-8").strip()
-    return session or None
+    return RecordingConfig.model_validate_json(CONFIG.read_text(encoding="utf-8"))
 
 
-def start(session: str) -> None:
+def start(config: RecordingConfig) -> None:
     RECORDINGS.mkdir(parents=True, exist_ok=True)
-    FLAG.write_text(session, encoding="utf-8")
+    temporary = CONFIG.with_suffix(".tmp")
+    temporary.write_text(config.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    temporary.replace(CONFIG)
 
 
 def stop() -> None:
-    FLAG.unlink(missing_ok=True)
+    CONFIG.unlink(missing_ok=True)
 
 
 def _body(payload: bytes, content_type: str) -> object | None:
@@ -70,9 +72,15 @@ class ReplayMiddleware:
             await self.app(scope, receive, send)
             return
 
-        session = recording_session()
+        config = recording_config()
         path = scope.get("path", "")
-        if session is None or path.startswith(SKIP_PREFIXES):
+        method = scope.get("method", "GET").upper()
+        excluded = SKIP_PREFIXES + tuple(config.exclude if config else ())
+        if (
+            config is None
+            or path.startswith(excluded)
+            or (config.read_only and method not in READ_ONLY_METHODS)
+        ):
             await self.app(scope, receive, send)
             return
 
@@ -98,10 +106,10 @@ class ReplayMiddleware:
         headers = dict(scope.get("headers") or [])
         content_type = headers.get(b"content-type", b"").decode("latin-1")
         step = BackendStep(
-            method=scope.get("method", "GET"),
+            method=method,
             path=path,
             query=(scope.get("query_string") or b"").decode("latin-1") or None,
             body=_body(payload, content_type),
             status=captured.get("status", 0),
         )
-        _append(session, step)
+        _append(config.session, step)

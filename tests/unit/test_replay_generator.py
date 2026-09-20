@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from backend.replay.schemas import BackendStep, ReplayStep
-from harness.replay import _path, render_backend_test, render_test
+from harness.replay import _path, render_backend_test, render_diff, render_test
 
 
 def test_path_strips_the_origin() -> None:
@@ -68,3 +68,44 @@ def test_render_backend_test_emits_the_requests() -> None:
 
 def test_render_backend_test_handles_an_empty_recording() -> None:
     assert "    pass" in render_backend_test("empty", [])
+
+
+def test_replay_diff_ignores_volatile_uuid_and_timestamp_values() -> None:
+    before = [
+        ReplayStep(
+            kind="goto",
+            url="/worlds/11111111-1111-4111-8111-111111111111",
+        ),
+        ReplayStep(kind="fill", selector="[name=when]", value="2026-03-01T10:20:30Z"),
+    ]
+    after = [
+        ReplayStep(
+            kind="goto",
+            url="/worlds/22222222-2222-4222-8222-222222222222",
+        ),
+        ReplayStep(
+            kind="fill", selector="[name=when]", value="2026-03-02T11:21:31+00:00"
+        ),
+    ]
+
+    assert render_diff(before, after, "ui") == "No differences."
+
+
+def test_replay_diff_reports_readable_changes() -> None:
+    before = [BackendStep(method="GET", path="/api/worlds", status=200)]
+    after = [BackendStep(method="GET", path="/api/worlds", status=500)]
+
+    result = render_diff(before, after, "backend")
+
+    assert "Changed:" in result
+    assert "before: GET /api/worlds -> 200" in result
+    assert "after:  GET /api/worlds -> 500" in result
+
+
+def test_replay_diff_reports_added_and_removed_steps() -> None:
+    anchor = BackendStep(method="GET", path="/anchor", status=200)
+    added = BackendStep(method="POST", path="/added", status=201)
+    removed = BackendStep(method="DELETE", path="/removed", status=204)
+
+    assert "Added:" in render_diff([anchor], [added, anchor], "backend")
+    assert "Removed:" in render_diff([removed, anchor], [anchor], "backend")

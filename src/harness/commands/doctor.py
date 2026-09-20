@@ -21,7 +21,7 @@ from ..test import state as test_state
 from ..test.browser import BROWSERS_PATH
 
 console = Console()
-_REPLAY_FLAG = Path("harness-artifacts/replay/.recording")
+_REPLAY_FLAG = Path("harness-artifacts/replay/.recording.json")
 
 
 class CheckStatus(str, Enum):

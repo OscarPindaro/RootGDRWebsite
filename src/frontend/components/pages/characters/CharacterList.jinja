@@ -7,7 +7,7 @@
     :eyebrow="eyebrow_text"
     lede="I giocatori gestiscono le proprie schede; il Master vede e modifica tutto."
     :crumbs="crumbs">
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/characters/new">Nuovo personaggio</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/characters/new" data-testid="create-character">Nuovo personaggio</a>
   </editorial.Masthead>
 
   {% if cards %}

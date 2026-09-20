@@ -14,10 +14,13 @@ Two recordings, both dev-only:
 - **Backend calls.** `harness replay start`, work (even with curl), then
   `harness replay stop`. Every request and its response status is recorded, and
   `harness replay export <session> --mode backend` writes an integration test
-  that replays them and asserts the statuses.
+  that replays them and asserts the statuses. Start with `--read-only` to keep
+  only GET, HEAD and OPTIONS, and repeat `--exclude /path` to omit path prefixes.
 
 `harness replay list` and `show <session> [--mode ui|backend]` inspect a
-recording.
+recording. `harness replay diff <before> <after> --mode ui|backend` reports
+added, removed and changed steps. Exact ISO timestamps and UUIDs are normalized
+for this comparison so routine generated values do not hide meaningful changes.
 
 ## How it is built
 
@@ -30,8 +33,9 @@ recording.
   sequence.
 - **Backend side** — `src/backend/replay/middleware.py`, a pure ASGI middleware
   (the body must be read and handed on unchanged, which `BaseHTTPMiddleware`
-  makes awkward). It records only while a flag file names a session, so every
-  worker sees the same state and no header has to be passed by hand.
+  makes awkward). It records only while a typed JSON config names a session, so
+  every worker sees the same read-only and exclusion settings. Exclusions and
+  write-method filtering happen before the middleware reads a request body.
 - **Storage** — `harness-artifacts/replay/` (ui) and `.../backend/`, mounted into
   both stacks. The routes are `src/backend/replay/routes.py`, registered only
   under `env: dev`.

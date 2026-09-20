@@ -27,7 +27,7 @@
                   :world_id="world.id"
                   :value="page.body if page else ''" />
     <div class="row-inline">
-      <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+      <common.Button type="submit" variant="primary" size="md" data-testid="save-page">Salva</common.Button>
       {% if page %}
       <a class="btn btn--ghost" href="/worlds/{{ world.id }}/pages/{{ page.slug }}">Annulla</a>
       {% else %}

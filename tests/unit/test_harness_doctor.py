@@ -116,7 +116,7 @@ def test_inspect_warns_for_high_connections_and_recording(
         "_run",
         lambda _environment, *args: "85|100" if "psql" in args else "ready",
     )
-    flag = tmp_path / "harness-artifacts/replay/.recording"
+    flag = tmp_path / "harness-artifacts/replay/.recording.json"
     flag.parent.mkdir(parents=True)
     flag.write_text("private-session-name")
 

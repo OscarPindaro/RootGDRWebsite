@@ -9,7 +9,7 @@
     :locked="session.locked"
     :is_draft="session.is_draft"
     :can_manage="can_manage">
-    <button class="btn btn--ghost btn--sm" type="button"
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-session"
             hx-delete="/worlds/{{ world.id }}/sessions/{{ session.id }}"
             hx-confirm="Eliminare «{{ session.title }}»?" hx-swap="none">Elimina</button>
   </editorial.Docbar>

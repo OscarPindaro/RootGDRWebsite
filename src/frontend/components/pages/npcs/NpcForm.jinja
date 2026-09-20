@@ -32,7 +32,7 @@
                   :world_id="world.id"
                   :value="npc.body if npc else ''" />
     <div class="row-inline">
-      <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+      <common.Button type="submit" variant="primary" size="md" data-testid="save-npc">Salva</common.Button>
       {% if npc %}
       <a class="btn btn--ghost" href="/worlds/{{ world.id }}/npcs/{{ npc.id }}">Annulla</a>
       {% else %}

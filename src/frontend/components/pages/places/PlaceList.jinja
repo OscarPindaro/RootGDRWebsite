@@ -8,7 +8,7 @@
     lede="Ogni radura ha un simbolo e un colore, così si riconosce a colpo d'occhio in una mappa, in una sessione o in un elenco."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/places/new">Nuovo luogo</a>
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/places/new" data-testid="create-place">Nuovo luogo</a>
     {% endif %}
   </editorial.Masthead>
 

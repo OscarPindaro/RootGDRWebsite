@@ -25,7 +25,7 @@ def test_master_creates_a_world_and_a_character(session: BrowserSession) -> None
     session.goto("/worlds/new")
     session.page.fill('input[name="name"]', name)
     session.page.fill('textarea[name="description"]', "Un mondo creato dai test.")
-    session.submit('button[type="submit"]', expect_url=r"/worlds/[0-9a-f-]{36}$")
+    session.submit('[data-testid="save-world"]', expect_url=r"/worlds/[0-9a-f-]{36}$")
 
     # Redirected to the world overview.
     session.page.wait_for_selector(".masthead")
@@ -38,7 +38,9 @@ def test_master_creates_a_world_and_a_character(session: BrowserSession) -> None
     session.goto(f"/worlds/{world_id}/characters/new")
     session.page.fill('input[name="name"]', "Rugginosa")
     session.page.fill('input[name="title"]', "La Senza Tana")
-    session.submit('button[type="submit"]', expect_url=r"/characters/[0-9a-f-]{36}$")
+    session.submit(
+        '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"
+    )
     session.page.wait_for_selector(".docbar")
     assert "Rugginosa" in session.page.content()
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
@@ -59,17 +61,19 @@ def test_master_can_draft_a_character(session: BrowserSession) -> None:
     session.goto("/worlds/new")
     session.page.fill('input[name="name"]', name)
     session.page.fill('textarea[name="description"]', "x")
-    session.submit('button[type="submit"]', expect_url=r"/worlds/[0-9a-f-]{36}$")
+    session.submit('[data-testid="save-world"]', expect_url=r"/worlds/[0-9a-f-]{36}$")
     world_id = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
     assert session.expect_api(f"/api/worlds/{world_id}").json()["name"] == name
 
     session.goto(f"/worlds/{world_id}/characters/new")
     session.page.fill('input[name="name"]', "Bozzetto")
-    session.submit('button[type="submit"]', expect_url=r"/characters/[0-9a-f-]{36}$")
+    session.submit(
+        '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"
+    )
     session.page.wait_for_selector(".docbar")
 
     # The draft toggle flips the visible state pill after the redirect.
-    session.submit('button:has-text("Riporta a bozza")')
+    session.submit('[data-testid="document-publication"]')
     session.page.wait_for_selector(".pill--draft", timeout=10_000)
     assert session.page.locator(".pill--draft").count() == 1
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
@@ -167,7 +171,9 @@ def test_character_form_uses_face_pickers(session: BrowserSession, seed_world) -
     session.page.fill('input[name="name"]', "Picker Test")
     session.page.check('input[name="animal"][value="🦊"]', force=True)
     session.page.check('input[name="tint"][value="p8"]', force=True)
-    session.submit('button[type="submit"]', expect_url=r"/characters/[0-9a-f-]{36}$")
+    session.submit(
+        '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"
+    )
 
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
     payload = session.expect_api(
@@ -187,7 +193,9 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     session.page.wait_for_selector("[data-markdown-editor]")
     session.page.locator(".cm-content").click()
     session.page.keyboard.type("Testo iniziale.")
-    session.submit('button[type="submit"]', expect_url=r"/characters/[0-9a-f-]{36}$")
+    session.submit(
+        '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"
+    )
 
     assert session.page.locator('a:has-text("Modifica")').count() == 0
 
@@ -208,7 +216,7 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     session.page.locator(".cm-content").click()
     session.page.keyboard.press("Control+a")
     session.page.keyboard.type("Riscritto e salvato.")
-    session.page.locator("[data-doc-save]").click()
+    session.page.locator('[data-testid="document-save"]').click()
     # The save answers with a redirect, so the editor goes away with the reload.
     session.page.wait_for_selector(".cm-editor", state="detached", timeout=5_000)
     session.page.wait_for_load_state("networkidle")

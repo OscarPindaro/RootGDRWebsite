@@ -9,13 +9,13 @@
     {% endif %}
     {% if can_manage %}
     {% if not locked %}
-    <button class="btn btn--ghost btn--sm" type="button" data-doc-edit-open>Modifica</button>
+    <button class="btn btn--ghost btn--sm" type="button" data-doc-edit-open data-testid="document-edit">Modifica</button>
     {% endif %}
-    <button class="btn btn--ghost btn--sm" type="button"
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="document-lock"
             aria-pressed="{{ 'true' if locked else 'false' }}"
             hx-post="{{ base }}/toggle/locked?value={{ 'false' if locked else 'true' }}"
             hx-swap="none">{{ 'Bloccato' if locked else 'Sbloccato' }}</button>
-    <button class="btn btn--ghost btn--sm" type="button"
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="document-publication"
             hx-post="{{ base }}/toggle/is_draft?value={{ 'false' if is_draft else 'true' }}"
             hx-swap="none">{{ 'Pubblica' if is_draft else 'Riporta a bozza' }}</button>
     {{ content }}

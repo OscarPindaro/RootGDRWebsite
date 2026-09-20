@@ -7,8 +7,8 @@
     :lede_html="world.description | markdown"
     :crumbs="crumbs">
     <div class="masthead__actions">
-      <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessions/new">Nuova sessione</a>
-      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/settings">Impostazioni</a>
+      <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessions/new" data-testid="create-session">Nuova sessione</a>
+      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/settings" data-testid="world-settings">Impostazioni</a>
     </div>
   </editorial.Masthead>
 

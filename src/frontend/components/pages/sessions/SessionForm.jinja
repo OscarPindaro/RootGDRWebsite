@@ -28,7 +28,7 @@
                   :world_id="world.id"
                   :value="session.body if session else ''" />
     <div class="row-inline">
-      <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+      <common.Button type="submit" variant="primary" size="md" data-testid="save-session">Salva</common.Button>
       {% if session %}
       <a class="btn btn--ghost" href="/worlds/{{ world.id }}/sessions/{{ session.id }}">Annulla</a>
       {% else %}
