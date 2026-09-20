@@ -42,6 +42,12 @@ repos:
         language: system
         files: \.jinja$
         pass_filenames: false
+      - id: route-links
+        name: Check that every generated link resolves to a route
+        entry: uv run python -m pre_commits.route_links
+        language: system
+        files: ^(src/frontend/components/.*\.jinja|src/backend/.*\.py)$
+        pass_filenames: false
       - id: model-registry
         name: Sync db/registry.py with model classes
         entry: uv run python -m pre_commits.model_registry
