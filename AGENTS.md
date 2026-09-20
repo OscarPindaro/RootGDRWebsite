@@ -120,3 +120,32 @@ See **`docs/database_migrations.md`** for complete documentation on:
 - Configuration files (`.env`, `config.yaml`, `config.docker.yaml`)
 - Detailed migration workflows
 - Best practices and troubleshooting
+
+## Local harness (learned)
+
+The harness drives a real Postgres via docker/podman and is the only supported
+way to run integration tests and browser checks.
+
+```bash
+uv run harness env up --mode local        # database only, for integration tests
+uv run harness test integration           # uses the active environment
+uv run harness env up --mode docker       # database + backend container
+uv run harness screenshot /worlds --email e2e-admin@example.com --name worlds
+uv run harness env teardown
+```
+
+- The committed `test.env` is preferred over `.env.test`; the harness and
+  `tests/conftest.py` both read it, so a fresh checkout runs tests without
+  private secrets.
+- Direct pytest/alembic runs need the active environment's config:
+  `ENV_FILE=$PWD/test.env YAML_CONFIG_FILE=~/.cache/fastapi-template/harness/<worktree>_<hash>/config.test.local.active.yaml`.
+- Playwright browsers are not installed automatically: run
+  `uv run playwright install chromium` once (and again after a playwright bump).
+- Screenshots land in `harness-artifacts/` (gitignored) by default; pass
+  `--output-dir /tmp/...` when the agent needs to read them back.
+- Bind mounts in the test compose files use `${HARNESS_REPO_ROOT}` and `:z`
+  because podman-compose resolves relative volume paths against the cwd and
+  SELinux blocks unlabelled mounts (the app would silently fall back to
+  `localhost` for the database).
+- `dev login` (`POST /auth/dev-login`) sets the same cookies as a real login;
+  browser contexts are authenticated through it.
