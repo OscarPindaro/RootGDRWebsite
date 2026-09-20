@@ -3,7 +3,9 @@ from typing import Annotated
 
 from pydantic import Field
 
+from ..concurrency import VersionedResponse
 from ..content.constants import DEFAULT_TINT, Tint
+from ..content.policy import ContentUpdate
 from ..schemas import AppBaseModel, OptionalDate, TimestampMixin, UUIDField
 from ..users.schemas import UserResponse
 
@@ -18,7 +20,7 @@ class SessionCreate(AppBaseModel):
     is_draft: Annotated[bool, Field(default=False)]
 
 
-class SessionUpdate(AppBaseModel):
+class SessionUpdate(ContentUpdate):
     title: Annotated[str | None, Field(default=None, min_length=1, max_length=255)]
     in_world_date: Annotated[
         str | None, Field(default=None, min_length=1, max_length=255)
@@ -27,11 +29,9 @@ class SessionUpdate(AppBaseModel):
     short_description: Annotated[str | None, Field(default=None, max_length=1000)]
     body: Annotated[str | None, Field(default=None, max_length=100_000)]
     tint: Annotated[Tint | None, Field(default=None)]
-    locked: Annotated[bool | None, Field(default=None)]
-    is_draft: Annotated[bool | None, Field(default=None)]
 
 
-class SessionSummary(AppBaseModel, TimestampMixin):
+class SessionSummary(AppBaseModel, TimestampMixin, VersionedResponse):
     id: Annotated[UUIDField, Field(description="Session ID")]
     title: Annotated[str, Field(description="Title")]
     in_world_date: Annotated[str, Field(description="In-world date label")]

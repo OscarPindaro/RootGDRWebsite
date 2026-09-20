@@ -130,6 +130,7 @@ class WorldRepository:
                 data.members, world.created_by_id
             )
         await self.db.flush()
+        await self.db.refresh(world, ["updated_at"])
         return world
 
     async def get_membership(

@@ -3,6 +3,7 @@ from typing import Annotated
 
 from pydantic import Field
 
+from ..concurrency import VersionedResponse, VersionedUpdate
 from ..db.enums import WorldRole
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 from ..users.schemas import UserResponse
@@ -44,7 +45,7 @@ class WorldCreate(AppBaseModel):
     ]
 
 
-class WorldUpdate(AppBaseModel):
+class WorldUpdate(VersionedUpdate):
     name: Annotated[
         str | None,
         Field(
@@ -77,7 +78,7 @@ class WorldMemberResponse(AppBaseModel):
     role: Annotated[WorldRole, Field(description="Role inside the world")]
 
 
-class WorldResponse(AppBaseModel, TimestampMixin):
+class WorldResponse(AppBaseModel, TimestampMixin, VersionedResponse):
     id: Annotated[UUIDField, Field(description="World ID")]
     name: Annotated[str, Field(max_length=255, description="World name")]
     description: Annotated[

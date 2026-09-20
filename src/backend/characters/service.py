@@ -10,6 +10,7 @@ from ..files.models import FileModel
 from ..filesystem.base import FileSystem
 from ..images import ImageNotFoundError, read_image, store_image
 from ..content.constants import ContentKind
+from ..content.policy import require_content_update
 from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.models import UserModel
@@ -134,16 +135,24 @@ async def update_character(
     if character is None:
         raise CharacterNotFoundException(character_id)
     await _require_manage(db, world, character, user)
-    for field in ("name", "title", "short_description", "body", "tint", "animal"):
-        value = getattr(data, field)
-        if value is not None:
-            setattr(character, field, value)
+    require_content_update(character, data)
+    if data.name is not None:
+        character.name = data.name
+    if data.title is not None:
+        character.title = data.title
+    if data.short_description is not None:
+        character.short_description = data.short_description
+    if data.body is not None:
+        character.body = data.body
+    if data.tint is not None:
+        character.tint = data.tint
+    if data.animal is not None:
+        character.animal = data.animal
     if data.locked is not None:
         character.locked = data.locked
     if data.is_draft is not None:
         character.is_draft = data.is_draft
     await db.flush()
-    # ``updated_at`` is server-generated; reload it before serialising.
     await db.refresh(character, ["updated_at"])
     await refresh_references(
         db, world_id, ContentKind.CHARACTER, character.id, character.body

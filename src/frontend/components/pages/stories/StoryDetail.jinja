@@ -24,7 +24,7 @@
               {% if story.period_label %}<span>{{ story.period_label }}</span>{% endif %}
             </span>
             <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
-              :can_manage="can_manage" :locked="story.locked">
+              :can_manage="can_manage" :locked="story.locked" :version="story.version">
               <h1 class="display" data-doc-field="title">{{ story.title }}</h1>
               <p class="lede" data-doc-field="short_description"
                  {% if not story.short_description %}data-empty="true"{% endif %}>{{ story.short_description or '' }}</p>
@@ -36,7 +36,7 @@
           <editorial.DocEdit world_id={{ world.id }}
             :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
             :body="story.body" :body_html="body_html"
-            :locked="story.locked" :can_manage="can_manage" />
+            :locked="story.locked" :version="story.version" :can_manage="can_manage" />
         </div>
       </div>
     </div>

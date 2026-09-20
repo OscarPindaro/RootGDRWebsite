@@ -10,6 +10,7 @@ from ..files.models import FileModel
 from ..filesystem.base import FileSystem
 from ..images import ImageNotFoundError, read_image, store_image
 from ..content.constants import ContentKind
+from ..content.policy import require_content_update
 from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.schemas import User
@@ -97,16 +98,22 @@ async def update_place(
     place = await _get(db, world_id, place_id)
     if place is None:
         raise PlaceNotFoundException(place_id)
-    for field in ("name", "short_description", "body", "tint", "shape"):
-        value = getattr(data, field)
-        if value is not None:
-            setattr(place, field, value)
+    require_content_update(place, data)
+    if data.name is not None:
+        place.name = data.name
+    if data.short_description is not None:
+        place.short_description = data.short_description
+    if data.body is not None:
+        place.body = data.body
+    if data.tint is not None:
+        place.tint = data.tint
+    if data.shape is not None:
+        place.shape = data.shape
     if data.locked is not None:
         place.locked = data.locked
     if data.is_draft is not None:
         place.is_draft = data.is_draft
     await db.flush()
-    # ``updated_at`` is server-generated; reload it before serialising.
     await db.refresh(place, ["updated_at"])
     await refresh_references(db, world_id, ContentKind.PLACE, place.id, place.body)
     return place

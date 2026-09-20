@@ -3,7 +3,9 @@ from typing import Annotated, AsyncGenerator
 from fastapi import Depends, Request
 from jinjax.catalog import Catalog
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.exc import StaleDataError
 
+from .concurrency import VersionConflictException
 from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
 from .jinja import _build_templates, get_catalog
@@ -24,6 +26,9 @@ async def get_db_session(
     try:
         yield session
         await session.commit()
+    except StaleDataError as exc:
+        await session.rollback()
+        raise VersionConflictException() from exc
     except Exception:
         await session.rollback()
         raise

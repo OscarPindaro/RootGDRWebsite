@@ -1,7 +1,8 @@
-{#def world_id, base, body, body_html, locked=False, can_manage=False #}
+{#def world_id, base, body, body_html, version, locked=False, can_manage=False #}
 <div class="docedit" data-doc-edit data-world-id="{{ world_id }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   <form class="docedit__form" hx-post="{{ base }}" hx-swap="none">
+    <input type="hidden" name="expected_version" value="{{ version }}">
     <textarea class="docedit__source" name="body" data-doc-source hidden>{{ body }}</textarea>
     <div class="docedit__editor" data-doc-editor hidden></div>
     <div class="docedit__render prose" data-doc-render tabindex="0">{{ body_html }}</div>

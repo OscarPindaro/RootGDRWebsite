@@ -10,6 +10,7 @@ from ..files.models import FileModel
 from ..filesystem.base import FileSystem
 from ..images import ImageNotFoundError, read_image, store_image
 from ..content.constants import ContentKind
+from ..content.policy import require_content_update
 from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.schemas import User
@@ -96,16 +97,24 @@ async def update_npc(
     npc = await _get(db, world_id, npc_id)
     if npc is None:
         raise NpcNotFoundException(npc_id)
-    for field in ("name", "title", "short_description", "body", "tint", "animal"):
-        value = getattr(data, field)
-        if value is not None:
-            setattr(npc, field, value)
+    require_content_update(npc, data)
+    if data.name is not None:
+        npc.name = data.name
+    if data.title is not None:
+        npc.title = data.title
+    if data.short_description is not None:
+        npc.short_description = data.short_description
+    if data.body is not None:
+        npc.body = data.body
+    if data.tint is not None:
+        npc.tint = data.tint
+    if data.animal is not None:
+        npc.animal = data.animal
     if data.locked is not None:
         npc.locked = data.locked
     if data.is_draft is not None:
         npc.is_draft = data.is_draft
     await db.flush()
-    # ``updated_at`` is server-generated; reload it before serialising.
     await db.refresh(npc, ["updated_at"])
     await refresh_references(db, world_id, ContentKind.NPC, npc.id, npc.body)
     return npc

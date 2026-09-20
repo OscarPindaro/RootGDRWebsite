@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from ..access import master_world, readable_world
 from ..content.constants import ContentKind
+from ..content.policy import require_content_update
 from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.schemas import User
@@ -120,26 +121,26 @@ async def update_page(
     page = await _get(db, world_id, page_id)
     if page is None:
         raise PageNotFoundException(page_id)
+    require_content_update(page, data)
     if data.slug is not None and data.slug != page.slug:
         if await _slug_taken(db, world_id, data.slug, exclude=page.id):
             raise PageSlugConflictException(data.slug)
         page.slug = data.slug
-    for field in (
-        "title",
-        "short_description",
-        "menu_position",
-        "tint",
-        "body",
-    ):
-        value = getattr(data, field)
-        if value is not None:
-            setattr(page, field, value)
+    if data.title is not None:
+        page.title = data.title
+    if data.short_description is not None:
+        page.short_description = data.short_description
+    if data.menu_position is not None:
+        page.menu_position = data.menu_position
+    if data.tint is not None:
+        page.tint = data.tint
+    if data.body is not None:
+        page.body = data.body
     if data.locked is not None:
         page.locked = data.locked
     if data.is_draft is not None:
         page.is_draft = data.is_draft
     await db.flush()
-    # ``updated_at`` is server-generated; reload it before serialising.
     await db.refresh(page, ["updated_at"])
     await refresh_references(db, world_id, ContentKind.PAGE, page.id, page.body)
     return page

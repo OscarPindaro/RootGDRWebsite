@@ -30,7 +30,7 @@
             <editorial.Face :tint="place.tint" :shape="place.shape" :image_url="place.image_url" />
           </div>
           <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
-            :can_manage="can_manage" :locked="place.locked">
+            :can_manage="can_manage" :locked="place.locked" :version="place.version">
             <h1 class="display" data-doc-field="name">{{ place.name }}</h1>
             <p class="lede" data-doc-field="short_description"
                {% if not place.short_description %}data-empty="true"{% endif %}>{{ place.short_description or '' }}</p>
@@ -41,7 +41,7 @@
           <editorial.DocEdit world_id={{ world.id }}
             :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
             :body="place.body" :body_html="body_html"
-            :locked="place.locked" :can_manage="can_manage" />
+            :locked="place.locked" :version="place.version" :can_manage="can_manage" />
         </div>
       </div>
     </div>

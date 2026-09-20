@@ -5,7 +5,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..db.db import Base
 from ..db.enums import WorldRole
-from ..db.mixins import TimestampMixin, UUIDv7PrimaryKeyMixin
+from ..db.mixins import OptimisticLockMixin, TimestampMixin, UUIDv7PrimaryKeyMixin
 from ..files.models import FileModel
 from ..users.models import UserModel
 
@@ -34,7 +34,7 @@ class WorldMembershipModel(Base, TimestampMixin):
     user: Mapped[UserModel] = relationship(lazy="select")
 
 
-class WorldModel(Base, UUIDv7PrimaryKeyMixin, TimestampMixin):
+class WorldModel(Base, UUIDv7PrimaryKeyMixin, TimestampMixin, OptimisticLockMixin):
     name: Mapped[str] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(nullable=False)
     image_file_id: Mapped[uuid.UUID | None] = mapped_column(

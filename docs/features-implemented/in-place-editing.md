@@ -29,6 +29,13 @@ The reading page is where a document is written: no separate edit form, no
   browser of someone who can edit; readers never download it.
 - The body is saved through the existing per-feature update endpoint with a JSON
   body (htmx `json-enc`), which returns the page again.
+- Worlds and documents expose an integer `version`. Update requests may send the
+  last read value as `expected_version`; stale requests return HTTP 409 and do
+  not mutate the row. The database also checks the version at commit, covering
+  two editors that save at the same time.
+- Locking is a server-side rule shared by all document services. A locked
+  document rejects every update with HTTP 423. The only accepted update is an
+  authorized, standalone `locked: false` request using the current version.
 
 ## Notes and limits
 

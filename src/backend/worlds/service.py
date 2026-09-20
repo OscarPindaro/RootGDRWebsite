@@ -3,6 +3,7 @@ import uuid
 from fastapi import UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..concurrency import require_expected_version
 from ..db.enums import UserRole, WorldRole
 from ..files.models import FileModel
 from ..filesystem.base import FileSystem
@@ -110,7 +111,9 @@ async def set_members(
     world = await get_world(db, world_id, user, include_members=True)
     _ensure_owner(world, user)
     try:
-        return await WorldRepository(db).update(world, WorldUpdate(members=entries))
+        return await WorldRepository(db).update(
+            world, WorldUpdate(members=entries, expected_version=world.version)
+        )
     except ValueError as exc:
         raise SharedUserNotFoundException() from exc
 
@@ -124,6 +127,7 @@ async def update_world(
 ) -> WorldModel:
     world = await get_world(db, world_id, user, include_members)
     _ensure_owner(world, user)
+    require_expected_version(world, data.expected_version)
     try:
         updated = await WorldRepository(db).update(world, data)
     except ValueError as exc:

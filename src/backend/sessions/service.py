@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from ..access import master_world, readable_world
 from ..content.constants import ContentKind
+from ..content.policy import require_content_update
 from ..content.references import refresh_references
 from ..log import get_logger
 from ..users.schemas import User
@@ -116,10 +117,17 @@ async def update_session(
     session = await _get(db, world_id, session_id)
     if session is None:
         raise SessionNotFoundException(session_id)
-    for field in ("title", "in_world_date", "short_description", "body", "tint"):
-        value = getattr(data, field)
-        if value is not None:
-            setattr(session, field, value)
+    require_content_update(session, data)
+    if data.title is not None:
+        session.title = data.title
+    if data.in_world_date is not None:
+        session.in_world_date = data.in_world_date
+    if data.short_description is not None:
+        session.short_description = data.short_description
+    if data.body is not None:
+        session.body = data.body
+    if data.tint is not None:
+        session.tint = data.tint
     if data.real_date is not None:
         session.real_date = data.real_date
     if data.locked is not None:
@@ -127,7 +135,6 @@ async def update_session(
     if data.is_draft is not None:
         session.is_draft = data.is_draft
     await db.flush()
-    # ``updated_at`` is server-generated; reload it before serialising.
     await db.refresh(session, ["updated_at"])
     await refresh_references(
         db, world_id, ContentKind.SESSION, session.id, session.body

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..content.models import ContentDocumentMixin, TintedMixin
 from ..db.db import Base
-from ..db.mixins import TimestampMixin, UUIDv7PrimaryKeyMixin
+from ..db.mixins import OptimisticLockMixin, TimestampMixin, UUIDv7PrimaryKeyMixin
 from ..sessions.models import SessionModel
 from ..users.models import UserModel
 
@@ -34,6 +34,7 @@ class StoryModel(
     Base,
     UUIDv7PrimaryKeyMixin,
     TimestampMixin,
+    OptimisticLockMixin,
     ContentDocumentMixin,
     TintedMixin,
 ):

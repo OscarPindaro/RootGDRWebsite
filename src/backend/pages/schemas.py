@@ -3,7 +3,9 @@ from typing import Annotated
 
 from pydantic import Field, field_validator
 
+from ..concurrency import VersionedResponse
 from ..content.constants import DEFAULT_TINT, Tint
+from ..content.policy import ContentUpdate
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 from ..users.schemas import UserResponse
 
@@ -50,15 +52,13 @@ class PageCreate(AppBaseModel):
         return 0 if value == "" else value
 
 
-class PageUpdate(AppBaseModel):
+class PageUpdate(ContentUpdate):
     title: Annotated[str | None, Field(default=None, min_length=1, max_length=255)]
     slug: Annotated[str | None, Field(default=None, max_length=255)]
     short_description: Annotated[str | None, Field(default=None, max_length=1000)]
     menu_position: Annotated[int | None, Field(default=None, ge=0)]
     tint: Annotated[Tint | None, Field(default=None)]
     body: Annotated[str | None, Field(default=None, max_length=100_000)]
-    locked: Annotated[bool | None, Field(default=None)]
-    is_draft: Annotated[bool | None, Field(default=None)]
 
     @field_validator("slug")
     @classmethod
@@ -71,7 +71,7 @@ class PageUpdate(AppBaseModel):
         return None if value == "" else value
 
 
-class PageSummary(AppBaseModel, TimestampMixin):
+class PageSummary(AppBaseModel, TimestampMixin, VersionedResponse):
     id: Annotated[UUIDField, Field(description="Page ID")]
     title: Annotated[str, Field(description="Title")]
     slug: Annotated[str, Field(description="URL slug, unique within the world")]

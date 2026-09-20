@@ -6,8 +6,7 @@ stays in the service layer.
 """
 
 import uuid
-from collections.abc import Awaitable, Callable
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import HTMLResponse
@@ -18,19 +17,19 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..access import readable_world
 from ..auth.dependencies import get_current_user
 from ..characters.schemas import CharacterUpdate
-from ..characters.service import update_character
+from ..characters.service import get_character, update_character
 from ..dependencies import get_db_session
 from ..npcs.schemas import NpcUpdate
-from ..npcs.service import update_npc
+from ..npcs.service import get_npc, update_npc
 from ..pages.schemas import PageUpdate
-from ..pages.service import update_page
+from ..pages.service import get_page, update_page
 from ..places.schemas import PlaceUpdate
-from ..places.service import update_place
+from ..places.service import get_place, update_place
 from ..schemas import AppBaseModel, ListResponse
 from ..sessions.schemas import SessionUpdate
-from ..sessions.service import update_session
+from ..sessions.service import get_session, update_session
 from ..stories.schemas import StoryUpdate
-from ..stories.service import update_story
+from ..stories.service import get_story, update_story
 from ..users.schemas import User
 from ..worlds.views import _htmx_redirect
 from .markdown import render_markdown
@@ -38,24 +37,8 @@ from .references import _NAME_FIELD, KIND_MODELS, resolve_body
 
 router = APIRouter(tags=["content-actions"])
 
-UpdateFn = Callable[..., Awaitable[Any]]
-
-_UPDATERS: dict[str, tuple[UpdateFn, type]] = {
-    "characters": (update_character, CharacterUpdate),
-    "npcs": (update_npc, NpcUpdate),
-    "places": (update_place, PlaceUpdate),
-    "sessions": (update_session, SessionUpdate),
-    "stories": (update_story, StoryUpdate),
-    "pages": (update_page, PageUpdate),
-}
-
+_KINDS = {"characters", "npcs", "places", "sessions", "stories", "pages"}
 _FIELDS = {"locked", "is_draft"}
-
-
-def _detail_url(kind: str, world_id: uuid.UUID, item: Any) -> str:
-    if kind == "pages":
-        return f"/worlds/{world_id}/pages/{item.slug}"
-    return f"/worlds/{world_id}/{kind}/{item.id}"
 
 
 @router.post("/worlds/{world_id}/{kind}/{item_id}/toggle/{field}")
@@ -69,11 +52,63 @@ async def toggle_document(
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> Response:
     """Lock/unlock or publish/draft a document (owner or master, per feature)."""
-    if kind not in _UPDATERS or field not in _FIELDS:
+    if kind not in _KINDS or field not in _FIELDS:
         return _htmx_redirect(f"/worlds/{world_id}")
-    updater, schema = _UPDATERS[kind]
-    item = await updater(db, world_id, item_id, schema(**{field: value}), user)
-    return _htmx_redirect(_detail_url(kind, world_id, item))
+
+    if kind == "characters":
+        current = await get_character(db, world_id, item_id, user)
+        data = CharacterUpdate(expected_version=current.version)
+        if field == "locked":
+            data.locked = value
+        else:
+            data.is_draft = value
+        item = await update_character(db, world_id, item_id, data, user)
+        return _htmx_redirect(f"/worlds/{world_id}/characters/{item.id}")
+    if kind == "npcs":
+        current = await get_npc(db, world_id, item_id, user)
+        data = NpcUpdate(expected_version=current.version)
+        if field == "locked":
+            data.locked = value
+        else:
+            data.is_draft = value
+        item = await update_npc(db, world_id, item_id, data, user)
+        return _htmx_redirect(f"/worlds/{world_id}/npcs/{item.id}")
+    if kind == "places":
+        current = await get_place(db, world_id, item_id, user)
+        data = PlaceUpdate(expected_version=current.version)
+        if field == "locked":
+            data.locked = value
+        else:
+            data.is_draft = value
+        item = await update_place(db, world_id, item_id, data, user)
+        return _htmx_redirect(f"/worlds/{world_id}/places/{item.id}")
+    if kind == "sessions":
+        current = await get_session(db, world_id, item_id, user)
+        data = SessionUpdate(expected_version=current.version)
+        if field == "locked":
+            data.locked = value
+        else:
+            data.is_draft = value
+        item = await update_session(db, world_id, item_id, data, user)
+        return _htmx_redirect(f"/worlds/{world_id}/sessions/{item.id}")
+    if kind == "stories":
+        current = await get_story(db, world_id, item_id, user)
+        data = StoryUpdate(expected_version=current.version)
+        if field == "locked":
+            data.locked = value
+        else:
+            data.is_draft = value
+        item = await update_story(db, world_id, item_id, data, user)
+        return _htmx_redirect(f"/worlds/{world_id}/stories/{item.id}")
+
+    current_page = await get_page(db, world_id, item_id, user)
+    page_data = PageUpdate(expected_version=current_page.version)
+    if field == "locked":
+        page_data.locked = value
+    else:
+        page_data.is_draft = value
+    page = await update_page(db, world_id, item_id, page_data, user)
+    return _htmx_redirect(f"/worlds/{world_id}/pages/{page.slug}")
 
 
 class MentionSuggestion(AppBaseModel):

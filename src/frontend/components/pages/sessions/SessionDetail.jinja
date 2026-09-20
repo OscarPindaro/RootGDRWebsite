@@ -17,7 +17,7 @@
   <div class="document">
     <div class="document__head document__head--plain">
       <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
-        :can_manage="can_manage" :locked="session.locked">
+        :can_manage="can_manage" :locked="session.locked" :version="session.version">
         <h1 class="display" data-doc-field="title">{{ session.title }}</h1>
         <p class="lede" data-doc-field="short_description"
            {% if not session.short_description %}data-empty="true"{% endif %}>{{ session.short_description or '' }}</p>
@@ -28,7 +28,7 @@
       <editorial.DocEdit world_id={{ world.id }}
         :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
         :body="session.body" :body_html="body_html"
-        :locked="session.locked" :can_manage="can_manage" />
+        :locked="session.locked" :version="session.version" :can_manage="can_manage" />
     </div>
   </div>
 

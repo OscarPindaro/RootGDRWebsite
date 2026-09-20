@@ -6,6 +6,7 @@ from sqlalchemy.orm import selectinload
 
 from ..access import master_world, readable_world
 from ..content.constants import ContentKind
+from ..content.policy import require_content_update
 from ..content.references import refresh_references
 from ..log import get_logger
 from ..sessions.models import SessionModel
@@ -120,17 +121,19 @@ async def update_story(
     story = await _get(db, world_id, story_id)
     if story is None:
         raise StoryNotFoundException(story_id)
-    for field in (
-        "title",
-        "short_description",
-        "period_label",
-        "status",
-        "tint",
-        "body",
-    ):
-        value = getattr(data, field)
-        if value is not None:
-            setattr(story, field, value)
+    require_content_update(story, data)
+    if data.title is not None:
+        story.title = data.title
+    if data.short_description is not None:
+        story.short_description = data.short_description
+    if data.period_label is not None:
+        story.period_label = data.period_label
+    if data.status is not None:
+        story.status = StoryStatus(data.status)
+    if data.tint is not None:
+        story.tint = data.tint
+    if data.body is not None:
+        story.body = data.body
     if data.session_ids is not None:
         story.sessions = await _resolve_sessions(db, world_id, data.session_ids)
     if data.locked is not None:
@@ -138,7 +141,6 @@ async def update_story(
     if data.is_draft is not None:
         story.is_draft = data.is_draft
     await db.flush()
-    # ``updated_at`` is server-generated; reload it before serialising.
     await db.refresh(story, ["updated_at"])
     await refresh_references(db, world_id, ContentKind.STORY, story.id, story.body)
     return story

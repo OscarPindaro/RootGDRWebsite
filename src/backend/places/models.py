@@ -6,7 +6,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..content.constants import DEFAULT_SHAPE
 from ..content.models import ContentDocumentMixin, TintedMixin
 from ..db.db import Base
-from ..db.mixins import TimestampMixin, UUIDv7PrimaryKeyMixin
+from ..db.mixins import OptimisticLockMixin, TimestampMixin, UUIDv7PrimaryKeyMixin
 from ..files.models import FileModel
 from ..users.models import UserModel
 
@@ -15,6 +15,7 @@ class PlaceModel(
     Base,
     UUIDv7PrimaryKeyMixin,
     TimestampMixin,
+    OptimisticLockMixin,
     ContentDocumentMixin,
     TintedMixin,
 ):

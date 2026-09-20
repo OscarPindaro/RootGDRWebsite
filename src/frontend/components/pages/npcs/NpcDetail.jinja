@@ -23,7 +23,7 @@
             <editorial.Face :tint="npc.tint" :animal="npc.animal" :image_url="npc.image_url" />
           </div>
           <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/npcs/' ~ npc.id"
-            :can_manage="can_manage" :locked="npc.locked">
+            :can_manage="can_manage" :locked="npc.locked" :version="npc.version">
             <h1 class="display" data-doc-field="name">{{ npc.name }}</h1>
             <p class="card__title" data-doc-field="title"
                {% if not npc.title %}data-empty="true"{% endif %}>{{ npc.title or '' }}</p>
@@ -36,7 +36,7 @@
           <editorial.DocEdit world_id={{ world.id }}
             :base="'/worlds/' ~ world.id ~ '/npcs/' ~ npc.id"
             :body="npc.body" :body_html="body_html"
-            :locked="npc.locked" :can_manage="can_manage" />
+            :locked="npc.locked" :version="npc.version" :can_manage="can_manage" />
         </div>
       </div>
     </div>

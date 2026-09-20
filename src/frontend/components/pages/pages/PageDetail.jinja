@@ -15,7 +15,7 @@
   </editorial.Docbar>
 
   <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
-    :can_manage="can_manage" :locked="page.locked">
+    :can_manage="can_manage" :locked="page.locked" :version="page.version">
     <h1 class="display" data-doc-field="title">{{ page.title }}</h1>
     <p class="lede" data-doc-field="short_description"
        {% if not page.short_description %}data-empty="true"{% endif %}>{{ page.short_description or '' }}</p>
@@ -26,7 +26,7 @@
       <editorial.DocEdit world_id={{ world.id }}
         :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
         :body="page.body" :body_html="body_html"
-        :locked="page.locked" :can_manage="can_manage" />
+        :locked="page.locked" :version="page.version" :can_manage="can_manage" />
     </article>
     <aside class="stack">
       <div class="toc">
