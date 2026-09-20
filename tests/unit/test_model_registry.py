@@ -46,6 +46,7 @@ def test_real_registry_registers_all_tables() -> None:
     models = discover_models(REAL_BACKEND)
     names = {m.name for m in models}
     assert names == {
+        "CharacterModel",
         "FileModel",
         "InvitationModel",
         "TaskModel",

@@ -1,0 +1,12 @@
+{#def tint, animal=None, shape=None, image_url=None, tag=None #}
+<span class="face{{ ' face--photo' if image_url else '' }}"
+      style="--c: var(--{{ tint }});{% if image_url %} background-image: url('{{ image_url }}');{% endif %}">
+  {% if not image_url %}
+    {% if shape %}
+    <span class="face__shape" aria-hidden="true">{{ shape(shape) }}</span>
+    {% elif animal %}
+    <span class="face__emoji" role="img" aria-label="{{ animal }}">{{ animal }}</span>
+    {% endif %}
+  {% endif %}
+  {% if tag %}<span class="face__tag">{{ tag }}</span>{% endif %}
+</span>

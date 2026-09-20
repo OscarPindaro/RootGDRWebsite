@@ -1,0 +1,11 @@
+{#def item, npc=False #}
+<a class="card{{ ' card--npc' if npc else '' }}" href="{{ item.href }}">
+  <div class="card__media">
+    <editorial.Face :tint="item.tint" :animal="item.animal" :shape="item.shape" :image_url="item.image_url" :tag="item.tag" />
+  </div>
+  <div class="card__body">
+    <h3 class="card__name">{{ item.name }}</h3>
+    {% if item.title %}<p class="card__title">{{ item.title }}</p>{% endif %}
+    {% if item.owner_label %}<span class="card__owner">{{ item.owner_label }}</span>{% endif %}
+  </div>
+</a>

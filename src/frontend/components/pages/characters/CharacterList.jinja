@@ -1,0 +1,20 @@
+{#def world, world_context, nav, cards, crumbs, current_user=None #}
+{#css common/Button.css, common/Grid.css, layout/UserMenu.css #}
+{% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
+<layout.Page title="Personaggi" current_user={{ current_user }} :world="world_context" :nav="nav" active="personaggi">
+  <editorial.Masthead
+    title="Personaggi"
+    :eyebrow="eyebrow_text"
+    lede="I giocatori gestiscono le proprie schede; il Master vede e modifica tutto."
+    :crumbs="crumbs">
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/characters/new">Nuovo personaggio</a>
+  </editorial.Masthead>
+
+  {% if cards %}
+  <div class="grid grid--cards">
+    {% for card in cards %}<editorial.Card :item="card" />{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">Nessun personaggio. Creane uno per cominciare.</div>
+  {% endif %}
+</layout.Page>

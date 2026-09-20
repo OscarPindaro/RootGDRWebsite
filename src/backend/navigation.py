@@ -57,6 +57,27 @@ class QuickEntry(BaseModel):
     accent: str
 
 
+class CardItem(BaseModel):
+    """A content item rendered as a card (character, NPC, place)."""
+
+    name: str
+    href: str
+    tint: str
+    title: str | None = None
+    animal: str | None = None
+    shape: str | None = None
+    image_url: str | None = None
+    owner_label: str | None = None
+    tag: str | None = None
+
+
+class Option(BaseModel):
+    """A labelled option for a select control."""
+
+    value: str
+    label: str
+
+
 def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
     """Navigation shown outside a world."""
     items = [

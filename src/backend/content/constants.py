@@ -65,6 +65,36 @@ DEFAULT_TINT: Tint = "p1"
 DEFAULT_SHAPE: Shape = "cerchio"
 DEFAULT_ANIMAL: str = "🐈"
 
+TINT_LABELS: dict[str, str] = {
+    "p1": "Vermiglio",
+    "p2": "Arancio",
+    "p3": "Ocra",
+    "p4": "Oliva",
+    "p5": "Bosco",
+    "p6": "Turchese",
+    "p7": "Cielo",
+    "p8": "Cobalto",
+    "p9": "Indaco",
+    "p10": "Prugna",
+    "p11": "Rosa",
+    "p12": "Argilla",
+}
+
+SHAPE_LABELS: dict[str, str] = {
+    "cerchio": "Cerchio",
+    "quadrato": "Quadrato",
+    "triangolo": "Triangolo",
+    "rombo": "Rombo",
+    "esagono": "Esagono",
+    "pentagono": "Pentagono",
+    "stella": "Stella",
+    "croce": "Croce",
+    "ottagono": "Ottagono",
+    "semicerchio": "Semicerchio",
+    "goccia": "Goccia",
+    "anello": "Anello",
+}
+
 
 class ContentKind(str, Enum):
     """The kinds of document that can be referenced and linked."""
