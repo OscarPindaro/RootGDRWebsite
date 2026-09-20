@@ -1,0 +1,9 @@
+{#def entries #}
+<div class="timeline">
+  {% for entry in entries %}
+  <div class="tl{{ ' tl--accent' if loop.first else '' }}" {% if entry.tint %}style="--c: var(--{{ entry.tint }})"{% endif %}>
+    <span class="tl__when">{{ entry.when }}</span>
+    <p class="tl__what"><a class="tl__link" href="{{ entry.href }}">{{ entry.title }}</a>{% if entry.text %} — {{ entry.text }}{% endif %}</p>
+  </div>
+  {% endfor %}
+</div>

@@ -113,3 +113,31 @@ def world_nav(
             )
         )
     return items
+
+
+# section id, label, mark, sub-label, accent
+QUICK_SECTIONS: tuple[tuple[str, str, str, str, str], ...] = (
+    ("personaggi", "Personaggi", "personaggi", "Schede", "vermilion"),
+    ("npc", "NPC", "npc", "Solo Master", "plum"),
+    ("luoghi", "Luoghi", "luoghi", "Atlante", "forest"),
+    ("sessioni", "Sessioni", "sessioni", "Registro", "cobalt"),
+    ("storie", "Storie", "storie", "Archi", "ochre"),
+)
+
+
+def build_quicks(
+    world_id: str, counts: dict[str, int] | None = None
+) -> list[QuickEntry]:
+    """The strip of entry points to the content sections on the overview."""
+    counts = counts or {}
+    return [
+        QuickEntry(
+            label=label,
+            href=f"/worlds/{world_id}/{section_id}",
+            mark=mark,
+            foot=foot,
+            count=counts.get(section_id, 0),
+            accent=accent,
+        )
+        for section_id, label, mark, foot, accent in QUICK_SECTIONS
+    ]

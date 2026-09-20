@@ -1,0 +1,7 @@
+{#def entry #}
+<a class="quick quick--{{ entry.accent }}" href="{{ entry.href }}">
+  <common.Mark :role="entry.mark" class="quick__mark" />
+  <span class="quick__title">{{ entry.label }}</span>
+  <span class="quick__count">{{ entry.count }}</span>
+  <span class="quick__foot"><span>{{ entry.foot }}</span><span aria-hidden="true">→</span></span>
+</a>
