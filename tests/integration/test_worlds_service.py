@@ -17,6 +17,7 @@ from src.backend.worlds.service import (
     get_world,
     get_world_role,
     get_worlds,
+    set_members,
     update_world,
 )
 
@@ -130,3 +131,41 @@ async def test_administrator_can_manage_another_users_world(
     )
 
     assert updated.name == "The Verdant Vale"
+
+
+async def test_owner_can_add_and_remove_members(db_session: AsyncSession) -> None:
+    owner = await _user(db_session, "owner")
+    player = await _user(db_session, "player")
+    world = await create_world(
+        db_session,
+        WorldCreate(name="Boscochiaro", description="A divided wood."),
+        owner,
+    )
+
+    added = await set_members(
+        db_session,
+        world.id,
+        [WorldMemberInput(user_id=player.id, role=WorldRole.PLAYER)],
+        owner,
+    )
+    assert {m.user_id: m.role for m in added.memberships} == {
+        owner.id: WorldRole.MASTER,
+        player.id: WorldRole.PLAYER,
+    }
+    assert await get_world_role(db_session, added, player) == WorldRole.PLAYER
+
+    # A player can read the world but cannot change its membership.
+    with pytest.raises(WorldAccessDeniedException):
+        await set_members(db_session, world.id, [], player)
+
+    removed = await set_members(
+        db_session,
+        world.id,
+        [WorldMemberInput(user_id=owner.id, role=WorldRole.MASTER)],
+        owner,
+    )
+    assert [m.user_id for m in removed.memberships] == [owner.id]
+
+    # Once removed, the world is no longer visible to the former player.
+    with pytest.raises(WorldNotFoundException):
+        await set_members(db_session, world.id, [], player)

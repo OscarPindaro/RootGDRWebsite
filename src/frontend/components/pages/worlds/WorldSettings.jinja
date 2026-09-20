@@ -1,0 +1,82 @@
+{#def world, members, world_context, nav, crumbs, error=None, current_user=None #}
+{#css common/Alert.css, common/Button.css, common/Field.css, common/Pill.css, layout/UserMenu.css, pages/worlds/WorldSettings.css #}
+<layout.Page title="Impostazioni" current_user={{ current_user }} :world="world_context" :nav="nav" active="mondo">
+  <editorial.Masthead title="Impostazioni" :eyebrow="world.name" :crumbs="crumbs">
+    <a class="btn btn--ghost" href="/worlds/{{ world.id }}">Torna al mondo</a>
+  </editorial.Masthead>
+
+  {% if error %}<common.Alert variant="danger">{{ error }}</common.Alert>{% endif %}
+
+  <div class="grid grid--two">
+    <div class="stack stack--lg">
+      <section>
+        <editorial.SectionHead title="Identità" eyebrow="Nome e descrizione" />
+        <form class="form" hx-post="/worlds/{{ world.id }}/settings" hx-swap="none">
+          <common.Field label="Nome" name="name" type="text" required :value="world.name" />
+          <common.Field label="Descrizione" name="description" type="textarea" required :value="world.description" />
+          <div class="row-inline">
+            <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+          </div>
+        </form>
+      </section>
+
+      <section>
+        <editorial.SectionHead title="Membri" eyebrow="Master e giocatori" />
+        <div class="links">
+          <div class="links__head">
+            <span class="eyebrow">Chi ha accesso</span>
+            <span class="mono muted">{{ members | length }}</span>
+          </div>
+          <div class="links__group">
+            {% for member in members %}
+            <div class="links__item">
+              <span class="links__dot" style="--c: var(--p8)"></span>
+              {{ member.user.name }}
+              <span class="mono muted">{{ 'Master' if member.role == 'master' else 'Giocatore' }}</span>
+              {% if member.user.id | string != world.created_by.id | string %}
+              <button class="btn--text" type="button"
+                      hx-delete="/worlds/{{ world.id }}/members/{{ member.user.id }}"
+                      hx-confirm="Rimuovere {{ member.user.name }}?"
+                      hx-swap="none">Rimuovi</button>
+              {% else %}
+              <span class="mono muted">proprietario</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        <form class="row-inline" style="margin-top: 1rem"
+              hx-post="/worlds/{{ world.id }}/members"
+              hx-ext="ignore:json-enc" hx-swap="none">
+          <input class="input" name="email" type="email" required placeholder="email@example.com" aria-label="Email del membro">
+          <select class="select" name="role" aria-label="Ruolo">
+            <option value="player">Giocatore</option>
+            <option value="master">Master</option>
+          </select>
+          <common.Button type="submit" variant="secondary" size="md">Aggiungi</common.Button>
+        </form>
+      </section>
+    </div>
+
+    <aside class="stack">
+      <section>
+        <editorial.SectionHead title="Copertina" eyebrow="Immagine del mondo" />
+        {% if world.image_url %}
+        <img src="{{ world.image_url }}" alt="" class="world-cover-preview">
+        {% else %}
+        <div class="empty">Nessuna immagine caricata.</div>
+        {% endif %}
+        <form style="margin-top: 1rem"
+              hx-post="/worlds/{{ world.id }}/image"
+              hx-ext="ignore:json-enc"
+              hx-encoding="multipart/form-data"
+              hx-swap="none">
+          <input class="input" type="file" name="image" accept="image/*" required aria-label="Nuova immagine di copertina">
+          <div class="row-inline" style="margin-top: 0.75rem">
+            <common.Button type="submit" variant="secondary" size="sm">Carica immagine</common.Button>
+          </div>
+        </form>
+      </section>
+    </aside>
+  </div>
+</layout.Page>

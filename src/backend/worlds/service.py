@@ -16,7 +16,7 @@ from .exceptions import (
 )
 from .models import WorldModel
 from .repository import WorldRepository
-from .schemas import WorldCreate, WorldUpdate
+from .schemas import WorldCreate, WorldMemberInput, WorldUpdate
 
 logger = get_logger(__name__)
 
@@ -90,6 +90,29 @@ def role_for_world(world: WorldModel, user: User) -> WorldRole:
         if membership.user_id == user.id:
             return membership.role
     return WorldRole.PLAYER
+
+
+def members_to_inputs(world: WorldModel) -> list[WorldMemberInput]:
+    """Current memberships as update inputs, for add/remove round-trips."""
+    return [
+        WorldMemberInput(user_id=membership.user_id, role=membership.role)
+        for membership in world.memberships
+    ]
+
+
+async def set_members(
+    db: AsyncSession,
+    world_id: uuid.UUID,
+    entries: list[WorldMemberInput],
+    user: User,
+) -> WorldModel:
+    """Replace the membership list (owner-only)."""
+    world = await get_world(db, world_id, user, include_members=True)
+    _ensure_owner(world, user)
+    try:
+        return await WorldRepository(db).update(world, WorldUpdate(members=entries))
+    except ValueError as exc:
+        raise SharedUserNotFoundException() from exc
 
 
 async def update_world(

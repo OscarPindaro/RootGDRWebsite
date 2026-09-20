@@ -1,0 +1,10 @@
+.world-cover-preview {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border: var(--rule-ink);
+}
+
+.links__item .btn--text {
+  margin-left: auto;
+}

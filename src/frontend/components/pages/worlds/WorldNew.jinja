@@ -1,0 +1,21 @@
+{#def crumbs, current_user=None #}
+{#css common/Button.css, common/Field.css, layout/UserMenu.css #}
+<layout.Page title="Nuovo mondo" current_user={{ current_user }}>
+  <editorial.Masthead
+    title="Nuovo mondo"
+    eyebrow="Crea un volume"
+    lede="Nome, descrizione e copertina. Potrai invitare i membri dopo averlo creato."
+    :crumbs="crumbs" />
+
+  <form class="form"
+        hx-post="/worlds/new"
+        hx-swap="none">
+    <common.Field label="Nome" name="name" type="text" required maxlength=255 placeholder="Le Cronache di Boscochiaro" />
+    <common.Field label="Descrizione" name="description" type="textarea" required
+                  placeholder="Un bosco diviso fra quattro pretendenti." helper="Markdown. Puoi modificarla in seguito." />
+    <div class="row-inline">
+      <common.Button type="submit" variant="primary" size="md">Crea mondo</common.Button>
+      <a class="btn btn--ghost" href="/worlds">Annulla</a>
+    </div>
+  </form>
+</layout.Page>

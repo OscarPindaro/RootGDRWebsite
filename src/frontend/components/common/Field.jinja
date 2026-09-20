@@ -10,6 +10,12 @@
     <option value="{{ opt.value }}" {{ 'selected' if opt.value == value else '' }}>{{ opt.label }}</option>
     {% endfor %}
   </select>
+  {% elif type == "textarea" %}
+  <textarea class="field-input"
+    name="{{ name }}"
+    {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+    {% if required %}required{% endif %}
+  >{{ value if value is not none else '' }}</textarea>
   {% else %}
   <input class="field-input"
     name="{{ name }}"
