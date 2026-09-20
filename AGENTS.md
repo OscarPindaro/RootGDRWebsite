@@ -186,6 +186,15 @@ uv run harness env teardown
 - `dev login` (`POST /auth/dev-login`) sets the same cookies as a real login;
   browser contexts are authenticated through it.
 
+## Known issues (fix together)
+
+- `get_db_manager` builds a new engine per request, so connections accumulate
+  until Postgres refuses them. Making it one shared engine exposed a second
+  bug: `get_db_session` commits *after* the response is sent, so an htmx
+  redirect (`HX-Redirect`) can be followed before the row is committed — the
+  redirected page 404s. Fix both at once: share the engine **and** commit before
+  answering with a redirect.
+
 ## Content harness (learned)
 
 ```bash
