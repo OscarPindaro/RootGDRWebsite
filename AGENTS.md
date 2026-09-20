@@ -14,8 +14,10 @@ DO NOT COAUTHOR THE COMMITS
 
 ## Working process
 
-- Plan in tickets, even for a large change: split it into sub-tickets and finish
-  each one — implement, test, commit — before starting the next.
+**Large changes are tickets.** Split a big change into tickets and finish each
+one on its own — implement it, test it, commit it — before starting the next.
+A large change is never delivered as a single commit.
+
 - After a context compaction, re-read `docs/features-request/*.md` before continuing.
 - All source is English, including URL paths and endpoints. Only the UI copy is
   Italian.
