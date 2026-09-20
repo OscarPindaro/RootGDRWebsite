@@ -4,14 +4,14 @@ from typing import Annotated
 from pydantic import Field
 
 from ..content.constants import DEFAULT_TINT, Tint
-from ..schemas import AppBaseModel, TimestampMixin, UUIDField
+from ..schemas import AppBaseModel, OptionalDate, TimestampMixin, UUIDField
 from ..users.schemas import UserResponse
 
 
 class SessionCreate(AppBaseModel):
     title: Annotated[str, Field(min_length=1, max_length=255)]
     in_world_date: Annotated[str, Field(min_length=1, max_length=255)]
-    real_date: Annotated[date | None, Field(default=None)]
+    real_date: OptionalDate = None
     short_description: Annotated[str, Field(default="", max_length=1000)]
     body: Annotated[str, Field(default="", max_length=100_000)]
     tint: Annotated[Tint, Field(default=DEFAULT_TINT)]
@@ -23,7 +23,7 @@ class SessionUpdate(AppBaseModel):
     in_world_date: Annotated[
         str | None, Field(default=None, min_length=1, max_length=255)
     ]
-    real_date: Annotated[date | None, Field(default=None)]
+    real_date: OptionalDate = None
     short_description: Annotated[str | None, Field(default=None, max_length=1000)]
     body: Annotated[str | None, Field(default=None, max_length=100_000)]
     tint: Annotated[Tint | None, Field(default=None)]

@@ -37,12 +37,17 @@ class PageCreate(AppBaseModel):
     @field_validator("slug")
     @classmethod
     def _slug(cls, value: str | None) -> str | None:
-        if value is None:
+        if not value:
             return None
         value = slugify(value)
         if not value or not _SLUG.match(value):
             raise ValueError("Slug must contain letters, digits and hyphens")
         return value
+
+    @field_validator("menu_position", mode="before")
+    @classmethod
+    def _empty_position(cls, value: object) -> object:
+        return 0 if value == "" else value
 
 
 class PageUpdate(AppBaseModel):
@@ -59,6 +64,11 @@ class PageUpdate(AppBaseModel):
     @classmethod
     def _slug(cls, value: str | None) -> str | None:
         return PageCreate._slug(value)
+
+    @field_validator("menu_position", mode="before")
+    @classmethod
+    def _empty_position(cls, value: object) -> object:
+        return None if value == "" else value
 
 
 class PageSummary(AppBaseModel, TimestampMixin):

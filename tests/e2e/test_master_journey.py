@@ -7,79 +7,20 @@ visible UI state, not just static page loads. Console errors fail the test.
 
 from __future__ import annotations
 
-import json
 import re
 import uuid
 
 import pytest
-from playwright.sync_api import BrowserContext, Page, sync_playwright
+from playwright.sync_api import sync_playwright
 
-from harness.test import state
-from harness.test.browser import authenticate_context, new_authenticated_context
+from harness.test.browser import BrowserSession, authenticate_context
 
 pytestmark = pytest.mark.e2e
 
 ADMIN = "e2e-admin@example.com"
 
 
-def _base_url() -> str:
-    environment = state.read()
-    if (
-        environment is None
-        or environment.mode != state.EnvironmentMode.DOCKER
-        or environment.ports.backend is None
-    ):
-        pytest.skip("E2E tests require an active Docker harness environment")
-    return f"http://127.0.0.1:{environment.ports.backend}"
-
-
-class _Session:
-    def __init__(self, playwright, context: BrowserContext, base_url: str):
-        self.context = context
-        self.base_url = base_url
-        self.errors: list[str] = []
-        self.page: Page = context.new_page()
-        self.page.on("console", self._console)
-        self.page.on("pageerror", lambda error: self.errors.append(str(error)))
-
-    def _console(self, message) -> None:
-        if message.type == "error":
-            self.errors.append(message.text)
-
-    def goto(self, path: str) -> None:
-        self.page.goto(f"{self.base_url}{path}", wait_until="networkidle")
-
-    def submit(self, selector: str, expect_url: str | None = None) -> None:
-        """Click an htmx control and wait for the resulting navigation/swap."""
-        self.page.locator(selector).first.click()
-        if expect_url is not None:
-            self.page.wait_for_url(re.compile(expect_url), timeout=10_000)
-        self.page.wait_for_load_state("networkidle")
-
-
-def _seed_world(session: _Session, name: str) -> tuple[str, str]:
-    """Create a world through the form and return (world_id, name)."""
-    session.goto("/worlds/new")
-    session.page.fill('input[name="name"]', name)
-    session.page.fill('textarea[name="description"]', "Creato dai test e2e.")
-    session.submit('button[type="submit"]', expect_url=r"/worlds/[0-9a-f-]{36}$")
-    world_id = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
-    return world_id, name
-
-
-@pytest.fixture()
-def session():
-    base_url = _base_url()
-    with sync_playwright() as playwright:
-        browser, context = new_authenticated_context(playwright, base_url, email=ADMIN)
-        try:
-            yield _Session(playwright, context, base_url)
-        finally:
-            context.close()
-            browser.close()
-
-
-def test_master_creates_a_world_and_a_character(session: _Session) -> None:
+def test_master_creates_a_world_and_a_character(session: BrowserSession) -> None:
     name = f"Mondo E2E {uuid.uuid4().hex[:6]}"
     session.goto("/worlds/new")
     session.page.fill('input[name="name"]', name)
@@ -106,7 +47,7 @@ def test_master_creates_a_world_and_a_character(session: _Session) -> None:
     assert session.errors == []
 
 
-def test_master_can_draft_a_character(session: _Session) -> None:
+def test_master_can_draft_a_character(session: BrowserSession) -> None:
     name = f"Mondo Draft {uuid.uuid4().hex[:6]}"
     session.goto("/worlds/new")
     session.page.fill('input[name="name"]', name)
@@ -127,13 +68,13 @@ def test_master_can_draft_a_character(session: _Session) -> None:
     assert session.errors == []
 
 
-def test_every_world_link_loads(session: _Session) -> None:
+def test_every_world_link_loads(session: BrowserSession, seed_world) -> None:
     """Follow the rail and the overview entry points; none may 404.
 
     Regression: the rail and the overview used the Italian section id as the
     URL, so Personaggi and NPC pointed at routes that did not exist.
     """
-    world_id, _ = _seed_world(session, "Mondo Link")
+    world_id = seed_world("Mondo Link")
     session.goto(f"/worlds/{world_id}")
 
     hrefs = session.page.eval_on_selector_all(
@@ -151,10 +92,12 @@ def test_every_world_link_loads(session: _Session) -> None:
     assert session.errors == []
 
 
-def test_overview_matches_the_prototype_geometry(session: _Session) -> None:
+def test_overview_matches_the_prototype_geometry(
+    session: BrowserSession, seed_world
+) -> None:
     """Regression: the rail overflowed horizontally, the quick strip had gaps
     and the role marks stretched to their cell (giant icons)."""
-    world_id, _ = _seed_world(session, "Mondo Geometria")
+    world_id = seed_world("Mondo Geometria")
     session.goto(f"/worlds/{world_id}")
 
     overflow = session.page.eval_on_selector(
@@ -175,10 +118,12 @@ def test_overview_matches_the_prototype_geometry(session: _Session) -> None:
     assert session.page.locator('.navitem[aria-current="page"]').count() == 1
 
 
-def test_secondary_actions_have_a_visible_border(session: _Session) -> None:
+def test_secondary_actions_have_a_visible_border(
+    session: BrowserSession, seed_world
+) -> None:
     """Regression: the component library's .btn transparent border won over the
     editorial one, so 'Impostazioni' rendered with no border at all."""
-    world_id, _ = _seed_world(session, "Mondo Bordo")
+    world_id = seed_world("Mondo Bordo")
     session.goto(f"/worlds/{world_id}")
 
     border = session.page.locator(
@@ -187,7 +132,7 @@ def test_secondary_actions_have_a_visible_border(session: _Session) -> None:
     assert border not in {"0px", ""}, border
 
 
-def test_settings_menu_is_dark_on_the_rail(session: _Session) -> None:
+def test_settings_menu_is_dark_on_the_rail(session: BrowserSession) -> None:
     """Regression: the menu popover assumed a light surface, so it rendered
     white over the black rail."""
     session.goto("/worlds")
@@ -201,10 +146,10 @@ def test_settings_menu_is_dark_on_the_rail(session: _Session) -> None:
     assert max(channels[:3]) < 80, background
 
 
-def test_character_form_uses_face_pickers(session: _Session) -> None:
+def test_character_form_uses_face_pickers(session: BrowserSession, seed_world) -> None:
     """The face is chosen from an emoji grid and a tint strip, not dropdowns,
     and both reach the server through the JSON-encoded htmx form."""
-    world_id, _ = _seed_world(session, "Mondo Picker")
+    world_id = seed_world("Mondo Picker")
     session.goto(f"/worlds/{world_id}/characters/new")
     session.page.fill('input[name="name"]', "Picker Test")
     session.page.check('input[name="animal"][value="🦊"]', force=True)
@@ -219,7 +164,7 @@ def test_character_form_uses_face_pickers(session: _Session) -> None:
     assert payload["tint"] == "p8"
 
 
-def test_command_palette_opens_and_searches(session: _Session) -> None:
+def test_command_palette_opens_and_searches(session: BrowserSession) -> None:
     session.goto("/worlds")
     session.page.keyboard.press("Alt+Space")
     session.page.wait_for_selector("#palette.is-open")
@@ -228,7 +173,7 @@ def test_command_palette_opens_and_searches(session: _Session) -> None:
     assert session.errors == []
 
 
-def test_mobile_drawer_opens_and_closes(session: _Session) -> None:
+def test_mobile_drawer_opens_and_closes(session: BrowserSession) -> None:
     session.page.set_viewport_size({"width": 390, "height": 844})
     session.goto("/worlds")
     session.page.click("#drawer-toggle")
@@ -238,8 +183,7 @@ def test_mobile_drawer_opens_and_closes(session: _Session) -> None:
     assert session.errors == []
 
 
-def test_player_cannot_manage_places() -> None:
-    base_url = _base_url()
+def test_player_cannot_manage_places(base_url: str) -> None:
     email = f"player-{uuid.uuid4().hex[:8]}@example.com"
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)

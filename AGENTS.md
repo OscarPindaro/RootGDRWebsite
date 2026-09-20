@@ -161,8 +161,11 @@ uv run harness env teardown
   private secrets.
 - Direct pytest/alembic runs need the active environment's config:
   `ENV_FILE=$PWD/test.env YAML_CONFIG_FILE=~/.cache/fastapi-template/harness/<worktree>_<hash>/config.test.local.active.yaml`.
-- Playwright browsers are not installed automatically: run
-  `uv run playwright install chromium` once (and again after a playwright bump).
+- Playwright's browser is installed with `uv run harness browsers` into the
+  repository (`.playwright-browsers/`, gitignored). Do not use
+  `playwright install` directly: the default `~/.cache` location is pruned by
+  some environments, which re-downloads it on every run. Re-run after a
+  playwright bump.
 - Screenshots land in `harness-artifacts/` (gitignored) by default; pass
   `--output-dir /tmp/...` when the agent needs to read them back.
 - Bind mounts in the test compose files use `${HARNESS_REPO_ROOT}` and `:z`

@@ -7,6 +7,7 @@ The API request context shares its cookie jar with the browser context, so once
 localStorage token trick is gone: the backend reads cookies, not localStorage.
 """
 
+import os
 import re
 from pathlib import Path
 
@@ -15,6 +16,12 @@ from playwright.sync_api import Playwright, sync_playwright
 from pydantic import BaseModel
 
 from . import state
+
+# Playwright's default cache (``~/.cache/ms-playwright``) is pruned by some
+# environments, so the browser is downloaded again on every run. Keep it in the
+# repository instead; ``harness browsers`` installs it there.
+BROWSERS_PATH = Path(__file__).resolve().parents[3] / ".playwright-browsers"
+os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(BROWSERS_PATH))
 
 
 class ScreenshotResult(BaseModel):
@@ -266,3 +273,33 @@ def capture_url(
             context.close()
             browser.close()
     return errors
+
+
+class BrowserSession:
+    """An authenticated page that records the console errors it produces.
+
+    Shared by the e2e tests so every journey fails on a browser error instead of
+    only the ones that remember to subscribe.
+    """
+
+    def __init__(self, context: BrowserContext, base_url: str):
+        self.context = context
+        self.base_url = base_url
+        self.errors: list[str] = []
+        self.page: Page = context.new_page()
+        self.page.on("console", self._console)
+        self.page.on("pageerror", lambda error: self.errors.append(str(error)))
+
+    def _console(self, message) -> None:
+        if message.type == "error":
+            self.errors.append(message.text)
+
+    def goto(self, path: str) -> None:
+        self.page.goto(f"{self.base_url}{path}", wait_until="networkidle")
+
+    def submit(self, selector: str, expect_url: str | None = None) -> None:
+        """Click an htmx control and wait for the resulting navigation/swap."""
+        self.page.locator(selector).first.click()
+        if expect_url is not None:
+            self.page.wait_for_url(re.compile(expect_url), timeout=10_000)
+        self.page.wait_for_load_state("networkidle")

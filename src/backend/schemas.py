@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from typing import Annotated, Generic, List, TypeVar
 from zoneinfo import ZoneInfo
 
@@ -12,6 +12,11 @@ def datetime_to_gmt_str(dt: datetime) -> str:
     if not dt.tzinfo:
         dt = dt.replace(tzinfo=ZoneInfo("UTC"))
     return dt.strftime("%Y-%m-%dT%H:%M:%S%z")
+
+
+def empty_to_none(value):
+    """A form field left blank arrives as ``""``; treat it as absent."""
+    return None if value == "" else value
 
 
 _base_config = dict(
@@ -27,6 +32,8 @@ UUIDField = Annotated[
     uuid.UUID,
     BeforeValidator(lambda v: v if isinstance(v, uuid.UUID) else uuid.UUID(str(v))),
 ]
+
+OptionalDate = Annotated[date | None, BeforeValidator(empty_to_none)]
 
 
 class AppBaseModel(BaseModel):

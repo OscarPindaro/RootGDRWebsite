@@ -1,0 +1,130 @@
+"""A master's journey through a world, checking the overview stays in step.
+
+Each step navigates the way a user does — the quick cards on the overview, the
+create link on the list, back to the overview — and asserts the counters and the
+blocks actually changed. The retrospective named this gap: the journeys existed,
+but nothing checked that the overview reflected a creation.
+"""
+
+from __future__ import annotations
+
+import re
+import uuid
+
+import pytest
+
+from harness.test.browser import BrowserSession
+
+pytestmark = pytest.mark.e2e
+
+QUICK_LABELS = ("Personaggi", "NPC", "Luoghi", "Sessioni", "Storie")
+
+
+def _quick_count(session: BrowserSession, label: str) -> str:
+    return (
+        session.page.locator(f'.quick:has-text("{label}") .quick__count')
+        .first.inner_text()
+        .strip()
+    )
+
+
+def _goto_overview(session: BrowserSession, world_id: str) -> None:
+    overview = f"/worlds/{world_id}"
+    session.page.click(f'#rail a[href="{overview}"]')
+    session.page.wait_for_url(re.compile(rf".*{re.escape(overview)}$"), timeout=10_000)
+    session.page.wait_for_load_state("networkidle")
+
+
+def _create(
+    session: BrowserSession,
+    quick_label: str,
+    new_label: str,
+    fields: dict[str, str],
+    expect_url: str,
+) -> None:
+    session.page.click(f'.quick:has-text("{quick_label}")')
+    session.page.wait_for_load_state("networkidle")
+    session.page.click(f'a:has-text("{new_label}")')
+    session.page.wait_for_load_state("networkidle")
+    for name, value in fields.items():
+        session.page.fill(f'[name="{name}"]', value)
+    session.submit('button[type="submit"]', expect_url=expect_url)
+
+
+def test_master_fills_the_world_and_the_overview_updates(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id = seed_world(f"Mondo Flusso {uuid.uuid4().hex[:6]}")
+    session.goto(f"/worlds/{world_id}")
+
+    assert [_quick_count(session, label) for label in QUICK_LABELS] == ["0"] * 5
+
+    _create(
+        session,
+        "Personaggi",
+        "Nuovo personaggio",
+        {"name": "Rugginosa"},
+        r"/characters/[0-9a-f-]{36}$",
+    )
+    _goto_overview(session, world_id)
+    assert _quick_count(session, "Personaggi") == "1"
+
+    _create(
+        session, "NPC", "Nuovo NPC", {"name": "La Marchesa"}, r"/npcs/[0-9a-f-]{36}$"
+    )
+    _goto_overview(session, world_id)
+    assert _quick_count(session, "NPC") == "1"
+
+    _create(
+        session,
+        "Luoghi",
+        "Nuovo luogo",
+        {"name": "Radura della Grande Quercia"},
+        r"/places/[0-9a-f-]{36}$",
+    )
+    session.submit('button:has-text("Scena corrente")')
+    # The toggle answers with an htmx redirect; wait for the re-rendered pill so
+    # the navigation has settled before clicking back to the overview.
+    session.page.wait_for_selector(".pill--forest")
+    _goto_overview(session, world_id)
+    assert _quick_count(session, "Luoghi") == "1"
+    assert (
+        "Radura della Grande Quercia" in session.page.locator(".wherenow").inner_text()
+    )
+
+    _create(
+        session,
+        "Sessioni",
+        "Nuova sessione",
+        {"title": "Il risveglio della Marchesa", "in_world_date": "Primavera, 3° anno"},
+        r"/sessions/[0-9a-f-]{36}$",
+    )
+    _goto_overview(session, world_id)
+    assert _quick_count(session, "Sessioni") == "1"
+    assert (
+        "Il risveglio della Marchesa" in session.page.locator(".timeline").inner_text()
+    )
+
+    _create(
+        session,
+        "Storie",
+        "Nuova storia",
+        {"title": "L'inverno dei corvi"},
+        r"/stories/[0-9a-f-]{36}$",
+    )
+    _goto_overview(session, world_id)
+    assert _quick_count(session, "Storie") == "1"
+    assert "L'inverno dei corvi" in session.page.locator(".story").inner_text()
+
+    # Pagine: not a quick entry, reached from the rail. The form leaves the menu
+    # position blank, which must not be rejected.
+    session.page.click('#rail a:has-text("Pagine")')
+    session.page.wait_for_load_state("networkidle")
+    session.page.click('a:has-text("Nuova pagina")')
+    session.page.wait_for_load_state("networkidle")
+    session.page.fill('[name="title"]', "Le regole della Casa")
+    session.submit('button[type="submit"]', expect_url=r"/pages/le-regole-della-casa$")
+    _goto_overview(session, world_id)
+    assert "Le regole della Casa" in session.page.locator("#rail").inner_text()
+
+    assert session.errors == []
