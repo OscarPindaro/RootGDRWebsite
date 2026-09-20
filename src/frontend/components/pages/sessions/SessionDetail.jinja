@@ -1,5 +1,5 @@
 {#def world, world_context, nav, session, previous=None, following=None, can_manage=False, crumbs, pages=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css #}
 <layout.Page :title="session.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="sessioni">
   <editorial.Crumbs :items="crumbs" />
 
@@ -9,7 +9,6 @@
     :locked="session.locked"
     :is_draft="session.is_draft"
     :can_manage="can_manage">
-    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/sessions/{{ session.id }}/edit">Modifica</a>
     <button class="btn btn--ghost btn--sm" type="button"
             hx-delete="/worlds/{{ world.id }}/sessions/{{ session.id }}"
             hx-confirm="Eliminare «{{ session.title }}»?" hx-swap="none">Elimina</button>
@@ -24,7 +23,10 @@
     </div>
     <div class="document__page">
       <span class="eyebrow">Resoconto</span>
-      <div class="prose">{{ body_html }}</div>
+      <editorial.DocEdit world_id={{ world.id }}
+        base="/worlds/{{ world.id }}/sessions/{{ session.id }}"
+        :body="session.body" :body_html="body_html"
+        :locked="session.locked" :can_manage="can_manage" />
     </div>
   </div>
 

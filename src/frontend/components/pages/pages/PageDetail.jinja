@@ -1,5 +1,5 @@
 {#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css #}
 <layout.Page :title="page.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
   <editorial.Crumbs :items="crumbs" />
 
@@ -9,15 +9,17 @@
     :locked="page.locked"
     :is_draft="page.is_draft"
     :can_manage="can_manage">
-    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/pages/{{ page.id }}/edit">Modifica</a>
     <button class="btn btn--ghost btn--sm" type="button"
             hx-delete="/worlds/{{ world.id }}/pages/{{ page.id }}"
             hx-confirm="Eliminare «{{ page.title }}»?" hx-swap="none">Elimina</button>
   </editorial.Docbar>
 
   <div class="article">
-    <article class="prose">
-      {{ body_html }}
+    <article>
+      <editorial.DocEdit world_id={{ world.id }}
+        base="/worlds/{{ world.id }}/pages/{{ page.id }}"
+        :body="page.body" :body_html="body_html"
+        :locked="page.locked" :can_manage="can_manage" />
     </article>
     <aside class="stack">
       <div class="toc">

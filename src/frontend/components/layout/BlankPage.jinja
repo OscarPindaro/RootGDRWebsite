@@ -25,7 +25,8 @@
     (function () {
       function loadEditor() {
         if (window.__editorLoaded) return;
-        if (!document.querySelector("[data-markdown-field]")) return;
+        if (!document.querySelector("[data-markdown-field]") &&
+            !document.querySelector("[data-doc-edit]")) return;
         window.__editorLoaded = true;
         var script = document.createElement("script");
         script.src = "/static/js/editor.js";

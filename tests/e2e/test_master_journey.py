@@ -164,6 +164,46 @@ def test_character_form_uses_face_pickers(session: BrowserSession, seed_world) -
     assert payload["tint"] == "p8"
 
 
+def test_document_is_written_in_place(session: BrowserSession, seed_world) -> None:
+    """The body is written on the page, not on a separate form: a double click
+    opens the editor, Ctrl/⌘+Enter shows the server-rendered result, Ctrl/⌘+S
+    saves it."""
+    world_id = seed_world("Mondo InPlace")
+    session.goto(f"/worlds/{world_id}/characters/new")
+    session.page.fill('input[name="name"]', "Rugginosa")
+    session.page.wait_for_selector("[data-markdown-editor]")
+    session.page.locator(".cm-content").click()
+    session.page.keyboard.type("Testo iniziale.")
+    session.submit('button[type="submit"]', expect_url=r"/characters/[0-9a-f-]{36}$")
+
+    assert session.page.locator('a:has-text("Modifica")').count() == 0
+
+    session.page.locator("[data-doc-render]").first.dblclick()
+    session.page.wait_for_selector(".cm-editor")
+    session.page.locator(".cm-content").click()
+    session.page.keyboard.type("\n\nScritto in place.")
+    session.page.keyboard.press("Control+Enter")
+    session.page.wait_for_selector(".cm-editor", state="detached")
+    # The result comes back from the server, so wait for the preview swap.
+    session.page.wait_for_function(
+        "() => document.querySelector('[data-doc-render]')"
+        ".innerText.includes('Scritto in place')"
+    )
+
+    session.page.locator("[data-doc-render]").first.dblclick()
+    session.page.wait_for_selector(".cm-editor")
+    session.page.locator(".cm-content").click()
+    session.page.keyboard.press("Control+a")
+    session.page.keyboard.type("Riscritto e salvato.")
+    session.page.locator("[data-doc-save]").click()
+    session.page.wait_for_load_state("networkidle")
+    session.page.wait_for_function(
+        "() => document.body.innerText.includes('Riscritto e salvato')"
+    )
+
+    assert session.errors == []
+
+
 def test_command_palette_opens_and_searches(session: BrowserSession) -> None:
     session.goto("/worlds")
     session.page.keyboard.press("Alt+Space")

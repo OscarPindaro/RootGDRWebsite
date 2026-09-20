@@ -1,5 +1,5 @@
 {#def world, world_context, nav, place, is_current=False, can_manage=False, crumbs, pages=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css #}
 <layout.Page :title="place.name" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="luoghi">
   <editorial.Crumbs :items="crumbs" />
 
@@ -17,7 +17,6 @@
     <button class="btn btn--ghost btn--sm" type="button"
             hx-post="/worlds/{{ world.id }}/places/{{ place.id }}/current" hx-swap="none">Scena corrente</button>
     {% endif %}
-    <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/places/{{ place.id }}/edit">Modifica</a>
     <button class="btn btn--ghost btn--sm" type="button"
             hx-delete="/worlds/{{ world.id }}/places/{{ place.id }}"
             hx-confirm="Eliminare {{ place.name }}?" hx-swap="none">Elimina</button>
@@ -37,7 +36,10 @@
         </div>
         <div class="document__page">
           <span class="eyebrow">Descrizione</span>
-          <div class="prose">{{ body_html }}</div>
+          <editorial.DocEdit world_id={{ world.id }}
+            base="/worlds/{{ world.id }}/places/{{ place.id }}"
+            :body="place.body" :body_html="body_html"
+            :locked="place.locked" :can_manage="can_manage" />
         </div>
       </div>
     </div>

@@ -9,7 +9,7 @@ import uuid
 from collections.abc import Awaitable, Callable
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Form, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 from fastapi.responses import HTMLResponse
 from pydantic import Field
 from sqlalchemy import select
@@ -82,6 +82,12 @@ class MentionSuggestion(AppBaseModel):
     tint: Annotated[str, Field(description="Tint token")]
 
 
+class PreviewRequest(AppBaseModel):
+    """A document body to render, from the editor's live preview."""
+
+    body: Annotated[str, Field(default="", max_length=100_000)]
+
+
 @router.get(
     "/api/worlds/{world_id}/mentions",
     response_model=ListResponse[MentionSuggestion],
@@ -116,11 +122,11 @@ async def mention_suggestions(
 @router.post("/worlds/{world_id}/preview", response_class=HTMLResponse)
 async def preview_body(
     world_id: uuid.UUID,
-    body: Annotated[str, Form()] = "",
+    data: PreviewRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session),
 ) -> HTMLResponse:
     """Render a body with the server's renderer, for the editor preview tab."""
     await readable_world(db, world_id, user)
-    mentions = await resolve_body(db, world_id, body)
-    return HTMLResponse(str(render_markdown(body, mentions)))
+    mentions = await resolve_body(db, world_id, data.body)
+    return HTMLResponse(str(render_markdown(data.body, mentions)))

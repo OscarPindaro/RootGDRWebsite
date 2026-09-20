@@ -1,9 +1,14 @@
 /* CodeMirror 6 editor for Markdown document bodies.
  *
- * The document stays the Markdown string: the textarea is the source of truth
- * and is kept in sync on every change, so the form still submits without
- * JavaScript. The rendered preview is produced by the server (same CommonMark
- * renderer as the reading page), so writing and reading cannot drift apart.
+ * Two hosts share the same editor:
+ *   - a form textarea (`[data-markdown-field]`), kept in sync on every change so
+ *     the form still submits without JavaScript;
+ *   - a document page (`[data-doc-edit]`), where the rendered body opens in
+ *     writing on a double click and toggles back with Ctrl/⌘+Enter.
+ *
+ * The document stays the Markdown string: the server renders the reading page,
+ * and the preview is produced by the same CommonMark renderer, so writing and
+ * reading cannot drift apart.
  */
 import {
   EditorView,
@@ -78,6 +83,35 @@ function mentionSource(worldId) {
   };
 }
 
+function extensions({ worldId, onDocChanged, onModEnter }) {
+  return [
+    history(),
+    drawSelection(),
+    highlightActiveLine(),
+    markdown(),
+    syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
+    autocompletion({ override: [mentionSource(worldId)] }),
+    keymap.of([
+      {
+        key: "Mod-Enter",
+        run: () => {
+          onModEnter();
+          return true;
+        },
+      },
+      ...defaultKeymap,
+      ...historyKeymap,
+      indentWithTab,
+    ]),
+    theme,
+    EditorView.updateListener.of((update) => {
+      if (update.docChanged) onDocChanged(update.state.doc.toString());
+    }),
+  ];
+}
+
+/* ---------- form fields ---------- */
+
 function selectTab(field, name) {
   field
     .querySelectorAll("[data-md-tab]")
@@ -117,32 +151,13 @@ function mount(textarea) {
   const view = new EditorView({
     state: EditorState.create({
       doc: textarea.value,
-      extensions: [
-        history(),
-        drawSelection(),
-        highlightActiveLine(),
-        markdown(),
-        syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
-        autocompletion({ override: [mentionSource(worldId)] }),
-        keymap.of([
-          {
-            key: "Mod-Enter",
-            run: () => {
-              togglePreview(field);
-              return true;
-            },
-          },
-          ...defaultKeymap,
-          ...historyKeymap,
-          indentWithTab,
-        ]),
-        theme,
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) {
-            textarea.value = update.state.doc.toString();
-          }
-        }),
-      ],
+      extensions: extensions({
+        worldId,
+        onDocChanged: (value) => {
+          textarea.value = value;
+        },
+        onModEnter: () => togglePreview(field),
+      }),
     }),
     parent: textarea.parentElement,
   });
@@ -150,13 +165,104 @@ function mount(textarea) {
   view.dom.dataset.markdownEditor = "true";
 }
 
+/* ---------- document pages ---------- */
+
+function mountDocEdit(block) {
+  if (block.dataset.docReady === "true") return;
+  block.dataset.docReady = "true";
+  if (block.dataset.readonly === "true") return;
+
+  const render = block.querySelector("[data-doc-render]");
+  const host = block.querySelector("[data-doc-editor]");
+  const source = block.querySelector("[data-doc-source]");
+  const preview = block.querySelector("[data-doc-preview]");
+  const actions = block.querySelector("[data-doc-actions]");
+  if (!render || !host || !source) return;
+
+  let view = null;
+  let saved = source.value;
+  let caret = 0;
+
+  function open(event) {
+    if (view) return;
+    // A double click on a reference follows the link, it does not enter writing.
+    if (event && event.target.closest("a")) return;
+    host.style.minHeight = `${render.getBoundingClientRect().height}px`;
+    host.hidden = false;
+    render.hidden = true;
+    if (actions) actions.hidden = false;
+    view = new EditorView({
+      state: EditorState.create({
+        doc: source.value,
+        selection: { anchor: caret },
+        extensions: extensions({
+          worldId: block.dataset.worldId,
+          onDocChanged: (value) => {
+            source.value = value;
+          },
+          onModEnter: () => showResult(),
+        }),
+      }),
+      parent: host,
+    });
+    view.focus();
+    if (event) {
+      const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
+      if (position != null) view.dispatch({ selection: { anchor: position } });
+    }
+  }
+
+  function showResult() {
+    if (!view) return;
+    caret = view.state.selection.main.head;
+    view.destroy();
+    view = null;
+    host.hidden = true;
+    render.hidden = false;
+    if (actions) actions.hidden = true;
+    // Re-render from the server, so the result is the same markup readers get.
+    if (preview) preview.click();
+  }
+
+  function cancel() {
+    if (!view) return;
+    view.destroy();
+    view = null;
+    source.value = saved;
+    host.hidden = true;
+    render.hidden = false;
+    if (actions) actions.hidden = true;
+  }
+
+  function save() {
+    saved = source.value;
+    const form = block.querySelector("form");
+    if (form) form.requestSubmit();
+  }
+
+  render.addEventListener("dblclick", open);
+  block.querySelector("[data-doc-save]")?.addEventListener("click", save);
+  block.querySelector("[data-doc-cancel]")?.addEventListener("click", cancel);
+  block.addEventListener("keydown", (event) => {
+    if (!view) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      cancel();
+    } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      save();
+    }
+  });
+  block.addEventListener("htmx:afterRequest", () => {
+    saved = source.value;
+  });
+}
+
 function mountAll(root) {
-  (root || document)
-    .querySelectorAll("[data-md-tabs]")
-    .forEach((field) => setupTabs(field));
-  (root || document)
-    .querySelectorAll("[data-markdown-field]")
-    .forEach((textarea) => mount(textarea));
+  const scope = root || document;
+  scope.querySelectorAll("[data-md-tabs]").forEach((field) => setupTabs(field));
+  scope.querySelectorAll("[data-markdown-field]").forEach((textarea) => mount(textarea));
+  scope.querySelectorAll("[data-doc-edit]").forEach((block) => mountDocEdit(block));
 }
 
 mountAll();

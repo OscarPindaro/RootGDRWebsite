@@ -1,0 +1,26 @@
+/* ---------- DocEdit (writing in place on a document page) ---------- */
+.docedit__render {
+  outline: none;
+}
+
+.docedit__render:focus-visible {
+  outline: var(--rule-ink);
+  outline-offset: 0.35rem;
+}
+
+/* The rendered text is the measure: the writing field takes its height. */
+.docedit__editor {
+  border: var(--rule-ink);
+  background: var(--surface);
+}
+
+.docedit__editor .cm-editor {
+  border: 0;
+}
+
+.docedit__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-3);
+}
