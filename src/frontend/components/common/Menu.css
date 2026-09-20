@@ -1,10 +1,19 @@
 .menu {
+  /* Surface tokens. A dark host (the rail) overrides these, so a menu never
+     assumes a light background — see docs/jinjax.md. */
+  --menu-surface: var(--surface);
+  --menu-ink: var(--ink);
+  --menu-line: var(--line);
+  --menu-hover: var(--paper-deep);
+  --menu-danger: var(--danger);
+
   position: fixed;
   inset: auto;
   margin: 0;
   padding: var(--sp-1);
-  background: var(--clr-surface-raised);
-  border: 1px solid var(--clr-border);
+  background: var(--menu-surface);
+  color: var(--menu-ink);
+  border: 1px solid var(--menu-line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
 }
@@ -23,7 +32,7 @@
   background: transparent;
   border: none;
   border-radius: var(--radius-md);
-  color: var(--clr-text);
+  color: var(--menu-ink);
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: var(--weight-medium);
@@ -34,7 +43,7 @@
 
 .menu-item:hover,
 .menu-item:focus-visible {
-  background: var(--clr-bg);
+  background: var(--menu-hover);
 }
 
 .menu-item:focus-visible {
@@ -67,5 +76,5 @@
 }
 
 .menu-item-danger {
-  color: var(--status-danger);
+  color: var(--menu-danger);
 }

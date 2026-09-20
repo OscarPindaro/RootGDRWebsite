@@ -369,6 +369,16 @@ ul, ol { margin: 0; padding: 0; }
   color: var(--rail-muted);
 }
 
+/* A menu opened from the rail adopts the rail's palette. The popover lives in
+   the top layer but stays a DOM descendant of .rail, so this applies. */
+.rail .menu {
+  --menu-surface: var(--rail-2);
+  --menu-ink: var(--rail-ink);
+  --menu-line: var(--rail-line);
+  --menu-hover: var(--rail-line);
+  --menu-danger: var(--vermilion);
+}
+
 /* ---------- 6. Topbar mobile / drawer ---------- */
 .topbar {
   display: none;

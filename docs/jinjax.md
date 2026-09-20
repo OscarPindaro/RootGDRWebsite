@@ -598,6 +598,32 @@ Every component follows this shape:
 - Class names are kebab-case and prefixed by the component name (`card-elevated`, `field-input`, `btn-primary`) so they don't collide across components.
 - Styles are global (JinjaX doesn't scope them), so always scope rules under the component's root class.
 
+### Surfaces: never assume a light background
+
+A component that can be opened from a dark surface — the rail — exposes its
+surface as local custom properties and lets the host override them:
+
+```css
+.menu {
+  --menu-surface: var(--surface);
+  --menu-ink: var(--ink);
+  background: var(--menu-surface);
+  color: var(--menu-ink);
+}
+```
+
+```css
+.rail .menu {
+  --menu-surface: var(--rail-2);
+  --menu-ink: var(--rail-ink);
+}
+```
+
+A popover lives in the top layer but stays a DOM descendant of its trigger, so
+`.rail .menu` still applies. Never hardcode a light surface (`white`,
+`--clr-surface-raised`) in a component that can appear on both — that is how the
+settings menu ended up white on a black rail.
+
 ### Layout shells
 
 - `layout.BlankPage` — the HTML shell only: `<!DOCTYPE>`, `<head>`, `catalog.render_assets()`, htmx/lucide scripts. No sidebar. Used by unauthenticated pages (login, error pages).

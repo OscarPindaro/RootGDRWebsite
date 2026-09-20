@@ -187,6 +187,20 @@ def test_secondary_actions_have_a_visible_border(session: _Session) -> None:
     assert border not in {"0px", ""}, border
 
 
+def test_settings_menu_is_dark_on_the_rail(session: _Session) -> None:
+    """Regression: the menu popover assumed a light surface, so it rendered
+    white over the black rail."""
+    session.goto("/worlds")
+    session.page.eval_on_selector("#user-menu-trigger", "el => el.click()")
+    session.page.wait_for_selector("#user-menu-popover:popover-open")
+
+    background = session.page.eval_on_selector(
+        "#user-menu-popover", "el => getComputedStyle(el).backgroundColor"
+    )
+    channels = [int(part) for part in re.findall(r"\d+", background)]
+    assert max(channels[:3]) < 80, background
+
+
 def test_command_palette_opens_and_searches(session: _Session) -> None:
     session.goto("/worlds")
     session.page.keyboard.press("Alt+Space")

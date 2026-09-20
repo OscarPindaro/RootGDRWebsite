@@ -41,7 +41,7 @@ side-by-side.
 | `.mention` | `content/markdown.py` output | faithful |
 | `.btn`, `.btn--primary/ghost/sm` | `common.Button` | faithful |
 | `.pill` | `common.Pill` | faithful |
-| popovers / menus | `common.Menu`, `layout.UserMenu` | adapted — white on the dark rail (T8) |
+| popovers / menus | `common.Menu`, `layout.UserMenu` | faithful — dark on the rail (T8) |
 | animal / tint pickers | — | missing — `<select>` instead of a grid (T9) |
 
 "faithful" means it reads the same; "adapted" means it renders but diverges and
