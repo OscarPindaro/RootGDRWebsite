@@ -4,6 +4,9 @@ Opinione mia (Devin) sul lavoro di questa sessione: cosa ho imparato, cosa mi
 sarebbe servito, quali strumenti mancano. Materiale di discussione, non un piano
 approvato.
 
+Le proposte e le cose da fare stanno **qui**: `AGENTS.md` contiene solo
+convenzioni richieste esplicitamente, non una lista di lavoro.
+
 ---
 
 ## 1. Errori miei, senza attenuanti
@@ -96,8 +99,14 @@ approvato.
   selettori registrati oggi cadono su `:has-text`, che si rompe appena cambia la
   copy. È il singolo cambiamento che rende robusti i test generati dal replay.
 - **Definizione di "fatto" che includa l'asserzione via API** per ogni scrittura.
-- **Chiudere i due bug aperti** (engine per richiesta, commit dopo la risposta):
-  sono in `AGENTS.md` come "da fare insieme".
+- **Chiudere i due bug aperti, nella stessa modifica perché si toccano.**
+  `get_db_manager` costruisce un engine per richiesta, quindi le connessioni si
+  accumulano finché Postgres le rifiuta (97 idle su 100 misurate oggi).
+  `get_db_session` invece committa *dopo* che la risposta è stata inviata: un
+  redirect htmx può essere seguito prima del commit, e la pagina di destinazione
+  risponde 404. Condividere l'engine da solo rende visibile il secondo — l'ho
+  provato e ho revertito — quindi vanno corretti insieme: engine condiviso **e**
+  commit prima di rispondere con un redirect.
 
 ---
 
