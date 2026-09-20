@@ -9,6 +9,7 @@ from .characters.routes import router as characters_router
 from .npcs.routes import router as npcs_router
 from .places.routes import router as places_router
 from .sessions.routes import router as sessions_router
+from .stories.routes import router as stories_router
 from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
 from .log import RequestContextMiddleware, setup_logging
@@ -72,6 +73,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(npcs_router)
     app.include_router(places_router)
     app.include_router(sessions_router)
+    app.include_router(stories_router)
 
     # Content sections register their overview count query here, so the world
     # overview stays a view over the features instead of reaching into them.
@@ -79,12 +81,14 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     from .npcs.service import count_npcs  # noqa: PLC0415
     from .places.service import count_places  # noqa: PLC0415
     from .sessions.service import count_sessions  # noqa: PLC0415
+    from .stories.service import count_stories  # noqa: PLC0415
     from .worlds.overview import register_counter  # noqa: PLC0415
 
     register_counter("personaggi", count_characters)
     register_counter("npc", count_npcs)
     register_counter("luoghi", count_places)
     register_counter("sessioni", count_sessions)
+    register_counter("storie", count_stories)
 
     # Importing the registry registers every model with Base.metadata so
     # DatabaseManager.initialize_tables() / alembic see all tables, including
@@ -98,6 +102,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         from .npcs.views import router as npcs_views_router  # noqa: PLC0415
         from .places.views import router as places_views_router  # noqa: PLC0415
         from .sessions.views import router as sessions_views_router  # noqa: PLC0415
+        from .stories.views import router as stories_views_router  # noqa: PLC0415
         from .users.views import router as users_views_router  # noqa: PLC0415
         from .views import router as views_router  # noqa: PLC0415
         from .worlds.views import router as worlds_views_router  # noqa: PLC0415
@@ -107,6 +112,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         app.include_router(npcs_views_router)
         app.include_router(places_views_router)
         app.include_router(sessions_views_router)
+        app.include_router(stories_views_router)
         app.include_router(users_views_router)
         app.include_router(views_router)
         app.include_router(worlds_views_router)

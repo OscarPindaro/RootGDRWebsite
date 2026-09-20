@@ -50,6 +50,7 @@ def test_real_registry_registers_all_tables() -> None:
         "NpcModel",
         "PlaceModel",
         "SessionModel",
+        "StoryModel",
         "FileModel",
         "InvitationModel",
         "TaskModel",

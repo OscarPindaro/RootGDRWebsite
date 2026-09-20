@@ -1,0 +1,58 @@
+{#def world, world_context, nav, story, can_manage=False, crumbs, current_user=None #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css #}
+<layout.Page :title="story.title" current_user={{ current_user }} :world="world_context" :nav="nav" active="storie">
+  <editorial.Crumbs :items="crumbs" />
+
+  <div class="docbar">
+    <span class="eyebrow">Storia · {{ 'in corso' if story.status == 'in_corso' else 'chiusa' }}</span>
+    <div class="docbar__actions">
+      {% if story.locked %}<span class="pill pill--plain">Bloccato</span>{% endif %}
+      {% if story.is_draft %}<span class="pill pill--draft">Bozza</span>{% endif %}
+      {% if can_manage %}
+      <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/storie/{{ story.id }}/edit">Modifica</a>
+      <button class="btn btn--ghost btn--sm" type="button"
+              hx-delete="/worlds/{{ world.id }}/storie/{{ story.id }}"
+              hx-confirm="Eliminare «{{ story.title }}»?" hx-swap="none">Elimina</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="docpage">
+    <div>
+      <div class="document">
+        <div class="document__head document__head--plain">
+          <div class="document__id">
+            <span class="story__band" style="background: var(--{{ story.tint }}); color: var(--surface); display: inline-flex; gap: 1rem; padding: 0.3rem 0.7rem; margin-bottom: 0.8rem">
+              <span>{{ 'In corso' if story.status == 'in_corso' else 'Chiusa' }}</span>
+              {% if story.period_label %}<span>{{ story.period_label }}</span>{% endif %}
+            </span>
+            <h1 class="display">{{ story.title }}</h1>
+            {% if story.short_description %}<p class="lede">{{ story.short_description }}</p>{% endif %}
+          </div>
+        </div>
+        <div class="document__page">
+          <span class="eyebrow">Testo</span>
+          <div class="prose">{{ story.body | markdown }}</div>
+        </div>
+      </div>
+    </div>
+
+    {% if story.sessions %}
+    <aside class="stack">
+      <div class="links">
+        <div class="links__head">
+          <span class="eyebrow">Sessioni incluse</span>
+          <span class="mono muted">{{ story.sessions | length }}</span>
+        </div>
+        <div class="links__group">
+          {% for session in story.sessions %}
+          <a class="links__item" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}" style="--c: var(--{{ session.tint }})">
+            <span class="links__dot"></span> {{ session.in_world_date }} · {{ session.title }}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </aside>
+    {% endif %}
+  </div>
+</layout.Page>

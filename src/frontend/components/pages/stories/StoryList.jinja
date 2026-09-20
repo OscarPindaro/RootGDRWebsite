@@ -1,0 +1,38 @@
+{#def world, world_context, nav, stories, can_manage=False, crumbs, current_user=None #}
+{#css common/Button.css, layout/UserMenu.css #}
+{% set count = stories | length %}
+{% set eyebrow_text = count ~ (' arco' if count == 1 else ' archi') %}
+<layout.Page title="Storie" current_user={{ current_user }} :world="world_context" :nav="nav" active="storie">
+  <editorial.Masthead
+    title="Storie"
+    :eyebrow="eyebrow_text"
+    lede="Archi narrativi che riassumono la campagna a un livello più alto delle singole partite."
+    :crumbs="crumbs">
+    {% if can_manage %}
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/storie/new">Nuova storia</a>
+    {% endif %}
+  </editorial.Masthead>
+
+  {% if stories %}
+  <div class="grid grid--stories">
+    {% for story in stories %}
+    <a class="story" href="/worlds/{{ world.id }}/storie/{{ story.id }}">
+      <div class="story__band" style="background: var(--{{ story.tint }}); color: var(--surface)">
+        <span>{{ 'In corso' if story.status == 'in_corso' else 'Chiusa' }}</span>
+        {% if story.period_label %}<span>{{ story.period_label }}</span>{% endif %}
+      </div>
+      <div class="story__body">
+        <h2 class="story__title">{{ story.title }}</h2>
+        <p class="story__sum">{{ story.short_description }}</p>
+        <div class="story__foot">
+          <span>{{ story.sessions | length }} sessioni</span>
+          <span>{% if story.is_draft %}Bozza{% endif %}</span>
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">Nessun arco narrativo.</div>
+  {% endif %}
+</layout.Page>

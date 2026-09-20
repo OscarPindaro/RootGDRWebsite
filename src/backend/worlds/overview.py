@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..navigation import TimelineEntry
 from ..places.models import PlaceModel
 from ..sessions.service import recent_sessions
+from ..stories.service import open_story
 from .models import WorldModel
 
 CountFn = Callable[[AsyncSession, uuid.UUID], Awaitable[int]]
@@ -70,7 +71,16 @@ async def _diary(db: AsyncSession, world: WorldModel) -> list[TimelineEntry]:
 
 
 async def _open_story(db: AsyncSession, world: WorldModel) -> Teaser | None:
-    return None
+    story = await open_story(db, world.id)
+    if story is None:
+        return None
+    return Teaser(
+        kind="In corso" if story.period_label is None else story.period_label,
+        title=story.title,
+        href=f"/worlds/{world.id}/storie/{story.id}",
+        description=story.short_description,
+        tint=story.tint,
+    )
 
 
 async def _current_place(db: AsyncSession, world: WorldModel) -> Teaser | None:
