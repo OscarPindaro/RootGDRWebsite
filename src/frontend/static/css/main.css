@@ -2213,6 +2213,10 @@ html[data-accent="gradiente"] .prose a.mention {
 
   /* layout */
   --sidebar-width: var(--rail-w);
+  --content-max: 960px;
+  --content-max-wide: 1200px;
+  --dialog-max: 480px;
+  --rule-width: 1px;
   --z-tooltip: 1000;
   --grid-gap: var(--sp-6);
   --stack-gap: var(--sp-4);

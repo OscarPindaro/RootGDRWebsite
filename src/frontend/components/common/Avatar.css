@@ -4,7 +4,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
-  color: #fff;
+  color: var(--surface);
   font-weight: var(--weight-bold);
   line-height: 1;
   flex-shrink: 0;

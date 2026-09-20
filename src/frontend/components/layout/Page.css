@@ -1,17 +1,6 @@
 /* ---------- Layout shell ---------- */
-.page-main {
-  margin-left: var(--sidebar-width);
-  padding: var(--sp-8) var(--sp-10);
-  min-height: 100vh;
-  transition: margin-left .2s ease;
-}
-
-body:has(.sidebar-collapsed) .page-main {
-  margin-left: 72px;
-}
-
-/* Center content so it doesn't jump when sidebar toggles */
+/* Center the admin content so it does not jump when the rail toggles. */
 .admin-dashboard {
-  max-width: 960px;
+  max-width: var(--content-max);
   margin: 0 auto;
 }

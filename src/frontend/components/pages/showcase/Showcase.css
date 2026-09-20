@@ -1,3 +1,4 @@
+/* design-tokens: off — the style guide draws sample boxes at fixed demo sizes. */
 .showcase {
   max-width: 920px;
   margin: 0 auto;
@@ -93,6 +94,6 @@
   padding: var(--sp-1) var(--sp-2);
   font-size: 10px;
   font-family: var(--font-mono);
-  color: #fff;
+  color: var(--surface);
   text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }

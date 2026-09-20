@@ -48,6 +48,12 @@ repos:
         language: system
         files: ^(src/frontend/components/.*\.jinja|src/backend/.*\.py)$
         pass_filenames: false
+      - id: design-tokens
+        name: Check that component CSS reads from design tokens
+        entry: uv run python -m pre_commits.design_tokens
+        language: system
+        files: ^src/frontend/components/.*\.css$
+        pass_filenames: false
       - id: model-registry
         name: Sync db/registry.py with model classes
         entry: uv run python -m pre_commits.model_registry

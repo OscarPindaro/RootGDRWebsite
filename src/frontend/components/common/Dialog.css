@@ -5,7 +5,7 @@
   background: var(--clr-surface);
   padding: 0;
   margin: auto;
-  max-width: 480px;
+  max-width: var(--dialog-max);
   width: calc(100% - var(--sp-8));
   box-shadow: var(--shadow-lg);
   color: var(--clr-text);

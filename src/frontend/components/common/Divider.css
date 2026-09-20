@@ -19,7 +19,7 @@
 .divider-labeled::after {
   content: "";
   flex: 1;
-  height: 1px;
+  height: var(--rule-width);
   background: var(--clr-border);
 }
 
