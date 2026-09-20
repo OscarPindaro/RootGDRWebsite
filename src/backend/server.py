@@ -131,12 +131,14 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         # the action recorder.
         if config.env == "dev":
             from .content.dev_routes import router as dev_content_router  # noqa: PLC0415
+            from .replay.middleware import ReplayMiddleware  # noqa: PLC0415
             from .replay.routes import router as replay_router  # noqa: PLC0415
             from .showcase.views import router as showcase_router  # noqa: PLC0415
 
             app.include_router(showcase_router)
             app.include_router(dev_content_router)
             app.include_router(replay_router)
+            app.add_middleware(ReplayMiddleware)
 
     # health check endpoint
     @app.get("/ping")

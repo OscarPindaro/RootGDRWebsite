@@ -117,6 +117,7 @@ def _run(environment_state: EnvironmentState, *args: str) -> str:
 
 
 def up(environment_state: EnvironmentState, *, build: bool = True) -> None:
+    _prepare_recordings()
     _run(environment_state, "up", "--detach", "--wait", "db")
     _wait_for_database(environment_state)
     _run_migrations(environment_state)
@@ -131,6 +132,13 @@ def up(environment_state: EnvironmentState, *, build: bool = True) -> None:
         f"http://127.0.0.1:{environment_state.ports.backend}/ping",
         attempts=30,
     )
+
+
+def _prepare_recordings() -> None:
+    """Make the mounted recordings directory writable by the container user."""
+    recordings = _REPO_ROOT / "harness-artifacts" / "replay"
+    recordings.mkdir(parents=True, exist_ok=True)
+    recordings.chmod(0o777)
 
 
 def _wait_for_database(environment_state: EnvironmentState) -> None:

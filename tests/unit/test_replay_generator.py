@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from backend.replay.schemas import ReplayStep
-from harness.replay import _path, render_test
+from backend.replay.schemas import BackendStep, ReplayStep
+from harness.replay import _path, render_backend_test, render_test
 
 
 def test_path_strips_the_origin() -> None:
@@ -39,3 +39,32 @@ def test_render_test_handles_an_empty_recording() -> None:
 
 def test_session_name_is_safe_for_a_function_name() -> None:
     assert "def test_replay_a_b_c(" in render_test("a-b.c", [])
+
+
+def test_render_backend_test_emits_the_requests() -> None:
+    steps = [
+        BackendStep(
+            method="POST",
+            path="/auth/dev-login",
+            body={"email": "a@b.c"},
+            status=200,
+        ),
+        BackendStep(method="GET", path="/api/worlds/", status=200),
+        BackendStep(method="POST", path="/api/worlds/", body={"name": "X"}, status=201),
+        BackendStep(method="GET", path="/worlds", query="page=2", status=200),
+    ]
+
+    source = render_backend_test("b123", steps)
+
+    assert "async def test_backend_replay_b123(async_client) -> None:" in source
+    assert (
+        "await async_client.request('POST', '/auth/dev-login', "
+        "json={'email': 'a@b.c'})" in source
+    )
+    assert "await async_client.request('GET', '/api/worlds/')" in source
+    assert "await async_client.request('GET', '/worlds?page=2')" in source
+    assert "assert response.status_code == 201" in source
+
+
+def test_render_backend_test_handles_an_empty_recording() -> None:
+    assert "    pass" in render_backend_test("empty", [])

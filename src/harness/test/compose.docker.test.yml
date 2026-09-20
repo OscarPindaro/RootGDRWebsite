@@ -38,6 +38,7 @@ services:
       # config defaults (database host ``localhost``).
       - ${HARNESS_REPO_ROOT}/src:/app/src:z
       - ${HARNESS_REPO_ROOT}/alembic:/app/alembic:z
+      - ${HARNESS_REPO_ROOT}/harness-artifacts:/app/harness-artifacts:z
       - ${HARNESS_CONFIG_FILE}:/app/config.yaml:ro,z
       - uploads:/app/data
     # The installed distribution is ``backend`` (from ``src/``); ``src.backend``

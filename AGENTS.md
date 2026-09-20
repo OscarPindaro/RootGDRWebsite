@@ -197,14 +197,18 @@ uv run harness env teardown
 
 ## Replay (learned)
 
-Turn a bug found by hand into a reproducible test:
+Turn a bug found by hand into a reproducible test, from either side:
 
-- In dev, open the user menu and switch on **Registra azioni**, then work
-  normally; every page, field and click is recorded.
-- `uv run harness replay list`, `show <session>`, and `export <session> [-o path]`
-  (writes a Playwright test, `tests/e2e/test_replay_<session>.py` by default).
-- Recordings live in `harness-artifacts/replay/` (gitignored). The recorder is
-  dev-only: the route and the script do not exist outside `env: dev`.
+- **Browser steps** — in dev, open the user menu and switch on **Registra
+  azioni**, then work normally; every page, field and click is recorded.
+- **Backend calls** — `uv run harness replay start` (dev-only middleware records
+  each request/response), work, then `uv run harness replay stop`.
+- `uv run harness replay list|show|export <session> [--mode ui|backend]`;
+  `export` writes a Playwright test (ui) or an integration test (backend) into
+  `tests/e2e/` or `tests/integration/`.
+- Recordings live in `harness-artifacts/replay/` (gitignored) and are mounted
+  into both stacks. Recorder and routes exist only under `env: dev`; recorded
+  ids come from where it was recorded, so a replay may need adjusting elsewhere.
 
 ## Content harness (learned)
 
