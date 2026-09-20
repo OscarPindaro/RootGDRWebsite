@@ -149,3 +149,21 @@ uv run harness env teardown
   `localhost` for the database).
 - `dev login` (`POST /auth/dev-login`) sets the same cookies as a real login;
   browser contexts are authenticated through it.
+
+## Content harness (learned)
+
+```bash
+ENV_FILE=$PWD/test.env YAML_CONFIG_FILE=config.test.yaml \
+  uv run harness content seed --email e2e-admin@example.com
+uv run harness content export <world-id> --email <email> -o /tmp/bundle.yaml
+uv run harness content import /tmp/bundle.yaml --email <email>
+uv run harness content rebuild --email <email> [--world <world-id>]
+```
+
+- `seed` builds the demo Boscochiaro world in code (no data files to package).
+- Export/import are idempotent: the world matches by name, content by its
+  natural key (name, or slug for pages), so a round trip updates instead of
+  duplicating. In dev, the same bundle is available over the API at
+  `/api/dev/worlds/{id}/export` and `/api/dev/worlds/import`.
+- Pass `ENV_FILE`/`YAML_CONFIG_FILE` to point the CLI at the test database;
+  without them it uses `config.yaml` (the dev database).

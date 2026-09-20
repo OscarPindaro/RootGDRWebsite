@@ -55,5 +55,5 @@ class StoryModel(
         default=StoryStatus.OPEN,
     )
     sessions: Mapped[list[SessionModel]] = relationship(
-        secondary=story_sessions, lazy="select"
+        secondary=story_sessions, lazy="selectin"
     )
