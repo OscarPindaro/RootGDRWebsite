@@ -112,6 +112,14 @@ def register_command(app: typer.Typer) -> None:
                 "--fail-on-diff", help="Exit non-zero when any pixel differs."
             ),
         ] = False,
+        base_url: Annotated[
+            str | None,
+            typer.Option(
+                "--base-url",
+                help="Target a running app (e.g. the dev showcase) instead of the "
+                "active harness environment.",
+            ),
+        ] = None,
     ) -> None:
         """Compare an application page with its prototype and write a report."""
         if not path.startswith("/"):
@@ -138,7 +146,11 @@ def register_command(app: typer.Typer) -> None:
 
         try:
             app_shots = capture_screenshots(
-                path, email=email, name="app", output_dir=output_dir
+                path,
+                email=email,
+                name="app",
+                output_dir=output_dir,
+                base_url=base_url,
             )
         except RuntimeError as error:
             err_console.print(f"[bold red]{error}[/bold red]")

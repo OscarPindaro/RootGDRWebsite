@@ -175,14 +175,20 @@ def capture_screenshots(
     hover: str | None = None,
     expect_visible: str | None = None,
     expected_status: int = 200,
+    base_url: str | None = None,
 ) -> ScreenshotResult:
-    environment_state = state.read()
-    if (
-        environment_state is None
-        or environment_state.mode != state.EnvironmentMode.DOCKER
-        or environment_state.ports.backend is None
-    ):
-        raise RuntimeError("Screenshots require an active Docker harness environment")
+    if base_url is None:
+        environment_state = state.read()
+        if (
+            environment_state is None
+            or environment_state.mode != state.EnvironmentMode.DOCKER
+            or environment_state.ports.backend is None
+        ):
+            raise RuntimeError(
+                "Screenshots require an active Docker harness environment "
+                "or an explicit base_url"
+            )
+        base_url = f"http://127.0.0.1:{environment_state.ports.backend}"
     if not path.startswith("/"):
         raise ValueError("Screenshot path must start with /")
     if click is not None and hover is not None:
@@ -197,7 +203,6 @@ def capture_screenshots(
     slug = re.sub(r"[^a-z0-9]+", "-", slug_source.lower()).strip("-") or "home"
     desktop = destination / f"{slug}-desktop.png"
     phone = destination / f"{slug}-phone.png"
-    base_url = f"http://127.0.0.1:{environment_state.ports.backend}"
     console_errors: list[str] = []
 
     with sync_playwright() as playwright:

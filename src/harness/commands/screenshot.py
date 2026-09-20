@@ -54,6 +54,14 @@ def register_command(app: typer.Typer) -> None:
                 help="Required HTTP status for the page navigation.",
             ),
         ] = 200,
+        base_url: Annotated[
+            str | None,
+            typer.Option(
+                "--base-url",
+                help="Target a running app (e.g. the dev showcase) instead of the "
+                "active harness environment.",
+            ),
+        ] = None,
     ) -> None:
         """Capture authenticated desktop and phone screenshots."""
         try:
@@ -66,6 +74,7 @@ def register_command(app: typer.Typer) -> None:
                 hover=hover,
                 expect_visible=expect_visible,
                 expected_status=expected_status,
+                base_url=base_url,
             )
         except (OSError, RuntimeError, ValueError) as error:
             err_console.print(f"[bold red]{error}[/bold red]")
