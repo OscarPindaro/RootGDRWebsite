@@ -226,3 +226,43 @@ def capture_screenshots(
         phone=phone,
         console_errors=console_errors,
     )
+
+
+def capture_url(
+    url: str,
+    output: Path,
+    *,
+    phone: bool = False,
+    wait_for: str | None = None,
+) -> list[str]:
+    """Screenshot an unauthenticated URL (the static prototype).
+
+    Uses the same viewports as :func:`capture_screenshots` so the two sides of a
+    comparison are captured identically. Returns the browser console errors.
+    """
+    errors: list[str] = []
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        context_options = (
+            playwright.devices["Pixel 7"]
+            if phone
+            else {"viewport": {"width": 1440, "height": 900}}
+        )
+        context = browser.new_context(**context_options)
+        try:
+            page = context.new_page()
+            page.on(
+                "console",
+                lambda message: (
+                    errors.append(message.text) if message.type == "error" else None
+                ),
+            )
+            page.on("pageerror", lambda error: errors.append(str(error)))
+            page.goto(url, wait_until="networkidle")
+            if wait_for is not None:
+                page.wait_for_selector(wait_for, timeout=5000)
+            page.screenshot(path=output)
+        finally:
+            context.close()
+            browser.close()
+    return errors

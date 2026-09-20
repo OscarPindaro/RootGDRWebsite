@@ -10,6 +10,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from .commands.compare import register_command as register_compare_command
 from .commands.content import register_commands as register_content_commands
 from .commands.dev import register_commands as register_dev_commands
 from .commands.environment import env_app
@@ -88,6 +89,7 @@ register_install_commands(app, is_dry_run=lambda: _dry_run)
 register_content_commands(app)
 register_dev_commands(app)
 register_prototype_commands(app)
+register_compare_command(app)
 register_screenshot_command(app)
 
 

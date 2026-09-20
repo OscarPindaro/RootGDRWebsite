@@ -1,0 +1,50 @@
+# Application path → prototype page, for `harness compare`.
+#
+# The patterns are matched in order against the application path; the first
+# match wins. Placeholder segments are `[^/]+`, so a UUID world id matches.
+entries:
+  - pattern: "^/worlds$"
+    prototype: index.html
+    label: Worlds list
+  - pattern: "^/worlds/[^/]+$"
+    prototype: mondo.html
+    label: World overview
+  - pattern: "^/worlds/[^/]+/characters$"
+    prototype: personaggi.html
+    label: Characters list
+  - pattern: "^/worlds/[^/]+/characters/new$"
+    prototype: nuovo-personaggio.html
+    label: New character
+  - pattern: "^/worlds/[^/]+/characters/[^/]+$"
+    prototype: personaggio.html
+    label: Character detail
+  - pattern: "^/worlds/[^/]+/npcs$"
+    prototype: npc.html
+    label: NPCs list
+  - pattern: "^/worlds/[^/]+/places$"
+    prototype: luoghi.html
+    label: Places atlas
+  - pattern: "^/worlds/[^/]+/places/new$"
+    prototype: nuovo-luogo.html
+    label: New place
+  - pattern: "^/worlds/[^/]+/places/[^/]+$"
+    prototype: luogo.html
+    label: Place detail
+  - pattern: "^/worlds/[^/]+/sessions$"
+    prototype: sessioni.html
+    label: Sessions ledger
+  - pattern: "^/worlds/[^/]+/sessions/[^/]+$"
+    prototype: sessione.html
+    label: Session detail
+  - pattern: "^/worlds/[^/]+/stories$"
+    prototype: storie.html
+    label: Stories list
+  - pattern: "^/worlds/[^/]+/stories/[^/]+$"
+    prototype: storia.html
+    label: Story detail
+  - pattern: "^/worlds/[^/]+/pages$"
+    prototype: pagine.html
+    label: Pages list
+  - pattern: "^/worlds/[^/]+/pages/[^/]+$"
+    prototype: pagina.html
+    label: Page detail
