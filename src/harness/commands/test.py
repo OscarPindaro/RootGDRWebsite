@@ -33,7 +33,9 @@ def _run_suite(suite: runner.TestSuite) -> None:
         raise typer.Exit(result.return_code)
 
 
-def _require_environment(mode: state.EnvironmentMode | None = None) -> None:
+def _require_environment(
+    mode: state.EnvironmentMode | None = None,
+) -> state.EnvironmentState:
     environment_state, _ = environment.status()
     if environment_state is None:
         raise typer.BadParameter("No active environment for this worktree.")
@@ -41,6 +43,7 @@ def _require_environment(mode: state.EnvironmentMode | None = None) -> None:
         raise typer.BadParameter(
             f"This command requires a {mode.value} environment, found {environment_state.mode.value}."
         )
+    return environment_state
 
 
 @test_app.command()
@@ -63,9 +66,23 @@ def integration() -> None:
 
 
 @test_app.command()
-def e2e() -> None:
+def e2e(
+    fresh: Annotated[
+        bool,
+        typer.Option(
+            "--fresh",
+            help="Recreate the active test database and uploads before running.",
+        ),
+    ] = False,
+) -> None:
     """Run E2E tests against the active Docker environment."""
     _require_environment(state.EnvironmentMode.DOCKER)
+    if fresh:
+        try:
+            environment.reset_test_database()
+        except environment.EnvironmentError as error:
+            err_console.print(f"[bold red]{error}[/bold red]")
+            raise typer.Exit(1) from error
     _run_suite(runner.TestSuite.E2E)
 
 

@@ -150,6 +150,7 @@ uv run harness dev reset --db show        # recreate the showcase DB + seed it
 uv run harness env up --mode local        # database only, for integration tests
 uv run harness test integration           # uses the active environment
 uv run harness env up --mode docker       # database + backend container
+uv run harness test e2e --fresh           # reset only the test DB/uploads, then run E2E
 uv run harness screenshot /worlds --email e2e-admin@example.com --name worlds
 uv run harness compare /worlds/<id>       # app vs prototype report + pixel diff
 uv run harness env teardown

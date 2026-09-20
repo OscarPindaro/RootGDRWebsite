@@ -13,7 +13,7 @@ import uuid
 import pytest
 from playwright.sync_api import sync_playwright
 
-from harness.test.browser import BrowserSession, authenticate_context
+from harness.test.browser import BrowserSession, authenticate_context, expect_api
 
 pytestmark = pytest.mark.e2e
 
@@ -33,12 +33,19 @@ def test_master_creates_a_world_and_a_character(session: BrowserSession) -> None
 
     # Create a character through the Markdown form.
     world_id = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
+    world_payload = session.expect_api(f"/api/worlds/{world_id}").json()
+    assert world_payload["name"] == name
     session.goto(f"/worlds/{world_id}/characters/new")
     session.page.fill('input[name="name"]', "Rugginosa")
     session.page.fill('input[name="title"]', "La Senza Tana")
     session.submit('button[type="submit"]', expect_url=r"/characters/[0-9a-f-]{36}$")
     session.page.wait_for_selector(".docbar")
     assert "Rugginosa" in session.page.content()
+    character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
+    character_payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/{character_id}"
+    ).json()
+    assert character_payload["name"] == "Rugginosa"
 
     # The CodeMirror editor mounted on the form.
     session.goto(f"/worlds/{world_id}/characters/new")
@@ -54,6 +61,7 @@ def test_master_can_draft_a_character(session: BrowserSession) -> None:
     session.page.fill('textarea[name="description"]', "x")
     session.submit('button[type="submit"]', expect_url=r"/worlds/[0-9a-f-]{36}$")
     world_id = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
+    assert session.expect_api(f"/api/worlds/{world_id}").json()["name"] == name
 
     session.goto(f"/worlds/{world_id}/characters/new")
     session.page.fill('input[name="name"]', "Bozzetto")
@@ -64,6 +72,11 @@ def test_master_can_draft_a_character(session: BrowserSession) -> None:
     session.submit('button:has-text("Riporta a bozza")')
     session.page.wait_for_selector(".pill--draft", timeout=10_000)
     assert session.page.locator(".pill--draft").count() == 1
+    character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/{character_id}"
+    ).json()
+    assert payload["isDraft"] is True
 
     assert session.errors == []
 
@@ -157,8 +170,8 @@ def test_character_form_uses_face_pickers(session: BrowserSession, seed_world) -
     session.submit('button[type="submit"]', expect_url=r"/characters/[0-9a-f-]{36}$")
 
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
-    payload = session.context.request.get(
-        f"{session.base_url}/api/worlds/{world_id}/characters/{character_id}"
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/{character_id}"
     ).json()
     assert payload["animal"] == "🦊"
     assert payload["tint"] == "p8"
@@ -201,8 +214,8 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     session.page.wait_for_load_state("networkidle")
 
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
-    payload = session.context.request.get(
-        f"{session.base_url}/api/worlds/{world_id}/characters/{character_id}"
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/{character_id}"
     ).json()
     assert "Riscritto e salvato" in payload["body"]
 
@@ -216,8 +229,8 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     )
     session.page.wait_for_load_state("networkidle")
 
-    payload = session.context.request.get(
-        f"{session.base_url}/api/worlds/{world_id}/characters/{character_id}"
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/{character_id}"
     ).json()
     assert payload["title"] == "Titolo in place"
     assert payload["name"] == "Rugginosa"
@@ -260,27 +273,41 @@ def test_player_cannot_manage_places(base_url: str) -> None:
             # Invite the player (admin only), then sign them in via the
             # development login, which accepts a pending invitation.
             authenticate_context(context, base_url, ADMIN)
-            invite = context.request.post(
-                f"{base_url}/admin/users/invite",
+            expect_api(
+                context,
+                base_url,
+                "/admin/users/invite",
+                method="POST",
                 data={"email": email, "role": "member"},
                 headers={"HX-Request": "true"},
             )
-            assert invite.ok, invite.text()
-            worlds = context.request.get(f"{base_url}/api/worlds/").json()["data"]
-            assert worlds, "expected at least one world from the seed"
-            world_id = worlds[0]["id"]
+            world = expect_api(
+                context,
+                base_url,
+                "/api/worlds/",
+                method="POST",
+                expected_status=201,
+                data={
+                    "name": f"Mondo Player {uuid.uuid4().hex[:6]}",
+                    "description": "Mondo per il test dei permessi.",
+                },
+            ).json()
+            world_id = world["id"]
 
             # Sign the player in first (this creates their user from the
             # invitation), then add them to the world by email.
             player = browser.new_context()
             try:
                 authenticate_context(player, base_url, email)
-                member = context.request.post(
-                    f"{base_url}/worlds/{world_id}/members",
+                expect_api(
+                    context,
+                    base_url,
+                    f"/worlds/{world_id}/members",
+                    method="POST",
+                    expected_status=204,
                     form={"email": email, "role": "player"},
                     headers={"HX-Request": "true"},
                 )
-                assert member.ok, member.text()
 
                 page = player.new_page()
                 page.goto(

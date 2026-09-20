@@ -9,9 +9,12 @@ localStorage token trick is gone: the backend reads cookies, not localStorage.
 
 import os
 import re
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
-from playwright.sync_api import Browser, BrowserContext, Error as PlaywrightError
+from playwright.sync_api import APIResponse, Browser, BrowserContext
+from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Playwright, sync_playwright
 from pydantic import BaseModel
 
@@ -66,6 +69,40 @@ def authenticate_context(
         access_token=tokens["access_token"],
         refresh_token=tokens["refresh_token"],
     )
+
+
+def expect_api(
+    context: BrowserContext,
+    base_url: str,
+    path: str,
+    *,
+    method: str = "GET",
+    expected_status: int = 200,
+    data: object | None = None,
+    form: dict[str, str] | None = None,
+    headers: dict[str, str] | None = None,
+    check: Callable[[Any], None] | None = None,
+) -> APIResponse:
+    if not path.startswith("/"):
+        raise ValueError("API path must start with /")
+    method = method.upper()
+    if method not in {"GET", "POST", "PUT", "PATCH", "DELETE"}:
+        raise ValueError(f"Unsupported API method: {method}")
+    response = context.request.fetch(
+        f"{base_url}{path}",
+        method=method,
+        data=data,
+        form=form,
+        headers=headers,
+    )
+    if response.status != expected_status:
+        raise AssertionError(
+            f"{method} {path}: expected {expected_status}, got "
+            f"{response.status}: {response.text()}"
+        )
+    if check is not None:
+        check(response.json())
+    return response
 
 
 def new_authenticated_context(
@@ -308,3 +345,26 @@ class BrowserSession:
         if expect_url is not None:
             self.page.wait_for_url(re.compile(expect_url), timeout=10_000)
         self.page.wait_for_load_state("networkidle")
+
+    def expect_api(
+        self,
+        path: str,
+        *,
+        method: str = "GET",
+        expected_status: int = 200,
+        data: object | None = None,
+        form: dict[str, str] | None = None,
+        headers: dict[str, str] | None = None,
+        check: Callable[[Any], None] | None = None,
+    ) -> APIResponse:
+        return expect_api(
+            self.context,
+            self.base_url,
+            path,
+            method=method,
+            expected_status=expected_status,
+            data=data,
+            form=form,
+            headers=headers,
+            check=check,
+        )

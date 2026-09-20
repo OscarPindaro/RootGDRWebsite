@@ -6,11 +6,13 @@ and every page must render with the expected status.
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 from playwright.sync_api import sync_playwright
 
 from harness.test import state
-from harness.test.browser import authenticate_context, capture_screenshots
+from harness.test.browser import authenticate_context, capture_screenshots, expect_api
 
 pytestmark = pytest.mark.e2e
 
@@ -28,20 +30,30 @@ def _base_url() -> str:
     return f"http://127.0.0.1:{environment.ports.backend}"
 
 
-def _first_world(base_url: str) -> tuple[str, str | None]:
-    """Return (world_id, character_id) from the seeded data."""
+def _screenshot_world(base_url: str) -> tuple[str, str]:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         context = browser.new_context()
         try:
             authenticate_context(context, base_url, ADMIN)
-            worlds = context.request.get(f"{base_url}/api/worlds/").json()["data"]
-            assert worlds, "seed a world before capturing screenshots"
-            world_id = worlds[0]["id"]
-            characters = context.request.get(
-                f"{base_url}/api/worlds/{world_id}/characters/"
-            ).json()["data"]
-            return world_id, (characters[0]["id"] if characters else None)
+            name = f"Mondo Screenshot {uuid.uuid4().hex[:6]}"
+            world = expect_api(
+                context,
+                base_url,
+                "/api/worlds/",
+                method="POST",
+                expected_status=201,
+                data={"name": name, "description": "Mondo per le schermate."},
+            ).json()
+            character = expect_api(
+                context,
+                base_url,
+                f"/api/worlds/{world['id']}/characters/",
+                method="POST",
+                expected_status=201,
+                data={"name": "Rugginosa"},
+            ).json()
+            return world["id"], character["id"]
         finally:
             context.close()
             browser.close()
@@ -49,7 +61,7 @@ def _first_world(base_url: str) -> tuple[str, str | None]:
 
 def test_capture_important_pages() -> None:
     base_url = _base_url()
-    world_id, character_id = _first_world(base_url)
+    world_id, character_id = _screenshot_world(base_url)
 
     pages = [
         "/worlds",

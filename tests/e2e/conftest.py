@@ -49,6 +49,9 @@ def seed_world(session: BrowserSession):
         session.page.fill('input[name="name"]', name)
         session.page.fill('textarea[name="description"]', "Creato dai test e2e.")
         session.submit('button[type="submit"]', expect_url=r"/worlds/[0-9a-f-]{36}$")
-        return re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
+        world_id = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
+        payload = session.expect_api(f"/api/worlds/{world_id}").json()
+        assert payload["name"] == name
+        return world_id
 
     return _seed

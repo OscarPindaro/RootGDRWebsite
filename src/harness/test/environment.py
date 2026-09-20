@@ -1,6 +1,8 @@
 import os
 from datetime import UTC, datetime
 
+from dotenv import dotenv_values
+
 from . import compose, config, ports, state
 
 
@@ -83,6 +85,38 @@ def status() -> tuple[state.EnvironmentState | None, str]:
         return environment_state, compose.status_text(environment_state)
     except compose.ComposeError as error:
         raise EnvironmentError(str(error)) from error
+
+
+def reset_test_database() -> state.EnvironmentState:
+    root = state.worktree_root()
+    environment_state = state.read(root)
+    if environment_state is None:
+        raise EnvironmentError("No active environment for this worktree.")
+    if environment_state.mode != state.EnvironmentMode.DOCKER:
+        raise EnvironmentError("A fresh E2E run requires a Docker test environment.")
+    if environment_state.config.env.name not in {
+        "test.env",
+        ".env.test",
+        ".env.test.example",
+    }:
+        raise EnvironmentError("Refusing to reset a non-test environment file.")
+    values = dotenv_values(environment_state.config.env)
+    app_database = values.get("DATABASE__DB")
+    migrator_database = values.get("MIGRATOR__DB")
+    if (
+        not app_database
+        or app_database != migrator_database
+        or not app_database.endswith("_test")
+    ):
+        raise EnvironmentError(
+            "Refusing to reset a database not named as a test database."
+        )
+    try:
+        compose.down(environment_state)
+        compose.up(environment_state, build=False)
+    except compose.ComposeError as error:
+        raise EnvironmentError(str(error)) from error
+    return environment_state
 
 
 def activate() -> state.EnvironmentState:

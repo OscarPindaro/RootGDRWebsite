@@ -58,9 +58,14 @@ class _FakeRequest:
     def __init__(self, response: _FakeResponse):
         self._response = response
         self.posts: list[tuple[str, dict]] = []
+        self.fetches: list[tuple[str, dict]] = []
 
     def post(self, url: str, data=None):
         self.posts.append((url, data))
+        return self._response
+
+    def fetch(self, url: str, **kwargs):
+        self.fetches.append((url, kwargs))
         return self._response
 
 
@@ -109,3 +114,42 @@ def test_authenticate_context_fails_when_cookies_are_missing() -> None:
 
     with pytest.raises(RuntimeError, match="missing"):
         browser.authenticate_context(context, "http://test", "a@example.test")
+
+
+def test_expect_api_returns_a_checked_response() -> None:
+    response = _FakeResponse(ok=True, status=201, payload={"id": "123"})
+    context = _FakeContext(response, [])
+    payloads = []
+
+    result = browser.expect_api(
+        context,
+        "http://test",
+        "/api/items",
+        method="post",
+        expected_status=201,
+        data={"name": "item"},
+        check=payloads.append,
+    )
+
+    assert result is response
+    assert payloads == [{"id": "123"}]
+    assert context.request.fetches == [
+        (
+            "http://test/api/items",
+            {
+                "method": "POST",
+                "data": {"name": "item"},
+                "form": None,
+                "headers": None,
+            },
+        )
+    ]
+
+
+def test_expect_api_reports_the_server_response() -> None:
+    context = _FakeContext(
+        _FakeResponse(ok=False, status=409, text="stale version"), []
+    )
+
+    with pytest.raises(AssertionError, match="expected 200, got 409: stale version"):
+        browser.expect_api(context, "http://test", "/api/items/1")

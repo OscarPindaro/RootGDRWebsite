@@ -41,7 +41,8 @@ def _create(
     new_label: str,
     fields: dict[str, str],
     expect_url: str,
-) -> None:
+    collection: str,
+) -> dict:
     session.page.click(f'.quick:has-text("{quick_label}")')
     session.page.wait_for_load_state("networkidle")
     session.page.click(f'a:has-text("{new_label}")')
@@ -49,6 +50,21 @@ def _create(
     for name, value in fields.items():
         session.page.fill(f'[name="{name}"]', value)
     session.submit('button[type="submit"]', expect_url=expect_url)
+    match = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url)
+    world_id = match.group(1)
+    if collection == "pages":
+        items = session.expect_api(f"/api/worlds/{world_id}/pages/").json()["data"]
+        payload = next(item for item in items if item["title"] == fields["title"])
+    else:
+        item_id = re.search(r"/([0-9a-f-]{36})$", session.page.url).group(1)
+        payload = session.expect_api(
+            f"/api/worlds/{world_id}/{collection}/{item_id}"
+        ).json()
+    for name, value in fields.items():
+        parts = name.split("_")
+        api_name = parts[0] + "".join(part.title() for part in parts[1:])
+        assert payload[api_name] == value
+    return payload
 
 
 def test_master_fills_the_world_and_the_overview_updates(
@@ -65,12 +81,18 @@ def test_master_fills_the_world_and_the_overview_updates(
         "Nuovo personaggio",
         {"name": "Rugginosa"},
         r"/characters/[0-9a-f-]{36}$",
+        "characters",
     )
     _goto_overview(session, world_id)
     assert _quick_count(session, "Personaggi") == "1"
 
     _create(
-        session, "NPC", "Nuovo NPC", {"name": "La Marchesa"}, r"/npcs/[0-9a-f-]{36}$"
+        session,
+        "NPC",
+        "Nuovo NPC",
+        {"name": "La Marchesa"},
+        r"/npcs/[0-9a-f-]{36}$",
+        "npcs",
     )
     _goto_overview(session, world_id)
     assert _quick_count(session, "NPC") == "1"
@@ -81,6 +103,7 @@ def test_master_fills_the_world_and_the_overview_updates(
         "Nuovo luogo",
         {"name": "Radura della Grande Quercia"},
         r"/places/[0-9a-f-]{36}$",
+        "places",
     )
     session.submit('button:has-text("Scena corrente")')
     # The toggle answers with an htmx redirect; wait for the re-rendered pill so
@@ -98,6 +121,7 @@ def test_master_fills_the_world_and_the_overview_updates(
         "Nuova sessione",
         {"title": "Il risveglio della Marchesa", "in_world_date": "Primavera, 3° anno"},
         r"/sessions/[0-9a-f-]{36}$",
+        "sessions",
     )
     _goto_overview(session, world_id)
     assert _quick_count(session, "Sessioni") == "1"
@@ -111,6 +135,7 @@ def test_master_fills_the_world_and_the_overview_updates(
         "Nuova storia",
         {"title": "L'inverno dei corvi"},
         r"/stories/[0-9a-f-]{36}$",
+        "stories",
     )
     _goto_overview(session, world_id)
     assert _quick_count(session, "Storie") == "1"
@@ -124,6 +149,8 @@ def test_master_fills_the_world_and_the_overview_updates(
     session.page.wait_for_load_state("networkidle")
     session.page.fill('[name="title"]', "Le regole della Casa")
     session.submit('button[type="submit"]', expect_url=r"/pages/le-regole-della-casa$")
+    pages = session.expect_api(f"/api/worlds/{world_id}/pages/").json()["data"]
+    assert any(page["title"] == "Le regole della Casa" for page in pages)
     _goto_overview(session, world_id)
     assert "Le regole della Casa" in session.page.locator("#rail").inner_text()
 
