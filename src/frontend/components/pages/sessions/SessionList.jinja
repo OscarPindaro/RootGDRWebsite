@@ -1,5 +1,5 @@
 {#def world, world_context, nav, rows, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 {% set count = rows | length %}
 {% set eyebrow_text = count ~ (' sessione' if count == 1 else ' sessioni') %}
 <layout.Page title="Sessioni" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="sessioni">
@@ -9,7 +9,9 @@
     lede="Dalla più recente. Ogni sessione ha un colore che la segue anche nelle timeline e nelle schede dei personaggi."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessions/new" data-testid="create-session">Nuova sessione</a>
+    <common.Tooltip text="Nuova sessione">
+      <common.Button :href="'/worlds/' ~ world.id ~ '/sessions/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuova sessione" data-testid="create-session" />
+    </common.Tooltip>
     {% endif %}
   </editorial.Masthead>
 

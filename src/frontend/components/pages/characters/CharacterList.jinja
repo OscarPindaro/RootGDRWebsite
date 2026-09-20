@@ -1,5 +1,5 @@
 {#def world, world_context, nav, cards, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
 <layout.Page title="Personaggi" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="personaggi">
   <editorial.Masthead
@@ -7,7 +7,9 @@
     :eyebrow="eyebrow_text"
     lede="I giocatori gestiscono le proprie schede; il Master vede e modifica tutto."
     :crumbs="crumbs">
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/characters/new" data-testid="create-character">Nuovo personaggio</a>
+    <common.Tooltip text="Nuovo personaggio">
+      <common.Button :href="'/worlds/' ~ world.id ~ '/characters/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuovo personaggio" data-testid="create-character" />
+    </common.Tooltip>
   </editorial.Masthead>
 
   {% if cards %}

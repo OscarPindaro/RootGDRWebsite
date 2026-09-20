@@ -17,6 +17,7 @@ from ..auth.service import (
 from ..config import AppConfig, get_app_config
 from ..dependencies import get_catalog_dep, get_db_session
 from ..db.enums import SymbolStyle, UserRole
+from ..navigation import ButtonGroupOption
 from ..users.schemas import User
 from ..users.service import get_all_users, get_user, update_symbol_style
 
@@ -160,13 +161,23 @@ async def revoke_invitation(
     )
 
 
+SYMBOL_STYLE_OPTIONS = [
+    ButtonGroupOption(value=SymbolStyle.ICONS, label="Icone"),
+    ButtonGroupOption(value=SymbolStyle.SHAPES, label="Forme"),
+]
+
+
 @router.get("/settings", response_class=HTMLResponse)
 async def settings_page(
     catalog=Depends(get_catalog_dep),
     user: User = Depends(get_current_user),
 ):
     """User settings: visual preferences stored on the user record."""
-    return catalog.render("pages.settings.Settings", current_user=user)
+    return catalog.render(
+        "pages.settings.Settings",
+        current_user=user,
+        symbol_style_options=SYMBOL_STYLE_OPTIONS,
+    )
 
 
 @router.post("/settings", response_class=HTMLResponse)
@@ -176,10 +187,6 @@ async def settings_submit(
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ):
-    """Save the symbol-style preference and re-render the page."""
+    """Save the symbol-style preference and return an htmx status message."""
     await update_symbol_style(db, user, symbol_style)
-    return catalog.render(
-        "pages.settings.Settings",
-        current_user=user.model_copy(update={"symbol_style": symbol_style}),
-        saved=True,
-    )
+    return catalog.render("pages.settings.SettingsStatus")

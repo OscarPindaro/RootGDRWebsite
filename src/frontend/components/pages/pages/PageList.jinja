@@ -1,5 +1,5 @@
 {#def world, world_context, nav, pages, rows, can_manage=False, crumbs, drafts=None, current_user=None #}
-{#css common/Button.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 {% set count = rows | length %}
 {% set eyebrow_text = count ~ (' pagina' if count == 1 else ' pagine') %}
 <layout.Page title="Pagine" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
@@ -9,7 +9,9 @@
     lede="Materiale statico: regole di casa, fazioni, calendario e storia. L'ordine è quello con cui compaiono nella navigazione."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/pages/new" data-testid="create-page">Nuova pagina</a>
+    <common.Tooltip text="Nuova pagina">
+      <common.Button :href="'/worlds/' ~ world.id ~ '/pages/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuova pagina" data-testid="create-page" />
+    </common.Tooltip>
     {% endif %}
   </editorial.Masthead>
 

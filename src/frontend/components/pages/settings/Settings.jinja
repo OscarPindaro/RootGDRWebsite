@@ -1,34 +1,18 @@
-{#def current_user=None, saved=False #}
-{#css common/Alert.css, common/Button.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#def current_user=None, symbol_style_options=None #}
+{#css common/Alert.css, common/Button.css, common/ButtonGroup.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 <layout.Page title="Impostazioni" current_user={{ current_user }} active="settings">
   <editorial.Masthead
     title="Impostazioni"
     eyebrow="Preferenze"
     lede="Le preferenze visive appartengono al tuo account e valgono in ogni mondo." />
 
-  {% if saved %}<common.Alert variant="success">Preferenze salvate.</common.Alert>{% endif %}
-
   <form class="form" style="max-width: 640px"
-        hx-post="/settings" hx-ext="ignore:json-enc" hx-target="body" hx-swap="outerHTML">
-    <fieldset class="field">
-      <legend class="field-label">Simboli</legend>
-      <div class="row-inline">
-        <label class="segmented">
-          <input type="radio" name="symbol_style" value="icons"
-                 {% if current_user.symbol_style != 'shapes' %}checked{% endif %}>
-          <span>Icone</span>
-        </label>
-        <label class="segmented">
-          <input type="radio" name="symbol_style" value="shapes"
-                 {% if current_user.symbol_style == 'shapes' %}checked{% endif %}>
-          <span>Forme</span>
-        </label>
-      </div>
-      <span class="field__hint">Icone: un disegno lineare dice cosa fa una voce. Forme: una geometria piena dice dove sta nella struttura.</span>
-    </fieldset>
-
-    <div class="row-inline">
-      <common.Button type="submit" variant="primary" size="md" data-testid="save-settings">Salva</common.Button>
-    </div>
+        hx-post="/settings" hx-ext="ignore:json-enc" hx-trigger="change"
+        hx-target="#settings-status" hx-swap="innerHTML">
+    <common.ButtonGroup label="Simboli" name="symbol_style" selection="single"
+                        :options="symbol_style_options" :value="current_user.symbol_style"
+                        required variant="connected" size="sm" />
+    <p class="field__hint">Icone: un disegno lineare dice cosa fa una voce. Forme: una geometria piena dice dove sta nella struttura.</p>
+    <div id="settings-status" aria-live="polite" aria-atomic="true"></div>
   </form>
 </layout.Page>

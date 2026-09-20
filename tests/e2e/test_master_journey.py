@@ -143,9 +143,9 @@ def test_secondary_actions_have_a_visible_border(
     world_id = seed_world("Mondo Bordo")
     session.goto(f"/worlds/{world_id}")
 
-    border = session.page.locator(
-        '.masthead a:has-text("Impostazioni")'
-    ).first.evaluate("el => getComputedStyle(el).borderTopWidth")
+    border = session.page.locator('[data-testid="world-settings"]').evaluate(
+        "el => getComputedStyle(el).borderTopWidth"
+    )
     assert border not in {"0px", ""}, border
 
 
@@ -328,3 +328,95 @@ def test_player_cannot_manage_places(base_url: str) -> None:
         finally:
             context.close()
             browser.close()
+
+
+def test_settings_choice_is_exclusive_and_persists(session: BrowserSession) -> None:
+    session.goto("/settings")
+    icons = session.page.locator('input[name="symbol_style"][value="icons"]')
+    shapes = session.page.locator('input[name="symbol_style"][value="shapes"]')
+
+    session.page.locator('.button-group-option:has(input[value="shapes"]) .btn').click()
+    session.page.locator("#settings-status", has_text="Preferenza salvata.").wait_for()
+    assert shapes.is_checked()
+    assert not icons.is_checked()
+    assert session.page.locator('input[name="symbol_style"]:checked').count() == 1
+
+    session.page.reload(wait_until="networkidle")
+    assert shapes.is_checked()
+    assert not icons.is_checked()
+
+    session.page.locator('.button-group-option:has(input[value="icons"]) .btn').click()
+    session.page.locator("#settings-status", has_text="Preferenza salvata.").wait_for()
+    session.page.reload(wait_until="networkidle")
+    assert icons.is_checked()
+    assert not shapes.is_checked()
+
+
+def test_components_navigation_marks_current_page(session: BrowserSession) -> None:
+    session.goto("/components")
+    current = session.page.get_by_role("link", name="Componenti", exact=True)
+    assert current.get_attribute("aria-current") == "page"
+
+
+def test_shape_marks_remove_the_quick_border(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id = seed_world("Mondo Forme")
+    session.goto("/settings")
+    session.page.locator('.button-group-option:has(input[value="shapes"]) .btn').click()
+    session.page.locator("#settings-status", has_text="Preferenza salvata.").wait_for()
+
+    try:
+        session.goto(f"/worlds/{world_id}")
+        mark = session.page.locator(".quick__mark.mark--shapes").first
+        assert mark.get_attribute("data-mark-style") == "shapes"
+        border_color = mark.evaluate("el => getComputedStyle(el).borderTopColor")
+        assert border_color == "rgba(0, 0, 0, 0)", border_color
+    finally:
+        session.goto("/settings")
+        session.page.locator(
+            '.button-group-option:has(input[value="icons"]) .btn'
+        ).click()
+        session.page.locator(
+            "#settings-status", has_text="Preferenza salvata."
+        ).wait_for()
+
+
+def test_compact_icon_actions_keep_accessible_names(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id = seed_world("Mondo Azioni")
+    actions = [
+        ("/worlds", "create-world", "Nuovo mondo"),
+        (f"/worlds/{world_id}", "create-session", "Nuova sessione"),
+        (f"/worlds/{world_id}/characters", "create-character", "Nuovo personaggio"),
+        (f"/worlds/{world_id}/npcs", "create-npc", "Nuovo NPC"),
+        (f"/worlds/{world_id}/places", "create-place", "Nuovo luogo"),
+        (f"/worlds/{world_id}/sessions", "create-session", "Nuova sessione"),
+        (f"/worlds/{world_id}/stories", "create-story", "Nuova storia"),
+        (f"/worlds/{world_id}/pages", "create-page", "Nuova pagina"),
+    ]
+
+    for path, test_id, label in actions:
+        session.goto(path)
+        action = session.page.locator(f'[data-testid="{test_id}"]')
+        assert action.get_attribute("aria-label") == label
+        assert "btn-icon-only" in (action.get_attribute("class") or "")
+        assert action.locator(".lucide-plus").count() == 1
+        assert (
+            action.locator("xpath=ancestor::*[@data-tooltip]").get_attribute(
+                "data-tooltip"
+            )
+            == label
+        )
+
+    session.goto(f"/worlds/{world_id}")
+    settings = session.page.locator('[data-testid="world-settings"]')
+    assert settings.get_attribute("aria-label") == "Impostazioni del mondo"
+    assert settings.locator(".lucide-settings").count() == 1
+    assert (
+        settings.locator("xpath=ancestor::*[@data-tooltip]").get_attribute(
+            "data-tooltip"
+        )
+        == "Impostazioni del mondo"
+    )

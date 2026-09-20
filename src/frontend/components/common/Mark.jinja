@@ -1,2 +1,3 @@
 {#def role, style="icons" #}
-<span {{ attrs.render(class="mark") }} aria-hidden="true">{{ mark(role, style) }}</span>
+{% set mark_style = style.value if style.value is defined else style %}
+<span {{ attrs.render(class="mark mark--" ~ mark_style) }} data-mark-style="{{ mark_style }}" aria-hidden="true">{{ mark(role, mark_style) }}</span>

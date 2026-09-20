@@ -1,5 +1,5 @@
 {#def world, world_context, nav, cards, crumbs, can_manage=False, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
 <layout.Page title="NPC" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="npc">  <editorial.Masthead
     title="NPC"
@@ -7,7 +7,9 @@
     lede="Schede scritte e mantenute dal Master. I giocatori le leggono; qui stanno anche i segreti che non devono ancora sapere."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/npcs/new" data-testid="create-npc">Nuovo NPC</a>
+    <common.Tooltip text="Nuovo NPC">
+      <common.Button :href="'/worlds/' ~ world.id ~ '/npcs/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuovo NPC" data-testid="create-npc" />
+    </common.Tooltip>
     {% endif %}
   </editorial.Masthead>
 

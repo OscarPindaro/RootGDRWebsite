@@ -1,5 +1,5 @@
 {#def world, world_context, nav, stories, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 {% set count = stories | length %}
 {% set eyebrow_text = count ~ (' arco' if count == 1 else ' archi') %}
 <layout.Page title="Storie" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
@@ -9,7 +9,9 @@
     lede="Archi narrativi che riassumono la campagna a un livello più alto delle singole partite."
     :crumbs="crumbs">
     {% if can_manage %}
-    <a class="btn btn--primary" href="/worlds/{{ world.id }}/stories/new" data-testid="create-story">Nuova storia</a>
+    <common.Tooltip text="Nuova storia">
+      <common.Button :href="'/worlds/' ~ world.id ~ '/stories/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuova storia" data-testid="create-story" />
+    </common.Tooltip>
     {% endif %}
   </editorial.Masthead>
 

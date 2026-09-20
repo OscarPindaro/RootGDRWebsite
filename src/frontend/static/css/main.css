@@ -1219,9 +1219,10 @@ ul, ol { margin: 0; padding: 0; }
   margin-top: 1.6rem;
 }
 
-/* in modalità forme il riquadro sparisce: la forma basta a se stessa */
-html[data-marks="forme"] .quick__mark { border-color: transparent; }
-html[data-marks="forme"] .quick__mark .mark__svg { width: 30px; height: 30px; }
+/* Le forme geometriche non hanno bisogno del riquadro delle icone. */
+.quick__mark.mark--shapes,
+.navitem__mark.mark--shapes { border-color: transparent; }
+.quick__mark.mark--shapes .mark__svg { width: 30px; height: 30px; }
 
 /* ---------- 25b. Accento: pieno o a tre pezzi ---------- */
 /* L'attributo data-accent arriva dalla preferenza dell'utente. Nel

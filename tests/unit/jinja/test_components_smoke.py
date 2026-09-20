@@ -59,6 +59,8 @@ def test_showcase_renders_with_a_signed_in_user() -> None:
     )
     html = _showcase(users=[], current_user=user)
     assert "Design Kit" in html
+    assert 'aria-current="page"' in html
+    assert "Componenti" in html
 
 
 def test_mark_and_shape_components_render_svg() -> None:
@@ -66,5 +68,7 @@ def test_mark_and_shape_components_render_svg() -> None:
     mark = str(catalog.render("common.Mark", role="luoghi"))
     shape = str(catalog.render("common.Shape", name="rombo"))
     assert "<svg" in mark
+    assert 'class="mark mark--icons"' in mark
+    assert 'data-mark-style="icons"' in mark
     assert "<svg" in shape
     assert "<polygon" in shape

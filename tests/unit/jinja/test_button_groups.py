@@ -1,6 +1,7 @@
 """Focused rendering tests for expressive buttons and button groups."""
 
 from pathlib import Path
+from types import SimpleNamespace
 
 from backend.jinja import get_catalog
 from backend.navigation import ButtonGroupOption
@@ -91,3 +92,31 @@ def test_action_group_keeps_slotted_buttons() -> None:
 
     assert 'role="group" aria-label="Azioni"' in html
     assert html.count("<button") == 2
+
+
+def test_settings_uses_required_connected_group_and_immediate_save() -> None:
+    user = SimpleNamespace(
+        name="Ada",
+        email="ada@example.com",
+        role="member",
+        avatar_url=None,
+        symbol_style="shapes",
+    )
+    html = str(
+        _catalog().render(
+            "pages.settings.Settings",
+            current_user=user,
+            symbol_style_options=[
+                ButtonGroupOption(value="icons", label="Icone"),
+                ButtonGroupOption(value="shapes", label="Forme"),
+            ],
+        )
+    )
+
+    assert "button-group-connected" in html
+    assert "data-button-group-required" in html
+    assert html.count('type="radio"') == 2
+    assert 'value="shapes" aria-label="Forme" checked required' in html
+    assert 'hx-trigger="change"' in html
+    assert 'aria-live="polite"' in html
+    assert 'data-testid="save-settings"' not in html

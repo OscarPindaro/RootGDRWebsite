@@ -1,5 +1,5 @@
 {#def world, world_context, nav, quicks, overview, crumbs, pages=None, current_user=None #}
-{#css common/Button.css, common/Card.css, common/Grid.css, common/Pill.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Card.css, common/Grid.css, common/Pill.css, common/Tooltip.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 <layout.Page title={{ world.name }} current_user={{ current_user }} active="mondo" :world="world_context" :nav="nav" :pages="pages">
   <editorial.Masthead
     :title="world.name"
@@ -7,8 +7,12 @@
     :lede_html="world.description | markdown"
     :crumbs="crumbs">
     <div class="masthead__actions">
-      <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessions/new" data-testid="create-session">Nuova sessione</a>
-      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/settings" data-testid="world-settings">Impostazioni</a>
+      <common.Tooltip text="Nuova sessione">
+        <common.Button :href="'/worlds/' ~ world.id ~ '/sessions/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuova sessione" data-testid="create-session" />
+      </common.Tooltip>
+      <common.Tooltip text="Impostazioni del mondo">
+        <common.Button :href="'/worlds/' ~ world.id ~ '/settings'" variant="secondary" size="sm" icon="settings" icon_only label="Impostazioni del mondo" data-testid="world-settings" />
+      </common.Tooltip>
     </div>
   </editorial.Masthead>
 
