@@ -151,6 +151,30 @@ def test_every_world_link_loads(session: _Session) -> None:
     assert session.errors == []
 
 
+def test_overview_matches_the_prototype_geometry(session: _Session) -> None:
+    """Regression: the rail overflowed horizontally, the quick strip had gaps
+    and the role marks stretched to their cell (giant icons)."""
+    world_id, _ = _seed_world(session, "Mondo Geometria")
+    session.goto(f"/worlds/{world_id}")
+
+    overflow = session.page.eval_on_selector(
+        ".rail__inner", "el => el.scrollWidth - el.clientWidth"
+    )
+    assert overflow <= 1, overflow
+
+    gap = session.page.eval_on_selector(
+        ".grid--quick", "el => getComputedStyle(el).gap"
+    )
+    assert gap == "0px", gap
+
+    mark = session.page.eval_on_selector(
+        ".quick__mark", "el => el.getBoundingClientRect().width"
+    )
+    assert mark == 30, mark
+
+    assert session.page.locator('.navitem[aria-current="page"]').count() == 1
+
+
 def test_secondary_actions_have_a_visible_border(session: _Session) -> None:
     """Regression: the component library's .btn transparent border won over the
     editorial one, so 'Impostazioni' rendered with no border at all."""

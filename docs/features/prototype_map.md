@@ -22,15 +22,15 @@ side-by-side.
 
 | Prototype class | JinjaX component | State |
 |---|---|---|
-| `.rail`, `.rail__inner`, `.rail__nav` | `layout.Rail` | adapted — no horizontal overflow (T7) |
+| `.rail`, `.rail__inner`, `.rail__nav` | `layout.Rail` | faithful |
 | `.rail__mark`, `.rail__identity` | `layout.Rail` | faithful |
 | nav item | `layout.RailItem` | faithful |
 | `.topbar`, `#drawer-toggle` | `layout.Topbar` | faithful |
 | `.masthead`, `.rule-accent`, `.eyebrow`, `.display`, `.lede` | `editorial.Masthead` | faithful |
 | `.crumbs` | `editorial.Crumbs` | faithful |
-| `.quick`, `.quick__mark/title/count/foot` | `editorial.Quick` | adapted — cards not attached, wrong ratio (T7) |
-| `.card`, `.card__media/body/name` | `editorial.Card` | adapted — ratio (T7) |
-| `.face`, `.mark`, `.mark__svg` | `editorial.Face`, `common.Mark` | adapted — mark scale (T7) |
+| `.quick`, `.quick__mark/title/count/foot` | `editorial.Quick` | faithful |
+| `.card`, `.card__media/body/name` | `editorial.Card` | faithful |
+| `.face`, `.mark`, `.mark__svg` | `editorial.Face`, `common.Mark` | faithful |
 | `.cover` | `editorial.Cover` | faithful |
 | `.ledger` | `pages.*.List` | faithful |
 | `.story`, `.story__band/body/title/sum` | `editorial.Story` (inline in pages) | faithful |

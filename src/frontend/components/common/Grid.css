@@ -3,6 +3,9 @@
   gap: var(--grid-gap, var(--sp-6));
 }
 
+/* The entry-point strip shares its borders: no gap. */
+.grid--quick { --grid-gap: 0; }
+
 .grid-columns-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
 @media (max-width: 960px) {
