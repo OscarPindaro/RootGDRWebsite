@@ -12,23 +12,30 @@ The reading page is where a document is written: no separate edit form, no
   line is rendered — headings, bold, italic, code, links and mentions. `Ctrl/⌘
   + Enter` shows the result, rendered by the same server renderer readers get,
   and coming back resumes at the same caret position.
-- The name, the title and the short description are written in place too: a
-  double click turns the text into a field, `Enter` saves, `Escape` cancels.
-- A locked document does not enter writing at all; draft/published stays visible
-  in the page bar.
+- The name, title and short description are written in place too. A double click
+  turns the text into a plain field. `Enter` and blur flush it; `Escape` exits
+  while preserving the draft.
+- Body and identity changes save automatically after about one idle second. A
+  five-second ceiling covers continuous typing and changes of 200 characters
+  flush immediately. `Ctrl/⌘ + Enter`, blur and navigation also flush.
+- Italian live status text reports saving, saved, offline, validation/access
+  errors and conflicts. A locked document does not enter writing at all.
 
 ## How it is built
 
-- `editorial/DocEdit.jinja` renders the body, a hidden source textarea and a
-  hidden preview button; `editorial/DocIdentity.jinja` wraps the identity block
-  with the small form that saves one field.
-- `src/frontend/js/editor/index.js` mounts CodeMirror into both, and
-  `live-preview.js` is the decoration plugin that hides the markers outside the
-  active line. The document stays Markdown: nothing rewrites it.
-- The editor bundle is loaded only on pages that have a field, and only in the
-  browser of someone who can edit; readers never download it.
-- The body is saved through the existing per-feature update endpoint with a JSON
-  body (htmx `json-enc`), which returns the page again.
+- `editorial/DocEdit.jinja` renders the body, hidden source textarea, server
+  preview control and live status. `editorial/DocIdentity.jinja` marks the plain
+  identity fields and shares the same status/controller.
+- `src/frontend/js/editor/index.js` owns one sequential autosave queue per API
+  document. It coalesces fields and sends authenticated JSON `PATCH` requests
+  with the latest `expected_version` to the existing per-feature endpoint.
+- The same file mounts CodeMirror for the body. `live-preview.js` hides Markdown
+  markers outside the active line. The document remains Markdown.
+- The editor bundle is loaded on demand only for editable pages/forms. Readers
+  do not download CodeMirror.
+- Every change snapshots dirty fields and its base version in `localStorage`.
+  Confirmed fields alone are removed. On mount, a differing local snapshot is
+  never applied silently: the user chooses whether to restore or discard it.
 - Worlds and documents expose an integer `version`. Update requests may send the
   last read value as `expected_version`; stale requests return HTTP 409 and do
   not mutate the row. The database also checks the version at commit, covering
@@ -37,10 +44,14 @@ The reading page is where a document is written: no separate edit form, no
   document rejects every update with HTTP 423. The only accepted update is an
   authorized, standalone `locked: false` request using the current version.
 
-## Notes and limits
+## Recovery and limits
 
-- The result is rendered by the server, so it updates on `Ctrl/⌘ + Enter`, not
-  on every keystroke; while typing, the live preview is what shows the rendered
-  text.
-- Saving is explicit for the body (`Salva`/`Annulla`). Saving on blur and
-  buffering unsaved text are not implemented yet.
+- The result is rendered by the server on `Ctrl/⌘ + Enter`; while typing, the
+  CodeMirror live preview shows rendered text.
+- Network, 401/403, 409, 422 and 423 responses retain the local draft. A stale
+  409 offers reload, copy and an explicit retry against the latest version.
+- `visibilitychange` and htmx/navigation intent flush normally. `pagehide` sends
+  one best-effort keepalive request, while retaining the local snapshot because
+  the browser may terminate before acknowledging it.
+- Identity fields remain plain short text in this iteration; Markdown support is
+  a separate feature.

@@ -27,7 +27,8 @@
       function loadEditor() {
         if (window.__editorLoaded) return;
         if (!document.querySelector("[data-markdown-field]") &&
-            !document.querySelector("[data-doc-edit]")) return;
+            !document.querySelector("[data-doc-edit]:not([data-readonly='true'])") &&
+            !document.querySelector("[data-doc-identity]:not([data-readonly='true'])")) return;
         window.__editorLoaded = true;
         var script = document.createElement("script");
         script.src = "/static/js/editor.js";

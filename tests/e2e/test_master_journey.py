@@ -205,27 +205,34 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     session.page.keyboard.type("\n\nScritto in place.")
     session.page.keyboard.press("Control+Enter")
     session.page.wait_for_selector(".cm-editor", state="detached")
-    # The result comes back from the server, so wait for the preview swap.
     session.page.wait_for_function(
         "() => document.querySelector('[data-doc-render]')"
         ".innerText.includes('Scritto in place')"
     )
+    session.page.wait_for_function(
+        "() => document.querySelector('[data-autosave-status]').innerText === 'Salvato'"
+    )
+
+    character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/{character_id}"
+    ).json()
+    assert "Scritto in place" in payload["body"]
 
     session.page.locator("[data-doc-render]").first.dblclick()
     session.page.wait_for_selector(".cm-editor")
     session.page.locator(".cm-content").click()
     session.page.keyboard.press("Control+a")
     session.page.keyboard.type("Riscritto e salvato.")
-    session.page.locator('[data-testid="document-save"]').click()
-    # The save answers with a redirect, so the editor goes away with the reload.
-    session.page.wait_for_selector(".cm-editor", state="detached", timeout=5_000)
-    session.page.wait_for_load_state("networkidle")
-
-    character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
+    session.page.wait_for_function(
+        "() => document.querySelector('[data-autosave-status]').innerText === 'Salvato'"
+    )
     payload = session.expect_api(
         f"/api/worlds/{world_id}/characters/{character_id}"
     ).json()
-    assert "Riscritto e salvato" in payload["body"]
+    assert payload["body"] == "Riscritto e salvato."
+    session.page.keyboard.press("Escape")
+    session.page.wait_for_selector(".cm-editor", state="detached")
 
     # The name, the title and the short description are written in place too.
     session.page.locator('[data-doc-field="title"]').dblclick()
@@ -235,7 +242,10 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     session.page.wait_for_selector(
         ".docidentity__input", state="detached", timeout=5_000
     )
-    session.page.wait_for_load_state("networkidle")
+    session.page.wait_for_function(
+        "() => [...document.querySelectorAll('[data-autosave-status]')]"
+        ".some(node => node.innerText === 'Salvato')"
+    )
 
     payload = session.expect_api(
         f"/api/worlds/{world_id}/characters/{character_id}"
@@ -247,8 +257,10 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     # follow a reference.
     session.page.locator("[data-doc-edit-open]").click()
     session.page.wait_for_selector(".cm-editor")
-    session.page.locator("[data-doc-cancel]").click()
+    session.page.keyboard.type("Bozza conservata")
+    session.page.keyboard.press("Escape")
     session.page.wait_for_selector(".cm-editor", state="detached")
+    assert "Bozza conservata" in session.page.locator("[data-doc-source]").input_value()
 
     assert session.errors == []
 

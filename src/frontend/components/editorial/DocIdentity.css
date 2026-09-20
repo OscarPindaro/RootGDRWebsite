@@ -1,8 +1,4 @@
 /* ---------- DocIdentity (name, title and description written in place) ---------- */
-.docidentity__form {
-  display: none;
-}
-
 .docidentity [data-doc-field] {
   cursor: text;
 }

@@ -1,0 +1,189 @@
+"""Autosave timing, recovery and optimistic-concurrency browser coverage."""
+
+from __future__ import annotations
+
+import time
+
+import pytest
+
+from harness.test.browser import BrowserSession
+
+pytestmark = pytest.mark.e2e
+
+
+def _character(
+    session: BrowserSession, seed_world, suffix: str
+) -> tuple[str, str, str]:
+    world_id = seed_world(f"Mondo Autosave {suffix}")
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/",
+        method="POST",
+        expected_status=201,
+        data={"name": f"Autore {suffix}", "body": "Testo iniziale"},
+    ).json()
+    path = f"/api/worlds/{world_id}/characters/{payload['id']}"
+    session.goto(f"/worlds/{world_id}/characters/{payload['id']}")
+    return world_id, payload["id"], path
+
+
+def _open_body(session: BrowserSession) -> None:
+    session.page.locator("[data-doc-render]").dblclick()
+    session.page.wait_for_selector(".cm-editor")
+    session.page.locator(".cm-content").click()
+
+
+def _wait_saved(session: BrowserSession) -> None:
+    session.page.wait_for_function(
+        "() => [...document.querySelectorAll('[data-autosave-status]')]"
+        ".some(node => node.innerText === 'Salvato')",
+        timeout=10_000,
+    )
+
+
+def test_idle_hard_max_threshold_and_explicit_flushes(
+    session: BrowserSession, seed_world
+) -> None:
+    _, _, api_path = _character(session, seed_world, "tempi")
+    patch_times: list[float] = []
+    session.page.on(
+        "request",
+        lambda request: (
+            patch_times.append(time.monotonic())
+            if request.method == "PATCH" and api_path in request.url
+            else None
+        ),
+    )
+
+    _open_body(session)
+    session.page.keyboard.type(" una modifica")
+    _wait_saved(session)
+    assert len(patch_times) == 1
+    assert session.expect_api(api_path).json()["body"].endswith(" una modifica")
+
+    start = time.monotonic()
+    for _ in range(7):
+        session.page.keyboard.type("x")
+        session.page.wait_for_timeout(800)
+    _wait_saved(session)
+    assert any(start + 4.5 <= stamp <= start + 6.5 for stamp in patch_times)
+    assert session.expect_api(api_path).json()["body"].endswith("xxxxxxx")
+
+    before = len(patch_times)
+    start = time.monotonic()
+    session.page.keyboard.type("z" * 200)
+    session.page.wait_for_timeout(250)
+    assert len(patch_times) > before
+    assert patch_times[-1] - start < 1
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["body"].endswith("z" * 200)
+
+    session.page.keyboard.type(" ctrl")
+    session.page.keyboard.press("Control+Enter")
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["body"].endswith(" ctrl")
+
+    _open_body(session)
+    session.page.keyboard.type(" blur")
+    session.page.locator("[data-doc-edit-open]").focus()
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["body"].endswith(" blur")
+    assert session.errors == []
+
+
+def test_offline_pagehide_and_restore_recovery(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id, character_id, api_path = _character(session, seed_world, "offline")
+    storage_key = f"rootgdr:autosave:{api_path}"
+    _open_body(session)
+    session.context.set_offline(True)
+    session.page.keyboard.type(" bozza offline")
+    session.page.wait_for_timeout(1_200)
+    assert "bozza offline" in session.page.evaluate(
+        "key => localStorage.getItem(key)", storage_key
+    )
+    assert (
+        "Offline" in session.page.locator("[data-autosave-status]").first.inner_text()
+    )
+
+    session.context.set_offline(False)
+    api_url = f"{session.base_url}{api_path}"
+    session.context.route(api_url, lambda route: route.abort())
+    session.goto("/worlds")
+    assert "bozza offline" in session.page.evaluate(
+        "key => localStorage.getItem(key)", storage_key
+    )
+    session.context.unroute(api_url)
+    current = session.expect_api(api_path).json()
+    recovered = f"{current['body']} bozza recuperata"
+    session.page.evaluate(
+        "([key, version, body]) => localStorage.setItem(key, "
+        "JSON.stringify({baseVersion: version, fields: {body}}))",
+        [storage_key, current["version"], recovered],
+    )
+    session.goto(f"/worlds/{world_id}/characters/{character_id}")
+    session.page.get_by_role("button", name="Ripristina bozza").click()
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["body"] == recovered
+    assert (
+        session.page.evaluate("key => localStorage.getItem(key)", storage_key) is None
+    )
+
+
+def test_two_tabs_keep_stale_draft_and_offer_recovery(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id, character_id, api_path = _character(session, seed_world, "conflitto")
+    stale = session.context.new_page()
+    stale.goto(
+        f"{session.base_url}/worlds/{world_id}/characters/{character_id}",
+        wait_until="networkidle",
+    )
+
+    session.page.locator('[data-doc-field="title"]').dblclick()
+    session.page.locator(".docidentity__input").fill("Titolo dalla prima scheda")
+    session.page.locator(".docidentity__input").press("Enter")
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["title"] == "Titolo dalla prima scheda"
+
+    stale.locator('[data-doc-field="title"]').dblclick()
+    stale.locator(".docidentity__input").fill("Titolo locale in conflitto")
+    stale.locator(".docidentity__input").press("Enter")
+    stale.wait_for_selector(".autosave-recovery")
+    assert "Conflitto" in stale.locator("[data-autosave-status]").first.inner_text()
+    for label in ("Ricarica", "Copia bozza", "Riprova"):
+        assert stale.get_by_role("button", name=label).is_visible()
+    storage_key = f"rootgdr:autosave:{api_path}"
+    assert "Titolo locale in conflitto" in stale.evaluate(
+        "key => localStorage.getItem(key)", storage_key
+    )
+    assert session.expect_api(api_path).json()["title"] == "Titolo dalla prima scheda"
+    stale.close()
+
+
+def test_locked_response_retains_draft_and_retry_saves(
+    session: BrowserSession, seed_world
+) -> None:
+    _, _, api_path = _character(session, seed_world, "bloccato")
+    api_url = f"{session.base_url}{api_path}"
+    session.page.route(
+        api_url,
+        lambda route: route.fulfill(
+            status=423,
+            content_type="application/json",
+            body='{"detail":"locked"}',
+        ),
+    )
+    _open_body(session)
+    session.page.keyboard.type(" bozza bloccata")
+    session.page.wait_for_function(
+        "() => document.querySelector('[data-autosave-status]').innerText.includes('bloccato')"
+    )
+    assert "bozza bloccata" in session.page.evaluate(
+        "key => localStorage.getItem(key)", f"rootgdr:autosave:{api_path}"
+    )
+
+    session.page.unroute(api_url)
+    session.page.get_by_role("button", name="Riprova").click()
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["body"].endswith(" bozza bloccata")

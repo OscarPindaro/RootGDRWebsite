@@ -1,9 +1,9 @@
 {#def base, version, can_manage=False, locked=False #}
-<div class="docidentity" data-doc-identity data-base="{{ base }}"
+<div class="docidentity" data-doc-identity data-autosave-url="/api{{ base }}"
+     data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
-  <form class="docidentity__form" hx-post="{{ base }}" hx-swap="none">
-    <input type="hidden" name="expected_version" value="{{ version }}">
-    <input type="hidden" name="name" value="" data-doc-input>
-  </form>
   {{ content }}
+  {% if can_manage and not locked %}
+    <p class="autosave-status" data-autosave-status role="status" aria-live="polite"></p>
+  {% endif %}
 </div>
