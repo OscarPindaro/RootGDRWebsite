@@ -12,6 +12,10 @@ actually happened in this repository:
   the global becomes a call to a string. Rename one of them.
 * **E903 unknown component** — ``<common.Buton>`` (a typo) or a component that
   was renamed or deleted. JinjaX raises at render time.
+* **E904 unknown prop** — ``<editorial.Face :animale="x" />``. A missing
+  *required* prop raises ``MissingRequiredArgument``, but a misspelled
+  *optional* prop is silently dropped and the component falls back to its
+  default, so the bug is invisible until someone notices the missing colour.
 
 The analysis is whole-program: it reads every component and resolves names
 against the real Jinja environment built by ``backend.jinja.get_catalog``, so
@@ -42,9 +46,54 @@ err_console = Console(stderr=True, soft_wrap=True)
 DEFAULT_COMPONENTS_DIR = Path("src/frontend/components")
 DEFAULT_ENV_FACTORY = "backend.jinja:get_catalog"
 
-DEF_DIRECTIVE = re.compile(r"\A\s*\{#def(.*?)#\}", re.DOTALL)
+DEF_DIRECTIVE = re.compile(r"\{#def(.*?)#\}", re.DOTALL)
 COMMENTS = re.compile(r"\{#.*?#\}|<!--.*?-->", re.DOTALL)
 COMPONENT_TAG = re.compile(r"<\s*((?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Z][A-Za-z0-9_]*)\b")
+# A whole opening tag, attributes included; quotes are skipped so a `>` inside
+# an attribute value does not end the tag.
+COMPONENT_INVOCATION = re.compile(
+    r"<\s*((?:[A-Za-z_][A-Za-z0-9_]*\.)*[A-Z][A-Za-z0-9_]*)((?:[^>\"']|\"[^\"]*\"|'[^']*')*?)/?>",
+    re.DOTALL,
+)
+ATTRIBUTE = re.compile(r"(?:^|\s)([:@]?[A-Za-z_][\w:.-]*)\s*=")
+
+# HTML attributes a component may forward to its root element via attrs.
+PASSTHROUGH_ATTRIBUTES = {
+    "class",
+    "id",
+    "style",
+    "role",
+    "title",
+    "href",
+    "target",
+    "type",
+    "name",
+    "value",
+    "disabled",
+    "hidden",
+    "tabindex",
+    "for",
+    "placeholder",
+    "required",
+    "minlength",
+    "maxlength",
+    "min",
+    "max",
+    "step",
+    "accept",
+    "multiple",
+    "size",
+    "selected",
+    "checked",
+    "readonly",
+    "autocomplete",
+    "cols",
+    "rows",
+    "open",
+    "popovertarget",
+    "popovertargetaction",
+    "_attrs",
+}
 
 # Names JinjaX itself injects into every component, plus Jinja's own globals.
 JINJAX_NAMES = {"content", "attrs", "catalog"}
@@ -90,7 +139,7 @@ def _split_top_level(text: str) -> list[str]:
 
 def declared_props(source: str) -> set[str]:
     """Prop names from the ``{#def ... #}`` header, ignoring annotations."""
-    match = DEF_DIRECTIVE.match(source)
+    match = DEF_DIRECTIVE.search(source)
     if match is None:
         return set()
     names = set()
@@ -116,12 +165,29 @@ def called_names(env, source: str) -> list[tuple[str, int]]:
 
 def component_references(source: str) -> list[tuple[str, int]]:
     """Every ``<Namespace.Component>`` reference, as (dotted, line)."""
+    return [(dotted, line) for dotted, _, line in component_invocations(source)]
+
+
+def component_invocations(source: str) -> list[tuple[str, list[str], int]]:
+    """Every ``<Namespace.Component ...>`` with its attribute names and line."""
     stripped = COMMENTS.sub(lambda m: "\n" * m.group(0).count("\n"), source)
-    found: list[tuple[str, int]] = []
-    for match in COMPONENT_TAG.finditer(stripped):
+    found: list[tuple[str, list[str], int]] = []
+    for match in COMPONENT_INVOCATION.finditer(stripped):
         line = stripped[: match.start()].count("\n") + 1
-        found.append((match.group(1), line))
+        # Blank out quoted values first: an expression like
+        # :eyebrow="'x' if story.status == 'y' else 'z'" would otherwise look
+        # like a `story.status` attribute.
+        body = re.sub(r"\"[^\"]*\"|'[^']*'", '""', match.group(2))
+        attrs = [attr.group(1) for attr in ATTRIBUTE.finditer(body)]
+        found.append((match.group(1), attrs, line))
     return found
+
+
+def _is_allowed_attribute(name: str) -> bool:
+    bare = name.lstrip(":@")
+    return bare in PASSTHROUGH_ATTRIBUTES or bare.startswith(
+        ("hx-", "data-", "aria-", "on")
+    )
 
 
 def _import_env_factory(dotted: str):
@@ -169,7 +235,7 @@ def run_check(
                 )
             )
 
-        for dotted, line in component_references(source):
+        for dotted, attrs, line in component_invocations(source):
             target = components_dir.joinpath(*dotted.split(".")).with_suffix(".jinja")
             if not target.is_file():
                 diagnostics.append(
@@ -179,6 +245,20 @@ def run_check(
                         "E903",
                         f"<{dotted}> does not resolve to a component "
                         f"({target.relative_to(components_dir)} is missing).",
+                    )
+                )
+                continue
+            props = declared_props(target.read_text(encoding="utf-8"))
+            for attr in attrs:
+                if attr.lstrip(":@") in props or _is_allowed_attribute(attr):
+                    continue
+                diagnostics.append(
+                    (
+                        component,
+                        line,
+                        "E904",
+                        f"<{dotted}> has no prop '{attr.lstrip(':@')}'. "
+                        f"Declared: {', '.join(sorted(props)) or '(none)'}.",
                     )
                 )
     return diagnostics

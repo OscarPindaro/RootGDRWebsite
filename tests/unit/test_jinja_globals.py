@@ -78,6 +78,38 @@ def test_unknown_component_is_reported(tmp_path: Path) -> None:
     assert codes == ["E903"]
 
 
+def test_unknown_prop_is_reported(tmp_path: Path) -> None:
+    """A misspelled optional prop is dropped silently at render time."""
+    _component(
+        tmp_path, "editorial/Face.jinja", "{#def tint, animal=None #}\n<span></span>\n"
+    )
+    _component(
+        tmp_path,
+        "Probe.jinja",
+        '{#def x #}\n<editorial.Face :tint="x" :animale="x" />\n',
+    )
+
+    diagnostics = run_check(tmp_path, ENV_FACTORY)
+
+    assert [(code, "animale" in message) for _, _, code, message in diagnostics] == [
+        ("E904", True)
+    ]
+
+
+def test_declared_and_passthrough_attributes_are_allowed(tmp_path: Path) -> None:
+    _component(
+        tmp_path, "common/Button.jinja", '{#def variant="primary" #}\n<span></span>\n'
+    )
+    _component(
+        tmp_path,
+        "Fine.jinja",
+        "{#def x #}\n"
+        '<common.Button :variant="x" class="a" hx-get="/y" aria-label="z" data-k="1" />\n',
+    )
+
+    assert run_check(tmp_path, ENV_FACTORY) == []
+
+
 def test_a_clean_component_has_no_diagnostics(tmp_path: Path) -> None:
     _component(
         tmp_path,
