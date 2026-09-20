@@ -222,6 +222,13 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     assert payload["title"] == "Titolo in place"
     assert payload["name"] == "Rugginosa"
 
+    # The `Modifica` command enters writing even where a double click would
+    # follow a reference.
+    session.page.locator("[data-doc-edit-open]").click()
+    session.page.wait_for_selector(".cm-editor")
+    session.page.locator("[data-doc-cancel]").click()
+    session.page.wait_for_selector(".cm-editor", state="detached")
+
     assert session.errors == []
 
 

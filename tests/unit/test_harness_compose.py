@@ -76,4 +76,5 @@ def test_compose_command_uses_selected_engine(
     monkeypatch.setattr(compose.subprocess, "run", run)
 
     assert compose._run(environment, "ps") == "ready"
-    assert calls[0][0][:2] == ["podman-compose", "--project-name"]
+    assert calls[0][0][:2] == ["podman-compose", "--env-file"]
+    assert "--project-name" in calls[0][0]

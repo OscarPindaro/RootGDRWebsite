@@ -257,6 +257,9 @@ function mountDocEdit(block) {
   }
 
   render.addEventListener("dblclick", open);
+  // The `Modifica` command: enters writing even where a double click would
+  // follow a reference instead.
+  block.docOpen = open;
   block.querySelector("[data-doc-save]")?.addEventListener("click", save);
   block.querySelector("[data-doc-cancel]")?.addEventListener("click", cancel);
   block.addEventListener("keydown", (event) => {
@@ -336,3 +339,12 @@ function mountAll(root) {
 
 mountAll();
 document.body.addEventListener("htmx:afterSwap", (event) => mountAll(event.target));
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest("[data-doc-edit-open]");
+  if (!trigger) return;
+  const block = document.querySelector("[data-doc-edit]");
+  if (block && block.docOpen) {
+    event.preventDefault();
+    block.docOpen();
+  }
+});

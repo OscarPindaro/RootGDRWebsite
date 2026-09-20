@@ -72,8 +72,14 @@ def _environment(environment_state: EnvironmentState) -> dict[str, str]:
         HARNESS_CONFIG_FILE=str(environment_state.config.docker),
         HARNESS_ENV_FILE=str(environment_state.config.env),
         HARNESS_PROJECT=environment_state.compose_project,
-        # Empty when reload is off, so the backend command is unchanged.
-        HARNESS_BACKEND_RELOAD="--reload" if environment_state.reload else "",
+        # Empty when reload is off, so the backend command is unchanged. The
+        # excludes matter: running pytest writes ``__pycache__`` under ``src``,
+        # and without them the reloader restarts the app mid-suite.
+        HARNESS_BACKEND_RELOAD=(
+            "--reload --reload-exclude=**/__pycache__/**"
+            if environment_state.reload
+            else ""
+        ),
         # Compose engines disagree on how relative volume paths are resolved
         # (file-relative vs cwd-relative). Pass the repo root explicitly so
         # bind mounts point at the same place under docker and podman.
@@ -86,6 +92,10 @@ def _run(environment_state: EnvironmentState, *args: str) -> str:
     engine = _container_engine()
     command = [
         *_compose_command(engine),
+        # Explicit, so a repository ``.env`` is not auto-loaded and does not
+        # override the test values during interpolation.
+        "--env-file",
+        str(environment_state.config.env),
         "--project-name",
         environment_state.compose_project,
         "-f",
@@ -108,6 +118,7 @@ def _run(environment_state: EnvironmentState, *args: str) -> str:
 
 def up(environment_state: EnvironmentState, *, build: bool = True) -> None:
     _run(environment_state, "up", "--detach", "--wait", "db")
+    _wait_for_database(environment_state)
     _run_migrations(environment_state)
     if environment_state.mode == EnvironmentMode.LOCAL:
         return
@@ -120,6 +131,34 @@ def up(environment_state: EnvironmentState, *, build: bool = True) -> None:
         f"http://127.0.0.1:{environment_state.ports.backend}/ping",
         attempts=30,
     )
+
+
+def _wait_for_database(environment_state: EnvironmentState) -> None:
+    """Wait until the container has finished creating the database.
+
+    ``compose up --wait`` only waits for the container to be running under
+    podman-compose, so migrations could race the entrypoint and find no database.
+    """
+    values = dotenv_values(environment_state.config.env)
+    database = values.get("DATABASE__DB") or "backend_test"
+    user = values.get("POSTGRES_USER") or "postgres"
+    for _ in range(60):
+        try:
+            _run(
+                environment_state,
+                "exec",
+                "-T",
+                "db",
+                "pg_isready",
+                "-U",
+                user,
+                "-d",
+                database,
+            )
+            return
+        except ComposeError:
+            time.sleep(1)
+    raise ComposeError("the database never became ready")
 
 
 def _run_migrations(environment_state: EnvironmentState) -> None:

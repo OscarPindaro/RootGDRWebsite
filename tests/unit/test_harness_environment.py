@@ -73,5 +73,5 @@ def test_environment_sets_the_reload_flag(tmp_path) -> None:
             )
         )
 
-    assert values(True)["HARNESS_BACKEND_RELOAD"] == "--reload"
+    assert values(True)["HARNESS_BACKEND_RELOAD"].startswith("--reload")
     assert values(False)["HARNESS_BACKEND_RELOAD"] == ""

@@ -43,7 +43,9 @@ def environment(dev: state.DevState, *, reload: bool = True) -> dict[str, str]:
         "HARNESS_DEV_WORK_PORT": str(dev.work_port),
         "HARNESS_DEV_SHOW_PORT": str(dev.show_port),
         "HARNESS_DEV_DB_PORT": str(dev.db_port),
-        "HARNESS_DEV_RELOAD": "--reload" if reload else "",
+        "HARNESS_DEV_RELOAD": (
+            "--reload --reload-exclude=**/__pycache__/**" if reload else ""
+        ),
     }
 
 
@@ -51,6 +53,8 @@ def run(dev: state.DevState, *args: str, reload: bool = True) -> str:
     engine = _container_engine()
     command = [
         *_compose_command(engine),
+        "--env-file",
+        str(ENV_FILE),
         "--project-name",
         dev.compose_project,
         "-f",

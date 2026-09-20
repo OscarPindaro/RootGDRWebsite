@@ -8,6 +8,9 @@
     <span class="pill pill--plain">Pubblicato</span>
     {% endif %}
     {% if can_manage %}
+    {% if not locked %}
+    <button class="btn btn--ghost btn--sm" type="button" data-doc-edit-open>Modifica</button>
+    {% endif %}
     <button class="btn btn--ghost btn--sm" type="button"
             aria-pressed="{{ 'true' if locked else 'false' }}"
             hx-post="{{ base }}/toggle/locked?value={{ 'false' if locked else 'true' }}"

@@ -51,7 +51,7 @@ def test_environment_sets_ports_reload_and_env_values(
     assert values["HARNESS_DEV_WORK_PORT"] == "8001"
     assert values["HARNESS_DEV_SHOW_PORT"] == "8002"
     assert values["HARNESS_DEV_DB_PORT"] == "5435"
-    assert values["HARNESS_DEV_RELOAD"] == "--reload"
+    assert values["HARNESS_DEV_RELOAD"].startswith("--reload")
     assert values["POSTGRES_DB"] == "root_gdr_dev"
 
     assert (
