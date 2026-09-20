@@ -1,0 +1,26 @@
+{#def label="Azioni", options=None, name="button-group", selection="action", value=None, values=None, required=False, variant="standard", size="md", shape="round", button_variant="secondary" #}
+{% set classes = "button-group button-group-" ~ variant ~ " button-group-" ~ size ~ " button-group-" ~ shape %}
+{% set icon_sizes = {"xs": 20, "sm": 20, "md": 24, "lg": 32, "xl": 40} %}
+{% if options %}
+<fieldset data-button-group data-button-group-selection="{{ selection }}"{% if required %} data-button-group-required{% endif %} {{ attrs.render(class=classes) }}>
+  <legend class="button-group-legend">{{ label }}</legend>
+  {% for option in options %}
+    {% set option_icon = option.icon %}
+    {% set option_label = option.label %}
+    {% set option_disabled = option.disabled %}
+    {% set option_aria_label = option.aria_label or option_label %}
+    {% set checked = option.value == value if selection == "single" else values and option.value in values %}
+    <label class="button-group-option{% if option_disabled %} button-group-option-disabled{% endif %}">
+      <input class="button-group-input" type="{{ 'radio' if selection == 'single' else 'checkbox' }}" name="{{ name }}" value="{{ option.value }}"{% if option_aria_label %} aria-label="{{ option_aria_label }}"{% endif %}{% if checked %} checked{% endif %}{% if required and selection == "single" %} required{% endif %}{% if option_disabled %} disabled{% endif %}>
+      <span class="btn btn-{{ button_variant }} btn-{{ size }} btn-{{ shape }}{% if option_icon and not option_label %} btn-icon-only{% elif option_icon %} btn-mixed{% endif %}">
+        {% if option_icon %}<span class="btn-icon" aria-hidden="true"><common.Icon :name="option_icon" :size="icon_sizes[size]" /></span>{% endif %}
+        {% if option_label %}<span class="btn-label">{{ option_label }}</span>{% endif %}
+      </span>
+    </label>
+  {% endfor %}
+</fieldset>
+{% else %}
+<div role="group" aria-label="{{ label }}" data-button-group data-button-group-selection="action" {{ attrs.render(class=classes) }}>
+  {{ content }}
+</div>
+{% endif %}

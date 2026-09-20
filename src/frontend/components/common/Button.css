@@ -1,25 +1,101 @@
-/* ---------- Button ---------- */
+/* ---------- M3 Expressive Button ---------- */
 .btn {
+  --btn-height: var(--button-height-md);
+  --btn-padding: var(--button-padding-md);
+  --btn-icon-size: var(--button-icon-md);
+  --btn-square: var(--button-square-md);
+  --btn-pressed: var(--button-pressed-md);
   display: inline-flex;
+  min-width: var(--btn-height);
+  height: var(--btn-height);
   align-items: center;
-  gap: var(--sp-2);
-  border-radius: var(--radius-md);
-  font-weight: var(--weight-medium);
-  cursor: pointer;
+  justify-content: center;
+  gap: var(--button-icon-gap);
+  box-sizing: border-box;
+  padding-inline: var(--btn-padding);
   border: 1.5px solid transparent;
-  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out);
+  border-radius: var(--radius-full);
+  font-family: var(--font-sans);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
   text-decoration: none;
   white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out), border-radius var(--dur-base) var(--ease-out), opacity var(--dur-base) var(--ease-out), width var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 
-.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn:focus-visible {
+  outline: var(--rule-width) solid currentColor;
+  outline-offset: var(--sp-1);
+}
 
-/* Sizes */
-.btn-sm { font-size: var(--text-xs); padding: var(--sp-1) var(--sp-3); }
-.btn-md { font-size: var(--text-sm); padding: var(--sp-2) var(--sp-5); }
-.btn-lg { font-size: var(--text-base); padding: var(--sp-3) var(--sp-6); }
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: .45;
+  cursor: not-allowed;
+}
 
-/* Variants */
+.btn-round:active:not(:disabled),
+.btn-round.btn-selected { border-radius: var(--btn-pressed); }
+.btn-square { border-radius: var(--btn-square); }
+.btn-square:active:not(:disabled),
+.btn-square.btn-selected { border-radius: var(--radius-full); }
+
+/* Sizes: generated Material values. sm/md/lg remain backward compatible. */
+.btn-xs {
+  --btn-height: var(--button-height-xs);
+  --btn-padding: var(--button-padding-xs);
+  --btn-icon-size: var(--button-icon-xs);
+  --btn-square: var(--button-square-xs);
+  --btn-pressed: var(--button-pressed-xs);
+  font-size: var(--text-sm);
+}
+.btn-sm {
+  --btn-height: var(--button-height-sm);
+  --btn-padding: var(--button-padding-sm);
+  --btn-icon-size: var(--button-icon-sm);
+  --btn-square: var(--button-square-sm);
+  --btn-pressed: var(--button-pressed-sm);
+  font-size: var(--text-sm);
+}
+.btn-md {
+  --btn-height: var(--button-height-md);
+  --btn-padding: var(--button-padding-md);
+  --btn-icon-size: var(--button-icon-md);
+  --btn-square: var(--button-square-md);
+  --btn-pressed: var(--button-pressed-md);
+  font-size: var(--text-base);
+}
+.btn-lg {
+  --btn-height: var(--button-height-lg);
+  --btn-padding: var(--button-padding-lg);
+  --btn-icon-size: var(--button-icon-lg);
+  --btn-square: var(--button-square-lg);
+  --btn-pressed: var(--button-pressed-lg);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-regular);
+}
+.btn-xl {
+  --btn-height: var(--button-height-xl);
+  --btn-padding: var(--button-padding-xl);
+  --btn-icon-size: var(--button-icon-xl);
+  --btn-square: var(--button-square-xl);
+  --btn-pressed: var(--button-pressed-xl);
+  font-size: var(--text-3xl);
+  font-weight: var(--weight-regular);
+}
+
+.btn-icon,
+.btn-icon svg {
+  display: block;
+  width: var(--btn-icon-size);
+  height: var(--btn-icon-size);
+  flex: 0 0 var(--btn-icon-size);
+}
+
+.btn-icon-only { width: var(--btn-height); padding-inline: 0; }
+
+/* Existing editorial variants are intentionally preserved. */
 .btn-primary {
   background: var(--clr-accent);
   color: var(--clr-text-on-accent);
@@ -29,14 +105,46 @@
   background: var(--clr-accent-hover);
   border-color: var(--clr-accent-hover);
 }
-
 .btn-secondary {
   background: transparent;
   color: var(--clr-text);
   border-color: var(--clr-border);
 }
 .btn-secondary:hover:not(:disabled) { border-color: var(--clr-border-strong); }
-
+.btn-filled {
+  background: var(--clr-accent);
+  color: var(--clr-text-on-accent);
+  border-color: var(--clr-accent);
+}
+.btn-filled:hover:not(:disabled) {
+  background: var(--clr-accent-hover);
+  border-color: var(--clr-accent-hover);
+}
+.btn-tonal {
+  background: var(--paper-deep);
+  color: var(--clr-text);
+  border-color: var(--paper-deep);
+}
+.btn-tonal:hover:not(:disabled) { border-color: var(--clr-border-strong); }
+.btn-outlined {
+  background: transparent;
+  color: var(--clr-text);
+  border-color: var(--clr-border);
+}
+.btn-outlined:hover:not(:disabled) { border-color: var(--clr-border-strong); }
+.btn-elevated {
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  border-color: transparent;
+  box-shadow: var(--shadow-sm);
+}
+.btn-text {
+  min-width: 0;
+  background: transparent;
+  color: var(--clr-text);
+  border-color: transparent;
+}
+.btn-text:hover:not(:disabled) { background: var(--paper-deep); }
 .btn-danger {
   background: var(--status-danger);
   color: var(--clr-text-on-accent);
@@ -44,8 +152,14 @@
 }
 .btn-danger:hover:not(:disabled) { opacity: .85; }
 
-/* Block — fill parent width */
-.btn-block {
-  width: 100%;
-  justify-content: center;
+.btn-toggle.btn-selected {
+  background: var(--clr-text);
+  border-color: var(--clr-text);
+  color: var(--clr-surface);
+}
+
+.btn-block { width: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition-duration: 0s; }
 }

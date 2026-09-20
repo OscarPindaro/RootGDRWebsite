@@ -78,6 +78,12 @@ class Option(BaseModel):
     label: str
 
 
+class ButtonGroupOption(Option):
+    icon: str | None = None
+    aria_label: str | None = None
+    disabled: bool = False
+
+
 def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
     """Navigation shown outside a world."""
     items = [

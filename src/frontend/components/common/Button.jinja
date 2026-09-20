@@ -1,12 +1,19 @@
-{#def variant="primary", size="md", href=None, block=False #}
-{% set classes = "btn btn-" ~ variant ~ " btn-" ~ size %}
+{#def variant="primary", size="md", href=None, block=False, shape="round", icon=None, icon_position="start", icon_only=False, label=None, selected=None #}
+{% set classes = "btn btn-" ~ variant ~ " btn-" ~ size ~ " btn-" ~ shape %}
 {% if block %}{% set classes = classes ~ " btn-block" %}{% endif %}
+{% if icon %}{% set classes = classes ~ (" btn-icon-only" if icon_only else " btn-mixed") %}{% endif %}
+{% if selected is not none %}{% set classes = classes ~ " btn-toggle" ~ (" btn-selected" if selected else "") %}{% endif %}
+{% set icon_sizes = {"xs": 20, "sm": 20, "md": 24, "lg": 32, "xl": 40} %}
 {% if href %}
-<a href="{{ href }}" {{ attrs.render(class=classes) }}>
-  {{ content }}
+<a href="{{ href }}"{% if label %} aria-label="{{ label }}"{% endif %}{% if selected is not none %} aria-pressed="{{ 'true' if selected else 'false' }}"{% endif %} {{ attrs.render(class=classes) }}>
+  {% if icon and icon_position == "start" %}<span class="btn-icon" aria-hidden="true"><common.Icon :name="icon" :size="icon_sizes[size]" /></span>{% endif %}
+  {% if not icon_only %}<span class="btn-label">{{ content }}</span>{% endif %}
+  {% if icon and icon_position == "end" %}<span class="btn-icon" aria-hidden="true"><common.Icon :name="icon" :size="icon_sizes[size]" /></span>{% endif %}
 </a>
 {% else %}
-<button {{ attrs.render(class=classes) }}>
-  {{ content }}
+<button{% if label %} aria-label="{{ label }}"{% endif %}{% if selected is not none %} aria-pressed="{{ 'true' if selected else 'false' }}"{% endif %} {{ attrs.render(class=classes, type=attrs.get('type', 'button')) }}>
+  {% if icon and icon_position == "start" %}<span class="btn-icon" aria-hidden="true"><common.Icon :name="icon" :size="icon_sizes[size]" /></span>{% endif %}
+  {% if not icon_only %}<span class="btn-label">{{ content }}</span>{% endif %}
+  {% if icon and icon_position == "end" %}<span class="btn-icon" aria-hidden="true"><common.Icon :name="icon" :size="icon_sizes[size]" /></span>{% endif %}
 </button>
 {% endif %}

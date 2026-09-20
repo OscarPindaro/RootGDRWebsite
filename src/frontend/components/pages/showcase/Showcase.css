@@ -47,6 +47,21 @@
   font-family: var(--font-mono);
 }
 
+.showcase-group-row {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-4);
+  overflow-x: auto;
+  padding-block: var(--sp-2);
+}
+
+.showcase-group-row > .showcase-label { flex: 0 0 120px; }
+
+.showcase-section h3 {
+  margin-block: var(--sp-6) var(--sp-2);
+  font-size: var(--text-lg);
+}
+
 .showcase-type-row {
   display: flex;
   align-items: baseline;

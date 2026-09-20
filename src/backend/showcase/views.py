@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import get_optional_user
 from ..content.view_helpers import animal_options, shape_options, tint_options
 from ..dependencies import get_catalog_dep, get_db_session
+from ..navigation import ButtonGroupOption
 from ..users.schemas import User
 from ..users.service import get_all_users
 
@@ -26,4 +27,21 @@ async def showcase(
         animals=animal_options(),
         tints=tint_options(),
         shapes=shape_options(),
+        button_group_views=[
+            ButtonGroupOption(value="list", label="Elenco", icon="list"),
+            ButtonGroupOption(value="grid", label="Griglia", icon="grid-2x2"),
+            ButtonGroupOption(value="map", label="Mappa", icon="map", disabled=True),
+        ],
+        button_group_filters=[
+            ButtonGroupOption(value="people", label="Personaggi"),
+            ButtonGroupOption(value="places", label="Luoghi"),
+            ButtonGroupOption(value="stories", label="Storie"),
+        ],
+        button_group_icons=[
+            ButtonGroupOption(value="list", label="", icon="list", aria_label="Elenco"),
+            ButtonGroupOption(
+                value="grid", label="", icon="grid-2x2", aria_label="Griglia"
+            ),
+            ButtonGroupOption(value="map", label="", icon="map", aria_label="Mappa"),
+        ],
     )

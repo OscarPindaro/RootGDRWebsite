@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 from backend.content.view_helpers import animal_options, shape_options, tint_options
 from backend.jinja import get_catalog
+from backend.navigation import ButtonGroupOption
 
 COMPONENTS_DIR = Path(__file__).parents[3] / "src" / "frontend" / "components"
 
@@ -25,6 +26,15 @@ def _showcase(**extra):
             animals=animal_options(),
             tints=tint_options(),
             shapes=shape_options(),
+            button_group_views=[ButtonGroupOption(value="list", label="Elenco")],
+            button_group_filters=[
+                ButtonGroupOption(value="people", label="Personaggi")
+            ],
+            button_group_icons=[
+                ButtonGroupOption(
+                    value="list", label="", icon="list", aria_label="Elenco"
+                )
+            ],
             **extra,
         )
     )

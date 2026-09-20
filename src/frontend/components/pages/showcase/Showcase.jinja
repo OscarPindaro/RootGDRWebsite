@@ -1,5 +1,5 @@
-{#def users, animals, tints, shapes, current_user=None #}
-{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css #}
+{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, current_user=None #}
+{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="home">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -117,15 +117,68 @@
 
     <section class="showcase-section">
       <h2>Buttons</h2>
+      <p class="showcase-note">M3 Expressive sizes, shapes, icon layouts, toggle state, and existing editorial colors.</p>
       <div class="showcase-row">
-        <common.Button variant="primary" size="sm">Small Primary</common.Button>
-        <common.Button variant="primary" size="md">Primary</common.Button>
-        <common.Button variant="primary" size="lg">Large Primary</common.Button>
+        <common.Button variant="primary" size="xs">Extra small</common.Button>
+        <common.Button variant="primary" size="sm">Small</common.Button>
+        <common.Button variant="primary" size="md">Medium</common.Button>
+        <common.Button variant="primary" size="lg">Large</common.Button>
+        <common.Button variant="primary" size="xl">Extra large</common.Button>
       </div>
       <div class="showcase-row">
-        <common.Button variant="secondary" size="md">Secondary</common.Button>
-        <common.Button variant="danger" size="md">Danger</common.Button>
-        <common.Button variant="primary" size="md" disabled>Disabled</common.Button>
+        <common.Button variant="filled" size="sm">Filled</common.Button>
+        <common.Button variant="tonal" size="sm">Tonal</common.Button>
+        <common.Button variant="outlined" size="sm">Outlined</common.Button>
+        <common.Button variant="elevated" size="sm">Elevated</common.Button>
+        <common.Button variant="text" size="sm">Text</common.Button>
+      </div>
+      <div class="showcase-row">
+        <common.Button variant="secondary" size="sm" shape="square">Square</common.Button>
+        <common.Button variant="secondary" size="sm" icon="plus" label="Aggiungi" icon_only />
+        <common.Button variant="secondary" size="sm" icon="save">Salva</common.Button>
+        <common.Button variant="secondary" size="sm" icon="arrow-right" icon_position="end">Continua</common.Button>
+        <common.Button variant="secondary" size="sm" :selected="False">Toggle off</common.Button>
+        <common.Button variant="secondary" size="sm" :selected="True">Toggle on</common.Button>
+        <common.Button variant="danger" size="sm">Danger</common.Button>
+        <common.Button variant="primary" size="sm" disabled>Disabled</common.Button>
+      </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Button groups</h2>
+      <p class="showcase-note">Standard groups expand the pressed item by 15% and compensate adjacent items. Connected groups keep their width and morph shape only.</p>
+      {% for group_size in ["xs", "sm", "md", "lg", "xl"] %}
+      <div class="showcase-group-row">
+        <span class="showcase-label">{{ group_size }}</span>
+        <common.ButtonGroup :label="'Azioni standard ' ~ group_size" variant="standard" :size="group_size">
+          <common.Button variant="secondary" :size="group_size">Uno</common.Button>
+          <common.Button variant="secondary" :size="group_size" icon="star">Due</common.Button>
+          <common.Button variant="secondary" :size="group_size" icon="plus" label="Aggiungi" icon_only />
+        </common.ButtonGroup>
+      </div>
+      {% endfor %}
+      {% for group_size in ["xs", "sm", "md", "lg", "xl"] %}
+      <div class="showcase-group-row">
+        <span class="showcase-label">connected {{ group_size }}</span>
+        <common.ButtonGroup :label="'Azioni connesse ' ~ group_size" variant="connected" shape="square" :size="group_size">
+          <common.Button variant="secondary" :size="group_size">Uno</common.Button>
+          <common.Button variant="secondary" :size="group_size" icon="star">Due</common.Button>
+          <common.Button variant="secondary" :size="group_size" disabled>Tre</common.Button>
+        </common.ButtonGroup>
+      </div>
+      {% endfor %}
+      <h3>Selection groups</h3>
+      <div class="showcase-group-row">
+        <span class="showcase-label">single optional</span>
+        <common.ButtonGroup label="Vista" name="showcase-view" selection="single" :options="button_group_views" value="grid" variant="standard" size="sm" />
+      </div>
+      <div class="showcase-group-row">
+        <span class="showcase-label">single required</span>
+        <common.ButtonGroup label="Vista richiesta" name="showcase-required-view" selection="single" :options="button_group_icons" value="list" required variant="connected" size="sm" />
+      </div>
+      <div class="showcase-group-row">
+        <span class="showcase-label">multi</span>
+        <common.ButtonGroup label="Filtri" name="showcase-filters" selection="multi" :options="button_group_filters" :values='["people", "stories"]' variant="connected" shape="square" size="sm" />
       </div>
     </section>
 

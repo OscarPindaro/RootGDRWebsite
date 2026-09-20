@@ -1,0 +1,155 @@
+/* ---------- M3 Expressive Button Group ---------- */
+.button-group {
+  --button-group-gap: var(--button-group-gap-md);
+  --button-group-inner: var(--button-group-inner-md);
+  --button-group-inner-pressed: var(--button-group-inner-pressed-md);
+  --button-group-square-outer: var(--button-group-square-outer-md);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--button-group-gap);
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  overflow-x: auto;
+}
+
+.button-group-xs {
+  --button-group-gap: var(--button-group-gap-xs);
+  --button-group-inner: var(--button-group-inner-xs);
+  --button-group-inner-pressed: var(--button-group-inner-pressed-xs);
+  --button-group-square-outer: var(--button-group-square-outer-xs);
+}
+.button-group-sm {
+  --button-group-gap: var(--button-group-gap-sm);
+  --button-group-inner: var(--button-group-inner-sm);
+  --button-group-inner-pressed: var(--button-group-inner-pressed-sm);
+  --button-group-square-outer: var(--button-group-square-outer-sm);
+}
+.button-group-md {
+  --button-group-gap: var(--button-group-gap-md);
+  --button-group-inner: var(--button-group-inner-md);
+  --button-group-inner-pressed: var(--button-group-inner-pressed-md);
+  --button-group-square-outer: var(--button-group-square-outer-md);
+}
+.button-group-lg {
+  --button-group-gap: var(--button-group-gap-lg);
+  --button-group-inner: var(--button-group-inner-lg);
+  --button-group-inner-pressed: var(--button-group-inner-pressed-lg);
+  --button-group-square-outer: var(--button-group-square-outer-lg);
+}
+.button-group-xl {
+  --button-group-gap: var(--button-group-gap-xl);
+  --button-group-inner: var(--button-group-inner-xl);
+  --button-group-inner-pressed: var(--button-group-inner-pressed-xl);
+  --button-group-square-outer: var(--button-group-square-outer-xl);
+}
+
+.button-group-legend {
+  position: absolute;
+  width: var(--rule-width);
+  height: var(--rule-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.button-group-option { position: relative; display: inline-flex; min-width: 0; }
+.button-group-input {
+  position: absolute;
+  width: var(--rule-width);
+  height: var(--rule-width);
+  opacity: 0;
+  pointer-events: none;
+}
+.button-group-input:focus-visible + .btn {
+  outline: var(--rule-width) solid currentColor;
+  outline-offset: var(--sp-1);
+}
+.button-group-input:disabled + .btn { opacity: .45; }
+.button-group-option-disabled { cursor: not-allowed; }
+.button-group-input:checked + .btn {
+  background: var(--clr-text);
+  border-color: var(--clr-text);
+  color: var(--clr-surface);
+}
+
+/* Standard groups expand by 15%; JS gives the same width back from neighbors. */
+.button-group-standard > .btn,
+.button-group-standard > .button-group-option,
+.button-group-standard > .button-group-option > .btn {
+  transition: width var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out), border-radius var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out), color var(--dur-base) var(--ease-out);
+}
+.button-group-standard > [data-button-group-pressed] > .btn,
+.button-group-standard > .btn[data-button-group-pressed] { z-index: 1; }
+.button-group-standard.button-group-round > .btn,
+.button-group-standard.button-group-round > .button-group-option > .btn { border-radius: var(--radius-full); }
+.button-group-standard.button-group-square > .btn,
+.button-group-standard.button-group-square > .button-group-option > .btn { border-radius: var(--btn-square); }
+.button-group-standard.button-group-round > .btn:active:not(:disabled),
+.button-group-standard.button-group-round > .button-group-option:active > .btn { border-radius: var(--btn-pressed); }
+.button-group-standard.button-group-square > .btn:active:not(:disabled),
+.button-group-standard.button-group-square > .button-group-option:active > .btn { border-radius: var(--radius-full); }
+.button-group-standard.button-group-round .button-group-input:checked + .btn,
+.button-group-standard.button-group-round > .btn[aria-pressed="true"] { border-radius: var(--btn-square); }
+.button-group-standard.button-group-square .button-group-input:checked + .btn,
+.button-group-standard.button-group-square > .btn[aria-pressed="true"] { border-radius: var(--radius-full); }
+
+/* Connected groups keep width and only morph their controlled corners. */
+.button-group-connected { --button-group-gap: var(--button-group-connected-gap); }
+.button-group-connected > .btn,
+.button-group-connected > .button-group-option > .btn {
+  border-radius: var(--button-group-inner);
+}
+.button-group-connected.button-group-round > :first-of-type.btn,
+.button-group-connected.button-group-round > :first-of-type > .btn {
+  border-start-start-radius: var(--radius-full);
+  border-end-start-radius: var(--radius-full);
+}
+.button-group-connected.button-group-round > :last-of-type.btn,
+.button-group-connected.button-group-round > :last-of-type > .btn {
+  border-start-end-radius: var(--radius-full);
+  border-end-end-radius: var(--radius-full);
+}
+.button-group-connected.button-group-square > :first-of-type.btn,
+.button-group-connected.button-group-square > :first-of-type > .btn {
+  border-start-start-radius: var(--button-group-square-outer);
+  border-end-start-radius: var(--button-group-square-outer);
+}
+.button-group-connected.button-group-square > :last-of-type.btn,
+.button-group-connected.button-group-square > :last-of-type > .btn {
+  border-start-end-radius: var(--button-group-square-outer);
+  border-end-end-radius: var(--button-group-square-outer);
+}
+.button-group-connected > .btn:active:not(:disabled),
+.button-group-connected > .button-group-option:active > .btn {
+  border-radius: var(--button-group-inner-pressed);
+}
+.button-group-connected.button-group-round > :first-of-type.btn:active,
+.button-group-connected.button-group-round > :first-of-type:active > .btn {
+  border-start-start-radius: var(--radius-full);
+  border-end-start-radius: var(--radius-full);
+}
+.button-group-connected.button-group-round > :last-of-type.btn:active,
+.button-group-connected.button-group-round > :last-of-type:active > .btn {
+  border-start-end-radius: var(--radius-full);
+  border-end-end-radius: var(--radius-full);
+}
+.button-group-connected.button-group-square > :first-of-type.btn:active,
+.button-group-connected.button-group-square > :first-of-type:active > .btn {
+  border-start-start-radius: var(--button-group-square-outer);
+  border-end-start-radius: var(--button-group-square-outer);
+}
+.button-group-connected.button-group-square > :last-of-type.btn:active,
+.button-group-connected.button-group-square > :last-of-type:active > .btn {
+  border-start-end-radius: var(--button-group-square-outer);
+  border-end-end-radius: var(--button-group-square-outer);
+}
+.button-group-connected .button-group-input:checked + .btn,
+.button-group-connected > .btn[aria-pressed="true"] { border-radius: var(--radius-full); }
+
+@media (prefers-reduced-motion: reduce) {
+  .button-group .btn,
+  .button-group-option { transition-duration: 0s; }
+}

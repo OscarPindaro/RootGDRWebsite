@@ -2156,6 +2156,58 @@ html[data-accent="gradiente"] .prose a.mention {
   --dur-slow: 280ms;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
+  /* M3 Expressive buttons and button groups (Google-generated values) */
+  --button-height-xs: 32px;
+  --button-height-sm: 40px;
+  --button-height-md: 56px;
+  --button-height-lg: 96px;
+  --button-height-xl: 136px;
+  --button-padding-xs: 12px;
+  --button-padding-sm: 16px;
+  --button-padding-md: 24px;
+  --button-padding-lg: 48px;
+  --button-padding-xl: 64px;
+  --button-icon-xs: 20px;
+  --button-icon-sm: 20px;
+  --button-icon-md: 24px;
+  --button-icon-lg: 32px;
+  --button-icon-xl: 40px;
+  --button-icon-gap: 8px;
+  --button-square-xs: 12px;
+  --button-square-sm: 12px;
+  --button-square-md: 16px;
+  --button-square-lg: 28px;
+  --button-square-xl: 28px;
+  --button-pressed-xs: 8px;
+  --button-pressed-sm: 8px;
+  --button-pressed-md: 12px;
+  --button-pressed-lg: 16px;
+  --button-pressed-xl: 16px;
+  --button-group-gap-xs: 18px;
+  --button-group-gap-sm: 12px;
+  --button-group-gap-md: 8px;
+  --button-group-gap-lg: 8px;
+  --button-group-gap-xl: 8px;
+  --button-group-connected-gap: 2px;
+  --button-group-press-scale: 1.15;
+  --button-group-spring-damping: .9;
+  --button-group-spring-stiffness: 1400;
+  --button-group-inner-xs: 8px;
+  --button-group-inner-sm: 8px;
+  --button-group-inner-md: 8px;
+  --button-group-inner-lg: 16px;
+  --button-group-inner-xl: 20px;
+  --button-group-inner-pressed-xs: 4px;
+  --button-group-inner-pressed-sm: 4px;
+  --button-group-inner-pressed-md: 4px;
+  --button-group-inner-pressed-lg: 12px;
+  --button-group-inner-pressed-xl: 16px;
+  --button-group-square-outer-xs: 4px;
+  --button-group-square-outer-sm: 8px;
+  --button-group-square-outer-md: 8px;
+  --button-group-square-outer-lg: 16px;
+  --button-group-square-outer-xl: 20px;
+
   /* role tokens */
   --clr-bg: var(--paper);
   --clr-surface: var(--surface);
