@@ -1,0 +1,57 @@
+{#def world, world_context, nav, session, previous=None, following=None, can_manage=False, crumbs, current_user=None #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css #}
+<layout.Page :title="session.title" current_user={{ current_user }} :world="world_context" :nav="nav" active="sessioni">
+  <editorial.Crumbs :items="crumbs" />
+
+  <div class="docbar">
+    <span class="eyebrow">{{ session.in_world_date }}{% if session.real_date %} · {{ session.real_date }}{% endif %}</span>
+    <div class="docbar__actions">
+      {% if session.locked %}<span class="pill pill--plain">Bloccato</span>{% endif %}
+      {% if session.is_draft %}<span class="pill pill--draft">Bozza</span>{% endif %}
+      {% if can_manage %}
+      <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}/edit">Modifica</a>
+      <button class="btn btn--ghost btn--sm" type="button"
+              hx-delete="/worlds/{{ world.id }}/sessioni/{{ session.id }}"
+              hx-confirm="Eliminare «{{ session.title }}»?" hx-swap="none">Elimina</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="document">
+    <div class="document__head document__head--plain">
+      <div class="document__id">
+        <h1 class="display">{{ session.title }}</h1>
+        {% if session.short_description %}<p class="lede">{{ session.short_description }}</p>{% endif %}
+      </div>
+    </div>
+    <div class="document__page">
+      <span class="eyebrow">Resoconto</span>
+      <div class="prose">{{ session.body | markdown }}</div>
+    </div>
+  </div>
+
+  <nav class="pager" aria-label="Navigazione fra sessioni" style="margin-top: 2.5rem">
+    {% if previous %}
+    <a href="/worlds/{{ world.id }}/sessioni/{{ previous[1].id }}">
+      <span class="pager__dir">← Sessione precedente</span>
+      <span class="pager__title">{{ '%02d' | format(previous[0]) }} · {{ previous[1].title }}</span>
+    </a>
+    {% else %}
+    <a class="is-empty" href="#">
+      <span class="pager__dir">← Sessione precedente</span>
+      <span class="pager__title">Nessuna sessione precedente</span>
+    </a>
+    {% endif %}
+    {% if following %}
+    <a href="/worlds/{{ world.id }}/sessioni/{{ following[1].id }}">
+      <span class="pager__dir">Sessione successiva →</span>
+      <span class="pager__title">{{ '%02d' | format(following[0]) }} · {{ following[1].title }}</span>
+    </a>
+    {% else %}
+    <a class="is-empty" href="#">
+      <span class="pager__dir">Sessione successiva →</span>
+      <span class="pager__title">Nessuna sessione successiva</span>
+    </a>
+    {% endif %}
+  </nav>
+</layout.Page>

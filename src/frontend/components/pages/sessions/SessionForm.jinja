@@ -1,0 +1,38 @@
+{#def world, world_context, nav, session, tints, crumbs, current_user=None #}
+{#css common/Button.css, common/Field.css, layout/UserMenu.css #}
+{% if session %}
+{% set title = "Modifica sessione" %}
+{% set action = "/worlds/" ~ world.id ~ "/sessioni/" ~ session.id %}
+{% else %}
+{% set title = "Nuova sessione" %}
+{% set action = "/worlds/" ~ world.id ~ "/sessioni/new" %}
+{% endif %}
+<layout.Page :title="title" current_user={{ current_user }} :world="world_context" :nav="nav" active="sessioni">
+  <editorial.Masthead :title="title" eyebrow="Sessione" :crumbs="crumbs" />
+
+  <form class="form" hx-post="{{ action }}" hx-swap="none">
+    <common.Field label="Titolo" name="title" type="text" required maxlength=255
+                  :value="session.title if session else None" />
+    <common.Field label="Data di gioco" name="in_world_date" type="text" required maxlength=255
+                  helper="Etichetta libera, per esempio «Inverno, 4° anno»."
+                  :value="session.in_world_date if session else None" />
+    <common.Field label="Data reale" name="real_date" type="date"
+                  helper="Opzionale. Ordina il registro quando è presente."
+                  :value="session.real_date.isoformat() if session and session.real_date else None" />
+    <common.Field label="Sintesi" name="short_description" type="text" maxlength=1000
+                  :value="session.short_description if session else None" />
+    <common.Field label="Tinta della sessione" name="tint" type="select" :options="tints"
+                  :value="session.tint if session else 'p1'" />
+    <common.Field label="Resoconto" name="body" type="textarea"
+                  helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :value="session.body if session else ''" />
+    <div class="row-inline">
+      <common.Button type="submit" variant="primary" size="md">Salva</common.Button>
+      {% if session %}
+      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}">Annulla</a>
+      {% else %}
+      <a class="btn btn--ghost" href="/worlds/{{ world.id }}/sessioni">Annulla</a>
+      {% endif %}
+    </div>
+  </form>
+</layout.Page>

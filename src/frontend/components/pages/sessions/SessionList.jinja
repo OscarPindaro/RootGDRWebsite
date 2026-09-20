@@ -1,0 +1,39 @@
+{#def world, world_context, nav, rows, can_manage=False, crumbs, current_user=None #}
+{#css common/Button.css, layout/UserMenu.css #}
+{% set count = rows | length %}
+{% set eyebrow_text = count ~ (' sessione' if count == 1 else ' sessioni') %}
+<layout.Page title="Sessioni" current_user={{ current_user }} :world="world_context" :nav="nav" active="sessioni">
+  <editorial.Masthead
+    title="Registro delle sessioni"
+    :eyebrow="eyebrow_text"
+    lede="Dalla più recente. Ogni sessione ha un colore che la segue anche nelle timeline e nelle schede dei personaggi."
+    :crumbs="crumbs">
+    {% if can_manage %}
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/sessioni/new">Nuova sessione</a>
+    {% endif %}
+  </editorial.Masthead>
+
+  {% if rows %}
+  <div class="ledger">
+    <div class="ledger__head">
+      <span class="eyebrow">N°</span>
+      <span class="eyebrow">Data</span>
+      <span class="eyebrow">Sessione</span>
+      <span class="eyebrow"></span>
+    </div>
+    {% for number, session in rows %}
+    <a class="ledger__row" href="/worlds/{{ world.id }}/sessioni/{{ session.id }}" style="--c: var(--{{ session.tint }})">
+      <span class="ledger__num"><span class="sdot"></span>{{ '%02d' | format(number) }}</span>
+      <span class="ledger__date">{{ session.in_world_date }}{% if session.real_date %}<br>{{ session.real_date }}{% endif %}</span>
+      <span class="ledger__main">
+        <span class="ledger__title">{{ session.title }}</span>
+        <span class="ledger__sum">{{ session.short_description }}</span>
+      </span>
+      <span class="ledger__tag">{% if session.is_draft %}Bozza{% endif %}</span>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">Nessuna sessione registrata.</div>
+  {% endif %}
+</layout.Page>

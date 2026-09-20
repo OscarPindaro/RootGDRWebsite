@@ -18,6 +18,7 @@ from ..characters.models import CharacterModel  # noqa: F401
 from ..files.models import FileModel  # noqa: F401
 from ..npcs.models import NpcModel  # noqa: F401
 from ..places.models import PlaceModel  # noqa: F401
+from ..sessions.models import SessionModel  # noqa: F401
 from ..tasks.models import TaskModel  # noqa: F401
 from ..users.models import UserModel  # noqa: F401
 from ..worlds.models import (  # noqa: F401
@@ -31,6 +32,7 @@ __all__ = [
     "InvitationModel",
     "NpcModel",
     "PlaceModel",
+    "SessionModel",
     "TaskModel",
     "UserAuthProviderModel",
     "UserModel",

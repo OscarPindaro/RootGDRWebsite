@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..navigation import TimelineEntry
 from ..places.models import PlaceModel
+from ..sessions.service import recent_sessions
 from .models import WorldModel
 
 CountFn = Callable[[AsyncSession, uuid.UUID], Awaitable[int]]
@@ -55,7 +56,17 @@ async def build_overview(db: AsyncSession, world: WorldModel) -> WorldOverview:
 
 async def _diary(db: AsyncSession, world: WorldModel) -> list[TimelineEntry]:
     """The last four sessions, most recent first."""
-    return []
+    sessions = await recent_sessions(db, world.id, 4)
+    return [
+        TimelineEntry(
+            when=session.in_world_date,
+            title=session.title,
+            href=f"/worlds/{world.id}/sessioni/{session.id}",
+            text=session.short_description,
+            tint=session.tint,
+        )
+        for session in sessions
+    ]
 
 
 async def _open_story(db: AsyncSession, world: WorldModel) -> Teaser | None:
