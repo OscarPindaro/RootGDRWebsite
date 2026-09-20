@@ -2209,3 +2209,15 @@ html[data-accent="gradiente"] .prose a.mention {
 
 /* Editorial defaults for bare elements used by components. */
 h1, h2, h3 { font-family: var(--serif); font-weight: 500; }
+
+/* ---------- Editorial buttons used as raw classes ----------
+   Templates write <a class="btn btn--ghost"> for secondary actions. The
+   component library's .btn sets a transparent border and is loaded after this
+   file, so it would win; scoping to .main (the rail has its own rule) restores
+   the prototype's ink border. */
+.main .btn.btn--ghost {
+  border-color: var(--ink);
+}
+.main .btn.btn--ghost:hover {
+  background: var(--paper-deep);
+}

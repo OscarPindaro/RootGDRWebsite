@@ -57,6 +57,16 @@ class _Session:
         self.page.wait_for_load_state("networkidle")
 
 
+def _seed_world(session: _Session, name: str) -> tuple[str, str]:
+    """Create a world through the form and return (world_id, name)."""
+    session.goto("/worlds/new")
+    session.page.fill('input[name="name"]', name)
+    session.page.fill('textarea[name="description"]', "Creato dai test e2e.")
+    session.submit('button[type="submit"]', expect_url=r"/worlds/[0-9a-f-]{36}$")
+    world_id = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
+    return world_id, name
+
+
 @pytest.fixture()
 def session():
     base_url = _base_url()
@@ -115,6 +125,42 @@ def test_master_can_draft_a_character(session: _Session) -> None:
     assert session.page.locator(".pill--draft").count() == 1
 
     assert session.errors == []
+
+
+def test_every_world_link_loads(session: _Session) -> None:
+    """Follow the rail and the overview entry points; none may 404.
+
+    Regression: the rail and the overview used the Italian section id as the
+    URL, so Personaggi and NPC pointed at routes that did not exist.
+    """
+    world_id, _ = _seed_world(session, "Mondo Link")
+    session.goto(f"/worlds/{world_id}")
+
+    hrefs = session.page.eval_on_selector_all(
+        "#rail a[href^='/worlds/'], .quick[href^='/worlds/']",
+        "els => els.map(e => e.getAttribute('href'))",
+    )
+    assert len(hrefs) >= 7, hrefs
+
+    for href in sorted(set(hrefs)):
+        response = session.page.goto(f"{session.base_url}{href}", wait_until="load")
+        assert response is not None, href
+        assert response.status == 200, f"{href} -> {response.status}"
+        assert "not found" not in session.page.content().lower(), href
+
+    assert session.errors == []
+
+
+def test_secondary_actions_have_a_visible_border(session: _Session) -> None:
+    """Regression: the component library's .btn transparent border won over the
+    editorial one, so 'Impostazioni' rendered with no border at all."""
+    world_id, _ = _seed_world(session, "Mondo Bordo")
+    session.goto(f"/worlds/{world_id}")
+
+    border = session.page.locator(
+        '.masthead a:has-text("Impostazioni")'
+    ).first.evaluate("el => getComputedStyle(el).borderTopWidth")
+    assert border not in {"0px", ""}, border
 
 
 def test_command_palette_opens_and_searches(session: _Session) -> None:

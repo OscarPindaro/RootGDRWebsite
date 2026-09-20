@@ -99,14 +99,18 @@ def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
     return items
 
 
-WORLD_SECTIONS: tuple[tuple[str, str, str], ...] = (
-    ("mondo", "Panoramica", "mondo"),
-    ("personaggi", "Personaggi", "personaggi"),
-    ("npc", "NPC", "npc"),
-    ("luoghi", "Luoghi", "luoghi"),
-    ("sessioni", "Sessioni", "sessioni"),
-    ("storie", "Storie", "storie"),
-    ("pagine", "Pagine", "pagine"),
+# section id (used for the active state and counts), label, mark, URL path.
+# The path is explicit because the HTML routes are not always the Italian
+# section name (characters/npcs are English paths); deriving it from the id is
+# what produced 404 links from the rail and the overview.
+WORLD_SECTIONS: tuple[tuple[str, str, str, str | None], ...] = (
+    ("mondo", "Panoramica", "mondo", None),
+    ("personaggi", "Personaggi", "personaggi", "characters"),
+    ("npc", "NPC", "npc", "npcs"),
+    ("luoghi", "Luoghi", "luoghi", "luoghi"),
+    ("sessioni", "Sessioni", "sessioni", "sessioni"),
+    ("storie", "Storie", "storie", "storie"),
+    ("pagine", "Pagine", "pagine", "pagine"),
 )
 
 
@@ -118,12 +122,8 @@ def world_nav(
     """Navigation shown inside a world, with per-section counts when known."""
     counts = counts or {}
     items = []
-    for section_id, label, mark in WORLD_SECTIONS:
-        href = (
-            f"/worlds/{world_id}"
-            if section_id == "mondo"
-            else f"/worlds/{world_id}/{section_id}"
-        )
+    for section_id, label, mark, path in WORLD_SECTIONS:
+        href = f"/worlds/{world_id}" if path is None else f"/worlds/{world_id}/{path}"
         items.append(
             NavItem(
                 id=section_id,
@@ -136,13 +136,13 @@ def world_nav(
     return items
 
 
-# section id, label, mark, sub-label, accent
-QUICK_SECTIONS: tuple[tuple[str, str, str, str, str], ...] = (
-    ("personaggi", "Personaggi", "personaggi", "Schede", "vermilion"),
-    ("npc", "NPC", "npc", "Solo Master", "plum"),
-    ("luoghi", "Luoghi", "luoghi", "Atlante", "forest"),
-    ("sessioni", "Sessioni", "sessioni", "Registro", "cobalt"),
-    ("storie", "Storie", "storie", "Archi", "ochre"),
+# section id, label, mark, sub-label, accent, URL path
+QUICK_SECTIONS: tuple[tuple[str, str, str, str, str, str], ...] = (
+    ("personaggi", "Personaggi", "personaggi", "Schede", "vermilion", "characters"),
+    ("npc", "NPC", "npc", "Solo Master", "plum", "npcs"),
+    ("luoghi", "Luoghi", "luoghi", "Atlante", "forest", "luoghi"),
+    ("sessioni", "Sessioni", "sessioni", "Registro", "cobalt", "sessioni"),
+    ("storie", "Storie", "storie", "Archi", "ochre", "storie"),
 )
 
 
@@ -154,11 +154,11 @@ def build_quicks(
     return [
         QuickEntry(
             label=label,
-            href=f"/worlds/{world_id}/{section_id}",
+            href=f"/worlds/{world_id}/{path}",
             mark=mark,
             foot=foot,
             count=counts.get(section_id, 0),
             accent=accent,
         )
-        for section_id, label, mark, foot, accent in QUICK_SECTIONS
+        for section_id, label, mark, foot, accent, path in QUICK_SECTIONS
     ]
