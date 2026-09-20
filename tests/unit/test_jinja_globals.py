@@ -110,6 +110,37 @@ def test_declared_and_passthrough_attributes_are_allowed(tmp_path: Path) -> None
     assert run_check(tmp_path, ENV_FACTORY) == []
 
 
+def test_quoted_component_interpolation_is_reported(tmp_path: Path) -> None:
+    _component(tmp_path, "common/Card.jinja", "{#def base #}\n<article></article>\n")
+    _component(
+        tmp_path,
+        "Probe.jinja",
+        '{#def world #}\n<common.Card\n    base="/worlds/{{ world.id }}"\n/>\n',
+    )
+
+    diagnostics = run_check(tmp_path, ENV_FACTORY)
+
+    assert [(line, code) for _, line, code, _ in diagnostics] == [(3, "E905")]
+    assert "Use a :base expression" in diagnostics[0][3]
+
+
+def test_interpolation_guard_ignores_html_dynamic_props_and_braces(
+    tmp_path: Path,
+) -> None:
+    _component(
+        tmp_path, "common/Card.jinja", "{#def base, label #}\n<article></article>\n"
+    )
+    _component(
+        tmp_path,
+        "Fine.jinja",
+        "{#def world #}\n"
+        '<a href="/worlds/{{ world.id }}">World</a>\n'
+        '<common.Card :base="\'/worlds/\' ~ world.id" label="literal {braces}" />\n',
+    )
+
+    assert run_check(tmp_path, ENV_FACTORY) == []
+
+
 def test_a_clean_component_has_no_diagnostics(tmp_path: Path) -> None:
     _component(
         tmp_path,

@@ -1,7 +1,6 @@
 """Pre-commit hook: catch JinjaX components that would fail at render time.
 
-Three failure modes that template compilation cannot see, all of which have
-actually happened in this repository:
+Failure modes that template compilation cannot see:
 
 * **E901 undefined global** — a component calls ``shape(name)`` but the global
   was renamed to ``shape_mark``. Jinja resolves filters at compile time but
@@ -16,6 +15,8 @@ actually happened in this repository:
   *required* prop raises ``MissingRequiredArgument``, but a misspelled
   *optional* prop is silently dropped and the component falls back to its
   default, so the bug is invisible until someone notices the missing colour.
+* **E905 quoted interpolation** — ``<Card base="/{{ item.id }}" />`` passes the
+  braces as literal text. Dynamic component props must use ``:base`` instead.
 
 The analysis is whole-program: it reads every component and resolves names
 against the real Jinja environment built by ``backend.jinja.get_catalog``, so
@@ -56,6 +57,10 @@ COMPONENT_INVOCATION = re.compile(
     re.DOTALL,
 )
 ATTRIBUTE = re.compile(r"(?:^|\s)([:@]?[A-Za-z_][\w:.-]*)\s*=")
+QUOTED_ATTRIBUTE = re.compile(
+    r"(?:^|\s)([:@]?[A-Za-z_][\w:.-]*)\s*=\s*(?:\"([^\"]*)\"|'([^']*)')"
+)
+JINJA_INTERPOLATION = re.compile(r"\{\{.*?\}\}", re.DOTALL)
 
 # HTML attributes a component may forward to its root element via attrs.
 PASSTHROUGH_ATTRIBUTES = {
@@ -183,6 +188,23 @@ def component_invocations(source: str) -> list[tuple[str, list[str], int]]:
     return found
 
 
+def quoted_component_interpolations(source: str) -> list[tuple[str, str, int]]:
+    """Static component attributes containing ``{{ ... }}``, with their line."""
+    stripped = COMMENTS.sub(lambda m: "\n" * m.group(0).count("\n"), source)
+    found: list[tuple[str, str, int]] = []
+    for component in COMPONENT_INVOCATION.finditer(stripped):
+        body = component.group(2)
+        body_start = component.start(2)
+        for attribute in QUOTED_ATTRIBUTE.finditer(body):
+            name = attribute.group(1)
+            value = attribute.group(2) or attribute.group(3) or ""
+            if name.startswith(":") or not JINJA_INTERPOLATION.search(value):
+                continue
+            line = stripped[: body_start + attribute.start()].count("\n") + 1
+            found.append((component.group(1), name.lstrip("@"), line))
+    return found
+
+
 def _is_allowed_attribute(name: str) -> bool:
     bare = name.lstrip(":@")
     return bare in PASSTHROUGH_ATTRIBUTES or bare.startswith(
@@ -232,6 +254,17 @@ def run_check(
                     "E902",
                     f"prop '{name}' shadows the registered global '{name}'. "
                     f"Rename the prop or the global.",
+                )
+            )
+
+        for dotted, attr, line in quoted_component_interpolations(source):
+            diagnostics.append(
+                (
+                    component,
+                    line,
+                    "E905",
+                    f"<{dotted}> attribute '{attr}' contains a quoted Jinja "
+                    f"interpolation. Use a :{attr} expression instead.",
                 )
             )
 

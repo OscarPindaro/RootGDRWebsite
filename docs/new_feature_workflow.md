@@ -140,3 +140,5 @@ app.include_router(feature_router)
   - [ ] responses dict
 - [ ] Router registered in `server.py`
 - [ ] List endpoints use `ListResponse[T]` wrapper
+- [ ] Every browser write is verified through the API or an integration database
+  query, not only through text still visible in the page

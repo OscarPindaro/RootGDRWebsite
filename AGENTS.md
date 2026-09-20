@@ -80,6 +80,8 @@ Unit testing is rarely useful for API development since most API calls are a cha
 - **Integration (s):** Use a real database and FastAPI's test client; verify behavior and database state.
 - **E2E (s–min):** Test complete workflows as a black box without mocks.
 - **Fuzzy/performance (min+):** Add these when robustness or load behavior matters.
+- After a browser action writes data, assert the persisted result through the API
+  or an integration database query; visible editor/DOM text is not proof of a save.
 
 ### Test Harness
 
