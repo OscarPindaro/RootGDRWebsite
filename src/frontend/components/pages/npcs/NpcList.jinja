@@ -1,0 +1,21 @@
+{#def world, world_context, nav, cards, crumbs, can_manage=False, current_user=None #}
+{#css common/Button.css, common/Grid.css, layout/UserMenu.css #}
+{% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
+<layout.Page title="NPC" current_user={{ current_user }} :world="world_context" :nav="nav" active="npc">  <editorial.Masthead
+    title="NPC"
+    :eyebrow="eyebrow_text"
+    lede="Schede scritte e mantenute dal Master. I giocatori le leggono; qui stanno anche i segreti che non devono ancora sapere."
+    :crumbs="crumbs">
+    {% if can_manage %}
+    <a class="btn btn--primary" href="/worlds/{{ world.id }}/npcs/new">Nuovo NPC</a>
+    {% endif %}
+  </editorial.Masthead>
+
+  {% if cards %}
+  <div class="grid grid--cards">
+    {% for card in cards %}<editorial.Card :item="card" />{% endfor %}
+  </div>
+  {% else %}
+  <div class="empty">Nessun NPC. Creane uno per cominciare.</div>
+  {% endif %}
+</layout.Page>

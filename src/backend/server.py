@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .auth.routes.auth import router as auth_router
 from .auth.routes.invitations import router as invitation_router
 from .characters.routes import router as characters_router
+from .npcs.routes import router as npcs_router
 from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
 from .log import RequestContextMiddleware, setup_logging
@@ -66,13 +67,16 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(invitation_router)
     app.include_router(worlds_router)
     app.include_router(characters_router)
+    app.include_router(npcs_router)
 
     # Content sections register their overview count query here, so the world
     # overview stays a view over the features instead of reaching into them.
     from .characters.service import count_characters  # noqa: PLC0415
+    from .npcs.service import count_npcs  # noqa: PLC0415
     from .worlds.overview import register_counter  # noqa: PLC0415
 
     register_counter("personaggi", count_characters)
+    register_counter("npc", count_npcs)
 
     # Importing the registry registers every model with Base.metadata so
     # DatabaseManager.initialize_tables() / alembic see all tables, including
@@ -83,12 +87,14 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     if config.frontend and config.frontend.enabled:
         from .auth.views import router as auth_views_router  # noqa: PLC0415
         from .characters.views import router as characters_views_router  # noqa: PLC0415
+        from .npcs.views import router as npcs_views_router  # noqa: PLC0415
         from .users.views import router as users_views_router  # noqa: PLC0415
         from .views import router as views_router  # noqa: PLC0415
         from .worlds.views import router as worlds_views_router  # noqa: PLC0415
 
         app.include_router(auth_views_router)
         app.include_router(characters_views_router)
+        app.include_router(npcs_views_router)
         app.include_router(users_views_router)
         app.include_router(views_router)
         app.include_router(worlds_views_router)

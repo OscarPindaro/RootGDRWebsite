@@ -47,6 +47,7 @@ def test_real_registry_registers_all_tables() -> None:
     names = {m.name for m in models}
     assert names == {
         "CharacterModel",
+        "NpcModel",
         "FileModel",
         "InvitationModel",
         "TaskModel",

@@ -1,0 +1,41 @@
+{#def world, world_context, nav, npc, can_manage, crumbs, current_user=None #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css #}
+<layout.Page :title="npc.name" current_user={{ current_user }} :world="world_context" :nav="nav" active="npc">
+  <editorial.Crumbs :items="crumbs" />
+
+  <div class="docbar">
+    <span class="eyebrow">NPC</span>
+    <div class="docbar__actions">
+      <span class="pill pill--plain">NPC del Master</span>
+      {% if npc.locked %}<span class="pill pill--plain">Bloccato</span>{% endif %}
+      {% if npc.is_draft %}<span class="pill pill--draft">Bozza</span>{% endif %}
+      {% if can_manage %}
+      <a class="btn btn--primary btn--sm" href="/worlds/{{ world.id }}/npcs/{{ npc.id }}/edit">Modifica</a>
+      <button class="btn btn--ghost btn--sm" type="button"
+              hx-delete="/worlds/{{ world.id }}/npcs/{{ npc.id }}"
+              hx-confirm="Eliminare {{ npc.name }}?" hx-swap="none">Elimina</button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="docpage">
+    <div>
+      <div class="document">
+        <div class="document__head">
+          <div class="document__face">
+            <editorial.Face :tint="npc.tint" :animal="npc.animal" :image_url="npc.image_url" />
+          </div>
+          <div class="document__id">
+            <h1 class="display">{{ npc.name }}</h1>
+            {% if npc.title %}<p class="card__title">{{ npc.title }}</p>{% endif %}
+            {% if npc.short_description %}<p class="lede">{{ npc.short_description }}</p>{% endif %}
+          </div>
+        </div>
+        <div class="document__page">
+          <span class="eyebrow">Descrizione</span>
+          <div class="prose">{{ npc.body | markdown }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</layout.Page>
