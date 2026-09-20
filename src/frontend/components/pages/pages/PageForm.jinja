@@ -22,8 +22,9 @@
                   :value="page.short_description if page else None" />
     <common.Field label="Tinta" name="tint" type="select" :options="tints"
                   :value="page.tint if page else 'p3'" />
-    <common.Field label="Testo" name="body" type="textarea"
+    <common.MarkdownField label="Testo" name="body"
                   helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :world_id="world.id"
                   :value="page.body if page else ''" />
     <div class="row-inline">
       <common.Button type="submit" variant="primary" size="md">Salva</common.Button>

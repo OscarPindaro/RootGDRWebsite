@@ -23,8 +23,9 @@
                   :value="session.short_description if session else None" />
     <common.Field label="Tinta della sessione" name="tint" type="select" :options="tints"
                   :value="session.tint if session else 'p1'" />
-    <common.Field label="Resoconto" name="body" type="textarea"
+    <common.MarkdownField label="Resoconto" name="body"
                   helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :world_id="world.id"
                   :value="session.body if session else ''" />
     <div class="row-inline">
       <common.Button type="submit" variant="primary" size="md">Salva</common.Button>

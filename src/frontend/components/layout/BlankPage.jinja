@@ -19,5 +19,22 @@
   <script src="/static/js/lucide-init.js"></script>
   <script src="/static/js/format-times.js"></script>
   <script>lucide.createIcons();</script>
+  <script>
+    /* Load the editor bundle only where there is a Markdown field. Readers
+       never download it, and it is re-checked after htmx swaps. */
+    (function () {
+      function loadEditor() {
+        if (window.__editorLoaded) return;
+        if (!document.querySelector("[data-markdown-field]")) return;
+        window.__editorLoaded = true;
+        var script = document.createElement("script");
+        script.src = "/static/js/editor.js";
+        script.defer = true;
+        document.body.appendChild(script);
+      }
+      loadEditor();
+      document.body.addEventListener("htmx:afterSwap", loadEditor);
+    })();
+  </script>
 </body>
 </html>

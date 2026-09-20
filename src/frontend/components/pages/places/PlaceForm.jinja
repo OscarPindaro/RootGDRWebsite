@@ -22,8 +22,9 @@
                   :value="place.shape if place else 'cerchio'" />
     <common.Field label="Tinta della scheda" name="tint" type="select" :options="tints"
                   :value="place.tint if place else 'p1'" />
-    <common.Field label="Descrizione lunga" name="body" type="textarea"
+    <common.MarkdownField label="Descrizione lunga" name="body"
                   helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :world_id="world.id"
                   :value="place.body if place else ''" />
     <div class="row-inline">
       <common.Button type="submit" variant="primary" size="md">Salva</common.Button>

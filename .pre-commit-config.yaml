@@ -4,6 +4,9 @@ repos:
     hooks:
     - id: trailing-whitespace
     - id: check-added-large-files
+      # The editor bundle is a generated artifact committed on purpose (see
+      # package.json); CodeMirror 6 alone is ~530 KB minified.
+      exclude: ^src/frontend/static/js/editor\.js$
     - id: check-executables-have-shebangs
     - id: check-ast
     - id: check-symlinks

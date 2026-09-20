@@ -36,8 +36,9 @@
       <span class="field-supporting">Tieni premuto Ctrl/⌘ per selezionare più sessioni.</span>
     </label>
 
-    <common.Field label="Testo" name="body" type="textarea"
+    <common.MarkdownField label="Testo" name="body"
                   helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :world_id="world.id"
                   :value="story.body if story else ''" />
     <div class="row-inline">
       <common.Button type="submit" variant="primary" size="md">Salva</common.Button>

@@ -1,0 +1,19 @@
+{#def name, value="", label=None, helper=None, world_id=None, preview_id=None #}
+{% set target_id = preview_id or ('md-preview-' ~ name) %}
+<div class="md-field" data-md-tabs data-world-id="{{ world_id }}">
+  <div class="field__bar">
+    <span class="field__label">{{ label }}</span>
+    <div class="tabs" role="tablist" aria-label="{{ label }}">
+      <button class="tab" type="button" role="tab" aria-selected="true" data-md-tab="scrivi">Scrivi</button>
+      <button class="tab" type="button" role="tab" aria-selected="false" data-md-tab="anteprima"
+              hx-post="/worlds/{{ world_id }}/preview"
+              hx-include="closest [data-md-tabs]"
+              hx-target="#{{ target_id }}"
+              hx-swap="innerHTML">Anteprima</button>
+    </div>
+  </div>
+  <textarea class="textarea" name="{{ name }}" data-markdown-field
+            aria-label="{{ label }}">{{ value }}</textarea>
+  <div class="prose md-preview" id="{{ target_id }}" data-md-preview hidden></div>
+  {% if helper %}<span class="field__hint">{{ helper }}</span>{% endif %}
+</div>
