@@ -143,6 +143,8 @@ async def update_character(
     if data.is_draft is not None:
         character.is_draft = data.is_draft
     await db.flush()
+    # ``updated_at`` is server-generated; reload it before serialising.
+    await db.refresh(character, ["updated_at"])
     await refresh_references(
         db, world_id, ContentKind.CHARACTER, character.id, character.body
     )
@@ -183,6 +185,7 @@ async def upload_character_image(
     )
     character.image = image
     await db.flush()
+    await db.refresh(character, ["updated_at"])
     return character
 
 

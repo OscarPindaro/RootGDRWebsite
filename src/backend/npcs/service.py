@@ -105,6 +105,8 @@ async def update_npc(
     if data.is_draft is not None:
         npc.is_draft = data.is_draft
     await db.flush()
+    # ``updated_at`` is server-generated; reload it before serialising.
+    await db.refresh(npc, ["updated_at"])
     await refresh_references(db, world_id, ContentKind.NPC, npc.id, npc.body)
     return npc
 
@@ -141,6 +143,7 @@ async def upload_npc_image(
     )
     npc.image = image
     await db.flush()
+    await db.refresh(npc, ["updated_at"])
     return npc
 
 

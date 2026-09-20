@@ -138,6 +138,8 @@ async def update_story(
     if data.is_draft is not None:
         story.is_draft = data.is_draft
     await db.flush()
+    # ``updated_at`` is server-generated; reload it before serialising.
+    await db.refresh(story, ["updated_at"])
     await refresh_references(db, world_id, ContentKind.STORY, story.id, story.body)
     return story
 

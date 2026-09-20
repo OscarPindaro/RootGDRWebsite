@@ -106,6 +106,8 @@ async def update_place(
     if data.is_draft is not None:
         place.is_draft = data.is_draft
     await db.flush()
+    # ``updated_at`` is server-generated; reload it before serialising.
+    await db.refresh(place, ["updated_at"])
     await refresh_references(db, world_id, ContentKind.PLACE, place.id, place.body)
     return place
 
@@ -142,6 +144,7 @@ async def upload_place_image(
     )
     place.image = image
     await db.flush()
+    await db.refresh(place, ["updated_at"])
     return place
 
 
