@@ -4,7 +4,7 @@
   <editorial.Crumbs :items="crumbs" />
 
   <editorial.Docbar
-    base="/worlds/{{ world.id }}/characters/{{ character.id }}"
+    :base="'/worlds/' ~ world.id ~ '/characters/' ~ character.id"
     eyebrow="Personaggio"
     :locked="character.locked"
     :is_draft="character.is_draft"

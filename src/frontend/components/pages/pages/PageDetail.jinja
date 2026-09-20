@@ -4,8 +4,8 @@
   <editorial.Crumbs :items="crumbs" />
 
   <editorial.Docbar
-    base="/worlds/{{ world.id }}/pagine/{{ page.id }}"
-    eyebrow="Pagina · posizione {{ '%02d' | format(page.menu_position) }} · slug {{ page.slug }}"
+    :base="'/worlds/' ~ world.id ~ '/pagine/' ~ page.id"
+    :eyebrow="'Pagina · posizione ' ~ '%02d'|format(page.menu_position) ~ ' · slug ' ~ page.slug"
     :locked="page.locked"
     :is_draft="page.is_draft"
     :can_manage="can_manage">

@@ -4,8 +4,8 @@
   <editorial.Crumbs :items="crumbs" />
 
   <editorial.Docbar
-    base="/worlds/{{ world.id }}/storie/{{ story.id }}"
-    eyebrow="Storia · {{ 'in corso' if story.status == 'in_corso' else 'chiusa' }}"
+    :base="'/worlds/' ~ world.id ~ '/storie/' ~ story.id"
+    :eyebrow="'Storia · ' ~ ('in corso' if story.status == 'in_corso' else 'chiusa')"
     :locked="story.locked"
     :is_draft="story.is_draft"
     :can_manage="can_manage">

@@ -4,8 +4,8 @@
   <editorial.Crumbs :items="crumbs" />
 
   <editorial.Docbar
-    base="/worlds/{{ world.id }}/sessioni/{{ session.id }}"
-    eyebrow="{{ session.in_world_date }}{% if session.real_date %} · {{ session.real_date }}{% endif %}"
+    :base="'/worlds/' ~ world.id ~ '/sessioni/' ~ session.id"
+    :eyebrow="session.in_world_date ~ (' · ' ~ session.real_date|string if session.real_date else '')"
     :locked="session.locked"
     :is_draft="session.is_draft"
     :can_manage="can_manage">

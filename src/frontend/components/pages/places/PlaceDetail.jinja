@@ -4,7 +4,7 @@
   <editorial.Crumbs :items="crumbs" />
 
   <editorial.Docbar
-    base="/worlds/{{ world.id }}/luoghi/{{ place.id }}"
+    :base="'/worlds/' ~ world.id ~ '/luoghi/' ~ place.id"
     eyebrow="Luogo"
     :locked="place.locked"
     :is_draft="place.is_draft"
