@@ -14,7 +14,7 @@
 
   <div class="grid grid--quick">
     {% for entry in quicks %}
-    <editorial.Quick :entry="entry" />
+    <editorial.Quick :entry="entry" :style="current_user.symbol_style" />
     {% endfor %}
   </div>
 

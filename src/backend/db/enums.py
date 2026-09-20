@@ -59,3 +59,10 @@ class WorldRole(str, Enum):
 
     MASTER = "master"
     PLAYER = "player"
+
+
+class SymbolStyle(str, Enum):
+    """How navigation roles are drawn: linear icons or solid shapes."""
+
+    ICONS = "icons"
+    SHAPES = "shapes"

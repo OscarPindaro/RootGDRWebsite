@@ -1,10 +1,10 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, Form, HTTPException, status
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..auth.dependencies import get_current_admin_user
+from ..auth.dependencies import get_current_admin_user, get_current_user
 from ..auth.exceptions import InvitationAlreadyExists, InvitationNotFound
 from ..auth.schemas import InvitationCreate, InvitationView
 from ..auth.service import (
@@ -16,9 +16,9 @@ from ..auth.service import (
 )
 from ..config import AppConfig, get_app_config
 from ..dependencies import get_catalog_dep, get_db_session
-from ..db.enums import UserRole
+from ..db.enums import SymbolStyle, UserRole
 from ..users.schemas import User
-from ..users.service import get_all_users, get_user
+from ..users.service import get_all_users, get_user, update_symbol_style
 
 router = APIRouter(tags=["users-views"])
 
@@ -157,4 +157,29 @@ async def revoke_invitation(
     return catalog.render(
         "pages.admin.InvitationsTable",
         invitations=invitations,
+    )
+
+
+@router.get("/settings", response_class=HTMLResponse)
+async def settings_page(
+    catalog=Depends(get_catalog_dep),
+    user: User = Depends(get_current_user),
+):
+    """User settings: visual preferences stored on the user record."""
+    return catalog.render("pages.settings.Settings", current_user=user)
+
+
+@router.post("/settings", response_class=HTMLResponse)
+async def settings_submit(
+    symbol_style: SymbolStyle = Form(SymbolStyle.ICONS),
+    catalog=Depends(get_catalog_dep),
+    db: AsyncSession = Depends(get_db_session),
+    user: User = Depends(get_current_user),
+):
+    """Save the symbol-style preference and re-render the page."""
+    await update_symbol_style(db, user, symbol_style)
+    return catalog.render(
+        "pages.settings.Settings",
+        current_user=user.model_copy(update={"symbol_style": symbol_style}),
+        saved=True,
     )

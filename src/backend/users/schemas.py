@@ -2,7 +2,7 @@ from typing import Annotated
 
 from pydantic import EmailStr, Field
 
-from ..db.enums import UserRole
+from ..db.enums import SymbolStyle, UserRole
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 
 
@@ -49,6 +49,10 @@ class User(AppBaseModel, TimestampMixin):
         str | None,
         Field(default=None, description="Profile picture URL from the auth provider"),
     ]
+    symbol_style: Annotated[
+        SymbolStyle,
+        Field(default=SymbolStyle.ICONS, description="Icon or shape navigation marks"),
+    ]
     role: Annotated[
         UserRole,
         Field(default=UserRole.MEMBER, description="User role"),
@@ -81,6 +85,10 @@ class UserResponse(AppBaseModel, TimestampMixin):
     avatar_url: Annotated[
         str | None,
         Field(default=None, description="Profile picture URL from the auth provider"),
+    ]
+    symbol_style: Annotated[
+        SymbolStyle,
+        Field(default=SymbolStyle.ICONS, description="Icon or shape navigation marks"),
     ]
     role: Annotated[
         UserRole,

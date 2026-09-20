@@ -3,8 +3,10 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..db.enums import SymbolStyle
+from .exceptions import UserNotFound
 from .models import UserModel
-from .schemas import UserCreate, UserUpdate
+from .schemas import User, UserCreate, UserUpdate
 
 
 async def create_user(db: AsyncSession, user_data: UserCreate) -> UserModel:
@@ -46,3 +48,15 @@ async def delete_user(db: AsyncSession, user_id: uuid.UUID) -> bool:
     await db.delete(user)
     await db.flush()
     return True
+
+
+async def update_symbol_style(
+    db: AsyncSession, user: User, style: SymbolStyle
+) -> UserModel:
+    """Store the user's symbol-style preference."""
+    model = await db.get(UserModel, user.id)
+    if model is None:
+        raise UserNotFound(user.id)
+    model.symbol_style = style
+    await db.flush()
+    return model
