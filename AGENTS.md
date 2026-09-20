@@ -195,6 +195,17 @@ uv run harness env teardown
   redirected page 404s. Fix both at once: share the engine **and** commit before
   answering with a redirect.
 
+## Replay (learned)
+
+Turn a bug found by hand into a reproducible test:
+
+- In dev, open the user menu and switch on **Registra azioni**, then work
+  normally; every page, field and click is recorded.
+- `uv run harness replay list`, `show <session>`, and `export <session> [-o path]`
+  (writes a Playwright test, `tests/e2e/test_replay_<session>.py` by default).
+- Recordings live in `harness-artifacts/replay/` (gitignored). The recorder is
+  dev-only: the route and the script do not exist outside `env: dev`.
+
 ## Content harness (learned)
 
 ```bash

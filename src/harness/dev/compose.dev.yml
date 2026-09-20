@@ -47,6 +47,7 @@ services:
       - ${HARNESS_REPO_ROOT}/src:/app/src:z
       - ${HARNESS_REPO_ROOT}/alembic:/app/alembic:z
       - ${HARNESS_REPO_ROOT}/docs:/app/docs:z
+      - ${HARNESS_REPO_ROOT}/harness-artifacts:/app/harness-artifacts:z
       - ${HARNESS_REPO_ROOT}/config.docker.yaml:/app/config.yaml:ro,z
     command:
       - sh
@@ -72,6 +73,7 @@ services:
       - ${HARNESS_REPO_ROOT}/src:/app/src:z
       - ${HARNESS_REPO_ROOT}/alembic:/app/alembic:z
       - ${HARNESS_REPO_ROOT}/docs:/app/docs:z
+      - ${HARNESS_REPO_ROOT}/harness-artifacts:/app/harness-artifacts:z
       - ${HARNESS_REPO_ROOT}/config.docker.yaml:/app/config.yaml:ro,z
     command:
       - sh

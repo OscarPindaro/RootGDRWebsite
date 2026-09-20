@@ -12,5 +12,8 @@
   <common.Menu id="user-menu-popover" labelledby="user-menu-trigger" placement="top-start" class="user-menu-popover">
     <common.MenuItem icon="settings" label="Impostazioni" href="/settings" />
     <common.MenuItem icon="log-out" label="Esci" href="/auth/logout-view" variant="danger" />
+    {% if env == "dev" %}
+    <common.MenuItem icon="circle-dot" label="Registra azioni" data-replay-toggle />
+    {% endif %}
   </common.Menu>
 </div>

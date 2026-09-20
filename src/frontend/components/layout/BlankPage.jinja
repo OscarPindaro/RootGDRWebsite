@@ -18,6 +18,7 @@
   <script src="/static/js/lucide.min.js"></script>
   <script src="/static/js/lucide-init.js"></script>
   <script src="/static/js/format-times.js"></script>
+  {% if env == "dev" %}<script src="/static/js/replay.js"></script>{% endif %}
   <script>lucide.createIcons();</script>
   <script>
     /* Load the editor bundle only where there is a Markdown field. Readers

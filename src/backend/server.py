@@ -127,13 +127,16 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         app.include_router(views_router)
         app.include_router(worlds_views_router)
 
-        # Dev-only: the component showcase and the bulk import/export routes
+        # Dev-only: the component showcase, the bulk import/export routes and
+        # the action recorder.
         if config.env == "dev":
             from .content.dev_routes import router as dev_content_router  # noqa: PLC0415
+            from .replay.routes import router as replay_router  # noqa: PLC0415
             from .showcase.views import router as showcase_router  # noqa: PLC0415
 
             app.include_router(showcase_router)
             app.include_router(dev_content_router)
+            app.include_router(replay_router)
 
     # health check endpoint
     @app.get("/ping")

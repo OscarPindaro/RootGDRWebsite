@@ -17,6 +17,7 @@ from .commands.dev import register_commands as register_dev_commands
 from .commands.environment import env_app
 from .commands.install import register_commands as register_install_commands
 from .commands.prototype import register_commands as register_prototype_commands
+from .commands.replay import register_commands as register_replay_commands
 from .commands.screenshot import register_command as register_screenshot_command
 from .commands.test import test_app
 
@@ -91,6 +92,7 @@ register_browser_commands(app)
 register_content_commands(app)
 register_dev_commands(app)
 register_prototype_commands(app)
+register_replay_commands(app)
 register_compare_command(app)
 register_screenshot_command(app)
 

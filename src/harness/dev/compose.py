@@ -76,6 +76,11 @@ def run(dev: state.DevState, *args: str, reload: bool = True) -> str:
 
 
 def up(dev: state.DevState, *, reload: bool = True) -> None:
+    # The app runs as a non-root user in the container, so the mounted
+    # recordings directory has to be writable by it.
+    recordings = _REPO_ROOT / "harness-artifacts" / "replay"
+    recordings.mkdir(parents=True, exist_ok=True)
+    recordings.chmod(0o777)
     run(dev, "up", "--detach", "--build", reload=reload)
     _wait_for_http(f"http://127.0.0.1:{dev.work_port}/ping", attempts=60)
     _wait_for_http(f"http://127.0.0.1:{dev.show_port}/ping", attempts=60)
