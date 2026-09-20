@@ -1,0 +1,8 @@
+{#def base, can_manage=False, locked=False #}
+<div class="docidentity" data-doc-identity data-base="{{ base }}"
+     {% if locked or not can_manage %}data-readonly="true"{% endif %}>
+  <form class="docidentity__form" hx-post="{{ base }}" hx-swap="none">
+    <input type="hidden" name="name" value="" data-doc-input>
+  </form>
+  {{ content }}
+</div>

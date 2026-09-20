@@ -1,5 +1,5 @@
 {#def world, world_context, nav, character, can_manage, crumbs, pages=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css #}
 <layout.Page :title="character.name" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="personaggi">
   <editorial.Crumbs :items="crumbs" />
 
@@ -22,16 +22,19 @@
           <div class="document__face">
             <editorial.Face :tint="character.tint" :animal="character.animal" :image_url="character.image_url" />
           </div>
-          <div class="document__id">
-            <h1 class="display">{{ character.name }}</h1>
-            {% if character.title %}<p class="card__title">{{ character.title }}</p>{% endif %}
-            {% if character.short_description %}<p class="lede">{{ character.short_description }}</p>{% endif %}
-          </div>
+          <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/characters/' ~ character.id"
+            :can_manage="can_manage" :locked="character.locked">
+            <h1 class="display" data-doc-field="name">{{ character.name }}</h1>
+            <p class="card__title" data-doc-field="title"
+               {% if not character.title %}data-empty="true"{% endif %}>{{ character.title or '' }}</p>
+            <p class="lede" data-doc-field="short_description"
+               {% if not character.short_description %}data-empty="true"{% endif %}>{{ character.short_description or '' }}</p>
+          </editorial.DocIdentity>
         </div>
         <div class="document__page">
           <span class="eyebrow">Descrizione</span>
           <editorial.DocEdit world_id={{ world.id }}
-            base="/worlds/{{ world.id }}/characters/{{ character.id }}"
+            :base="'/worlds/' ~ world.id ~ '/characters/' ~ character.id"
             :body="character.body" :body_html="body_html"
             :locked="character.locked" :can_manage="can_manage" />
         </div>

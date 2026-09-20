@@ -1,5 +1,5 @@
 {#def world, world_context, nav, story, can_manage=False, crumbs, pages=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css #}
 <layout.Page :title="story.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
   <editorial.Crumbs :items="crumbs" />
 
@@ -23,14 +23,18 @@
               <span>{{ 'In corso' if story.status == 'in_corso' else 'Chiusa' }}</span>
               {% if story.period_label %}<span>{{ story.period_label }}</span>{% endif %}
             </span>
-            <h1 class="display">{{ story.title }}</h1>
-            {% if story.short_description %}<p class="lede">{{ story.short_description }}</p>{% endif %}
+            <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
+              :can_manage="can_manage" :locked="story.locked">
+              <h1 class="display" data-doc-field="title">{{ story.title }}</h1>
+              <p class="lede" data-doc-field="short_description"
+                 {% if not story.short_description %}data-empty="true"{% endif %}>{{ story.short_description or '' }}</p>
+            </editorial.DocIdentity>
           </div>
         </div>
         <div class="document__page">
           <span class="eyebrow">Testo</span>
           <editorial.DocEdit world_id={{ world.id }}
-            base="/worlds/{{ world.id }}/stories/{{ story.id }}"
+            :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
             :body="story.body" :body_html="body_html"
             :locked="story.locked" :can_manage="can_manage" />
         </div>

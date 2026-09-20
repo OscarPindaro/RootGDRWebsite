@@ -196,10 +196,31 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     session.page.keyboard.press("Control+a")
     session.page.keyboard.type("Riscritto e salvato.")
     session.page.locator("[data-doc-save]").click()
+    # The save answers with a redirect, so the editor goes away with the reload.
+    session.page.wait_for_selector(".cm-editor", state="detached", timeout=5_000)
     session.page.wait_for_load_state("networkidle")
-    session.page.wait_for_function(
-        "() => document.body.innerText.includes('Riscritto e salvato')"
+
+    character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
+    payload = session.context.request.get(
+        f"{session.base_url}/api/worlds/{world_id}/characters/{character_id}"
+    ).json()
+    assert "Riscritto e salvato" in payload["body"]
+
+    # The name, the title and the short description are written in place too.
+    session.page.locator('[data-doc-field="title"]').dblclick()
+    session.page.wait_for_selector(".docidentity__input")
+    session.page.keyboard.type("Titolo in place")
+    session.page.keyboard.press("Enter")
+    session.page.wait_for_selector(
+        ".docidentity__input", state="detached", timeout=5_000
     )
+    session.page.wait_for_load_state("networkidle")
+
+    payload = session.context.request.get(
+        f"{session.base_url}/api/worlds/{world_id}/characters/{character_id}"
+    ).json()
+    assert payload["title"] == "Titolo in place"
+    assert payload["name"] == "Rugginosa"
 
     assert session.errors == []
 

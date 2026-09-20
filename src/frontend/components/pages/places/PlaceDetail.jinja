@@ -1,5 +1,5 @@
 {#def world, world_context, nav, place, is_current=False, can_manage=False, crumbs, pages=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css #}
 <layout.Page :title="place.name" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="luoghi">
   <editorial.Crumbs :items="crumbs" />
 
@@ -29,15 +29,17 @@
           <div class="document__face">
             <editorial.Face :tint="place.tint" :shape="place.shape" :image_url="place.image_url" />
           </div>
-          <div class="document__id">
-            <h1 class="display">{{ place.name }}</h1>
-            {% if place.short_description %}<p class="lede">{{ place.short_description }}</p>{% endif %}
-          </div>
+          <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
+            :can_manage="can_manage" :locked="place.locked">
+            <h1 class="display" data-doc-field="name">{{ place.name }}</h1>
+            <p class="lede" data-doc-field="short_description"
+               {% if not place.short_description %}data-empty="true"{% endif %}>{{ place.short_description or '' }}</p>
+          </editorial.DocIdentity>
         </div>
         <div class="document__page">
           <span class="eyebrow">Descrizione</span>
           <editorial.DocEdit world_id={{ world.id }}
-            base="/worlds/{{ world.id }}/places/{{ place.id }}"
+            :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
             :body="place.body" :body_html="body_html"
             :locked="place.locked" :can_manage="can_manage" />
         </div>

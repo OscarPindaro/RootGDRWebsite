@@ -1,0 +1,26 @@
+/* ---------- DocIdentity (name, title and description written in place) ---------- */
+.docidentity__form {
+  display: none;
+}
+
+.docidentity [data-doc-field] {
+  cursor: text;
+}
+
+.docidentity [data-doc-field][data-empty="true"] {
+  min-height: 1.2em;
+}
+
+.docidentity [data-doc-field]:hover {
+  background: var(--paper-deep);
+}
+
+.docidentity__input {
+  font: inherit;
+  color: inherit;
+  background: var(--surface);
+  border: var(--rule-ink);
+  padding: 0 var(--sp-1);
+  width: 100%;
+  outline: none;
+}

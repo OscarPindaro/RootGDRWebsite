@@ -274,11 +274,64 @@ function mountDocEdit(block) {
   });
 }
 
+/* ---------- identity fields ---------- */
+
+function mountDocIdentity(block) {
+  if (block.dataset.identityReady === "true") return;
+  block.dataset.identityReady = "true";
+  if (block.dataset.readonly === "true") return;
+  const form = block.querySelector("form");
+  const input = block.querySelector("[data-doc-input]");
+  if (!form || !input) return;
+
+  block.querySelectorAll("[data-doc-field]").forEach((field) => {
+    field.addEventListener("dblclick", () => {
+      if (field.querySelector("input")) return;
+      const name = field.dataset.docField;
+      const current = field.textContent.trim();
+      const editor = document.createElement("input");
+      editor.className = "docidentity__input";
+      editor.value = current;
+      field.textContent = "";
+      field.appendChild(editor);
+      editor.focus();
+      editor.select();
+
+      let done = false;
+      function finish(save) {
+        if (done) return;
+        done = true;
+        if (save && editor.value.trim() !== current) {
+          input.name = name;
+          input.value = editor.value;
+          form.requestSubmit();
+          return;
+        }
+        field.textContent = current;
+      }
+
+      editor.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          finish(true);
+        } else if (event.key === "Escape") {
+          event.preventDefault();
+          finish(false);
+        }
+      });
+      editor.addEventListener("blur", () => finish(true));
+    });
+  });
+}
+
 function mountAll(root) {
   const scope = root || document;
   scope.querySelectorAll("[data-md-tabs]").forEach((field) => setupTabs(field));
   scope.querySelectorAll("[data-markdown-field]").forEach((textarea) => mount(textarea));
   scope.querySelectorAll("[data-doc-edit]").forEach((block) => mountDocEdit(block));
+  scope
+    .querySelectorAll("[data-doc-identity]")
+    .forEach((block) => mountDocIdentity(block));
 }
 
 mountAll();
