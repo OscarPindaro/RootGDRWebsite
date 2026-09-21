@@ -33,6 +33,7 @@ Template:
 | Render and reference Markdown summaries | [markdown-summaries.md](markdown-summaries.md) |
 | Keep and restore uploaded images | [image-history.md](image-history.md) |
 | Buttons and selection groups, stable geometry | [button-groups.md](button-groups.md) |
+| One action-button skin and one status-pill skin | [button-pill-skins.md](button-pill-skins.md) |
 | Icon-only commands with a label and a tooltip | [icon-button.md](icon-button.md) |
 | One aspect ratio for a media block | [media-frame.md](media-frame.md) |
 | What a list shows when it is empty | [empty-state.md](empty-state.md) |

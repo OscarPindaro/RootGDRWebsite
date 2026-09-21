@@ -33,7 +33,7 @@ def test_the_tooltip_script_is_loaded(component):
     assert page.evaluate("() => window.__circeusTooltip === true")
 
 
-def test_geometry_is_square_and_uses_the_square_token(component):
+def test_geometry_is_square_and_uses_the_atlas_radius(component):
     page = _mount(component)
 
     button = page.locator("button.btn-icon-only")
@@ -47,7 +47,7 @@ def test_geometry_is_square_and_uses_the_square_token(component):
             const root = getComputedStyle(document.documentElement);
             return [
               getComputedStyle(button).borderRadius,
-              root.getPropertyValue('--button-square-sm').trim(),
+              root.getPropertyValue('--radius').trim(),
             ];
         }"""
     )

@@ -417,45 +417,6 @@ ul, ol { margin: 0; padding: 0; }
 }
 .scrim.is-open { display: block; }
 
-/* ---------- 7. Link d'azione ----------
-   I pulsanti sono common.Button. Resta qui lo stile dei link testuali
-   che il prototipo usa nella prosa e nelle testate. */
-.btn--text {
-  border: 0;
-  background: none;
-  padding: 0.2rem 0;
-  font-family: var(--mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  border-bottom: 1px solid currentColor;
-  border-radius: 0;
-}
-.btn--text:hover { color: var(--vermilion); background: none; }
-
-/* ---------- 8. Pill ---------- */
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.15rem 0.5rem;
-  border: 1px solid var(--ink);
-  border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: var(--surface);
-  white-space: nowrap;
-}
-.pill--master { background: var(--ink); color: var(--paper); }
-.pill--player { background: var(--surface); }
-.pill--vermilion { background: var(--vermilion); border-color: var(--vermilion); color: var(--surface); }
-.pill--cobalt { background: var(--cobalt); border-color: var(--cobalt); color: var(--surface); }
-.pill--ochre { background: var(--ochre); }
-.pill--forest { background: var(--forest); border-color: var(--forest); color: var(--surface); }
-.pill--plain { border-color: var(--line); color: var(--muted); }
-
 /* ---------- 9. Masthead ---------- */
 .masthead {
   border-top: 3px solid var(--ink);
@@ -1191,7 +1152,6 @@ html[data-accent="gradiente"] .rule-accent { background: var(--accent-grad); }
 /* i link: barra sotto il testo che si inverte al passaggio */
 html[data-accent="gradiente"] .prose a,
 html[data-accent="gradiente"] .tl__link,
-html[data-accent="gradiente"] .btn--text,
 html[data-accent="gradiente"] .toc a.is-current {
   text-decoration: none;
   border-bottom: 0;
@@ -1202,8 +1162,7 @@ html[data-accent="gradiente"] .toc a.is-current {
   padding-bottom: 2px;
 }
 html[data-accent="gradiente"] .prose a:hover,
-html[data-accent="gradiente"] .tl__link:hover,
-html[data-accent="gradiente"] .btn--text:hover {
+html[data-accent="gradiente"] .tl__link:hover {
   color: inherit;
   background-image: var(--accent-grad-swap);
 }
@@ -1268,7 +1227,6 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
 .kindnote__text b { color: var(--ink); }
 
 /* badge e scheda NPC */
-.pill--npc { background: var(--surface); border-style: dashed; }
 .card--npc .card__name::after {
   content: "NPC";
   font-family: var(--mono);
@@ -1322,10 +1280,6 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
 .ledger__row { border-left: 4px solid var(--c, transparent); padding-left: 0.7rem; }
 .ledger__head { padding-left: 0.7rem; border-left: 4px solid transparent; }
 .ledger__row:hover { background: var(--surface); }
-
-.pill--act1 { background: var(--p1); border-color: var(--p1); color: var(--surface); }
-.pill--act2 { background: var(--p3); border-color: var(--p3); color: var(--ink); }
-.pill--act3 { background: var(--p8); border-color: var(--p8); color: var(--surface); }
 
 /* ---------- 28. Scena corrente ---------- */
 .wherenow {
@@ -1892,8 +1846,6 @@ html[data-accent="gradiente"] .prose a.mention {
 .links__item:hover { color: var(--c, var(--vermilion)); }
 .links__dot { width: 10px; height: 10px; flex: 0 0 10px; background: var(--c, var(--ink)); }
 
-.pill--draft { background: var(--surface); border-style: dashed; color: var(--muted); }
-
 /* ---------- 29d. Pagina di un contenuto ---------- */
 /* barra dei comandi in cima a un documento */
 .docbar {
@@ -2017,7 +1969,6 @@ html[data-accent="gradiente"] .prose a.mention {
     padding: 0.2rem 0.15rem 0.45rem;
   }
   .docbar__actions > * { flex: 0 0 auto; }
-  .docbar__actions .btn { min-height: 44px; }
   .autosave-recovery .btn { margin: 0.25rem 0.25rem 0 0; }
 
   /* le categorie diventano righe compatte invece di blocchi alti */
@@ -2139,11 +2090,6 @@ html[data-accent="gradiente"] .prose a.mention {
   --button-icon-lg: 32px;
   --button-icon-xl: 40px;
   --button-icon-gap: 8px;
-  --button-square-xs: 12px;
-  --button-square-sm: 12px;
-  --button-square-md: 16px;
-  --button-square-lg: 28px;
-  --button-square-xl: 28px;
   --button-group-gap-xs: 18px;
   --button-group-gap-sm: 12px;
   --button-group-gap-md: 8px;

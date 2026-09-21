@@ -9,8 +9,9 @@ default shape was the round one.
 - Renders an icon-only action whose `label` is required and reaches both
   `aria-label` and the tooltip, so the accessible name and the visible hint
   cannot drift apart.
-- Square by default (`shape="square"`), which is the shape the product uses for
-  commands.
+- Square by default (`shape="square"`), which the product uses for commands. The
+  atlas skin gives it the shared low radius; "square" here means equal width and
+  height, not a distinct corner.
 - Keeps the caller's attributes (`data-testid`, `hx-post`, `class`) on the
   button, not on the wrapper.
 - Renders an anchor when `href` is given.

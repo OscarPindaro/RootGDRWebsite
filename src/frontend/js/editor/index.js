@@ -472,7 +472,7 @@ class AutosaveController {
       if (!label) return;
       const button = document.createElement("button");
       button.type = "button";
-      button.className = "btn btn--ghost btn--sm";
+      button.className = "btn btn-secondary btn-sm";
       button.textContent = label;
       button.addEventListener("click", action);
       panel.appendChild(button);

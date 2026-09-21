@@ -1,25 +1,25 @@
 {#def base, eyebrow=None, locked=False, is_draft=False, can_manage=False, badge=None #}
-{#css common/Button.css #}
+{#css common/Button.css, common/Pill.css #}
 <div class="docbar">
   <div class="docbar__lead">
     <span class="eyebrow">{{ eyebrow }}</span>
-    {% if badge %}<span class="pill pill--forest">{{ badge }}</span>{% endif %}
+    {% if badge %}<common.Pill variant="forest">{{ badge }}</common.Pill>{% endif %}
   </div>
   <div class="docbar__actions">
     {% if is_draft %}
-    <span class="pill pill--draft">Bozza</span>
+    <common.Pill variant="draft">Bozza</common.Pill>
     {% else %}
-    <span class="pill pill--plain">Pubblicato</span>
+    <common.Pill variant="plain">Pubblicato</common.Pill>
     {% endif %}
     {% if can_manage %}
     {% if not locked %}
-    <common.Button variant="text" size="sm" data-doc-edit-open data-testid="document-edit">Modifica</common.Button>
+    <common.Button variant="primary" size="sm" data-doc-edit-open data-testid="document-edit">Modifica</common.Button>
     {% endif %}
-    <common.Button variant="text" size="sm" data-testid="document-lock"
+    <common.Button variant="secondary" size="sm" data-testid="document-lock"
             :aria-pressed="('true' if locked else 'false')"
             :hx-post="base ~ '/toggle/locked?value=' ~ ('false' if locked else 'true')"
             hx-swap="none">{{ 'Bloccato' if locked else 'Sbloccato' }}</common.Button>
-    <common.Button variant="text" size="sm" data-testid="document-publication"
+    <common.Button variant="secondary" size="sm" data-testid="document-publication"
             :hx-post="base ~ '/toggle/is_draft?value=' ~ ('false' if is_draft else 'true')"
             hx-swap="none">{{ 'Pubblica' if is_draft else 'Riporta a bozza' }}</common.Button>
     {{ content }}

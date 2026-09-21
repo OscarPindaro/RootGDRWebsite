@@ -1,14 +1,12 @@
 {#def worlds, total, page, page_size, current_user=None #}
-{#css common/Button.css, common/Card.css, common/Grid.css, common/Tooltip.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/MediaFrame.css, common/SaveIndicator.css, pages/worlds/WorldList.css #}
+{#css common/Button.css, common/Card.css, common/Grid.css, common/Tooltip.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/MediaFrame.css, common/SaveIndicator.css, pages/worlds/WorldList.css, common/Pill.css #}
 {% set eyebrow_text = "Archivio · " ~ total ~ (" mondo" if total == 1 else " mondi") %}
 <layout.Page title="I tuoi mondi" current_user={{ current_user }} active="worlds">
   <editorial.Masthead
     title="I tuoi mondi"
     :eyebrow="eyebrow_text"
     lede="Ogni mondo è un volume a sé: personaggi, luoghi, sessioni, storie e pagine di riferimento raccolti sotto un'unica copertina.">
-    <common.Tooltip text="Nuovo mondo">
-      <common.Button href="/worlds/new" variant="primary" size="sm" icon="plus" icon_only label="Nuovo mondo" data-testid="create-world" />
-    </common.Tooltip>
+    <common.IconButton icon="plus" label="Nuovo mondo" variant="primary" size="sm" href="/worlds/new" data-testid="create-world" />
   </editorial.Masthead>
 
   {% if worlds %}

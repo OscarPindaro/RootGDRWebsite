@@ -26,7 +26,7 @@
     <common.Grid split gap=10>
       <div>
         <editorial.SectionHead title="Come è cambiato il mondo" eyebrow="Diario · ultime 4 sessioni">
-          <a class="btn--text" href="/worlds/{{ world.id }}/sessions">Registro completo</a>
+          <common.Button variant="text" :href="'/worlds/' ~ world.id ~ '/sessions'">Registro completo</common.Button>
         </editorial.SectionHead>
         {% if overview.diary %}
         <editorial.Timeline :entries="overview.diary" />
@@ -37,7 +37,7 @@
 
       <div>
         <editorial.SectionHead title="Storia in corso" eyebrow="Arco aperto">
-          <a class="btn--text" href="/worlds/{{ world.id }}/stories">Tutte le storie</a>
+          <common.Button variant="text" :href="'/worlds/' ~ world.id ~ '/stories'">Tutte le storie</common.Button>
         </editorial.SectionHead>
         {% if overview.open_story %}
         <a class="story" href="{{ overview.open_story.href }}">
@@ -58,7 +58,7 @@
 
   <section class="section">
     <editorial.SectionHead title="Dove sono adesso" eyebrow="Scena corrente">
-      <a class="btn--text" href="/worlds/{{ world.id }}/places">Atlante</a>
+      <common.Button variant="text" :href="'/worlds/' ~ world.id ~ '/places'">Atlante</common.Button>
     </editorial.SectionHead>
     {% if overview.current_place %}
     <a class="wherenow" href="{{ overview.current_place.href }}" style="--c: var(--{{ overview.current_place.tint or 'p9' }})">

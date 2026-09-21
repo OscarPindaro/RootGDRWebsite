@@ -18,11 +18,15 @@ FAILED tests/e2e/test_master_journey.py::test_mapped_lists_and_drafts_do_not_ove
    `<common.Grid min="quick" flush>`, which is `.grid.grid-auto.grid-flush`.
    The landmark needs to point at the class the app actually emits.
 
-2. **`test_character_form_uses_face_pickers` cannot select a symbol.**
-   `session.page.check('input[name="animal"][value="🦊"]', force=True)` resolves
-   the radio in `common.ChoiceGrid` but the click does not change its state.
-   Worth checking whether a label or an overlay intercepts the click, or whether
-   `check(force=True)` is the wrong primitive for a visually hidden radio.
+2. **`test_character_form_uses_face_pickers` is racy.** The test clicks a
+   `common.ChoiceGrid` radio with `check(force=True)` inside
+   `expect_navigation()`, twice: the symbol and then the tint. The radio
+   auto-submits the form, so the click races the navigation. Repeated runs on an
+   unchanged tree fail at two different places: `Playwright: Clicking the
+   checkbox did not change its state` on the symbol click, or
+   `assert payload["tint"] == "p8"` when the tint click is lost and the default
+   `p1` is submitted. The fix is to wait for the request the change triggers
+   rather than for a navigation, or to select the value without a real click.
 
 3. **World Settings overflows at 412px.** On `/worlds/<id>/settings` at a Pixel 7
    viewport the document scrolls horizontally by 48px. F21's "no unexplained

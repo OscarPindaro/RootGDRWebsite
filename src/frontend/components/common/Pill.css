@@ -1,14 +1,23 @@
-/* ---------- Pill ---------- */
+/* ---------- Pill ----------
+   One status pill, atlas skin: a capsule with an ink rule, a flat surface
+   fill and mono, uppercase type. Migrated from main.css so Pill owns the
+   only pill skin. */
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: var(--sp-1) var(--sp-3);
+  gap: 0.35rem;
+  padding: 0.15rem var(--sp-2);
+  border: var(--rule-ink);
   border-radius: var(--radius-full);
+  font-family: var(--mono);
   font-size: var(--text-xs);
-  font-weight: var(--weight-medium);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--surface);
   white-space: nowrap;
 }
 
+/* Status and role variants (M3 compatibility names). */
 .pill-neutral    { background: var(--status-neutral-bg); color: var(--status-neutral); }
 .pill-success    { background: var(--status-success-bg); color: var(--status-success); }
 .pill-danger     { background: var(--status-danger-bg);  color: var(--status-danger); }
@@ -18,3 +27,17 @@
 .pill-role-admin  { background: var(--role-admin-bg);  color: var(--role-admin); }
 .pill-role-dev    { background: var(--role-dev-bg);    color: var(--role-dev); }
 .pill-role-member { background: var(--role-member-bg); color: var(--role-member); }
+
+/* Product variants (editorial names). */
+.pill-master    { background: var(--ink); color: var(--paper); }
+.pill-player    { background: var(--surface); }
+.pill-vermilion { background: var(--vermilion); border-color: var(--vermilion); color: var(--surface); }
+.pill-cobalt    { background: var(--cobalt); border-color: var(--cobalt); color: var(--surface); }
+.pill-ochre     { background: var(--ochre); }
+.pill-forest    { background: var(--forest); border-color: var(--forest); color: var(--surface); }
+.pill-plain     { border-color: var(--line); color: var(--muted); }
+.pill-npc       { background: var(--surface); border-style: dashed; }
+.pill-act1      { background: var(--p1); border-color: var(--p1); color: var(--surface); }
+.pill-act2      { background: var(--p3); border-color: var(--p3); color: var(--ink); }
+.pill-act3      { background: var(--p8); border-color: var(--p8); color: var(--surface); }
+.pill-draft     { background: var(--surface); border-style: dashed; color: var(--muted); }

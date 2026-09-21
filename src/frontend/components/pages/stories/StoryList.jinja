@@ -1,5 +1,5 @@
 {#def world, world_context, nav, stories, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css #}
 {% set count = stories | length %}
 {% set eyebrow_text = count ~ (' arco' if count == 1 else ' archi') %}
 <layout.Page title="Storie" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
@@ -9,9 +9,7 @@
     lede="Archi narrativi che riassumono la campagna a un livello più alto delle singole partite."
     :crumbs="crumbs">
     {% if can_manage %}
-    <common.Tooltip text="Nuova storia">
-      <common.Button :hx-post="'/worlds/' ~ world.id ~ '/stories/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuova storia" data-testid="create-story" />
-    </common.Tooltip>
+    <common.IconButton icon="plus" label="Nuova storia" variant="primary" size="sm" :hx-post="'/worlds/' ~ world.id ~ '/stories/new'" hx-swap="none" data-testid="create-story" />
     {% endif %}
   </editorial.Masthead>
 
@@ -45,7 +43,7 @@
     {% for draft in drafts %}
     <a class="row" href="/worlds/{{ world.id }}/stories/{{ draft.id }}" style="--c: var(--{{ draft.tint }})">
       <span><span class="row__name">{{ draft.title }}</span><br><span class="row__desc">{{ draft.short_description }}</span></span>
-      <span class="row__meta"><span class="pill pill--draft">Bozza</span></span>
+      <span class="row__meta"><common.Pill variant="draft">Bozza</common.Pill></span>
     </a>
     {% endfor %}
   </div>

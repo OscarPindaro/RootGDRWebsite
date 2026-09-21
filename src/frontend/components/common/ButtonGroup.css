@@ -76,7 +76,7 @@
 .button-group-standard.button-group-round > .btn,
 .button-group-standard.button-group-round > .button-group-option > .btn { border-radius: var(--radius-full); }
 .button-group-standard.button-group-square > .btn,
-.button-group-standard.button-group-square > .button-group-option > .btn { border-radius: var(--btn-square); }
+.button-group-standard.button-group-square > .button-group-option > .btn { border-radius: var(--radius); }
 
 /* Connected groups: the controlled corners are square, the outer ones follow
    the group shape. Nothing here changes on press or selection. */

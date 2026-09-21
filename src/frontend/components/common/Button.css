@@ -1,11 +1,11 @@
 /* ---------- Button ----------
+   Atlas skin: a low-radius control with an ink rule and a flat fill.
    Stable geometry: shape and width do not change between enabled, hovered,
    pressed and selected states (see docs/features-request/frontend.md). */
 .btn {
   --btn-height: var(--button-height-md);
   --btn-padding: var(--button-padding-md);
   --btn-icon-size: var(--button-icon-md);
-  --btn-square: var(--button-square-md);
   display: inline-flex;
   min-width: var(--btn-height);
   height: var(--btn-height);
@@ -14,8 +14,8 @@
   gap: var(--button-icon-gap);
   box-sizing: border-box;
   padding-inline: var(--btn-padding);
-  border: 1.5px solid transparent;
-  border-radius: var(--radius-full);
+  border: var(--rule-ink);
+  border-radius: var(--radius);
   font-family: var(--font-sans);
   font-weight: var(--weight-medium);
   line-height: var(--leading-tight);
@@ -36,35 +36,32 @@
   cursor: not-allowed;
 }
 
-.btn-square { border-radius: var(--btn-square); }
-
-/* Sizes: generated Material values. sm/md/lg remain backward compatible. */
+/* Sizes: generated Material values. sm/md/lg remain backward compatible.
+   `shape` still emits the btn-{shape} class for callers and ButtonGroup, but
+   the atlas skin gives every button the same low radius, so the corner no
+   longer changes with it. */
 .btn-xs {
   --btn-height: var(--button-height-xs);
   --btn-padding: var(--button-padding-xs);
   --btn-icon-size: var(--button-icon-xs);
-  --btn-square: var(--button-square-xs);
   font-size: var(--text-sm);
 }
 .btn-sm {
   --btn-height: var(--button-height-sm);
   --btn-padding: var(--button-padding-sm);
   --btn-icon-size: var(--button-icon-sm);
-  --btn-square: var(--button-square-sm);
   font-size: var(--text-sm);
 }
 .btn-md {
   --btn-height: var(--button-height-md);
   --btn-padding: var(--button-padding-md);
   --btn-icon-size: var(--button-icon-md);
-  --btn-square: var(--button-square-md);
   font-size: var(--text-base);
 }
 .btn-lg {
   --btn-height: var(--button-height-lg);
   --btn-padding: var(--button-padding-lg);
   --btn-icon-size: var(--button-icon-lg);
-  --btn-square: var(--button-square-lg);
   font-size: var(--text-xl);
   font-weight: var(--weight-regular);
 }
@@ -72,7 +69,6 @@
   --btn-height: var(--button-height-xl);
   --btn-padding: var(--button-padding-xl);
   --btn-icon-size: var(--button-icon-xl);
-  --btn-square: var(--button-square-xl);
   font-size: var(--text-3xl);
   font-weight: var(--weight-regular);
 }
@@ -130,13 +126,38 @@
   border-color: transparent;
   box-shadow: var(--shadow-sm);
 }
+/* The editorial text action: a mono, uppercase link with an ink underline.
+   Migrated from main.css so Button owns the only text-action skin. */
 .btn-text {
   min-width: 0;
+  height: auto;
+  padding: var(--sp-1) 0;
+  border: 0;
+  border-bottom: 1px solid currentColor;
+  border-radius: 0;
   background: transparent;
   color: var(--clr-text);
-  border-color: transparent;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-.btn-text:hover:not(:disabled) { background: var(--paper-deep); }
+.btn-text:hover:not(:disabled) {
+  color: var(--vermilion);
+  background: transparent;
+}
+html[data-accent="gradiente"] .btn-text {
+  border-bottom: 0;
+  background-image: var(--accent-grad);
+  background-position: 0 100%;
+  background-size: 100% 0.25em;
+  background-repeat: no-repeat;
+  padding-bottom: 0.15rem;
+}
+html[data-accent="gradiente"] .btn-text:hover {
+  color: inherit;
+  background-image: var(--accent-grad-swap);
+}
 .btn-danger {
   background: var(--status-danger);
   color: var(--clr-text-on-accent);
@@ -151,6 +172,12 @@
 }
 
 .btn-block { width: 100%; }
+
+/* The touch target survives the atlas skin: on a phone every command keeps
+   the touch-target minimum even when its desktop size is smaller. */
+@media (max-width: 700px) {
+  .btn { min-height: var(--touch-target); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .btn { transition-duration: 0s; }

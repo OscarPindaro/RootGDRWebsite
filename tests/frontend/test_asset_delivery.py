@@ -23,7 +23,7 @@ def _token(page, name: str) -> str:
 
 
 def _assert_button_is_styled(page) -> None:
-    """Button.css gives the button its height, its pill radius and its centring.
+    """Button.css gives the button its height, its atlas radius and its centring.
 
     A user-agent button has no height, no radius, and ``normal`` alignment, so
     these three fail together when the stylesheet never arrives.
@@ -34,7 +34,7 @@ def _assert_button_is_styled(page) -> None:
         page, "--button-height-md"
     )
     assert button.evaluate("el => getComputedStyle(el).borderRadius") == _token(
-        page, "--radius-full"
+        page, "--radius"
     )
     assert button.evaluate("el => getComputedStyle(el).alignItems") == "center"
 

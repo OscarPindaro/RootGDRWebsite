@@ -8,9 +8,7 @@
     lede="Ogni radura ha un simbolo e un colore, così si riconosce a colpo d'occhio in una mappa, in una sessione o in un elenco."
     :crumbs="crumbs">
     {% if can_manage %}
-    <common.Tooltip text="Nuovo luogo">
-      <common.Button :hx-post="'/worlds/' ~ world.id ~ '/places/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuovo luogo" data-testid="create-place" />
-    </common.Tooltip>
+    <common.IconButton icon="plus" label="Nuovo luogo" variant="primary" size="sm" :hx-post="'/worlds/' ~ world.id ~ '/places/new'" hx-swap="none" data-testid="create-place" />
     {% endif %}
   </editorial.Masthead>
 

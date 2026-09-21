@@ -1,4 +1,4 @@
-{#css common/MediaFrame.css #}
+{#css common/MediaFrame.css, common/Pill.css #}
 {#def world #}
 {% set cover_src = world.image_url or '/static/img/plate-' ~ ((world.volume - 1) % 8 + 1) ~ '.svg' %}
 <a class="cover" href="/worlds/{{ world.id }}">
@@ -11,9 +11,9 @@
     <p class="cover__desc">{{ world.description }}</p>
     <div class="cover__foot">
       {% if world.role == 'master' %}
-      <span class="pill pill--master">Master</span>
+      <common.Pill variant="master">Master</common.Pill>
       {% else %}
-      <span class="pill pill--player">Giocatore</span>
+      <common.Pill variant="player">Giocatore</common.Pill>
       {% endif %}
     </div>
   </div>

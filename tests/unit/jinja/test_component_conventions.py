@@ -61,13 +61,6 @@ OWNED_ROOTS = ("btn", "card", "dialog", "field", "pill", "table")
 # that removes the losing rules. The test fails on a stale entry, so an
 # exception cannot outlive its migration.
 MIGRATION_ALLOWLIST: dict[str, tuple[str, tuple[str, str]]] = {
-    "btn": (
-        "F3",
-        (
-            "src/frontend/components/common/Button.css",
-            "src/frontend/static/css/main.css",
-        ),
-    ),
     "card": (
         "F14",
         (
@@ -79,13 +72,6 @@ MIGRATION_ALLOWLIST: dict[str, tuple[str, tuple[str, str]]] = {
         "F4",
         (
             "src/frontend/components/common/Field.css",
-            "src/frontend/static/css/main.css",
-        ),
-    ),
-    "pill": (
-        "F3",
-        (
-            "src/frontend/components/common/Pill.css",
             "src/frontend/static/css/main.css",
         ),
     ),

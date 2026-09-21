@@ -26,7 +26,7 @@
       <input class="image-editor__input" id="image-{{ owner_kind }}-{{ owner_id }}" type="file"
              name="image" accept="image/png,image/jpeg,image/gif,image/webp" required data-image-input tabindex="-1"
              aria-label="{{ 'Cambia' if image_url else 'Carica' }} {{ label | lower }}">
-      <button class="btn btn-secondary btn-sm btn-round image-editor__fallback-submit" type="submit" data-image-submit>Carica immagine</button>
+      <common.Button variant="secondary" size="sm" class="image-editor__fallback-submit" type="submit" data-image-submit>Carica immagine</common.Button>
     </form>
     <common.HStack gap=2 wrap class="image-editor__tools">
       <common.IconButton icon="history" label="Storico immagini"
@@ -67,7 +67,7 @@
         <p class="image-editor__error" data-image-error role="alert" aria-live="assertive" hidden></p>
         <div class="image-editor__history" data-image-history-list data-testid="image-history-list"></div>
         {% if image_url %}
-        <button class="btn btn-ghost btn-sm btn-round" type="button" data-image-clear data-testid="image-clear-current">Rimuovi immagine corrente</button>
+        <common.Button variant="text" size="sm" type="button" data-image-clear data-testid="image-clear-current">Rimuovi immagine corrente</common.Button>
         {% endif %}
       </div>
     </div>

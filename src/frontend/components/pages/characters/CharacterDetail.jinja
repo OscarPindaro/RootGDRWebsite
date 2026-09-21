@@ -9,7 +9,7 @@
     :locked="character.locked"
     :is_draft="character.is_draft"
     :can_manage="can_manage">
-    <span class="pill pill--plain">Giocato da {{ character.owner.name }}</span>
+    <common.Pill variant="plain">Giocato da {{ character.owner.name }}</common.Pill>
     {% if character.is_draft %}
     <common.Button variant="text" size="sm" data-testid="cancel-character-draft" :hx-post="'/worlds/' ~ world.id ~ '/characters/' ~ character.id ~ '/cancel-draft'" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</common.Button>
     {% else %}

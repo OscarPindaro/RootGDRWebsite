@@ -30,7 +30,7 @@
   function actionButton(label, testId, action, disabled) {
     var button = document.createElement("button");
     button.type = "button";
-    button.className = "btn btn-ghost btn-sm btn-round";
+    button.className = "btn btn-secondary btn-sm";
     button.textContent = label;
     button.dataset.testid = testId;
     button.disabled = Boolean(disabled);

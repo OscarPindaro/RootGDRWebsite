@@ -124,7 +124,7 @@ def test_master_fills_the_world_and_the_overview_updates(
     session.submit('button:has-text("Scena corrente")')
     # The toggle answers with an htmx redirect; wait for the re-rendered pill so
     # the navigation has settled before clicking back to the overview.
-    session.page.wait_for_selector(".pill--forest")
+    session.page.wait_for_selector(".pill-forest")
     _goto_overview(session, world_id)
     assert _quick_count(session, "Luoghi") == "1"
     assert (

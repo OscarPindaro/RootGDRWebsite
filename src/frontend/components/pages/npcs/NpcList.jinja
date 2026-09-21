@@ -7,9 +7,7 @@
     lede="Schede scritte e mantenute dal Master. I giocatori le leggono; qui stanno anche i segreti che non devono ancora sapere."
     :crumbs="crumbs">
     {% if can_manage %}
-    <common.Tooltip text="Nuovo NPC">
-      <common.Button :hx-post="'/worlds/' ~ world.id ~ '/npcs/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuovo NPC" data-testid="create-npc" />
-    </common.Tooltip>
+    <common.IconButton icon="plus" label="Nuovo NPC" variant="primary" size="sm" :hx-post="'/worlds/' ~ world.id ~ '/npcs/new'" hx-swap="none" data-testid="create-npc" />
     {% endif %}
   </editorial.Masthead>
 

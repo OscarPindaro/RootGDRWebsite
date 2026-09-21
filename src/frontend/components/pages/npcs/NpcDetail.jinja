@@ -9,7 +9,7 @@
     :locked="npc.locked"
     :is_draft="npc.is_draft"
     :can_manage="can_manage">
-    <span class="pill pill--plain">NPC del Master</span>
+    <common.Pill variant="plain">NPC del Master</common.Pill>
     {% if npc.is_draft %}
     <common.Button variant="text" size="sm" data-testid="cancel-npc-draft" :hx-post="'/worlds/' ~ world.id ~ '/npcs/' ~ npc.id ~ '/cancel-draft'" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</common.Button>
     {% else %}

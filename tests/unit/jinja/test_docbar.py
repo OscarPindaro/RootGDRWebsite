@@ -36,4 +36,4 @@ def test_without_a_badge_the_lead_only_has_the_eyebrow() -> None:
         )
     )
 
-    assert 'class="pill pill--forest"' not in html
+    assert 'class="pill pill-forest"' not in html
