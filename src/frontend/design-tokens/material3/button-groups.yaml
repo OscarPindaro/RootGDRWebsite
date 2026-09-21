@@ -1,0 +1,79 @@
+# Material 3 token inventory — button groups.
+#
+# Every value the project took from Material 3 Expressive, with its provenance.
+# `harness material check` verifies offline that this inventory and the CSS
+# custom properties in main.css agree; the unit test suite runs the same check.
+# The only command allowed to touch the network is a future `material sync`;
+# this file and `material check` work entirely offline.
+#
+# dp maps to CSS px (logical scale). The Android spring (stiffness/damping) has
+# no portable CSS primitive: the project conserves the tokens but uses a
+# documented web transition — see `web_adaptations`.
+
+component: button-groups
+sources:
+  android-tokens:
+    repository: https://github.com/material-components/material-components-android
+    revision: 66c334b7946dabf33adfe1a2b7cad6bcaa4ea3ad  # tag 1.14.0
+    files:
+      button_group_tokens: lib/java/com/google/android/material/button/res/values/button_group_tokens.xml
+      button_tokens: lib/java/com/google/android/material/button/res/values/tokens.xml
+    retrieved_at: 2026-09-21
+  compose:
+    repository: https://android.googlesource.com/platform/frameworks/support
+    revision: 3fac28c9daeb1322742860e9dc556efd83b340a0  # androidx-main
+    files:
+      button_group: compose/material3/material3/src/commonMain/kotlin/androidx/compose/material3/ButtonGroup.kt
+    retrieved_at: 2026-09-21
+  m3-web-spec:
+    page: https://m3.material.io/components/button-groups/specs
+    retrieved_at: 2026-09-21
+
+tokens:
+  # Button container heights (dp → px).
+  - {name: md.comp.button.xsmall.container.height, value: 32, css: --button-height-xs}
+  - {name: md.comp.button.small.container.height, value: 40, css: --button-height-sm}
+  - {name: md.comp.button.medium.container.height, value: 56, css: --button-height-md}
+  - {name: md.comp.button.large.container.height, value: 96, css: --button-height-lg}
+  - {name: md.comp.button.xlarge.container.height, value: 136, css: --button-height-xl}
+  # Horizontal padding: leading/trailing space per size (dp → px).
+  - {name: md.comp.button.xsmall.leading.space, value: 12, css: --button-padding-xs}
+  - {name: md.comp.button.small.leading_space, value: 16, css: --button-padding-sm}
+  - {name: md.comp.button.medium.leading_space, value: 24, css: --button-padding-md}
+  - {name: md.comp.button.large.leading_space, value: 48, css: --button-padding-lg}
+  - {name: md.comp.button.xlarge.leading_space, value: 64, css: --button-padding-xl}
+  # Icon sizes per size.
+  - {name: md.comp.button.xsmall.icon.size, value: 20, css: --button-icon-xs}
+  - {name: md.comp.button.small.icon.size, value: 20, css: --button-icon-sm}
+  - {name: md.comp.button.medium.icon.size, value: 24, css: --button-icon-md}
+  - {name: md.comp.button.large.icon.size, value: 32, css: --button-icon-lg}
+  - {name: md.comp.button.xlarge.icon.size, value: 40, css: --button-icon-xl}
+  # Standard group spacing per size. Only the small value exists in the
+  # generated Android files; the other sizes come from the M3 web spec.
+  - {name: md.comp.button-group.standard.xsmall.between-space, value: 18, css: --button-group-gap-xs, source: m3-web-spec}
+  - {name: md.comp.button-group.standard.small.between-space, value: 12, css: --button-group-gap-sm, selector: m3_comp_button_group_standard_small_between_space}
+  - {name: md.comp.button-group.standard.medium.between-space, value: 8, css: --button-group-gap-md, source: m3-web-spec}
+  - {name: md.comp.button-group.standard.large.between-space, value: 8, css: --button-group-gap-lg, source: m3-web-spec}
+  - {name: md.comp.button-group.standard.xlarge.between-space, value: 8, css: --button-group-gap-xl, selector: null, source: m3-web-spec}
+  # Connected group gap.
+  - {name: md.comp.button-group.connected.small.between-space, value: 2, css: --button-group-connected-gap, selector: m3_comp_button_group_connected_small_between_space}
+
+web_adaptations:
+  - name: press expansion
+    css: --button-group-press-scale
+    value: 1.15
+    source: compose
+    selector: ButtonGroupDefaults.ExpandedRatio
+    rationale: >-
+      Android expands the pressed button by 15% of its width and takes the
+      same width from the direct neighbours; the web port applies the same
+      ratio in JS on pointerdown.
+  - name: spring motion
+    css: "--button-group-spring-stiffness / --button-group-spring-damping"
+    value: "1400 / 0.9"
+    source: project
+    rationale: >-
+      The Android spring (stiffness 1400, damping 0.9) has no portable CSS
+      primitive. The project conserves the tokens but uses a documented web
+      transition (--dur-base / --ease-out); it is not an exact equivalent and
+      must not be described as one.

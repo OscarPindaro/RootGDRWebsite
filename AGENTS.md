@@ -156,6 +156,7 @@ uv run harness env up --mode docker       # database + backend container
 uv run harness test e2e --fresh           # reset only the E2E DB/uploads, then run E2E
 uv run harness doctor                     # environment, ports, DB, browser, replay checks
 uv run harness artifacts list             # artifact runs; `show <id>`, `clean --keep-latest N [--apply]`
+uv run harness material check             # offline: M3 token inventory vs main.css
 uv run harness smoke                      # authenticated main-page checks
 uv run harness logs --request-id <id>     # filter structured compose logs
 uv run harness screenshot /worlds --email e2e-admin@example.com --name worlds

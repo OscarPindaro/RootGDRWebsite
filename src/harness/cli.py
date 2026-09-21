@@ -19,6 +19,7 @@ from .commands.doctor import register_command as register_doctor_command
 from .commands.environment import env_app
 from .commands.install import register_commands as register_install_commands
 from .commands.logs import register_command as register_logs_command
+from .commands.material import register_command as register_material_command
 from .commands.prototype import register_commands as register_prototype_commands
 from .commands.replay import register_commands as register_replay_commands
 from .commands.screenshot import register_command as register_screenshot_command
@@ -101,6 +102,7 @@ register_replay_commands(app)
 register_compare_command(app)
 register_screenshot_command(app)
 register_doctor_command(app)
+register_material_command(app)
 register_smoke_command(app)
 register_logs_command(app)
 
