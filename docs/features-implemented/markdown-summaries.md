@@ -19,4 +19,8 @@ Campaign documents have short CommonMark descriptions with the same semantic ref
 
 - Summary Markdown follows the same safe renderer as body Markdown; raw HTML is not supported.
 - Ambiguous unqualified references are not guessed.
+- The `@` menu is CodeMirror's autocomplete with the app skin: a tinted dot per
+  suggestion, the name and the uppercase kind. A mention reads as the rendered
+  pill while writing too; the type icon shows when the label carries its kind
+  (`@[luogo:Name]`).
 - Autosave failures retain the local draft; stale versions return HTTP 409 and locked documents return HTTP 423.

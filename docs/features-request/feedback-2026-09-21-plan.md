@@ -54,3 +54,10 @@ Ogni ticket si chiude da solo: implementazione, test, commit.
 - Integration: invito membro, settings view (`tests/integration/`).
 - E2E: autosave, image editor, flussi membri (`tests/e2e/`).
 - Screenshot desktop + telefono contro `prototypes/devin-prototype/`.
+
+## Stato
+
+Tutti i ticket sono implementati e committati. Restano fuori i punti 2, 21 e 22
+(redesign grafico). Il pulsante "Storico" e la resa delle icone dei punti 4/11
+sono stati fatti per la parte di posizione; la conversione generale dei pulsanti
+a icone (punto 14) resta da decidere.
