@@ -81,10 +81,12 @@
 *::before,
 *::after { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; max-width: 100%; overflow-x: clip; }
 
 body {
   margin: 0;
+  max-width: 100%;
+  overflow-x: clip;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--sans);
@@ -166,7 +168,7 @@ ul, ol { margin: 0; padding: 0; }
    è sticky dentro la colonna, quindi resta fermo mentre la pagina scorre.
    Questo evita anche l'artefatto per cui, in una cattura a pagina intera,
    una colonna fissa sembra fermarsi a metà. */
-.shell { position: relative; min-height: 100vh; }
+.shell { position: relative; min-width: 0; min-height: 100vh; }
 
 .main {
   position: relative;
@@ -2051,7 +2053,22 @@ html[data-accent="gradiente"] .prose a.mention {
 }
 
 @media (max-width: 700px) {
-  .container { padding-bottom: 3.5rem; }
+  .container { min-width: 0; padding-bottom: 3.5rem; }
+  .docbar { display: block; }
+  .docbar > .eyebrow { display: block; margin-bottom: 0.6rem; }
+  .docbar__actions {
+    width: 100%;
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding: 0.2rem 0.15rem 0.45rem;
+  }
+  .docbar__actions > * { flex: 0 0 auto; }
+  .docbar__actions .btn { min-height: 44px; }
+  .row-inline > .input,
+  .row-inline > .select { min-width: 0; }
+  .autosave-recovery .btn { margin: 0.25rem 0.25rem 0 0; }
 
   /* le categorie diventano righe compatte invece di blocchi alti */
   .grid--quick { grid-template-columns: 1fr; }
@@ -2269,6 +2286,7 @@ html[data-accent="gradiente"] .prose a.mention {
   --content-max: 960px;
   --content-max-wide: 1200px;
   --dialog-max: 480px;
+  --touch-target: 44px;
   --rule-width: 1px;
   --z-tooltip: 1000;
   --grid-gap: var(--sp-6);

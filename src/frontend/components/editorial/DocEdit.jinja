@@ -1,10 +1,10 @@
-{#def world_id, base, body, body_html, version, locked=False, can_manage=False #}
-<div class="docedit" data-doc-edit data-world-id="{{ world_id }}"
+{#def world_id, base, body, body_html, version, locked=False, can_manage=False, field_name="body", label="Testo Markdown" #}
+<div class="docedit" data-doc-edit data-world-id="{{ world_id }}" data-doc-field-name="{{ field_name }}"
      data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   <textarea class="docedit__source" name="body" data-doc-source hidden>{{ body }}</textarea>
   <div class="docedit__editor" data-doc-editor hidden></div>
-  <div class="docedit__render prose" data-doc-render tabindex="0">{{ body_html }}</div>
+  <div class="docedit__render prose" data-doc-render tabindex="0" aria-label="{{ label }}. Premi Invio per modificare.">{{ body_html }}</div>
   <button type="button" hidden data-doc-preview
           hx-post="/worlds/{{ world_id }}/preview"
           hx-include="closest [data-doc-edit]"

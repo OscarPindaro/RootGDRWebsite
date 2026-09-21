@@ -431,3 +431,90 @@ def test_compact_icon_actions_keep_accessible_names(
         )
         == "Impostazioni del mondo"
     )
+
+
+def test_mapped_lists_and_drafts_do_not_overflow_desktop_or_pixel_7(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id = seed_world("Mondo Responsive")
+    kinds = ["characters", "npcs", "places", "sessions", "stories", "pages"]
+    paths = [f"/worlds/{world_id}/{kind}" for kind in kinds]
+    details: list[str] = []
+    for kind, path in zip(kinds, paths, strict=True):
+        session.goto(path)
+        session.page.locator(
+            f'[data-testid="create-{kind[:-1] if kind != "stories" else "story"}"]'
+        ).click()
+        session.page.wait_for_url(re.compile(rf"/worlds/{world_id}/{kind}/[^/]+$"))
+        details.append(session.page.url.removeprefix(session.base_url))
+
+    checked = [f"/worlds/{world_id}", f"/worlds/{world_id}/settings", *paths, *details]
+    for viewport in ({"width": 1440, "height": 900}, {"width": 412, "height": 915}):
+        session.page.set_viewport_size(viewport)
+        for path in checked:
+            session.goto(path)
+            overflow = session.page.evaluate(
+                "() => Math.max(document.documentElement.scrollWidth - document.documentElement.clientWidth, "
+                "document.body.scrollWidth - document.body.clientWidth)"
+            )
+            assert overflow <= 1, (viewport, path, overflow)
+            assert session.page.locator('[aria-current="page"]').count() == 1, path
+
+    assert session.errors == []
+
+
+def test_document_identity_keyboard_layout_reduced_motion_and_readonly_bundle(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id = seed_world("Mondo Documento")
+    character = session.expect_api(
+        f"/api/worlds/{world_id}/characters/",
+        method="POST",
+        expected_status=201,
+        data={"name": "Volpe", "title": "Custode", "body": "Testo"},
+    ).json()
+    path = f"/worlds/{world_id}/characters/{character['id']}"
+    session.page.set_viewport_size({"width": 1440, "height": 900})
+    session.goto(path)
+
+    positions = session.page.evaluate(
+        "() => { const image = document.querySelector('.document__face'); "
+        "const identity = document.querySelector('.docidentity'); "
+        "return {image: image.getBoundingClientRect(), identity: identity.getBoundingClientRect()}; }"
+    )
+    assert positions["image"]["right"] <= positions["identity"]["left"]
+    title = session.page.locator('[data-doc-field="title"]')
+    title.focus()
+    title.press("Enter")
+    assert session.page.locator(".docidentity__input").evaluate(
+        "element => document.activeElement === element"
+    )
+    session.page.locator(".docidentity__input").press("Escape")
+
+    session.page.emulate_media(reduced_motion="reduce")
+    assert (
+        session.page.locator(".btn").first.evaluate(
+            "element => getComputedStyle(element).transitionDuration"
+        )
+        == "0s"
+    )
+
+    updated = session.expect_api(
+        f"/api{path}",
+        method="PATCH",
+        data={"locked": True, "expected_version": character["version"]},
+    ).json()
+    assert updated["locked"] is True
+    editor_requests: list[str] = []
+    session.page.on(
+        "request",
+        lambda request: (
+            editor_requests.append(request.url)
+            if request.url.endswith("/static/js/editor.js")
+            else None
+        ),
+    )
+    session.goto(path)
+    session.page.wait_for_timeout(300)
+    assert editor_requests == []
+    assert session.errors == []

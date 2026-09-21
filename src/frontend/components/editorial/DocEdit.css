@@ -10,13 +10,18 @@
 
 /* The rendered text is the measure: the writing field takes its height. */
 .docedit__editor {
-  border: var(--rule-ink);
-  background: var(--surface);
+  border: 0;
+  border-left: 3px solid var(--vermilion);
+  background: transparent;
+  padding-left: var(--sp-3);
 }
 
 .docedit__editor .cm-editor {
   border: 0;
+  background: transparent;
 }
+
+.docedit__editor .cm-focused { outline: none; }
 
 .docedit__actions {
   display: flex;

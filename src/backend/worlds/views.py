@@ -9,6 +9,8 @@ from ..access import owner_world, readable_world
 from ..auth.dependencies import get_current_user
 from ..auth.service import find_by_email
 from ..correlation import set_world_id
+from ..content.markdown import render_markdown
+from ..content.references import resolve_text
 from ..db.enums import WorldRole
 from ..dependencies import get_catalog_dep, get_db_session
 from ..filesystem.base import FileSystem
@@ -148,6 +150,9 @@ async def world_settings_page(
     """Render the world management page (owner only)."""
     set_world_id(str(world_id))
     world = await owner_world(db, world_id, user, include_members=True)
+    description_html = render_markdown(
+        world.description, await resolve_text(db, world.id, world.description)
+    )
     pages = [
         PageLink(label=page.title, href=f"/worlds/{world.id}/pages/{page.slug}")
         for page in await rail_pages(db, world.id)
@@ -155,6 +160,7 @@ async def world_settings_page(
     return catalog.render(
         "pages.worlds.WorldSettings",
         world=world,
+        description_html=description_html,
         members=_member_responses(world),
         world_context=_world_context(world, role_for_world(world, user)),
         nav=world_nav(str(world.id), None),

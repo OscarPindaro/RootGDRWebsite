@@ -504,7 +504,8 @@ function mountDocEdit(block) {
   const actions = block.querySelector("[data-doc-actions]");
   if (!render || !host || !source) return;
   const autosave = controllerFor(block);
-  autosave.register("body", source.value, (value) => { source.value = value; }, block.querySelector("[data-autosave-status]"), block);
+  const fieldName = block.dataset.docFieldName || "body";
+  autosave.register(fieldName, source.value, (value) => { source.value = value; }, block.querySelector("[data-autosave-status]"), block);
 
   let view = null;
   let caret = 0;
@@ -530,7 +531,7 @@ function mountDocEdit(block) {
         selection: { anchor: Math.min(caret, source.value.length) },
         extensions: extensions({
           worldId: block.dataset.worldId,
-          onDocChanged: (value) => { source.value = value; autosave.change("body", value); },
+          onDocChanged: (value) => { source.value = value; autosave.change(fieldName, value); },
           onModEnter: () => { autosave.flush(); close(); },
           onEscape: close,
         }),
@@ -553,6 +554,11 @@ function mountDocEdit(block) {
     }
   }
   render.addEventListener("dblclick", open);
+  render.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    open();
+  });
   block.docOpen = open;
   block.addEventListener("keydown", (event) => {
     if (view && event.key === "Escape") { event.preventDefault(); close(); }
@@ -635,7 +641,10 @@ function mountDocIdentity(block) {
     const initial = field.textContent.trim();
     const apply = (value) => { field.textContent = value; field.dataset.empty = String(!value); };
     autosave.register(name, initial, apply, block.querySelector("[data-autosave-status]"), block);
-    field.addEventListener("dblclick", () => {
+    field.tabIndex = 0;
+    field.setAttribute("role", "textbox");
+    field.setAttribute("aria-label", field.dataset.docLabel || name);
+    const open = () => {
       if (field.querySelector("input")) return;
       const editor = document.createElement("input");
       editor.className = "docidentity__input";
@@ -659,6 +668,12 @@ function mountDocIdentity(block) {
         else if (event.key === "Escape") { event.preventDefault(); finish(false); }
       });
       editor.addEventListener("blur", () => finish(true));
+    };
+    field.addEventListener("dblclick", open);
+    field.addEventListener("keydown", (event) => {
+      if (event.target !== field || (event.key !== "Enter" && event.key !== "F2")) return;
+      event.preventDefault();
+      open();
     });
   });
 }

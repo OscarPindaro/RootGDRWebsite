@@ -36,6 +36,8 @@
 
 .dialog-close {
   display: flex;
+  min-width: var(--touch-target);
+  min-height: var(--touch-target);
   align-items: center;
   justify-content: center;
   background: none;
@@ -53,8 +55,15 @@
 }
 
 .dialog-body {
+  min-width: 0;
   padding: var(--sp-2) var(--sp-5) var(--sp-5);
   display: flex;
   flex-direction: column;
   gap: var(--sp-4);
+}
+
+@media (max-width: 640px) {
+  .dialog { width: calc(100% - var(--sp-4)); max-height: calc(100dvh - var(--sp-4)); }
+  .dialog-header { padding: var(--sp-3) var(--sp-3) var(--sp-1); }
+  .dialog-body { padding: var(--sp-2) var(--sp-3) var(--sp-3); overflow-y: auto; }
 }

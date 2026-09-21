@@ -150,6 +150,14 @@ def test_character_image_keyboard_focus_and_symbol_tint_on_phone(
     assert session.page.locator("[data-image-history-close]").evaluate(
         "element => document.activeElement === element"
     )
+    session.page.keyboard.press("Tab")
+    assert session.page.evaluate(
+        "() => Boolean(document.activeElement.closest('[data-image-history-dialog]'))"
+    )
+    session.page.keyboard.press("Shift+Tab")
+    assert session.page.evaluate(
+        "() => Boolean(document.activeElement.closest('[data-image-history-dialog]'))"
+    )
     session.page.keyboard.press("Escape")
     assert not dialog.is_visible()
     assert trigger.evaluate("element => document.activeElement === element")

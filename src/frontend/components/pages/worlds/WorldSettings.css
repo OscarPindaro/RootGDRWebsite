@@ -5,6 +5,22 @@
   border: var(--rule-ink);
 }
 
+.world-identity {
+  display: grid;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.world-identity .section__head { margin-bottom: var(--sp-2); }
+.world-identity .docidentity .display { margin: 0; }
+.world-identity .docedit__render { min-height: 7rem; }
+
 .links__item .btn--text {
   margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .world-identity .display { font-size: 1.8rem; }
+  .world-identity + section .row-inline { align-items: stretch; }
+  .world-identity + section .row-inline .input { flex: 1 1 100%; }
 }

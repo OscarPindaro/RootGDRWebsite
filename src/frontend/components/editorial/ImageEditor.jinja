@@ -24,7 +24,7 @@
         <span class="image-editor__overlay">{{ "Cambia immagine" if image_url else "Carica immagine" }}</span>
       </label>
       <input class="image-editor__input" id="image-{{ owner_kind }}-{{ owner_id }}" type="file"
-             name="image" accept="image/png,image/jpeg,image/gif,image/webp" required data-image-input
+             name="image" accept="image/png,image/jpeg,image/gif,image/webp" required data-image-input tabindex="-1"
              aria-label="{{ 'Cambia' if image_url else 'Carica' }} {{ label | lower }}">
       <button class="btn btn-secondary btn-sm btn-round image-editor__fallback-submit" type="submit" data-image-submit>Carica immagine</button>
     </form>

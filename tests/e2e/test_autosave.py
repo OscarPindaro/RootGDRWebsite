@@ -228,3 +228,52 @@ def test_locked_response_retains_draft_and_retry_saves(
     session.page.get_by_role("button", name="Riprova").click()
     _wait_saved(session)
     assert session.expect_api(api_path).json()["body"].endswith(" bozza bloccata")
+
+
+def test_world_settings_autosaves_name_markdown_and_local_recovery(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id = seed_world("Mondo Autosave impostazioni")
+    api_path = f"/api/worlds/{world_id}"
+    session.goto(f"/worlds/{world_id}/settings")
+
+    name = session.page.locator('[data-doc-field="name"]')
+    name.focus()
+    name.press("Enter")
+    session.page.locator(".docidentity__input").fill("Bosco recuperato")
+    session.page.locator(".docidentity__input").press("Enter")
+    _wait_saved(session)
+
+    description = session.page.locator(
+        '[data-doc-field-name="description"] [data-doc-render]'
+    )
+    description.focus()
+    description.press("Enter")
+    editor = session.page.locator('[data-doc-field-name="description"] .cm-content')
+    editor.fill("## Radura\n\nDescrizione **salvata**.")
+    session.page.keyboard.press("Control+Enter")
+    _wait_saved(session)
+
+    payload = session.expect_api(api_path).json()
+    assert payload["name"] == "Bosco recuperato"
+    assert payload["description"] == "## Radura\n\nDescrizione **salvata**."
+    assert (
+        session.page.locator('[data-doc-field-name="description"] h2').inner_text()
+        == "Radura"
+    )
+    assert (
+        session.page.locator('[data-doc-field-name="description"] strong').inner_text()
+        == "salvata"
+    )
+
+    recovered = "Testo recuperato dal dispositivo"
+    session.page.evaluate(
+        "([key, version, description]) => localStorage.setItem(key, "
+        "JSON.stringify({baseVersion: version, fields: {description}}))",
+        [f"rootgdr:autosave:{api_path}", payload["version"], recovered],
+    )
+    session.page.reload(wait_until="networkidle")
+    session.page.get_by_role("button", name="Ripristina bozza").click()
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["description"] == recovered
+    assert session.errors == []

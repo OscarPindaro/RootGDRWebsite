@@ -18,6 +18,9 @@ The reading page is where a document is written: no separate edit form, no
 - Body and identity changes save automatically after about one idle second. A
   five-second ceiling covers continuous typing and changes of 200 characters
   flush immediately. `Ctrl/⌘ + Enter`, blur and navigation also flush.
+- World settings uses the same controller for its in-place name and rendered
+  Markdown description. It shares one optimistic world version, local recovery,
+  conflict handling and server preview while members and cover stay on the page.
 - Italian live status text reports saving, saved, offline, validation/access
   errors and conflicts. A locked document does not enter writing at all.
 
