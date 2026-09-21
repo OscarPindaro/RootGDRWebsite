@@ -145,6 +145,19 @@
     </section>
 
     <section class="showcase-section">
+      <h2>Icon buttons</h2>
+      <p class="showcase-note">Icon-only actions. The label is required: it becomes both the accessible name and the tooltip.</p>
+      <div class="showcase-row">
+        <common.IconButton icon="plus" label="Nuovo" variant="primary" />
+        <common.IconButton icon="settings" label="Impostazioni" />
+        <common.IconButton icon="history" label="Storico" />
+        <common.IconButton icon="trash-2" label="Elimina" variant="danger" />
+        <common.IconButton icon="star" label="Preferito" :selected="True" />
+        <common.IconButton icon="download" label="Scarica" size="md" />
+      </div>
+    </section>
+
+    <section class="showcase-section">
       <h2>Button groups</h2>
       <p class="showcase-note">Geometry is stable: pressing or selecting never changes width or shape. Standard groups fix the shape of their items; connected groups share their inner corners.</p>
       {% for group_size in ["xs", "sm", "md", "lg", "xl"] %}

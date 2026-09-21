@@ -7,12 +7,12 @@
     :lede_html="world.description | markdown"
     :crumbs="crumbs">
     <div class="masthead__actions">
-      <common.Tooltip text="Nuova sessione">
-        <common.Button :hx-post="'/worlds/' ~ world.id ~ '/sessions/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuova sessione" data-testid="create-session" />
-      </common.Tooltip>
-      <common.Tooltip text="Impostazioni del mondo">
-        <common.Button :href="'/worlds/' ~ world.id ~ '/settings'" variant="secondary" size="sm" icon="settings" icon_only label="Impostazioni del mondo" data-testid="world-settings" />
-      </common.Tooltip>
+      <common.IconButton icon="plus" label="Nuova sessione" variant="primary"
+                         :hx-post="'/worlds/' ~ world.id ~ '/sessions/new'" hx-swap="none"
+                         data-testid="create-session" />
+      <common.IconButton icon="settings" label="Impostazioni del mondo"
+                         :href="'/worlds/' ~ world.id ~ '/settings'"
+                         data-testid="world-settings" />
     </div>
   </editorial.Masthead>
 

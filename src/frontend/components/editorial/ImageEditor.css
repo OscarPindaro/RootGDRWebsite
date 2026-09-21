@@ -89,12 +89,13 @@
 .image-editor[data-enhanced="true"] .image-editor__fallback-submit { display: none; }
 .image-editor__fallback-submit { margin-top: var(--sp-2); }
 
-.image-editor__history-trigger {
-  position: absolute;
-  right: var(--sp-2);
-  bottom: var(--sp-2);
-  z-index: 2;
+.image-editor__media {
+  grid-template-rows: 1fr auto;
+  gap: var(--sp-2);
 }
+
+/* The history command sits under the image, never on top of it. */
+.image-editor__history-trigger { justify-self: end; }
 
 .image-editor__choices {
   display: grid;
