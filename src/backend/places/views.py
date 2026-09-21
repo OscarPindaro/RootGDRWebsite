@@ -1,13 +1,14 @@
 import uuid
 
 from fastapi import APIRouter, Depends, File, Response, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from jinjax.catalog import Catalog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
 from ..content.constants import ContentKind
+from ..content.policy import require_draft
 from ..content.view_helpers import (
     render_document,
     shape_options,
@@ -68,7 +69,7 @@ async def places_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
     places = await list_places(db, world_id, user)
-    published, drafts = split_published_drafts(places, user)
+    published, drafts = split_published_drafts(places)
     return catalog.render(
         "pages.places.PlaceList",
         world=world,
@@ -84,46 +85,28 @@ async def places_page(
     )
 
 
-@router.get("/worlds/{world_id}/places/new", response_class=HTMLResponse)
-async def place_new_page(
-    world_id: uuid.UUID,
-    catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session, scope="function"),
-    user: User = Depends(get_current_user),
-) -> HTMLResponse:
-    """Render the create-Luogo form (master only)."""
-    set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
-    await master_world(db, world_id, user)
-    return catalog.render(
-        "pages.places.PlaceForm",
-        world=world,
-        world_context=context,
-        nav=nav,
-        pages=rail_pages,
-        place=None,
-        shapes=shape_options(),
-        tints=tint_options(),
-        crumbs=_crumbs(world, Crumb(label="Nuovo")),
-        current_user=user,
-    )
+@router.get("/worlds/{world_id}/places/new")
+async def place_new_page(world_id: uuid.UUID) -> RedirectResponse:
+    return RedirectResponse(f"/worlds/{world_id}/places", status_code=303)
 
 
 @router.post("/worlds/{world_id}/places/new")
 async def place_new_submit(
     world_id: uuid.UUID,
-    data: PlaceCreate,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
-    place = await create_place(db, world_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/places/{place.id}")
+    place = await create_place(
+        db, world_id, PlaceCreate(name="Nuovo luogo", is_draft=True), user
+    )
+    return _htmx_redirect(f"/worlds/{world_id}/places/{place.id}?edit=1")
 
 
 @router.get("/worlds/{world_id}/places/{place_id}", response_class=HTMLResponse)
 async def place_detail_page(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
+    edit: bool = False,
     catalog: Catalog = Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
@@ -148,50 +131,31 @@ async def place_detail_page(
         links=links,
         is_current=world.current_place_id == place.id,
         can_manage=await is_master(db, world, user),
+        auto_edit=edit,
         crumbs=_crumbs(world, Crumb(label=place.name)),
         current_user=user,
     )
 
 
-@router.get("/worlds/{world_id}/places/{place_id}/edit", response_class=HTMLResponse)
-async def place_edit_page(
-    world_id: uuid.UUID,
-    place_id: uuid.UUID,
-    catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session, scope="function"),
-    user: User = Depends(get_current_user),
-) -> HTMLResponse:
-    set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
-    place = await get_place(db, world_id, place_id, user)
-    return catalog.render(
-        "pages.places.PlaceForm",
-        world=world,
-        world_context=context,
-        nav=nav,
-        pages=rail_pages,
-        place=place,
-        shapes=shape_options(),
-        tints=tint_options(),
-        crumbs=_crumbs(
-            world,
-            Crumb(label=place.name, href=f"/worlds/{world_id}/places/{place_id}"),
-            Crumb(label="Modifica"),
-        ),
-        current_user=user,
+@router.get("/worlds/{world_id}/places/{place_id}/edit")
+async def place_edit_page(world_id: uuid.UUID, place_id: uuid.UUID) -> RedirectResponse:
+    return RedirectResponse(
+        f"/worlds/{world_id}/places/{place_id}?edit=1", status_code=303
     )
 
 
-@router.post("/worlds/{world_id}/places/{place_id}")
-async def place_edit_submit(
+@router.post("/worlds/{world_id}/places/{place_id}/cancel-draft")
+async def place_cancel_draft(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
-    data: PlaceUpdate,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:
-    await update_place(db, world_id, place_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/places/{place_id}")
+    place = await get_place(db, world_id, place_id, user)
+    require_draft(place)
+    await delete_place(db, world_id, place_id, user, filesystem)
+    return _htmx_redirect(f"/worlds/{world_id}/places")
 
 
 @router.delete("/worlds/{world_id}/places/{place_id}")
@@ -200,8 +164,9 @@ async def place_delete(
     place_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:
-    await delete_place(db, world_id, place_id, user)
+    await delete_place(db, world_id, place_id, user, filesystem)
     return _htmx_redirect(f"/worlds/{world_id}/places")
 
 

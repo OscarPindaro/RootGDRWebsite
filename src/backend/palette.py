@@ -9,7 +9,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
 from pydantic import Field
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .access import readable_world
@@ -56,16 +56,28 @@ async def palette(
     if world_id is not None:
         world = await readable_world(db, world_id, user)
         named_queries = (
-            (ContentKind.CHARACTER, CharacterModel, CharacterModel.name),
-            (ContentKind.NPC, NpcModel, NpcModel.name),
-            (ContentKind.PLACE, PlaceModel, PlaceModel.name),
-            (ContentKind.SESSION, SessionModel, SessionModel.title),
-            (ContentKind.STORY, StoryModel, StoryModel.title),
-            (ContentKind.PAGE, PageModel, PageModel.title),
+            (
+                ContentKind.CHARACTER,
+                CharacterModel,
+                CharacterModel.name,
+                CharacterModel.owner_id,
+            ),
+            (ContentKind.NPC, NpcModel, NpcModel.name, NpcModel.created_by_id),
+            (ContentKind.PLACE, PlaceModel, PlaceModel.name, PlaceModel.created_by_id),
+            (
+                ContentKind.SESSION,
+                SessionModel,
+                SessionModel.title,
+                SessionModel.created_by_id,
+            ),
+            (ContentKind.STORY, StoryModel, StoryModel.title, StoryModel.created_by_id),
+            (ContentKind.PAGE, PageModel, PageModel.title, PageModel.created_by_id),
         )
-        for kind, model, name_column in named_queries:
+        for kind, model, name_column, author_column in named_queries:
             stmt = select(model).where(
-                model.world_id == world_id, name_column.ilike(f"%{q}%")
+                model.world_id == world_id,
+                name_column.ilike(f"%{q}%"),
+                or_(model.is_draft.is_(False), author_column == user.id),
             )
             for content in (await db.scalars(stmt.limit(5))).all():
                 name = (
@@ -80,40 +92,4 @@ async def palette(
                         href=content_href(kind, world_id, content),
                     )
                 )
-        if await is_master(db, world, user):
-            items.extend(
-                [
-                    PaletteItem(
-                        kind="Azione",
-                        name="Nuova sessione",
-                        href=f"/worlds/{world_id}/sessions/new",
-                    ),
-                    PaletteItem(
-                        kind="Azione",
-                        name="Nuovo luogo",
-                        href=f"/worlds/{world_id}/places/new",
-                    ),
-                    PaletteItem(
-                        kind="Azione",
-                        name="Nuovo personaggio",
-                        href=f"/worlds/{world_id}/characters/new",
-                    ),
-                    PaletteItem(
-                        kind="Azione",
-                        name="Nuovo NPC",
-                        href=f"/worlds/{world_id}/npcs/new",
-                    ),
-                    PaletteItem(
-                        kind="Azione",
-                        name="Nuova storia",
-                        href=f"/worlds/{world_id}/stories/new",
-                    ),
-                    PaletteItem(
-                        kind="Azione",
-                        name="Nuova pagina",
-                        href=f"/worlds/{world_id}/pages/new",
-                    ),
-                ]
-            )
-
     return ListResponse(data=items[:12])

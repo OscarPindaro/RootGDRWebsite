@@ -4,7 +4,9 @@ The rail is server-rendered, so the active item, the marks and the counts are
 decided here rather than in the browser. Values are typed models, not dicts.
 """
 
-from pydantic import BaseModel
+from typing import Literal
+
+from pydantic import BaseModel, Field
 
 
 class NavItem(BaseModel):
@@ -82,6 +84,17 @@ class ButtonGroupOption(Option):
     icon: str | None = None
     aria_label: str | None = None
     disabled: bool = False
+
+
+class MetadataField(BaseModel):
+    """A typed field rendered and autosaved by the document metadata editor."""
+
+    name: str
+    label: str
+    kind: Literal["text", "date", "number", "select", "multiselect"]
+    value: str | int | None = None
+    values: list[str] = Field(default_factory=list)
+    options: list[Option] = Field(default_factory=list)
 
 
 def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:

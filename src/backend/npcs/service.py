@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import UploadFile
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -78,7 +78,10 @@ async def list_npcs(
             selectinload(NpcModel.created_by),
             selectinload(NpcModel.image),
         )
-        .where(NpcModel.world_id == world_id)
+        .where(
+            NpcModel.world_id == world_id,
+            or_(NpcModel.is_draft.is_(False), NpcModel.created_by_id == user.id),
+        )
         .order_by(NpcModel.name.asc())
     )
     return list((await db.scalars(stmt)).all())
@@ -89,7 +92,7 @@ async def get_npc(
 ) -> NpcModel:
     await readable_world(db, world_id, user)
     npc = await _get(db, world_id, npc_id)
-    if npc is None:
+    if npc is None or (npc.is_draft and npc.created_by_id != user.id):
         raise NpcNotFoundException(npc_id)
     return npc
 
@@ -103,7 +106,7 @@ async def update_npc(
 ) -> NpcModel:
     await master_world(db, world_id, user)
     npc = await _get(db, world_id, npc_id)
-    if npc is None:
+    if npc is None or (npc.is_draft and npc.created_by_id != user.id):
         raise NpcNotFoundException(npc_id)
     require_content_update(npc, data)
     if data.name is not None:
@@ -139,7 +142,7 @@ async def delete_npc(
 ) -> None:
     await master_world(db, world_id, user)
     npc = await _get(db, world_id, npc_id)
-    if npc is None:
+    if npc is None or (npc.is_draft and npc.created_by_id != user.id):
         raise NpcNotFoundException(npc_id)
     await purge_owner_revisions(db, filesystem, owner_reference(npc))
     await db.delete(npc)
@@ -156,7 +159,7 @@ async def upload_npc_image(
 ) -> NpcModel:
     await master_world(db, world_id, user)
     npc = await _get(db, world_id, npc_id)
-    if npc is None:
+    if npc is None or (npc.is_draft and npc.created_by_id != user.id):
         raise NpcNotFoundException(npc_id)
     await upload_revision(
         db,
@@ -188,6 +191,6 @@ async def count_npcs(db: AsyncSession, world_id: uuid.UUID) -> int:
         await db.scalar(
             select(func.count())
             .select_from(NpcModel)
-            .where(NpcModel.world_id == world_id)
+            .where(NpcModel.world_id == world_id, NpcModel.is_draft.is_(False))
         )
     ) or 0

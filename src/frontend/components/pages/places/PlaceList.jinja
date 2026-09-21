@@ -9,7 +9,7 @@
     :crumbs="crumbs">
     {% if can_manage %}
     <common.Tooltip text="Nuovo luogo">
-      <common.Button :href="'/worlds/' ~ world.id ~ '/places/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuovo luogo" data-testid="create-place" />
+      <common.Button :hx-post="'/worlds/' ~ world.id ~ '/places/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuovo luogo" data-testid="create-place" />
     </common.Tooltip>
     {% endif %}
   </editorial.Masthead>

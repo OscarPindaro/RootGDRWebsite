@@ -55,9 +55,20 @@ def _create(
     test_kind = TEST_KINDS[collection]
     session.page.click(f'[data-testid="create-{test_kind}"]')
     session.page.wait_for_load_state("networkidle")
+    session.page.wait_for_selector(".docidentity__input")
+    primary = "name" if "name" in fields else "title"
+    session.page.fill(".docidentity__input", fields[primary])
+    session.page.keyboard.press("Enter")
     for name, value in fields.items():
+        if name == primary:
+            continue
         session.page.fill(f'[name="{name}"]', value)
-    session.submit(f'[data-testid="save-{test_kind}"]', expect_url=expect_url)
+        session.page.locator(f'[name="{name}"]').blur()
+    session.page.wait_for_function(
+        "() => [...document.querySelectorAll('[data-autosave-status]')]"
+        ".some(node => node.innerText === 'Salvato')"
+    )
+    session.submit('[data-testid="document-publication"]', expect_url=expect_url)
     match = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url)
     world_id = match.group(1)
     if collection == "pages":
@@ -149,10 +160,18 @@ def test_master_fills_the_world_and_the_overview_updates(
     session.page.click('#rail a:has-text("Pagine")')
     session.page.wait_for_load_state("networkidle")
     session.page.click('[data-testid="create-page"]')
-    session.page.wait_for_load_state("networkidle")
-    session.page.fill('[name="title"]', "Le regole della Casa")
+    session.page.wait_for_selector(".docidentity__input")
+    session.page.fill(".docidentity__input", "Le regole della Casa")
+    session.page.keyboard.press("Enter")
+    session.page.wait_for_function(
+        "() => [...document.querySelectorAll('[data-autosave-status]')].some(node => node.innerText === 'Salvato')"
+    )
+    session.page.fill('[name="slug"]', "le-regole-della-casa")
+    session.page.locator('[name="slug"]').blur()
+    session.page.wait_for_url(re.compile(r"/pages/le-regole-della-casa$"))
     session.submit(
-        '[data-testid="save-page"]', expect_url=r"/pages/le-regole-della-casa$"
+        '[data-testid="document-publication"]',
+        expect_url=r"/pages/le-regole-della-casa$",
     )
     pages = session.expect_api(f"/api/worlds/{world_id}/pages/").json()["data"]
     assert any(page["title"] == "Le regole della Casa" for page in pages)

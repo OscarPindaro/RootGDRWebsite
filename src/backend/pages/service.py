@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -45,7 +45,13 @@ async def create_page(
 ) -> PageModel:
     await master_world(db, world_id, user)
     slug = data.slug or slugify(data.title)
-    if await _slug_taken(db, world_id, slug):
+    if data.slug is None:
+        base = slug
+        suffix = 2
+        while await _slug_taken(db, world_id, slug):
+            slug = f"{base}-{suffix}"
+            suffix += 1
+    elif await _slug_taken(db, world_id, slug):
         raise PageSlugConflictException(slug)
     page = PageModel(
         world_id=world_id,
@@ -84,7 +90,13 @@ async def list_pages(
             await db.scalars(
                 select(PageModel)
                 .options(selectinload(PageModel.created_by))
-                .where(PageModel.world_id == world_id)
+                .where(
+                    PageModel.world_id == world_id,
+                    or_(
+                        PageModel.is_draft.is_(False),
+                        PageModel.created_by_id == user.id,
+                    ),
+                )
                 .order_by(PageModel.menu_position.asc(), PageModel.title.asc())
             )
         ).all()
@@ -96,7 +108,7 @@ async def get_page(
 ) -> PageModel:
     await readable_world(db, world_id, user)
     page = await _get(db, world_id, page_id)
-    if page is None:
+    if page is None or (page.is_draft and page.created_by_id != user.id):
         raise PageNotFoundException(page_id)
     return page
 
@@ -112,7 +124,7 @@ async def get_page_by_slug(
             .where(PageModel.world_id == world_id, PageModel.slug == slug)
         )
     ).scalar_one_or_none()
-    if page is None:
+    if page is None or (page.is_draft and page.created_by_id != user.id):
         raise PageNotFoundException(slug)
     return page
 
@@ -126,7 +138,7 @@ async def update_page(
 ) -> PageModel:
     await master_world(db, world_id, user)
     page = await _get(db, world_id, page_id)
-    if page is None:
+    if page is None or (page.is_draft and page.created_by_id != user.id):
         raise PageNotFoundException(page_id)
     require_content_update(page, data)
     if data.slug is not None and data.slug != page.slug:
@@ -160,7 +172,7 @@ async def delete_page(
 ) -> None:
     await master_world(db, world_id, user)
     page = await _get(db, world_id, page_id)
-    if page is None:
+    if page is None or (page.is_draft and page.created_by_id != user.id):
         raise PageNotFoundException(page_id)
     await db.delete(page)
     await db.flush()
@@ -171,7 +183,7 @@ async def count_pages(db: AsyncSession, world_id: uuid.UUID) -> int:
         await db.scalar(
             select(func.count())
             .select_from(PageModel)
-            .where(PageModel.world_id == world_id)
+            .where(PageModel.world_id == world_id, PageModel.is_draft.is_(False))
         )
     ) or 0
 

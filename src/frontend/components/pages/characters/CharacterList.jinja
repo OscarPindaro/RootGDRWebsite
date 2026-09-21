@@ -8,7 +8,7 @@
     lede="I giocatori gestiscono le proprie schede; il Master vede e modifica tutto."
     :crumbs="crumbs">
     <common.Tooltip text="Nuovo personaggio">
-      <common.Button :href="'/worlds/' ~ world.id ~ '/characters/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuovo personaggio" data-testid="create-character" />
+      <common.Button :hx-post="'/worlds/' ~ world.id ~ '/characters/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuovo personaggio" data-testid="create-character" />
     </common.Tooltip>
   </editorial.Masthead>
 

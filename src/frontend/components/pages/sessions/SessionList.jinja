@@ -10,7 +10,7 @@
     :crumbs="crumbs">
     {% if can_manage %}
     <common.Tooltip text="Nuova sessione">
-      <common.Button :href="'/worlds/' ~ world.id ~ '/sessions/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuova sessione" data-testid="create-session" />
+      <common.Button :hx-post="'/worlds/' ~ world.id ~ '/sessions/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuova sessione" data-testid="create-session" />
     </common.Tooltip>
     {% endif %}
   </editorial.Masthead>

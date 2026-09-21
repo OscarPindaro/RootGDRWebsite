@@ -1,5 +1,5 @@
-{#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, short_html=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css #}
+{#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, short_html=None, body_html=None, links=None, current_user=None, metadata=None, auto_edit=False #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css #}
 <layout.Page :title="page.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
   <editorial.Crumbs :items="crumbs" />
 
@@ -9,18 +9,21 @@
     :locked="page.locked"
     :is_draft="page.is_draft"
     :can_manage="can_manage">
-    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-page"
-            hx-delete="/worlds/{{ world.id }}/pages/{{ page.id }}"
-            hx-confirm="Eliminare «{{ page.title }}»?" hx-swap="none">Elimina</button>
+    {% if page.is_draft %}
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="cancel-page-draft" hx-post="/worlds/{{ world.id }}/pages/{{ page.id }}/cancel-draft" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</button>
+    {% else %}
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-page" hx-delete="/worlds/{{ world.id }}/pages/{{ page.id }}" hx-confirm="Eliminare «{{ page.title }}»?" hx-swap="none">Elimina</button>
+    {% endif %}
   </editorial.Docbar>
 
   <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
-    :can_manage="can_manage" :locked="page.locked" :version="page.version">
+    :can_manage="can_manage" :locked="page.locked" :version="page.version" :auto_edit="auto_edit">
     <h1 class="display" data-doc-field="title">{{ page.title }}</h1>
     <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
       :value="page.short_description" :value_html="short_html" :version="page.version"
       :can_manage="can_manage" :locked="page.locked" />
   </editorial.DocIdentity>
+  <editorial.Metadata :fields="metadata" :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id" :version="page.version" :can_manage="can_manage" :locked="page.locked" :canonical_prefix="'/worlds/' ~ world.id ~ '/pages'" />
 
   <div class="article">
     <article>

@@ -11,6 +11,7 @@ from ..concurrency import VersionedUpdate, require_expected_version
 class ContentDocument(Protocol):
     version: int
     locked: bool
+    is_draft: bool
 
 
 class ContentUpdate(VersionedUpdate):
@@ -23,6 +24,14 @@ class ContentLockedException(HTTPException):
         super().__init__(
             status_code=status.HTTP_423_LOCKED,
             detail="Unlock the document before editing it",
+        )
+
+
+def require_draft(document: ContentDocument) -> None:
+    if not document.is_draft:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Only drafts can be cancelled",
         )
 
 

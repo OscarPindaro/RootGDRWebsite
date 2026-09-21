@@ -232,6 +232,9 @@ async def count_characters(db: AsyncSession, world_id: uuid.UUID) -> int:
         await db.scalar(
             select(func.count())
             .select_from(CharacterModel)
-            .where(CharacterModel.world_id == world_id)
+            .where(
+                CharacterModel.world_id == world_id,
+                CharacterModel.is_draft.is_(False),
+            )
         )
     ) or 0

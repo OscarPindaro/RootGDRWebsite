@@ -10,7 +10,7 @@
     :crumbs="crumbs">
     {% if can_manage %}
     <common.Tooltip text="Nuova pagina">
-      <common.Button :href="'/worlds/' ~ world.id ~ '/pages/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuova pagina" data-testid="create-page" />
+      <common.Button :hx-post="'/worlds/' ~ world.id ~ '/pages/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuova pagina" data-testid="create-page" />
     </common.Tooltip>
     {% endif %}
   </editorial.Masthead>

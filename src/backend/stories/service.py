@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -98,7 +98,13 @@ async def list_stories(
                     selectinload(StoryModel.created_by),
                     selectinload(StoryModel.sessions),
                 )
-                .where(StoryModel.world_id == world_id)
+                .where(
+                    StoryModel.world_id == world_id,
+                    or_(
+                        StoryModel.is_draft.is_(False),
+                        StoryModel.created_by_id == user.id,
+                    ),
+                )
                 .order_by(StoryModel.created_at.asc(), StoryModel.id.asc())
             )
         ).all()
@@ -110,7 +116,7 @@ async def get_story(
 ) -> StoryModel:
     await readable_world(db, world_id, user)
     story = await _get(db, world_id, story_id)
-    if story is None:
+    if story is None or (story.is_draft and story.created_by_id != user.id):
         raise StoryNotFoundException(story_id)
     return story
 
@@ -124,14 +130,14 @@ async def update_story(
 ) -> StoryModel:
     await master_world(db, world_id, user)
     story = await _get(db, world_id, story_id)
-    if story is None:
+    if story is None or (story.is_draft and story.created_by_id != user.id):
         raise StoryNotFoundException(story_id)
     require_content_update(story, data)
     if data.title is not None:
         story.title = data.title
     if data.short_description is not None:
         story.short_description = data.short_description
-    if data.period_label is not None:
+    if "period_label" in data.model_fields_set:
         story.period_label = data.period_label
     if data.status is not None:
         story.status = StoryStatus(data.status)
@@ -158,7 +164,7 @@ async def delete_story(
 ) -> None:
     await master_world(db, world_id, user)
     story = await _get(db, world_id, story_id)
-    if story is None:
+    if story is None or (story.is_draft and story.created_by_id != user.id):
         raise StoryNotFoundException(story_id)
     await db.delete(story)
     await db.flush()
@@ -169,7 +175,7 @@ async def count_stories(db: AsyncSession, world_id: uuid.UUID) -> int:
         await db.scalar(
             select(func.count())
             .select_from(StoryModel)
-            .where(StoryModel.world_id == world_id)
+            .where(StoryModel.world_id == world_id, StoryModel.is_draft.is_(False))
         )
     ) or 0
 
@@ -182,6 +188,7 @@ async def open_story(db: AsyncSession, world_id: uuid.UUID) -> StoryModel | None
             .where(
                 StoryModel.world_id == world_id,
                 StoryModel.status == StoryStatus.OPEN,
+                StoryModel.is_draft.is_(False),
             )
             .order_by(StoryModel.updated_at.desc(), StoryModel.id.desc())
             .limit(1)

@@ -43,10 +43,18 @@ async def test_slug_is_unique_per_world(db_session: AsyncSession) -> None:
     world = await create_world(
         db_session, WorldCreate(name="Boscochiaro", description="x"), master
     )
-    await create_page(db_session, world.id, PageCreate(title="Regole"), master)
+    first = await create_page(db_session, world.id, PageCreate(title="Regole"), master)
+    second = await create_page(db_session, world.id, PageCreate(title="Regole"), master)
 
+    assert first.slug == "regole"
+    assert second.slug == "regole-2"
     with pytest.raises(PageSlugConflictException):
-        await create_page(db_session, world.id, PageCreate(title="Regole"), master)
+        await create_page(
+            db_session,
+            world.id,
+            PageCreate(title="Altre regole", slug="regole"),
+            master,
+        )
 
 
 async def test_pages_are_master_managed_and_ordered_by_menu_position(
@@ -83,8 +91,14 @@ async def test_pages_are_master_managed_and_ordered_by_menu_position(
     assert [p.slug for p in await list_pages(db_session, world.id, player)] == [
         "regole",
         "fazioni",
+    ]
+    assert [p.slug for p in await list_pages(db_session, world.id, master)] == [
+        "regole",
+        "fazioni",
         "bozza",
     ]
+    with pytest.raises(PageNotFoundException):
+        await get_page_by_slug(db_session, world.id, "bozza", player)
     # The rail only shows published pages.
     assert [p.slug for p in await rail_pages(db_session, world.id)] == [
         "regole",

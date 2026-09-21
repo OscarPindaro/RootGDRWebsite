@@ -1,13 +1,14 @@
 import uuid
 
 from fastapi import APIRouter, Depends, File, Response, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from jinjax.catalog import Catalog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import readable_world
 from ..auth.dependencies import get_current_user
 from ..content.constants import ContentKind
+from ..content.policy import require_draft
 from ..content.view_helpers import (
     render_document,
     animal_options,
@@ -69,7 +70,7 @@ async def characters_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
     characters = await list_characters(db, world_id, user)
-    published, drafts = split_published_drafts(characters, user, author_attr="owner_id")
+    published, drafts = split_published_drafts(characters)
     return catalog.render(
         "pages.characters.CharacterList",
         world=world,
@@ -83,46 +84,30 @@ async def characters_page(
     )
 
 
-@router.get("/worlds/{world_id}/characters/new", response_class=HTMLResponse)
-async def character_new_page(
-    world_id: uuid.UUID,
-    catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session, scope="function"),
-    user: User = Depends(get_current_user),
-) -> HTMLResponse:
-    """Render the create-character form."""
-    set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
-    return catalog.render(
-        "pages.characters.CharacterForm",
-        world=world,
-        world_context=context,
-        nav=nav,
-        pages=rail_pages,
-        character=None,
-        animals=animal_options(),
-        tints=tint_options(),
-        crumbs=_crumbs(world, Crumb(label="Nuovo")),
-        current_user=user,
-    )
+@router.get("/worlds/{world_id}/characters/new")
+async def character_new_page(world_id: uuid.UUID) -> RedirectResponse:
+    """Keep the former creation URL safe and non-mutating."""
+    return RedirectResponse(f"/worlds/{world_id}/characters", status_code=303)
 
 
 @router.post("/worlds/{world_id}/characters/new")
 async def character_new_submit(
     world_id: uuid.UUID,
-    data: CharacterCreate,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
-    """Create a character and redirect to it."""
-    character = await create_character(db, world_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/characters/{character.id}")
+    """Create an author-owned draft and open its normal detail surface."""
+    character = await create_character(
+        db, world_id, CharacterCreate(name="Nuovo personaggio", is_draft=True), user
+    )
+    return _htmx_redirect(f"/worlds/{world_id}/characters/{character.id}?edit=1")
 
 
 @router.get("/worlds/{world_id}/characters/{character_id}", response_class=HTMLResponse)
 async def character_detail_page(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
+    edit: bool = False,
     catalog: Catalog = Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
@@ -148,58 +133,32 @@ async def character_detail_page(
         body_html=body_html,
         links=links,
         can_manage=can_manage,
+        auto_edit=edit,
         crumbs=_crumbs(world, Crumb(label=character.name)),
         current_user=user,
     )
 
 
-@router.get(
-    "/worlds/{world_id}/characters/{character_id}/edit",
-    response_class=HTMLResponse,
-)
+@router.get("/worlds/{world_id}/characters/{character_id}/edit")
 async def character_edit_page(
-    world_id: uuid.UUID,
-    character_id: uuid.UUID,
-    catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session, scope="function"),
-    user: User = Depends(get_current_user),
-) -> HTMLResponse:
-    """Render the edit-character form."""
-    set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "personaggi")
-    character = await get_character(db, world_id, character_id, user)
-    return catalog.render(
-        "pages.characters.CharacterForm",
-        world=world,
-        world_context=context,
-        nav=nav,
-        pages=rail_pages,
-        character=character,
-        animals=animal_options(),
-        tints=tint_options(),
-        crumbs=_crumbs(
-            world,
-            Crumb(
-                label=character.name,
-                href=f"/worlds/{world_id}/characters/{character_id}",
-            ),
-            Crumb(label="Modifica"),
-        ),
-        current_user=user,
+    world_id: uuid.UUID, character_id: uuid.UUID
+) -> RedirectResponse:
+    return RedirectResponse(
+        f"/worlds/{world_id}/characters/{character_id}?edit=1", status_code=303
     )
 
 
-@router.post("/worlds/{world_id}/characters/{character_id}")
-async def character_edit_submit(
+@router.post("/worlds/{world_id}/characters/{character_id}/cancel-draft")
+async def character_cancel_draft(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
-    data: CharacterUpdate,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
-    """Update a character and redirect to it."""
-    await update_character(db, world_id, character_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/characters/{character_id}")
+    character = await get_character(db, world_id, character_id, user)
+    require_draft(character)
+    await delete_character(db, world_id, character_id, user)
+    return _htmx_redirect(f"/worlds/{world_id}/characters")
 
 
 @router.delete("/worlds/{world_id}/characters/{character_id}")

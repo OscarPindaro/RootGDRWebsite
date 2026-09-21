@@ -1,0 +1,25 @@
+{#def fields, base, version, can_manage=False, locked=False, canonical_prefix=None #}
+<div class="metadata" data-doc-metadata data-autosave-url="/api{{ base }}"
+     {% if canonical_prefix %}data-canonical-prefix="{{ canonical_prefix }}"{% endif %}
+     data-autosave-version="{{ version }}"
+     {% if locked or not can_manage %}data-readonly="true"{% endif %}>
+  {% for field in fields %}
+  <label class="metadata__field">
+    <span class="eyebrow">{{ field.label }}</span>
+    {% if field.kind == "select" %}
+    <select name="{{ field.name }}" data-metadata-field data-value-kind="string" {% if locked or not can_manage %}disabled{% endif %}>
+      {% for option in field.options %}<option value="{{ option.value }}" {% if option.value == field.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}
+    </select>
+    {% elif field.kind == "multiselect" %}
+    <select name="{{ field.name }}" data-metadata-field data-value-kind="array" multiple {% if locked or not can_manage %}disabled{% endif %}>
+      {% for option in field.options %}<option value="{{ option.value }}" {% if option.value in field.values %}selected{% endif %}>{{ option.label }}</option>{% endfor %}
+    </select>
+    {% else %}
+    <input name="{{ field.name }}" type="{{ field.kind }}" value="{{ field.value if field.value is not none else '' }}"
+           data-metadata-field data-value-kind="{{ 'integer' if field.kind == 'number' else ('nullable' if field.kind == 'date' else 'string') }}"
+           {% if field.kind == "number" %}min="0"{% endif %} {% if locked or not can_manage %}disabled{% endif %}>
+    {% endif %}
+  </label>
+  {% endfor %}
+  {% if can_manage and not locked %}<p class="autosave-status" data-autosave-status role="status" aria-live="polite"></p>{% endif %}
+</div>

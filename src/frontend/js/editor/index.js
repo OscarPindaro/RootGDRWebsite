@@ -353,6 +353,14 @@ class AutosaveController {
       }
       const payload = await response.json();
       this.version = Number(payload.version);
+      document.dispatchEvent(new CustomEvent("autosave:saved", { detail: { url: this.url, sent, payload } }));
+      document.querySelectorAll("[data-image-editor]").forEach((editor) => {
+        if (editor.querySelector("[data-image-choices]")?.dataset.autosaveUrl === this.url) editor.dataset.version = payload.version;
+      });
+      if ("slug" in sent && payload.slug && this.url.includes("/pages/")) {
+          const canonical = location.pathname.replace(/\/pages\/[^/]+$/, `/pages/${payload.slug}`);
+          location.replace(canonical);
+      }
       Object.entries(sent).forEach(([name, value]) => {
         const field = this.fields.get(name);
         if (field) field.saved = value;
@@ -655,6 +663,32 @@ function mountDocIdentity(block) {
   });
 }
 
+function metadataValue(field) {
+  if (field.dataset.valueKind === "array") {
+    return [...field.selectedOptions].map((option) => option.value);
+  }
+  if (field.dataset.valueKind === "integer") return Number(field.value);
+  if (field.dataset.valueKind === "nullable") return field.value || null;
+  return field.value;
+}
+
+function mountDocMetadata(block) {
+  if (block.dataset.metadataReady === "true") return;
+  block.dataset.metadataReady = "true";
+  if (block.dataset.readonly === "true") return;
+  const autosave = controllerFor(block);
+  block.querySelectorAll("[data-metadata-field]").forEach((field) => {
+    const initial = metadataValue(field);
+    autosave.register(field.name, initial, (value) => {
+      if (field.multiple) [...field.options].forEach((option) => { option.selected = value.includes(option.value); });
+      else field.value = value ?? "";
+    }, block.querySelector("[data-autosave-status]"), block);
+    field.addEventListener("change", () => { autosave.change(field.name, metadataValue(field)); autosave.flush(); });
+    field.addEventListener("input", () => autosave.change(field.name, metadataValue(field)));
+    field.addEventListener("blur", () => autosave.flush());
+  });
+}
+
 function flushAll() { autosaves.forEach((autosave) => autosave.flush()); }
 
 function mountAll(root) {
@@ -664,6 +698,9 @@ function mountAll(root) {
   scope.querySelectorAll("[data-doc-edit]").forEach((block) => mountDocEdit(block));
   scope.querySelectorAll("[data-doc-summary]").forEach((block) => mountDocSummary(block));
   scope.querySelectorAll("[data-doc-identity]").forEach((block) => mountDocIdentity(block));
+  scope.querySelectorAll("[data-doc-metadata]").forEach((block) => mountDocMetadata(block));
+  const autoField = scope.querySelector("[data-auto-edit='true'] [data-doc-field]");
+  if (autoField) autoField.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
 }
 
 mountAll();

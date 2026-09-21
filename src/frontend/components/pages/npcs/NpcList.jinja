@@ -8,7 +8,7 @@
     :crumbs="crumbs">
     {% if can_manage %}
     <common.Tooltip text="Nuovo NPC">
-      <common.Button :href="'/worlds/' ~ world.id ~ '/npcs/new'" variant="primary" size="sm" icon="plus" icon_only label="Nuovo NPC" data-testid="create-npc" />
+      <common.Button :hx-post="'/worlds/' ~ world.id ~ '/npcs/new'" hx-swap="none" variant="primary" size="sm" icon="plus" icon_only label="Nuovo NPC" data-testid="create-npc" />
     </common.Tooltip>
     {% endif %}
   </editorial.Masthead>

@@ -1,0 +1,26 @@
+.metadata {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: var(--sp-3);
+  padding: var(--sp-3) 0;
+  border-block: var(--rule-hair);
+}
+
+.metadata__field {
+  display: grid;
+  gap: var(--sp-1);
+}
+
+.metadata input,
+.metadata select {
+  width: 100%;
+  min-height: 2.5rem;
+  color: var(--ink);
+  background: var(--surface);
+  border: var(--rule-ink);
+  padding: var(--sp-1) var(--sp-2);
+}
+
+.metadata select[multiple] {
+  min-height: 6rem;
+}

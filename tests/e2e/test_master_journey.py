@@ -35,11 +35,17 @@ def test_master_creates_a_world_and_a_character(session: BrowserSession) -> None
     world_id = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
     world_payload = session.expect_api(f"/api/worlds/{world_id}").json()
     assert world_payload["name"] == name
-    session.goto(f"/worlds/{world_id}/characters/new")
-    session.page.fill('input[name="name"]', "Rugginosa")
-    session.page.fill('input[name="title"]', "La Senza Tana")
+    session.goto(f"/worlds/{world_id}/characters")
+    session.page.click('[data-testid="create-character"]')
+    session.page.wait_for_selector(".docidentity__input")
+    session.page.fill(".docidentity__input", "Rugginosa")
+    session.page.keyboard.press("Enter")
+    session.page.locator('[data-doc-field="title"]').dblclick()
+    session.page.fill(".docidentity__input", "La Senza Tana")
+    session.page.keyboard.press("Enter")
     session.submit(
-        '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"
+        '[data-testid="document-publication"]',
+        expect_url=r"/characters/[0-9a-f-]{36}$",
     )
     session.page.wait_for_selector(".docbar")
     assert "Rugginosa" in session.page.content()
@@ -49,9 +55,7 @@ def test_master_creates_a_world_and_a_character(session: BrowserSession) -> None
     ).json()
     assert character_payload["name"] == "Rugginosa"
 
-    # The CodeMirror editor mounted on the form.
-    session.goto(f"/worlds/{world_id}/characters/new")
-    session.page.wait_for_selector("[data-markdown-editor]", timeout=5000)
+    session.page.wait_for_selector("[data-doc-render]", state="attached")
 
     assert session.errors == []
 
@@ -65,16 +69,14 @@ def test_master_can_draft_a_character(session: BrowserSession) -> None:
     world_id = re.search(r"/worlds/([0-9a-f-]{36})", session.page.url).group(1)
     assert session.expect_api(f"/api/worlds/{world_id}").json()["name"] == name
 
-    session.goto(f"/worlds/{world_id}/characters/new")
-    session.page.fill('input[name="name"]', "Bozzetto")
-    session.submit(
-        '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"
-    )
-    session.page.wait_for_selector(".docbar")
-
-    # The draft toggle flips the visible state pill after the redirect.
-    session.submit('[data-testid="document-publication"]')
+    session.goto(f"/worlds/{world_id}/characters")
+    session.page.click('[data-testid="create-character"]')
+    session.page.wait_for_selector(".docidentity__input")
+    session.page.fill(".docidentity__input", "Bozzetto")
+    session.page.keyboard.press("Enter")
     session.page.wait_for_selector(".pill--draft", timeout=10_000)
+
+    # Creation starts as an author-owned draft on the detail surface.
     assert session.page.locator(".pill--draft").count() == 1
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
     payload = session.expect_api(
@@ -167,13 +169,13 @@ def test_character_form_uses_face_pickers(session: BrowserSession, seed_world) -
     """The face is chosen from an emoji grid and a tint strip, not dropdowns,
     and both reach the server through the JSON-encoded htmx form."""
     world_id = seed_world("Mondo Picker")
-    session.goto(f"/worlds/{world_id}/characters/new")
-    session.page.fill('input[name="name"]', "Picker Test")
-    session.page.check('input[name="animal"][value="🦊"]', force=True)
-    session.page.check('input[name="tint"][value="p8"]', force=True)
-    session.submit(
-        '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"
-    )
+    session.goto(f"/worlds/{world_id}/characters")
+    session.page.click('[data-testid="create-character"]')
+    session.page.wait_for_selector('input[name="animal"]')
+    with session.page.expect_navigation():
+        session.page.check('input[name="animal"][value="🦊"]', force=True)
+    with session.page.expect_navigation():
+        session.page.check('input[name="tint"][value="p8"]', force=True)
 
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
     payload = session.expect_api(
@@ -188,20 +190,15 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     opens the editor, Ctrl/⌘+Enter shows the server-rendered result, Ctrl/⌘+S
     saves it."""
     world_id = seed_world("Mondo InPlace")
-    session.goto(f"/worlds/{world_id}/characters/new")
-    session.page.fill('input[name="name"]', "Rugginosa")
-    session.page.wait_for_selector("[data-markdown-editor]")
-    session.page.locator('textarea[name="body"]').locator("..").locator(
-        ".cm-content"
-    ).click()
-    session.page.keyboard.type("Testo iniziale.")
-    session.submit(
-        '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"
-    )
+    session.goto(f"/worlds/{world_id}/characters")
+    session.page.click('[data-testid="create-character"]')
+    session.page.wait_for_selector(".docidentity__input")
+    session.page.fill(".docidentity__input", "Rugginosa")
+    session.page.keyboard.press("Enter")
 
     assert session.page.locator('a:has-text("Modifica")').count() == 0
 
-    session.page.locator("[data-doc-render]").first.dblclick()
+    session.page.click('[data-testid="document-edit"]')
     session.page.wait_for_selector(".cm-editor")
     session.page.locator(".cm-content").click()
     session.page.keyboard.type("\n\nScritto in place.")
@@ -221,7 +218,7 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     ).json()
     assert "Scritto in place" in payload["body"]
 
-    session.page.locator("[data-doc-render]").first.dblclick()
+    session.page.click('[data-testid="document-edit"]')
     session.page.wait_for_selector(".cm-editor")
     session.page.locator(".cm-content").click()
     session.page.keyboard.press("Control+a")

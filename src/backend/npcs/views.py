@@ -1,13 +1,14 @@
 import uuid
 
 from fastapi import APIRouter, Depends, File, Response, UploadFile
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from jinjax.catalog import Catalog
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
 from ..content.constants import ContentKind
+from ..content.policy import require_draft
 from ..content.view_helpers import (
     render_document,
     animal_options,
@@ -68,7 +69,7 @@ async def npcs_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
     npcs = await list_npcs(db, world_id, user)
-    published, drafts = split_published_drafts(npcs, user)
+    published, drafts = split_published_drafts(npcs)
     return catalog.render(
         "pages.npcs.NpcList",
         world=world,
@@ -83,46 +84,28 @@ async def npcs_page(
     )
 
 
-@router.get("/worlds/{world_id}/npcs/new", response_class=HTMLResponse)
-async def npc_new_page(
-    world_id: uuid.UUID,
-    catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session, scope="function"),
-    user: User = Depends(get_current_user),
-) -> HTMLResponse:
-    """Render the create-NPC form (master only)."""
-    set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
-    await master_world(db, world_id, user)
-    return catalog.render(
-        "pages.npcs.NpcForm",
-        world=world,
-        world_context=context,
-        nav=nav,
-        pages=rail_pages,
-        npc=None,
-        animals=animal_options(),
-        tints=tint_options(),
-        crumbs=_crumbs(world, Crumb(label="Nuovo")),
-        current_user=user,
-    )
+@router.get("/worlds/{world_id}/npcs/new")
+async def npc_new_page(world_id: uuid.UUID) -> RedirectResponse:
+    return RedirectResponse(f"/worlds/{world_id}/npcs", status_code=303)
 
 
 @router.post("/worlds/{world_id}/npcs/new")
 async def npc_new_submit(
     world_id: uuid.UUID,
-    data: NpcCreate,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
-    npc = await create_npc(db, world_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/npcs/{npc.id}")
+    npc = await create_npc(
+        db, world_id, NpcCreate(name="Nuovo NPC", is_draft=True), user
+    )
+    return _htmx_redirect(f"/worlds/{world_id}/npcs/{npc.id}?edit=1")
 
 
 @router.get("/worlds/{world_id}/npcs/{npc_id}", response_class=HTMLResponse)
 async def npc_detail_page(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
+    edit: bool = False,
     catalog: Catalog = Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
@@ -146,50 +129,29 @@ async def npc_detail_page(
         body_html=body_html,
         links=links,
         can_manage=await is_master(db, world, user),
+        auto_edit=edit,
         crumbs=_crumbs(world, Crumb(label=npc.name)),
         current_user=user,
     )
 
 
-@router.get("/worlds/{world_id}/npcs/{npc_id}/edit", response_class=HTMLResponse)
-async def npc_edit_page(
-    world_id: uuid.UUID,
-    npc_id: uuid.UUID,
-    catalog: Catalog = Depends(get_catalog_dep),
-    db: AsyncSession = Depends(get_db_session, scope="function"),
-    user: User = Depends(get_current_user),
-) -> HTMLResponse:
-    set_world_id(str(world_id))
-    world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
-    npc = await get_npc(db, world_id, npc_id, user)
-    return catalog.render(
-        "pages.npcs.NpcForm",
-        world=world,
-        world_context=context,
-        nav=nav,
-        pages=rail_pages,
-        npc=npc,
-        animals=animal_options(),
-        tints=tint_options(),
-        crumbs=_crumbs(
-            world,
-            Crumb(label=npc.name, href=f"/worlds/{world_id}/npcs/{npc_id}"),
-            Crumb(label="Modifica"),
-        ),
-        current_user=user,
-    )
+@router.get("/worlds/{world_id}/npcs/{npc_id}/edit")
+async def npc_edit_page(world_id: uuid.UUID, npc_id: uuid.UUID) -> RedirectResponse:
+    return RedirectResponse(f"/worlds/{world_id}/npcs/{npc_id}?edit=1", status_code=303)
 
 
-@router.post("/worlds/{world_id}/npcs/{npc_id}")
-async def npc_edit_submit(
+@router.post("/worlds/{world_id}/npcs/{npc_id}/cancel-draft")
+async def npc_cancel_draft(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
-    data: NpcUpdate,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:
-    await update_npc(db, world_id, npc_id, data, user)
-    return _htmx_redirect(f"/worlds/{world_id}/npcs/{npc_id}")
+    npc = await get_npc(db, world_id, npc_id, user)
+    require_draft(npc)
+    await delete_npc(db, world_id, npc_id, user, filesystem)
+    return _htmx_redirect(f"/worlds/{world_id}/npcs")
 
 
 @router.delete("/worlds/{world_id}/npcs/{npc_id}")
@@ -198,8 +160,9 @@ async def npc_delete(
     npc_id: uuid.UUID,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
 ) -> Response:
-    await delete_npc(db, world_id, npc_id, user)
+    await delete_npc(db, world_id, npc_id, user, filesystem)
     return _htmx_redirect(f"/worlds/{world_id}/npcs")
 
 

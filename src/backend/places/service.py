@@ -1,7 +1,7 @@
 import uuid
 
 from fastapi import UploadFile
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -77,7 +77,10 @@ async def list_places(
             selectinload(PlaceModel.created_by),
             selectinload(PlaceModel.image),
         )
-        .where(PlaceModel.world_id == world_id)
+        .where(
+            PlaceModel.world_id == world_id,
+            or_(PlaceModel.is_draft.is_(False), PlaceModel.created_by_id == user.id),
+        )
         .order_by(PlaceModel.name.asc())
     )
     return list((await db.scalars(stmt)).all())
@@ -88,7 +91,7 @@ async def get_place(
 ) -> PlaceModel:
     await readable_world(db, world_id, user)
     place = await _get(db, world_id, place_id)
-    if place is None:
+    if place is None or (place.is_draft and place.created_by_id != user.id):
         raise PlaceNotFoundException(place_id)
     return place
 
@@ -102,7 +105,7 @@ async def update_place(
 ) -> PlaceModel:
     await master_world(db, world_id, user)
     place = await _get(db, world_id, place_id)
-    if place is None:
+    if place is None or (place.is_draft and place.created_by_id != user.id):
         raise PlaceNotFoundException(place_id)
     require_content_update(place, data)
     if data.name is not None:
@@ -136,7 +139,7 @@ async def delete_place(
 ) -> None:
     await master_world(db, world_id, user)
     place = await _get(db, world_id, place_id)
-    if place is None:
+    if place is None or (place.is_draft and place.created_by_id != user.id):
         raise PlaceNotFoundException(place_id)
     await purge_owner_revisions(db, filesystem, owner_reference(place))
     await db.delete(place)
@@ -153,7 +156,7 @@ async def upload_place_image(
 ) -> PlaceModel:
     await master_world(db, world_id, user)
     place = await _get(db, world_id, place_id)
-    if place is None:
+    if place is None or (place.is_draft and place.created_by_id != user.id):
         raise PlaceNotFoundException(place_id)
     await upload_revision(
         db,
@@ -185,7 +188,7 @@ async def count_places(db: AsyncSession, world_id: uuid.UUID) -> int:
         await db.scalar(
             select(func.count())
             .select_from(PlaceModel)
-            .where(PlaceModel.world_id == world_id)
+            .where(PlaceModel.world_id == world_id, PlaceModel.is_draft.is_(False))
         )
     ) or 0
 

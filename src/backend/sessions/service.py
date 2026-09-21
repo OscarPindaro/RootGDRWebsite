@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -79,7 +79,13 @@ async def list_sessions(
             await db.scalars(
                 select(SessionModel)
                 .options(selectinload(SessionModel.created_by))
-                .where(SessionModel.world_id == world_id)
+                .where(
+                    SessionModel.world_id == world_id,
+                    or_(
+                        SessionModel.is_draft.is_(False),
+                        SessionModel.created_by_id == user.id,
+                    ),
+                )
                 .order_by(*_order())
             )
         ).all()
@@ -91,7 +97,7 @@ async def get_session(
 ) -> SessionModel:
     await readable_world(db, world_id, user)
     session = await _get(db, world_id, session_id)
-    if session is None:
+    if session is None or (session.is_draft and session.created_by_id != user.id):
         raise SessionNotFoundException(session_id)
     return session
 
@@ -120,7 +126,7 @@ async def update_session(
 ) -> SessionModel:
     await master_world(db, world_id, user)
     session = await _get(db, world_id, session_id)
-    if session is None:
+    if session is None or (session.is_draft and session.created_by_id != user.id):
         raise SessionNotFoundException(session_id)
     require_content_update(session, data)
     if data.title is not None:
@@ -133,7 +139,7 @@ async def update_session(
         session.body = data.body
     if data.tint is not None:
         session.tint = data.tint
-    if data.real_date is not None:
+    if "real_date" in data.model_fields_set:
         session.real_date = data.real_date
     if data.locked is not None:
         session.locked = data.locked
@@ -157,7 +163,7 @@ async def delete_session(
 ) -> None:
     await master_world(db, world_id, user)
     session = await _get(db, world_id, session_id)
-    if session is None:
+    if session is None or (session.is_draft and session.created_by_id != user.id):
         raise SessionNotFoundException(session_id)
     await db.delete(session)
     await db.flush()
@@ -168,7 +174,7 @@ async def count_sessions(db: AsyncSession, world_id: uuid.UUID) -> int:
         await db.scalar(
             select(func.count())
             .select_from(SessionModel)
-            .where(SessionModel.world_id == world_id)
+            .where(SessionModel.world_id == world_id, SessionModel.is_draft.is_(False))
         )
     ) or 0
 
@@ -181,7 +187,10 @@ async def recent_sessions(
         (
             await db.scalars(
                 select(SessionModel)
-                .where(SessionModel.world_id == world_id)
+                .where(
+                    SessionModel.world_id == world_id,
+                    SessionModel.is_draft.is_(False),
+                )
                 .order_by(*[column.desc() for column in _order()])
                 .limit(limit)
             )

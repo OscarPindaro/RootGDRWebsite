@@ -1,5 +1,5 @@
-{#def world, world_context, nav, story, can_manage=False, crumbs, pages=None, short_html=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css #}
+{#def world, world_context, nav, story, can_manage=False, crumbs, pages=None, short_html=None, body_html=None, links=None, current_user=None, metadata=None, auto_edit=False #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css #}
 <layout.Page :title="story.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
   <editorial.Crumbs :items="crumbs" />
 
@@ -9,9 +9,11 @@
     :locked="story.locked"
     :is_draft="story.is_draft"
     :can_manage="can_manage">
-    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-story"
-            hx-delete="/worlds/{{ world.id }}/stories/{{ story.id }}"
-            hx-confirm="Eliminare «{{ story.title }}»?" hx-swap="none">Elimina</button>
+    {% if story.is_draft %}
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="cancel-story-draft" hx-post="/worlds/{{ world.id }}/stories/{{ story.id }}/cancel-draft" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</button>
+    {% else %}
+    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-story" hx-delete="/worlds/{{ world.id }}/stories/{{ story.id }}" hx-confirm="Eliminare «{{ story.title }}»?" hx-swap="none">Elimina</button>
+    {% endif %}
   </editorial.Docbar>
 
   <div class="docpage">
@@ -24,12 +26,13 @@
               {% if story.period_label %}<span>{{ story.period_label }}</span>{% endif %}
             </span>
             <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
-              :can_manage="can_manage" :locked="story.locked" :version="story.version">
+              :can_manage="can_manage" :locked="story.locked" :version="story.version" :auto_edit="auto_edit">
               <h1 class="display" data-doc-field="title">{{ story.title }}</h1>
               <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
                 :value="story.short_description" :value_html="short_html" :version="story.version"
                 :can_manage="can_manage" :locked="story.locked" />
             </editorial.DocIdentity>
+            <editorial.Metadata :fields="metadata" :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id" :version="story.version" :can_manage="can_manage" :locked="story.locked" />
           </div>
         </div>
         <div class="document__page">
