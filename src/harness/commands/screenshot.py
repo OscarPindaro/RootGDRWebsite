@@ -4,6 +4,8 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from .. import artifacts
+from ..test import state
 from ..test.browser import capture_screenshots
 
 console = Console()
@@ -23,9 +25,12 @@ def register_command(app: typer.Typer) -> None:
             typer.Option("--name", help="Filename prefix for both screenshots."),
         ] = None,
         output_dir: Annotated[
-            Path,
-            typer.Option("--output-dir", help="Directory for generated PNG files."),
-        ] = Path("harness-artifacts"),
+            Path | None,
+            typer.Option(
+                "--output-dir",
+                help="Directory for the PNG files (default: a new artifact run).",
+            ),
+        ] = None,
         click: Annotated[
             str | None,
             typer.Option(
@@ -64,6 +69,11 @@ def register_command(app: typer.Typer) -> None:
         ] = None,
     ) -> None:
         """Capture authenticated desktop and phone screenshots."""
+        run = None
+        if output_dir is None:
+            run = artifacts.create_run("screenshot", command=f"screenshot {path}")
+            destination = run.directory / artifacts.ArtifactKind.SCREENSHOTS.value
+            output_dir = destination.relative_to(state.worktree_root())
         try:
             result = capture_screenshots(
                 path,
@@ -77,8 +87,15 @@ def register_command(app: typer.Typer) -> None:
                 base_url=base_url,
             )
         except (OSError, RuntimeError, ValueError) as error:
+            if run is not None:
+                run.mark_failed()
             err_console.print(f"[bold red]{error}[/bold red]")
             raise typer.Exit(1) from error
+        if run is not None:
+            run.register(artifacts.ArtifactKind.SCREENSHOTS, result.desktop)
+            run.register(artifacts.ArtifactKind.SCREENSHOTS, result.phone)
+            run.mark_passed()
+            console.print(f"Run: {run.id}")
         console.print(f"Desktop: {result.desktop}")
         console.print(f"Phone: {result.phone}")
         for error in result.console_errors:

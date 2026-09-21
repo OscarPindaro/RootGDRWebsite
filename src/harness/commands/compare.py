@@ -19,6 +19,7 @@ import yaml
 from pydantic import BaseModel
 from rich.console import Console
 
+from .. import artifacts
 from ..test import state
 from ..test.browser import capture_screenshots, capture_url
 from ..test.compare import Comparison, pixel_diff, write_report
@@ -95,8 +96,12 @@ def register_command(app: typer.Typer) -> None:
             typer.Option("--prototype", help="Prototype page (default: the map)."),
         ] = None,
         output_dir: Annotated[
-            Path, typer.Option("--output-dir", help="Directory for the report.")
-        ] = Path("harness-artifacts/compare"),
+            Path | None,
+            typer.Option(
+                "--output-dir",
+                help="Directory for the report (default: a new artifact run).",
+            ),
+        ] = None,
         threshold: Annotated[
             int,
             typer.Option(
@@ -141,7 +146,13 @@ def register_command(app: typer.Typer) -> None:
             err_console.print(f"[bold red]prototype page not found: {page}[/bold red]")
             raise typer.Exit(1)
 
-        destination = state.worktree_root() / output_dir
+        run = None
+        if output_dir is None:
+            run = artifacts.create_run("compare", command=f"compare {path}")
+            destination = run.directory
+            output_dir = destination.relative_to(state.worktree_root())
+        else:
+            destination = state.worktree_root() / output_dir
         destination.mkdir(parents=True, exist_ok=True)
 
         try:
@@ -153,6 +164,8 @@ def register_command(app: typer.Typer) -> None:
                 base_url=base_url,
             )
         except RuntimeError as error:
+            if run is not None:
+                run.mark_failed()
             err_console.print(f"[bold red]{error}[/bold red]")
             raise typer.Exit(1) from error
 
@@ -183,6 +196,21 @@ def register_command(app: typer.Typer) -> None:
 
         title = f"{entry.label or path} — app vs prototype"
         report = write_report(destination, title=title, comparisons=comparisons)
+
+        if run is not None:
+            for comparison in comparisons:
+                run.register(
+                    artifacts.ArtifactKind.COMPARE, destination / comparison.app
+                )
+                run.register(
+                    artifacts.ArtifactKind.COMPARE, destination / comparison.prototype
+                )
+                run.register(
+                    artifacts.ArtifactKind.COMPARE, destination / comparison.diff
+                )
+            run.register(artifacts.ArtifactKind.COMPARE, report)
+            run.mark_passed()
+            console.print(f"Run: {run.id}")
 
         for comparison in comparisons:
             console.print(

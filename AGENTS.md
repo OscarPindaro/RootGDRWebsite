@@ -155,6 +155,7 @@ uv run harness test frontend              # component tests: real JinjaX in Chro
 uv run harness env up --mode docker       # database + backend container
 uv run harness test e2e --fresh           # reset only the E2E DB/uploads, then run E2E
 uv run harness doctor                     # environment, ports, DB, browser, replay checks
+uv run harness artifacts list             # artifact runs; `show <id>`, `clean --keep-latest N [--apply]`
 uv run harness smoke                      # authenticated main-page checks
 uv run harness logs --request-id <id>     # filter structured compose logs
 uv run harness screenshot /worlds --email e2e-admin@example.com --name worlds
@@ -195,8 +196,9 @@ uv run harness env teardown
   `playwright install` directly: the default `~/.cache` location is pruned by
   some environments, which re-downloads it on every run. Re-run after a
   playwright bump.
-- Screenshots land in `harness-artifacts/` (gitignored) by default; pass
-  `--output-dir /tmp/...` when the agent needs to read them back.
+- Screenshots land in `harness-artifacts/<run-id>/` (gitignored) with a
+  manifest; pass `--output-dir /tmp/...` when the agent needs to read them back
+  (the artifacts area is not readable by tooling).
 - Bind mounts in the test compose files use `${HARNESS_REPO_ROOT}` and `:z`
   because podman-compose resolves relative volume paths against the cwd and
   SELinux blocks unlabelled mounts (the app would silently fall back to

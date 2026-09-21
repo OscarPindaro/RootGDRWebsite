@@ -29,6 +29,11 @@ change" answerable without guessing.
   request/trace id in Python.
 - `harness env up --recreate` repairs changed containers without discarding
   failed-start state; `harness dev up --no-build` skips an unnecessary rebuild.
+- `harness artifacts list|show|clean` inspects and prunes artifact runs. Every
+  artifact-producing command (screenshot, compare, component tests) writes into
+  `harness-artifacts/<run-id>/` with a manifest recording command, revision,
+  status and files. `clean` is a dry run unless `--apply` is passed and never
+  deletes running or pinned runs (or the latest failure, unless `--force`).
 
 ## How it is built
 
@@ -42,6 +47,11 @@ change" answerable without guessing.
   harness generates per-target env/config under its state directory, so the
   shared `test.env` cannot override which database a suite uses. `--fresh`
   drops and recreates only the E2E database after checking its name.
+- `src/harness/artifacts.py` owns the artifact layout: run ids are validated,
+  artifact names cannot escape the run directory, and cleanup refuses paths
+  outside the root. Integration test uploads go to
+  `harness-artifacts/uploads/` (configured in the generated test config) instead
+  of the repository's `data/`; E2E uploads stay in the container volume.
 - `docs/features-request/prototype_map.md` records which JinjaX component
   renders each prototype construct, and how faithful it is.
 - The browser lives in `.playwright-browsers/` (gitignored): Playwright's default
@@ -57,3 +67,6 @@ change" answerable without guessing.
   the comparison judges structure, typography and spacing, not the text.
 - `harness compare` needs the harness Docker environment for the app side unless
   `--base-url` is given.
+- Replay recordings stay in `harness-artifacts/replay/`: the backend middleware
+  writes them from inside the container, so they are a shared inbox rather than
+  a per-run artifact.

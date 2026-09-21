@@ -10,6 +10,7 @@ from typing import Annotated
 import typer
 from rich.console import Console
 
+from .commands.artifacts import register_command as register_artifacts_command
 from .commands.browsers import register_commands as register_browser_commands
 from .commands.compare import register_command as register_compare_command
 from .commands.content import register_commands as register_content_commands
@@ -91,6 +92,7 @@ def main(
 app.add_typer(env_app, name="env")
 app.add_typer(test_app, name="test")
 register_install_commands(app, is_dry_run=lambda: _dry_run)
+register_artifacts_command(app)
 register_browser_commands(app)
 register_content_commands(app)
 register_dev_commands(app)

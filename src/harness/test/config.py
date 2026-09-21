@@ -98,6 +98,11 @@ def prepare(
     )
     e2e_docker = _with_database(source, e2e_db, "db", 5432)
     e2e_local = _with_database(source, e2e_db, "localhost", database_port)
+    # Test uploads stay inside the gitignored artifacts area instead of the
+    # repository's `data/` directory; the E2E container keeps its own volume.
+    uploads_root = root / "harness-artifacts" / "uploads"
+    integration_local["storage"] = {"storage_root": str(uploads_root / "integration")}
+    e2e_local["storage"] = {"storage_root": str(uploads_root / "e2e")}
     if backend_port is not None:
         integration_local.update(backend_host="127.0.0.1", backend_port=backend_port)
         e2e_local.update(backend_host="127.0.0.1", backend_port=backend_port)
