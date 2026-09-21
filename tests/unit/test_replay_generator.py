@@ -5,6 +5,8 @@ from __future__ import annotations
 from backend.replay.schemas import BackendStep, ReplayStep
 from harness.replay import _path, render_backend_test, render_diff, render_test
 
+WORLD_ID = "01a0c41e-201e-74a3-93d6-0e29017a4e01"
+
 
 def test_path_strips_the_origin() -> None:
     assert _path("http://127.0.0.1:8001/worlds?page=2") == "/worlds?page=2"
@@ -41,33 +43,78 @@ def test_session_name_is_safe_for_a_function_name() -> None:
     assert "def test_replay_a_b_c(" in render_test("a-b.c", [])
 
 
-def test_render_backend_test_emits_the_requests() -> None:
+def test_render_backend_test_handles_an_empty_recording() -> None:
+    assert "    pass" in render_backend_test("empty", [])
+
+
+WORLD_ID = "01a0c41e-201e-74a3-93d6-0e29017a4e01"
+CHARACTER = "01a0c41e-201e-74a3-93d6-0e29017a4e02"
+
+
+def test_created_ids_are_rebound_in_later_requests() -> None:
     steps = [
         BackendStep(
             method="POST",
-            path="/auth/dev-login",
-            body={"email": "a@b.c"},
+            path="/api/worlds/",
+            body={"name": "X"},
+            status=201,
+            response={"id": WORLD_ID},
+        ),
+        BackendStep(
+            method="GET",
+            path=f"/api/worlds/{WORLD_ID}",
             status=200,
         ),
-        BackendStep(method="GET", path="/api/worlds/", status=200),
-        BackendStep(method="POST", path="/api/worlds/", body={"name": "X"}, status=201),
-        BackendStep(method="GET", path="/worlds", query="page=2", status=200),
+        BackendStep(
+            method="POST",
+            path=f"/api/worlds/{WORLD_ID}/characters",
+            body={"name": "Eroina", "world_id": WORLD_ID},
+            status=201,
+        ),
     ]
 
     source = render_backend_test("b123", steps)
 
-    assert "async def test_backend_replay_b123(async_client) -> None:" in source
+    assert 'world_1 = response.json()["id"]' in source
+    assert "await async_client.request('GET', f'/api/worlds/{world_1}')" in source
     assert (
-        "await async_client.request('POST', '/auth/dev-login', "
-        "json={'email': 'a@b.c'})" in source
+        "json={'name': 'Eroina', 'world_id': world_1}" in source
     )
-    assert "await async_client.request('GET', '/api/worlds/')" in source
-    assert "await async_client.request('GET', '/worlds?page=2')" in source
-    assert "assert response.status_code == 201" in source
 
 
-def test_render_backend_test_handles_an_empty_recording() -> None:
-    assert "    pass" in render_backend_test("empty", [])
+def test_ids_the_session_did_not_create_are_listed_as_preconditions() -> None:
+    steps = [
+        BackendStep(method="GET", path=f"/api/worlds/{WORLD_ID}", status=200),
+    ]
+
+    source = render_backend_test("b123", steps)
+
+    assert WORLD_ID in source
+    assert "Pre-existing objects" in source
+
+
+def test_a_created_character_gets_its_own_variable() -> None:
+    steps = [
+        BackendStep(
+            method="POST",
+            path="/api/worlds/",
+            body={"name": "X"},
+            status=201,
+            response={"id": WORLD_ID},
+        ),
+        BackendStep(
+            method="POST",
+            path=f"/api/worlds/{WORLD_ID}/characters/",
+            body={"name": "Eroina"},
+            status=201,
+            response={"id": "01a0c41e-201e-74a3-93d6-0e29017a4e02"},
+        ),
+    ]
+
+    source = render_backend_test("b123", steps)
+
+    assert "world_1 = response.json()[\"id\"]" in source
+    assert "character_1 = response.json()[\"id\"]" in source
 
 
 def test_replay_diff_ignores_volatile_uuid_and_timestamp_values() -> None:
