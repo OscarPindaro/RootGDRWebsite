@@ -35,6 +35,10 @@ def _showcase(**extra):
                     value="list", label="", icon="list", aria_label="Elenco"
                 )
             ],
+            showcase_tabs=[ButtonGroupOption(value="write", label="Scrivi")],
+            showcase_people=[
+                ButtonGroupOption(value="admin@example.com", label="admin@example.com")
+            ],
             **extra,
         )
     )
