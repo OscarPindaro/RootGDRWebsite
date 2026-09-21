@@ -11,11 +11,13 @@ Two kinds of recording:
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Annotated, Literal
 
 import httpx
 import typer
+import yaml
 from rich.console import Console
 
 from .. import replay as recordings
@@ -134,10 +136,22 @@ def export(
         Path | None,
         typer.Option("--output", "-o", help="Where to write the test."),
     ] = None,
+    bundle_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--bundle",
+            help="Export the referenced worlds as content bundles into this "
+            "directory, so the replay can run on another database.",
+        ),
+    ] = None,
+    email: Annotated[
+        str, typer.Option("--email", help="Dev login email for the bundle export.")
+    ] = DEFAULT_EMAIL,
 ) -> None:
     """Generate a test from one recording."""
     try:
         if mode == "backend":
+            plan = recordings.plan_backend(recordings.load_backend(session))
             source = recordings.render_backend_test(
                 session, recordings.load_backend(session)
             )
@@ -157,6 +171,157 @@ def export(
     console.print(
         f"Run it with `uv run harness test {mode if mode == 'ui' else 'integration'}`."
     )
+    if bundle_dir is not None and mode == "backend":
+        _export_preconditions(plan, bundle_dir, base_url=None, email=email)
+
+
+def _export_preconditions(
+    plan: recordings.BackendPlan,
+    directory: Path,
+    base_url: str | None,
+    email: str,
+) -> None:
+    """Export each referenced world as a content bundle (dev API)."""
+    worlds = [item for item in plan.preconditions if "/worlds/" in item.path]
+    if not worlds:
+        console.print("No world preconditions to export.")
+        return
+    url = _dev_base_url(base_url)
+    client = _client(url, email)
+    try:
+        for precondition in worlds:
+            world_id = precondition.id
+            response = client.get(f"/api/dev/worlds/{world_id}/export")
+            if response.status_code != 200:
+                err_console.print(
+                    f"[yellow]Cannot export precondition {world_id}: "
+                    f"{response.status_code}[/yellow]"
+                )
+                continue
+            name = precondition.name or world_id
+            destination = directory / f"{_slug(name)}.bundle.yaml"
+            destination.write_text(
+                yaml.safe_dump(response.json(), sort_keys=False, allow_unicode=True),
+                encoding="utf-8",
+            )
+            console.print(f"[green]Bundle:[/green] {destination}")
+    finally:
+        client.close()
+
+
+def _slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "world"
+
+
+@replay_app.command()
+def run(
+    session: Annotated[str, typer.Argument(help="Recorded backend session id.")],
+    base_url: Annotated[
+        str | None, typer.Option("--base-url", help="App to replay against.")
+    ] = None,
+    email: Annotated[
+        str, typer.Option("--email", help="Dev login email.")
+    ] = DEFAULT_EMAIL,
+    bundle: Annotated[
+        list[Path] | None,
+        typer.Option(
+            "--bundle",
+            help="Precondition bundle to import before replaying; repeat as needed.",
+        ),
+    ] = None,
+) -> None:
+    """Replay a backend recording against a running app, with rebound ids."""
+    try:
+        url = _dev_base_url(base_url)
+        client = _client(url, email)
+    except (RuntimeError, httpx.HTTPError) as error:
+        err_console.print(f"[bold red]{error}[/bold red]")
+        raise typer.Exit(1) from error
+
+    try:
+        plan = recordings.plan_backend(recordings.load_backend(session))
+    except FileNotFoundError as error:
+        err_console.print(f"[bold red]{error}[/bold red]")
+        raise typer.Exit(1) from error
+
+    _report_preconditions(plan)
+    for path in bundle or []:
+        _import_bundle(client, path)
+
+    failures = 0
+    bound: dict[str, str] = {}
+    for index, request in enumerate(plan.requests, start=1):
+        target = _bind_text(request.target, bound)
+        body = _bind_value(request.body, bound)
+        response = client.request(
+            request.method, target, json=body if body is not None else None
+        )
+        mark = "ok" if response.status_code == request.expected_status else "FAIL"
+        if mark == "FAIL":
+            failures += 1
+        console.print(
+            f"{index:3d}. [{mark}] {request.method} {target} -> "
+            f"{response.status_code} (expected {request.expected_status})",
+            markup=False,
+        )
+        if request.bind is not None and response.status_code == request.expected_status:
+            payload = response.json() if _is_json(response) else {}
+            identifier = payload.get("id") if isinstance(payload, dict) else None
+            if isinstance(identifier, str):
+                bound[request.bind] = identifier
+    if failures:
+        raise typer.Exit(1)
+
+
+def _bind_value(value: object, bound: dict[str, str]) -> object:
+    if isinstance(value, dict):
+        return {key: _bind_value(item, bound) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_bind_value(item, bound) for item in value]
+    if isinstance(value, str):
+        for variable, identifier in bound.items():
+            value = value.replace("{" + variable + "}", identifier)
+        return value
+    return value
+
+
+def _bind_target(target: str, bound: dict[str, str]) -> str:
+    for variable, identifier in bound.items():
+        target = target.replace("{" + variable + "}", identifier)
+    return target
+
+
+def _bind_text(target: str, bound: dict[str, str]) -> str:
+    return _bind_target(target, bound)
+
+
+def _is_json(response: httpx.Response) -> bool:
+    return "application/json" in response.headers.get("content-type", "")
+
+
+def _report_preconditions(plan: recordings.BackendPlan) -> None:
+    if not plan.preconditions:
+        return
+    console.print("[yellow]Preconditions (objects the recording expects):[/yellow]")
+    for item in plan.preconditions:
+        label = f" ({item.name})" if item.name else ""
+        console.print(f"  - {item.id} ({item.path})", markup=False)
+    console.print(
+        "Import the matching bundles with --bundle, or the steps that touch them fail."
+    )
+
+
+def _import_bundle(client: httpx.Client, path: Path) -> None:
+    bundle = yaml.safe_load(path.read_text(encoding="utf-8"))
+    response = client.post("/api/dev/worlds/import", json=bundle)
+    if response.status_code != 200:
+        err_console.print(
+            f"[bold red]Bundle import failed ({response.status_code}): "
+            f"{response.text[:200]}[/bold red]"
+        )
+        raise typer.Exit(1)
+    result = response.json()
+    console.print(f"[green]Imported[/green] {result['name']} ({result['id']})")
 
 
 @replay_app.command()

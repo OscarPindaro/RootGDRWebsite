@@ -3,7 +3,16 @@
 from __future__ import annotations
 
 from backend.replay.schemas import BackendStep, ReplayStep
-from harness.replay import _path, render_backend_test, render_diff, render_test
+from harness.replay import (
+    Precondition,
+    _path,
+    plan_backend,
+    preconditions,
+    preconditions,
+    render_backend_test,
+    render_diff,
+    render_test,
+)
 
 WORLD_ID = "01a0c41e-201e-74a3-93d6-0e29017a4e01"
 
@@ -154,3 +163,47 @@ def test_replay_diff_reports_added_and_removed_steps() -> None:
 
     assert "Added:" in render_diff([anchor], [added, anchor], "backend")
     assert "Removed:" in render_diff([removed, anchor], [anchor], "backend")
+
+
+def test_plan_binds_created_ids_and_collects_preconditions() -> None:
+    steps = [
+        BackendStep(
+            method="POST",
+            path="/api/worlds/",
+            body={"name": "X"},
+            status=201,
+            response={"id": WORLD_ID},
+        ),
+        BackendStep(
+            method="GET",
+            path=f"/api/worlds/{WORLD_ID}",
+            status=200,
+            response={"id": WORLD_ID, "name": "Boschetto"},
+        ),
+    ]
+
+    plan = plan_backend(steps)
+
+    assert plan.requests[1].target == "/api/worlds/{world_1}"
+    assert plan.preconditions == []
+
+
+def test_plan_lists_uncreated_references_as_preconditions() -> None:
+    steps = [
+        BackendStep(
+            method="GET",
+            path=f"/api/worlds/{WORLD_ID}",
+            status=200,
+            response={"id": WORLD_ID, "name": "Boschetto"},
+        ),
+    ]
+
+    plan = preconditions(steps)
+
+    assert plan == [
+        Precondition(
+            id=WORLD_ID,
+            path=f"/api/worlds/{WORLD_ID}",
+            name="Boschetto",
+        )
+    ]

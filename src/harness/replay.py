@@ -13,6 +13,8 @@ from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Literal
 
+from pydantic import BaseModel
+
 from backend.replay.schemas import BackendStep, ReplayStep
 
 RECORDINGS = Path("harness-artifacts/replay")
@@ -26,6 +28,29 @@ UUID_VALUE = re.compile(
 TIMESTAMP_VALUE = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$"
 )
+
+
+class Precondition(BaseModel):
+    """An object the recording references but did not create."""
+
+    id: str
+    path: str
+    name: str | None = None
+
+
+class PlannedRequest(BaseModel):
+    """One replayed request; ``{variable}`` placeholders bind created ids."""
+
+    method: str
+    target: str
+    body: object | None = None
+    expected_status: int
+    bind: str | None = None
+
+
+class BackendPlan(BaseModel):
+    requests: list[PlannedRequest]
+    preconditions: list[Precondition]
 
 
 def sessions() -> list[str]:
@@ -154,68 +179,99 @@ def render_diff(
     return "\n\n".join(sections) if sections else "No differences."
 
 
-def render_backend_test(session: str, steps: list[BackendStep]) -> str:
-    """An integration test that replays the recorded requests.
+def preconditions(steps: list[BackendStep]) -> list[Precondition]:
+    """Objects the recording references but did not create, with known names."""
+    return plan_backend(steps).preconditions
 
-    Ids returned by create operations are captured into variables and
-    substituted into the later requests that reference them, so the test runs
-    on any database. Ids that point at objects the session did not create are
-    left as literals and listed in the docstring as preconditions.
+
+def plan_backend(steps: list[BackendStep]) -> BackendPlan:
+    """Turn recorded steps into a replay plan with rebound ids.
+
+    Ids returned by successful creates become ``{resource_N}`` placeholders in
+    the later requests that reference them; ids the session did not create
+    are collected as preconditions. Authentication steps are dropped: the
+    replay logs in as the operator itself.
     """
-    name = re.sub(r"[^A-Za-z0-9_]", "_", session)
     variables: dict[str, str] = {}
     counts: dict[str, int] = {}
-    external: set[str] = set()
-    body: list[str] = []
+    external: dict[str, str] = {}
+    requests: list[PlannedRequest] = []
     for step in steps:
+        if step.path.startswith("/auth/"):
+            continue
         target = step.path + (f"?{step.query}" if step.query else "")
-        call = (
-            f"    response = await async_client.request({step.method!r}, "
-            f"{_python_target(target, variables, external)}"
-        )
-        if step.body is not None:
-            call += f", json={_python_value(step.body, variables, external)}"
-        body.append(call + ")")
-        body.append(
-            f"    assert response.status_code == {step.status}, "
-            f'f"{step.method} {target} -> {{response.status_code}}"'
-        )
+        planned_target = _substitute(target, variables, external, step.path)
+        bind = None
         created = _created_id(step)
         if created is not None:
-            body.append(
-                f"    {_variable_for(created, step.path, variables, counts)}"
-                ' = response.json()["id"]'
+            bind = _variable_for(created, step.path, variables, counts)
+        requests.append(
+            PlannedRequest(
+                method=step.method,
+                target=planned_target,
+                body=_substitute_value(step.body, variables, external, step.path),
+                expected_status=step.status,
+                bind=bind,
             )
-    if not body:
-        body.append("    pass")
-
-    preconditions = ""
-    if external:
-        listed = "".join(f"\n#   - {item}" for item in sorted(external))
-        preconditions = (
-            "\n# Pre-existing objects the recording references but did not create"
-            f":{listed}\n# Import the matching content bundle before running."
         )
-
-    header = [
-        f'"""Recorded backend session {session} — replays the requests it answered.',
-        "",
-        "Ids created during the session are captured from the responses and",
-        "reused, so the test runs on any database. Ids that predate the session",
-        "are listed as preconditions below.",
-        preconditions,
-        '"""',
-        "",
-        "from __future__ import annotations",
-        "",
-        "import pytest",
-        "",
-        "pytestmark = pytest.mark.integration",
-        "",
-        "",
-        f"async def test_backend_replay_{name}(async_client) -> None:",
+    names = _recorded_names(steps)
+    conditions = [
+        Precondition(id=value, path=external[value], name=names.get(value))
+        for value in sorted(external)
     ]
-    return "\n".join([*header, *body, ""])
+    return BackendPlan(requests=requests, preconditions=conditions)
+
+
+def _substitute(
+    text: str,
+    variables: dict[str, str],
+    external: dict[str, Precondition],
+    path: str,
+) -> str:
+    """Replace created ids with placeholders; record unknown ones as external."""
+
+    def replacement(match: re.Match) -> str:
+        value = match.group(0)
+        variable = variables.get(value)
+        if variable is None:
+            external.setdefault(value, path)
+            return value
+        return "{" + variable + "}"
+
+    return UUID_VALUE.sub(replacement, text)
+
+
+def _substitute_value(
+    value: object, variables: dict[str, str], external: dict[str, str], path: str
+) -> object:
+    """Deep substitution of created ids inside a recorded JSON body."""
+    if isinstance(value, dict):
+        return {
+            key: _substitute_value(item, variables, external, path)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_substitute_value(item, variables, external, path) for item in value]
+    if isinstance(value, str) and UUID_VALUE.fullmatch(value):
+        variable = variables.get(value)
+        if variable is not None:
+            return "{" + variable + "}"
+        external.setdefault(value, path)
+        return value
+    return value
+
+
+def _recorded_names(steps: list[BackendStep]) -> dict[str, str]:
+    """id → name for the objects whose GET response was recorded."""
+    names: dict[str, str] = {}
+    for step in steps:
+        if not isinstance(step.response, dict):
+            continue
+        identifier = step.response.get("id")
+        name = step.response.get("name")
+        if isinstance(identifier, str) and isinstance(name, str):
+            names.setdefault(identifier, name)
+    return names
 
 
 def _created_id(step: BackendStep) -> str | None:
@@ -243,44 +299,88 @@ def _variable_for(
     return variable
 
 
-def _python_target(target: str, variables: dict[str, str], external: set[str]) -> str:
-    """A Python expression for the target, with created ids as variables."""
-    substituted = UUID_VALUE.sub(
-        lambda match: _reference(match.group(0), variables, external), target
-    )
-    if substituted != target:
-        return f'f"{substituted}"'
-    return repr(target)
+def render_backend_test(session: str, steps: list[BackendStep]) -> str:
+    """An integration test that replays the recorded requests.
 
-
-def _python_value(value: object, variables: dict[str, str], external: set[str]) -> str:
-    """A Python literal for a recorded JSON value, with created ids rebound."""
-    if isinstance(value, dict):
-        items = ", ".join(
-            f"{key!r}: {_python_value(item, variables, external)}"
-            for key, item in value.items()
+    Ids created during the session are captured into variables and reused, so
+    the test runs on any database; ids that predate the session are listed as
+    preconditions.
+    """
+    plan = plan_backend(steps)
+    name = re.sub(r"[^A-Za-z0-9_]", "_", session)
+    body: list[str] = []
+    for request in plan.requests:
+        call = (
+            f"    response = await async_client.request({request.method!r}, "
+            f"{_python_string(request.target)}"
         )
-        return "{" + items + "}"
-    if isinstance(value, list):
-        items = ", ".join(_python_value(item, variables, external) for item in value)
-        return "[" + items + "]"
-    if isinstance(value, str):
-        if UUID_VALUE.fullmatch(value):
-            variable = variables.get(value)
-            if variable is not None:
-                return variable
-            external.add(value)
-        return repr(value)
+        if request.body is not None:
+            call += f", json={_python_value(request.body)}"
+        body.append(call + ")")
+        body.append(
+            f"    assert response.status_code == {request.expected_status}, "
+            f'f"{request.method} {request.target} -> {{response.status_code}}"'
+        )
+        if request.bind is not None:
+            body.append(f'    {request.bind} = response.json()["id"]')
+    if not body:
+        body.append("    pass")
+
+    preconditions = ""
+    if plan.preconditions:
+        listed = "".join(
+            f"\n#   - {item.id}" + (f" ({item.name})" if item.name else "")
+            for item in plan.preconditions
+        )
+        preconditions = (
+            "\n# Pre-existing objects the recording references but did not create"
+            f":{listed}\n# Import the matching content bundle before running."
+        )
+
+    header = [
+        f'"""Recorded backend session {session} — replays the requests it answered.',
+        "",
+        "Ids created during the session are captured from the responses and",
+        "reused, so the test runs on any database. Ids that predate the session",
+        "are listed as preconditions below.",
+        preconditions,
+        '"""',
+        "",
+        "from __future__ import annotations",
+        "",
+        "import pytest",
+        "",
+        "pytestmark = pytest.mark.integration",
+        "",
+        "",
+        f"async def test_backend_replay_{name}(async_client) -> None:",
+    ]
+    return "\n".join([*header, *body, ""])
+
+
+def _python_string(value: str) -> str:
+    """A Python literal; a target with placeholders becomes an f-string."""
+    if re.search(r"\{\w+\}", value):
+        return f'f"{value}"'
     return repr(value)
 
 
-def _reference(value: str, variables: dict[str, str], external: set[str]) -> str:
-    """The variable for a created id, or the literal marked as external."""
-    variable = variables.get(value)
-    if variable is None:
-        external.add(value)
-        return value
-    return "{" + variable + "}"
+def _python_value(value: object) -> str:
+    """A Python literal for a planned JSON value; placeholders become variables."""
+    if isinstance(value, dict):
+        items = ", ".join(
+            f"{key!r}: {_python_value(item)}" for key, item in value.items()
+        )
+        return "{" + items + "}"
+    if isinstance(value, list):
+        items = ", ".join(_python_value(item) for item in value)
+        return "[" + items + "]"
+    if isinstance(value, str):
+        match = re.fullmatch(r"\{(\w+)\}", value)
+        if match:
+            return match.group(1)
+        return repr(value)
+    return repr(value)
 
 
 def render_test(session: str, steps: list[ReplayStep]) -> str:

@@ -96,6 +96,7 @@ async def _record(
     recording_path: Path,
     *,
     path: str = "/api/worlds",
+    method: str = "POST",
     request_body: bytes = b"",
     response_body: bytes = b"",
 ) -> list[dict]:
@@ -189,3 +190,17 @@ async def test_content_names_outside_identity_paths_are_kept(
 
     assert steps[0]["body"] == {"name": "Boschetto"}
     assert steps[0]["response"]["name"] == "Boschetto"
+
+
+async def test_tokens_are_never_recorded(recording_path: Path) -> None:
+    steps = await _record(
+        recording_path,
+        path="/auth/dev-login",
+        method="POST",
+        request_body=b'{"email": "admin@example.com"}',
+        response_body=b'{"access_token": "jwt-secret", "refresh_token": "r", "token_type": "bearer"}',
+    )
+
+    assert steps[0]["response"]["access_token"] == "<redacted>"
+    assert steps[0]["response"]["refresh_token"] == "<redacted>"
+    assert "jwt-secret" not in json.dumps(steps)

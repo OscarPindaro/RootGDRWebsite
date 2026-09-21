@@ -1,14 +1,15 @@
 """Anonymization of recorded data.
 
-Recordings may be taken in production and replayed elsewhere, so
+Recordings may be taken in production and shared or replayed elsewhere, so
 user-identifying values never reach the recording files. Emails and user
 names are replaced with deterministic per-session pseudonyms: the same input
 always maps to the same replacement within a session, so a replay stays
 coherent while carrying no real identities. The mapping lives only in the
 worker-shared recording config, which never leaves the machine.
 
-Content that is not an identity (world names, page titles, …) is kept: the
-replay needs it to reproduce the journey.
+Credentials and tokens are replaced outright: a replay re-authenticates, so
+they carry no useful value. Content that is not an identity (world names,
+page titles, …) is kept: the replay needs it to reproduce the journey.
 """
 
 from __future__ import annotations
@@ -19,6 +20,8 @@ EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@]+$")
 
 # Keys whose string values are identities wherever they appear.
 IDENTITY_KEYS = frozenset({"email"})
+# Keys whose values are credentials or tokens: replaced, never kept.
+SECRET_KEYS = frozenset({"access_token", "refresh_token", "password"})
 # Path prefixes where a "name" value identifies a person, not a piece of content.
 IDENTITY_PATHS = ("/auth", "/api/users", "/api/admin")
 
@@ -51,6 +54,8 @@ class Anonymizer:
             return self.scrub(value, identity_path=identity_path)
         if isinstance(value, list):
             return [self._scrub(key, item, identity_path) for item in value]
+        if key in SECRET_KEYS:
+            return "<redacted>"
         if isinstance(value, str) and len(value) <= _MAX_VALUE:
             if key in IDENTITY_KEYS or (identity_path and key == "name"):
                 return self._alias(value)
