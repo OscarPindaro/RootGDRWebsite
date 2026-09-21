@@ -94,9 +94,9 @@
 .image-editor[data-enhanced="true"] .image-editor__fallback-submit { display: none; }
 .image-editor__fallback-submit { margin-top: var(--sp-2); }
 
-/* Commands under the image: the history button lives here, not over the
-   picture, so it never covers what is being looked at. */
-.image-editor__tools { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+/* Commands under the image, never over the picture: the row is a
+   common.HStack, so only the placement is decided here. */
+.image-editor__tools { justify-content: flex-start; }
 
 .image-editor__choices {
   display: grid;
