@@ -19,10 +19,18 @@ import yaml
 from pydantic import BaseModel
 from rich.console import Console
 
+from playwright.sync_api import sync_playwright
+
 from .. import artifacts
 from ..test import state
-from ..test.browser import capture_screenshots, capture_url
+from ..test.browser import capture_screenshots, capture_url, new_authenticated_context
 from ..test.compare import Comparison, pixel_diff, write_report
+from ..test.landmarks import (
+    MEASURE_JS,
+    Landmark,
+    PageMetrics,
+    structural_diagnostics,
+)
 
 console = Console()
 err_console = Console(stderr=True)
@@ -38,6 +46,7 @@ class MapEntry(BaseModel):
     pattern: str
     prototype: str
     label: str = ""
+    landmarks: dict[str, Landmark] = {}
 
 
 class PrototypeMap(BaseModel):
@@ -75,6 +84,96 @@ class _PrototypeServer:
 
 def _load_map(path: Path) -> PrototypeMap:
     return PrototypeMap.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
+
+
+def _measure(url: str, selectors: dict[str, str], *, phone: bool) -> PageMetrics:
+    """Measure the page-level and landmark geometry of one URL."""
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        try:
+            context_options = (
+                playwright.devices["Pixel 7"]
+                if phone
+                else {"viewport": {"width": 1440, "height": 900}}
+            )
+            context = browser.new_context(**context_options)
+            page = context.new_page()
+            page.goto(url, wait_until="networkidle")
+            raw = page.evaluate(MEASURE_JS, selectors)
+            context.close()
+        finally:
+            browser.close()
+    return _to_metrics(raw, selectors)
+
+
+def _measure_authenticated(
+    base_url: str, path: str, selectors: dict[str, str], email: str, *, phone: bool
+) -> PageMetrics:
+    """Measure an authenticated application page."""
+    with sync_playwright() as playwright:
+        browser, context = new_authenticated_context(
+            playwright, base_url, email=email, phone=phone
+        )
+        try:
+            page = context.new_page()
+            page.goto(f"{base_url}{path}", wait_until="networkidle")
+            raw = page.evaluate(MEASURE_JS, selectors)
+        finally:
+            context.close()
+            browser.close()
+    return _to_metrics(raw, selectors)
+
+
+def _to_metrics(raw: dict, selectors: dict[str, str]) -> PageMetrics:
+    return PageMetrics.model_validate(
+        {
+            "scroll_width": raw["scroll_width"],
+            "client_width": raw["client_width"],
+            "landmarks": {
+                name: {**metrics, "selector": selectors[name]}
+                for name, metrics in raw["landmarks"].items()
+                if metrics is not None
+            },
+        }
+    )
+
+
+def _compare_landmarks(
+    entry: MapEntry,
+    app_path: str,
+    prototype_base: str,
+    *,
+    phone: bool,
+    email: str,
+    base_url: str | None,
+) -> list[str]:
+    app_base = base_url or _environment_base_url()
+    app_metrics = _measure_authenticated(
+        f"{app_base}{app_path}",
+        app_path,
+        {name: landmark.app for name, landmark in entry.landmarks.items()},
+        email,
+        phone=phone,
+    )
+    prototype_metrics = _measure(
+        f"{prototype_base}/{entry.prototype}",
+        {name: landmark.prototype for name, landmark in entry.landmarks.items()},
+        phone=phone,
+    )
+    return structural_diagnostics(
+        app_metrics, prototype_metrics, entry.landmarks, phone=phone
+    )
+
+
+def _environment_base_url() -> str:
+    environment_state = state.read()
+    if (
+        environment_state is None
+        or environment_state.mode != state.EnvironmentMode.DOCKER
+        or environment_state.ports.backend is None
+    ):
+        raise ValueError("Landmark comparison requires an active Docker environment")
+    return f"http://127.0.0.1:{environment_state.ports.backend}"
 
 
 def _prototype_for(path: str, prototype_map: PrototypeMap) -> MapEntry:
@@ -170,11 +269,12 @@ def register_command(app: typer.Typer) -> None:
             raise typer.Exit(1) from error
 
         comparisons: list[Comparison] = []
-        with _PrototypeServer(PROTOTYPE_DIR) as base_url:
+        structure: list[tuple[str, list[str]]] = []
+        with _PrototypeServer(PROTOTYPE_DIR) as prototype_base:
             for viewport, phone in VIEWPORTS:
                 prototype_png = destination / f"prototype-{viewport}.png"
                 capture_url(
-                    f"{base_url}/{entry.prototype}",
+                    f"{prototype_base}/{entry.prototype}",
                     prototype_png,
                     phone=phone,
                     wait_for=".rail__inner",
@@ -193,9 +293,23 @@ def register_command(app: typer.Typer) -> None:
                         stats=stats,
                     )
                 )
+                if entry.landmarks:
+                    diagnostics = _compare_landmarks(
+                        entry,
+                        path,
+                        prototype_base,
+                        phone=phone,
+                        email=email,
+                        base_url=base_url,
+                    )
+                    for issue in diagnostics:
+                        console.print(f"[yellow]{viewport}: {issue}[/yellow]")
+                    structure.append((viewport, diagnostics))
 
         title = f"{entry.label or path} — app vs prototype"
-        report = write_report(destination, title=title, comparisons=comparisons)
+        report = write_report(
+            destination, title=title, comparisons=comparisons, structure=structure
+        )
 
         if run is not None:
             for comparison in comparisons:

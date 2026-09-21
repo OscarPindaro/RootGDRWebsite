@@ -142,7 +142,13 @@ def pixel_diff(
     )
 
 
-def write_report(directory: Path, *, title: str, comparisons: list[Comparison]) -> Path:
+def write_report(
+    directory: Path,
+    *,
+    title: str,
+    comparisons: list[Comparison],
+    structure: list[tuple[str, list[str]]] | None = None,
+) -> Path:
     """Write ``report.html`` with the screenshots side by side, per viewport."""
     rows = []
     for comparison in comparisons:
@@ -162,6 +168,16 @@ def write_report(directory: Path, *, title: str, comparisons: list[Comparison]) 
       </div>
     </section>"""
         )
+
+    sections = []
+    for viewport, issues in structure or []:
+        if not issues:
+            sections.append(
+                f"<p><strong>{viewport}</strong>: no structural differences.</p>"
+            )
+            continue
+        items = "".join(f"<li><code>{issue}</code></li>" for issue in issues)
+        sections.append(f"<h2>{viewport} — structure</h2><ul>{items}</ul>")
 
     report = directory / "report.html"
     report.write_text(
@@ -184,6 +200,7 @@ def write_report(directory: Path, *, title: str, comparisons: list[Comparison]) 
 <body>
 <h1>{title}</h1>
 {"".join(rows)}
+{"".join(sections)}
 </body>
 </html>
 """,

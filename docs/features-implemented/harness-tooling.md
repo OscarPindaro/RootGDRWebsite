@@ -9,7 +9,11 @@ change" answerable without guessing.
   page it must match, at the same viewports, and writes a side-by-side HTML
   report plus a pixel diff. The percentage is a signal, not a gate
   (`--fail-on-diff` makes it one). `--base-url` points it at the dev showcase
-  instead of the harness environment.
+  instead of the harness environment. Entries in `seed/prototype_map.yaml` can
+  declare `landmarks` (semantic app/prototype selector pairs); the report then
+  gains a structural section that explains differences in geometry terms —
+  width divergence, vertical displacement, page overflow, missing landmarks,
+  font family changes, and sub-44px touch targets on phone.
 - `harness prototype serve` opens the static prototype next to the app.
 - `harness browsers` installs Playwright's Chromium into the repository.
 - `harness screenshot --base-url …` captures a page at desktop and phone width.
@@ -41,6 +45,11 @@ change" answerable without guessing.
   `seed/prototype_map.yaml`, serves the prototype on an ephemeral port, captures
   both sides and writes the report; `src/harness/test/compare.py` computes the
   diff in Chromium (canvas), so no image library is needed.
+- The structural section measures each landmark in the live page
+  (`src/harness/test/landmarks.py`): rect, display, font, gap, padding, border
+  and overflow, plus the page's scroll/client width. Landmarks are explicit
+  selector pairs in the map — nothing is inferred from the DOM, and no selector
+  depends on the Italian copy. The pixel diff is unchanged.
 - Integration and E2E each get their own database in the single test PostgreSQL
   container. `src/harness/test/databases.py` creates both idempotently through
   the container superuser (init scripts only run on an empty volume) and the

@@ -2,6 +2,8 @@
 #
 # The patterns are matched in order against the application path; the first
 # match wins. Placeholder segments are `[^/]+`, so a UUID world id matches.
+# Landmarks are optional semantic elements measured on both sides for the
+# structural (DOM/geometry) section of the compare report.
 entries:
   - pattern: "^/worlds$"
     prototype: index.html
@@ -9,12 +11,38 @@ entries:
   - pattern: "^/worlds/[^/]+$"
     prototype: mondo.html
     label: World overview
+    landmarks:
+      rail:
+        app: ".rail"
+        prototype: ".rail"
+      container:
+        app: ".container"
+        prototype: ".container"
+      masthead:
+        app: ".masthead"
+        prototype: ".masthead"
+      quick_strip:
+        app: ".grid--quick"
+        prototype: ".grid--quick"
   - pattern: "^/worlds/[^/]+/characters$"
     prototype: personaggi.html
     label: Characters list
   - pattern: "^/worlds/[^/]+/characters/[^/]+$"
     prototype: personaggio.html
     label: Character detail
+    landmarks:
+      container:
+        app: ".container"
+        prototype: ".container"
+      docbar:
+        app: ".docbar"
+        prototype: ".docbar"
+      document:
+        app: ".document"
+        prototype: ".document"
+      face:
+        app: ".document__face"
+        prototype: ".document__face"
   - pattern: "^/worlds/[^/]+/npcs$"
     prototype: npc.html
     label: NPCs list
