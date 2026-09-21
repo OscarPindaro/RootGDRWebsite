@@ -4,6 +4,10 @@
 
 JinjaX is a component system built on top of Jinja2. It allows server-rendered templates to be organized and composed like UI components while remaining regular text templates.
 
+This file documents how JinjaX works. The rules this repository follows when
+using it — folder roles, component anatomy, tokens, tests, checklists — are in
+[frontend_guide.md](frontend_guide.md).
+
 ## Core setup
 
 ```python
@@ -562,41 +566,40 @@ A bare unquoted value like `size=32` is **not** a valid expression — it is tre
 
 ### Folder layout
 
-```
+```text
 src/frontend/components/
-├── common/        # Reusable M3 primitives (Button, Card, Field, Icon, Pill, Table, Avatar, Alert, Divider, Dialog, ConfirmDialog)
-├── layout/        # Page shells (BlankPage, Page, Sidebar)
-└── pages/         # Full pages composed from common + layout
-    ├── admin/     # Admin dashboard, tables, invite/revoke dialogs
-    ├── home/
-    ├── login/
-    └── showcase/  # The living style guide at /components
+├── common/        # Reusable primitives, no domain knowledge
+├── editorial/     # The product's vocabulary and its atlas identity
+├── layout/        # Page shells (BlankPage, Page, Sidebar, Rail, Topbar, UserMenu)
+└── pages/         # Full pages, one folder per module
 ```
 
-Component names are dot-separated by folder: `common.Button`, `layout.Page`, `pages.admin.AdminDashboard`, `pages.showcase.Showcase`.
+Component names are dot-separated by folder: `common.Button`,
+`editorial.Cover`, `layout.Page`, `pages.admin.AdminDashboard`.
 
-### Component anatomy
+How to choose a folder, the anatomy of a component, the token rules, and the
+checklists for adding or changing one are in
+[frontend_guide.md](frontend_guide.md). What follows is only what is specific to
+this application's JinjaX wiring.
 
-Every component follows this shape:
+### Assets
+
+Each component has a colocated `<Name>.css`, and a `.js` when it needs
+behaviour; JinjaX discovers them. A component that composes others declares
+their assets itself:
 
 ```jinja
-{#def required_arg, optional_arg="default", variant="outlined" #}
-
-<element class="component-name component-name-{{ variant }}" {{ attrs.render() }}>
-  {{ content }}
-</element>
+{#def icon, label #}
+{#css common/Button.css, common/Tooltip.css #}
 ```
 
-- Declare every argument in `{#def ... #}` — no undeclared props reach the template logic.
-- Undeclared HTML attributes (e.g. `type="submit"`, `hx-*`, `data-*`) flow through `attrs.render()` onto the root element.
-- The root element always carries a class named after the component (`card`, `field`, `btn`, `pill`) plus a variant modifier (`card-elevated`, `field-outlined`, `btn-primary`).
+The `jinjax-css-dependencies` pre-commit hook adds a missing declaration. This
+matters for fragments loaded over htmx: only the assets of the rendered tree are
+emitted, so an htmx response must carry the CSS of everything it renders.
 
-### CSS
-
-- Each component has a colocated `<Name>.css` (auto-loaded by JinjaX, no manual `{#css#}` needed).
-- **Every value reads from a design token** in `src/frontend/static/css/main.css` — no raw hex, no magic px. The only raw px allowed are border widths and shadow spreads for which no token exists (consistent with `Button.css`, `Sidebar.css`).
-- Class names are kebab-case and prefixed by the component name (`card-elevated`, `field-input`, `btn-primary`) so they don't collide across components.
-- Styles are global (JinjaX doesn't scope them), so always scope rules under the component's root class.
+Styles are global — JinjaX does not scope them — so every rule is scoped under
+the component's root class, and class names are kebab-case and prefixed by the
+component name so they cannot collide.
 
 ### Surfaces: never assume a light background
 
@@ -645,14 +648,32 @@ settings menu ended up white on a black rail.
 
 ### Design system
 
-Material Design 3 (M3) is the reference. Component variants and states follow the M3 specs:
+Material 3 supplies **anatomy, states and sizes**. The product's identity — the
+printed atlas — comes from `prototypes/devin-prototype/` and is expressed in the
+tokens in `main.css`. The result is M3-inspired, not M3-faithful: where the two
+disagree about geometry, the identity wins and the disagreement is written down.
 
+- Values adopted from M3 are inventoried in
+  `src/frontend/design-tokens/material3/`, with the repository, revision and file
+  they came from, and checked offline by `uv run harness material check`.
+- A deviation from M3 is recorded as a `web_adaptation` with a rationale, not as
+  a missing token.
+- Variants follow the specs for states and sizing, not for shape.
+
+Components and their variants:
+
+- **Button** — editorial `primary` / `secondary` / `danger` plus `filled` /
+  `tonal` / `outlined` / `elevated` / `text`; sizes `xs … xl`; round or square
+- **ButtonGroup** — standard / connected, single / multi selection
 - **Card** — elevated / outlined / filled
-- **Text field** — outlined / filled, with error and supporting-text states
-- **Button** — primary / secondary / danger, sizes sm / md / lg
+- **Field** — outlined / filled, with error and supporting text
 - **Pill** — success / danger / warning / info / neutral / accent / role-*
 - **Alert** — danger / warning / info / success
-- **Divider** — full-width separator
-- **Dialog** — native `<dialog>` opened with `showModal()`, M3 modal styling
+- **Dialog** — native `<dialog>` opened with `showModal()`
+- **Divider** — full width, or with a centred label
+- **IconButton**, **MediaFrame**, **EmptyState**, **Switch**, **Tabs**,
+  **SaveIndicator**, **Combobox**, **Grid**, **VStack**, **HStack** — see
+  `docs/features-implemented/`
 
-When adding a new component, check the M3 spec first, then map it to the existing tokens.
+See [frontend_guide.md](frontend_guide.md) §2 for the token layers, and
+[design_guide.md](design_guide.md) for how the identity itself was chosen.

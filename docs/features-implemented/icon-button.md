@@ -22,7 +22,9 @@ default shape was the round one.
   and the states; IconButton adds the label obligation and the square default.
 - Caller attributes are forwarded with `_attrs={{ attrs }}`, the supported
   JinjaX way, so `Button` merges them into its own class and style.
-- No colocated CSS: everything comes from `Button.css` and `Tooltip.css`.
+- No CSS of its own: the appearance comes from `Button.css` and `Tooltip.css`,
+  which the component declares with `{#css #}` so an htmx-loaded fragment
+  carries them.
 
 ## Used by
 
