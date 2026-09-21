@@ -10,11 +10,11 @@
   <div class="grid grid--two">
     <div class="stack stack--lg">
       <section class="world-identity">
-        <editorial.SectionHead title="Identità" eyebrow="Nome e descrizione" />
+        <span class="eyebrow">Nome</span>
         <editorial.DocIdentity :base="'/worlds/' ~ world.id" :version="world.version" :can_manage="True">
           <h2 class="display display--sm" data-doc-field="name" data-doc-label="Nome del mondo">{{ world.name }}</h2>
         </editorial.DocIdentity>
-        <span class="eyebrow">Descrizione Markdown</span>
+        <span class="eyebrow">Descrizione</span>
         <editorial.DocEdit world_id={{ world.id }} :base="'/worlds/' ~ world.id"
           :body="world.description" :body_html="description_html" field_name="description"
           label="Descrizione del mondo" :version="world.version" :can_manage="True" />

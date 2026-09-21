@@ -32,7 +32,9 @@
           </div>
           <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/characters/' ~ character.id"
             :can_manage="can_manage" :locked="character.locked" :version="character.version" :auto_edit="auto_edit">
+            <span class="eyebrow">Nome</span>
             <h1 class="display" data-doc-field="name">{{ character.name }}</h1>
+            <span class="eyebrow">Titolo</span>
             <p class="card__title" data-doc-field="title"
                {% if not character.title %}data-empty="true"{% endif %}>{{ character.title or '' }}</p>
             <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/characters/' ~ character.id"
