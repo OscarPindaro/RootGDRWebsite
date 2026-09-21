@@ -1,5 +1,5 @@
 {#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, current_user=None #}
-{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css #}
+{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css, common/Grid.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -328,13 +328,13 @@
     <section class="showcase-section">
       <h2>Choice grids</h2>
       <p class="showcase-note">A radio group drawn as an attached grid — emoji, tint or shape. No JavaScript.</p>
-      <div class="form-pair" style="max-width: 720px;">
+      <common.Grid columns=2 gap=6 style="max-width: 720px">
         <common.ChoiceGrid label="Animale" name="demo-animal" kind="emoji" :options="animals" :columns="8" value="🐈" />
         <common.ChoiceGrid label="Tinta" name="demo-tint" kind="tint" :options="tints" :columns="6" value="p8" />
-      </div>
-      <div class="form-pair" style="max-width: 720px; margin-top: var(--sp-4);">
+      </common.Grid>
+      <common.Grid columns=2 gap=6 style="max-width: 720px; margin-top: var(--sp-4)">
         <common.ChoiceGrid label="Forma" name="demo-shape" kind="shape" :options="shapes" :columns="6" value="rombo" />
-      </div>
+      </common.Grid>
     </section>
 
     <section class="showcase-section">

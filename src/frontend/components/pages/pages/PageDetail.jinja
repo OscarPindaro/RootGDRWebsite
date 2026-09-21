@@ -1,5 +1,5 @@
 {#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, short_html=None, body_html=None, links=None, current_user=None, metadata=None, auto_edit=False #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css #}
+{#css common/Button.css, common/Pill.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css #}
 <layout.Page :title="page.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
   <editorial.Crumbs :items="crumbs" />
 
@@ -32,14 +32,14 @@
         :body="page.body" :body_html="body_html"
         :locked="page.locked" :version="page.version" :can_manage="can_manage" />
     </article>
-    <aside class="stack">
+    <common.VStack element="aside">
       <div class="toc">
         <div class="toc__label">Altre pagine</div>
         {% for other in others %}
         <a href="/worlds/{{ world.id }}/pages/{{ other.slug }}">{{ other.title }}</a>
         {% endfor %}
       </div>
-    </aside>
+    </common.VStack>
   </div>
     {% if links %}<editorial.Links :groups="links" />{% endif %}
 </layout.Page>

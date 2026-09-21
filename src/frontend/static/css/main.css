@@ -558,14 +558,8 @@ ul, ol { margin: 0; padding: 0; }
 .section__head h2 { font-family: var(--serif); font-size: 1.5rem; font-weight: 500; }
 .section__head .eyebrow { display: block; margin-bottom: 0.25rem; }
 
-/* ---------- 11. Griglie ---------- */
-.grid { display: grid; gap: 1.25rem; }
-.grid--covers { grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); }
-.grid--cards { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-.grid--quick { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0; }
-.grid--stories { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
-.grid--two { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; --grid-gap: 2.5rem; }
-.grid--stats { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0; }
+/* ---------- 11. Griglie ----------
+   Le griglie sono common.Grid (src/frontend/components/common/Grid.css). */
 
 /* ---------- 12. Cover (mondi) ---------- */
 .cover {
@@ -1418,8 +1412,6 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
 
 /* ---------- 29. Moduli ---------- */
 .form { display: grid; gap: 1.5rem; max-width: 720px; }
-.form-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
-@media (max-width: 700px) { .form-pair { grid-template-columns: 1fr; } }
 .field { display: grid; gap: 0.4rem; }
 .field__label {
   font-family: var(--mono);
@@ -1955,10 +1947,6 @@ html[data-accent="gradiente"] .prose a.mention {
 .face--photo .face__shape { visibility: hidden; }
 
 /* ---------- 30. Utility ---------- */
-.stack { display: grid; gap: 1rem; }
-.stack--sm { gap: 0.5rem; }
-.stack--lg { gap: 1.75rem; }
-.row-inline { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
 .spread { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .hr { border: 0; border-top: var(--rule-ink); margin: 2.5rem 0; }
 .empty {
@@ -2066,12 +2054,9 @@ html[data-accent="gradiente"] .prose a.mention {
   }
   .docbar__actions > * { flex: 0 0 auto; }
   .docbar__actions .btn { min-height: 44px; }
-  .row-inline > .input,
-  .row-inline > .select { min-width: 0; }
   .autosave-recovery .btn { margin: 0.25rem 0.25rem 0 0; }
 
   /* le categorie diventano righe compatte invece di blocchi alti */
-  .grid--quick { grid-template-columns: 1fr; }
   .quick {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
@@ -2278,6 +2263,11 @@ html[data-accent="gradiente"] .prose a.mention {
   --z-tooltip: 1000;
   --grid-gap: var(--sp-6);
   --stack-gap: var(--sp-4);
+  /* Minimum column widths for auto-fit grids. */
+  --grid-min-card: 240px;
+  --grid-min-cover: 310px;
+  --grid-min-story: 330px;
+  --grid-min-quick: 190px;
 }
 
 /* Editorial defaults for bare elements used by components. */

@@ -1,5 +1,5 @@
 {#def crumbs, current_user=None #}
-{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Field.css, common/HStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 <layout.Page title="Nuovo mondo" current_user={{ current_user }}>
   <editorial.Masthead
     title="Nuovo mondo"
@@ -13,9 +13,9 @@
     <common.Field label="Nome" name="name" type="text" required maxlength=255 placeholder="Le Cronache di Boscochiaro" />
     <common.Field label="Descrizione" name="description" type="textarea" required
                   placeholder="Un bosco diviso fra quattro pretendenti." helper="Markdown. Puoi modificarla in seguito." />
-    <div class="row-inline">
+    <common.HStack gap=3>
       <common.Button type="submit" variant="primary" size="md" data-testid="save-world">Crea mondo</common.Button>
       <a class="btn btn--ghost" href="/worlds">Annulla</a>
-    </div>
+    </common.HStack>
   </form>
 </layout.Page>

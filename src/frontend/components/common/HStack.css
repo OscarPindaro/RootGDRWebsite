@@ -10,3 +10,7 @@
 .h-stack-justify-between { justify-content: space-between; }
 .h-stack-justify-end { justify-content: flex-end; }
 .h-stack-wrap { flex-wrap: wrap; }
+
+/* Form controls in a row must be allowed to shrink instead of overflowing. */
+.h-stack > input,
+.h-stack > select { min-width: 0; }

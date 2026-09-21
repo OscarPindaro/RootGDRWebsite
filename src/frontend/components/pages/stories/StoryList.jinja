@@ -1,5 +1,5 @@
 {#def world, world_context, nav, stories, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 {% set count = stories | length %}
 {% set eyebrow_text = count ~ (' arco' if count == 1 else ' archi') %}
 <layout.Page title="Storie" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
@@ -16,7 +16,7 @@
   </editorial.Masthead>
 
   {% if stories %}
-  <div class="grid grid--stories">
+  <common.Grid min="story" gap=5>
     {% for story in stories %}
     <a class="story" href="/worlds/{{ world.id }}/stories/{{ story.id }}">
       <div class="story__band" style="background: var(--{{ story.tint }}); color: var(--surface)">
@@ -33,7 +33,7 @@
       </div>
     </a>
     {% endfor %}
-  </div>
+  </common.Grid>
   {% else %}
   <div class="empty">Nessun arco narrativo.</div>
   {% endif %}

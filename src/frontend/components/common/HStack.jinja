@@ -1,4 +1,5 @@
-{#def gap=4, align="center", justify="start", wrap=False #}
-<div class="h-stack h-stack-align-{{ align }} h-stack-justify-{{ justify }}{% if wrap %} h-stack-wrap{% endif %}" style="--stack-gap: var(--sp-{{ gap }});" {{ attrs.render() }}>
+{#def gap=4, align="center", justify="start", wrap=False, element="div" #}
+{% set stack_style = "--stack-gap: var(--sp-" ~ gap ~ "); " ~ attrs.get("style", "") %}
+<{{ element }} {{ attrs.render(class="h-stack h-stack-align-" ~ align ~ " h-stack-justify-" ~ justify ~ (" h-stack-wrap" if wrap else ""), style=stack_style) }}>
   {{ content }}
-</div>
+</{{ element }}>

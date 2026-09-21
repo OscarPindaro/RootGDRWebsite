@@ -16,14 +16,14 @@
     </div>
   </editorial.Masthead>
 
-  <div class="grid grid--quick">
+  <common.Grid min="quick" flush>
     {% for entry in quicks %}
     <editorial.Quick :entry="entry" :style="current_user.symbol_style" />
     {% endfor %}
-  </div>
+  </common.Grid>
 
   <section class="section">
-    <div class="grid grid--two">
+    <common.Grid split gap=10>
       <div>
         <editorial.SectionHead title="Come è cambiato il mondo" eyebrow="Diario · ultime 4 sessioni">
           <a class="btn--text" href="/worlds/{{ world.id }}/sessions">Registro completo</a>
@@ -53,7 +53,7 @@
         <div class="empty">Nessun arco narrativo aperto.</div>
         {% endif %}
       </div>
-    </div>
+    </common.Grid>
   </section>
 
   <section class="section">

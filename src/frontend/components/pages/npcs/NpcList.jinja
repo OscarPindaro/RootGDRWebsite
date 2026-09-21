@@ -14,9 +14,9 @@
   </editorial.Masthead>
 
   {% if cards %}
-  <div class="grid grid--cards">
+  <common.Grid min="card" gap=5>
     {% for card in cards %}<editorial.Card :item="card" />{% endfor %}
-  </div>
+  </common.Grid>
   {% else %}
   <div class="empty">Nessun NPC. Creane uno per cominciare.</div>
   {% endif %}
@@ -24,9 +24,9 @@
 {% if drafts %}
 <section class="section">
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
-  <div class="grid grid--cards">
+  <common.Grid min="card" gap=5>
     {% for card in drafts %}<editorial.Card :item="card" />{% endfor %}
-  </div>
+  </common.Grid>
 </section>
 {% endif %}
 </layout.Page>

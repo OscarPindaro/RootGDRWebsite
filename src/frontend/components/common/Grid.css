@@ -4,14 +4,30 @@
 }
 
 /* The entry-point strip shares its borders: no gap. */
-.grid--quick { --grid-gap: 0; }
+.grid-flush { gap: 0; }
 
+.grid-columns-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .grid-columns-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+/* Auto-fit: as many columns as fit, none narrower than --grid-min. */
+.grid-auto { grid-template-columns: repeat(auto-fill, minmax(var(--grid-min), 1fr)); }
+
+/* Content beside an aside; the content column takes the larger share. */
+.grid-split {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .grid-split { grid-template-columns: 1fr; }
+}
 
 @media (max-width: 960px) {
   .grid-columns-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-@media (max-width: 640px) {
-  .grid-columns-3 { grid-template-columns: 1fr; }
+@media (max-width: 700px) {
+  .grid-columns-2,
+  .grid-columns-3,
+  .grid-auto { grid-template-columns: 1fr; }
 }
