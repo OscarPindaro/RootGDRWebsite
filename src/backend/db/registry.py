@@ -26,6 +26,7 @@ from ..stories.models import StoryModel  # noqa: F401
 from ..tasks.models import TaskModel  # noqa: F401
 from ..users.models import UserModel  # noqa: F401
 from ..worlds.models import (  # noqa: F401
+    WorldInviteModel,
     WorldMembershipModel,
     WorldModel,
 )
@@ -45,6 +46,7 @@ __all__ = [
     "UserAuthProviderModel",
     "UserModel",
     "UserPasswordModel",
+    "WorldInviteModel",
     "WorldMembershipModel",
     "WorldModel",
 ]

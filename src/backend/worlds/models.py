@@ -1,13 +1,50 @@
 import uuid
+from datetime import datetime
 
-from sqlalchemy import Enum as SAEnum, ForeignKey
+from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..db.db import Base
 from ..db.enums import WorldRole
-from ..db.mixins import OptimisticLockMixin, TimestampMixin, UUIDv7PrimaryKeyMixin
+from ..db.mixins import (
+    IntegerPrimaryKeyMixin,
+    OptimisticLockMixin,
+    TimestampMixin,
+    UUIDv7PrimaryKeyMixin,
+)
 from ..files.models import FileModel
 from ..users.models import UserModel
+
+
+class WorldInviteModel(Base, IntegerPrimaryKeyMixin, TimestampMixin):
+    """An email invited into one world before that person has an account.
+
+    A world owner can add someone who is not in the app yet: the row keeps the
+    email and the role to grant. When a user with that email first signs in,
+    the invite is applied as a membership and marked accepted.
+    """
+
+    __tablename__ = "world_invites"
+    __table_args__ = (
+        UniqueConstraint("world_id", "email", name="uq_world_invite_email"),
+    )
+
+    world_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("worlds.id", ondelete="CASCADE"), nullable=False
+    )
+    email: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[WorldRole] = mapped_column(
+        SAEnum(WorldRole, name="world_role"), nullable=False
+    )
+    invited_by: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id"), nullable=False
+    )
+    accepted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False
+    )
 
 
 class WorldMembershipModel(Base, TimestampMixin):

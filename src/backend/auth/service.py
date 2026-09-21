@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import AppConfig
 from ..db.enums import UserRole
 from ..users.models import UserModel
+from ..worlds.invites import apply_pending_invites
 from .models import (
     InvitationModel,
     UserAuthProviderModel,
@@ -153,6 +154,7 @@ async def login_with_provider(
     user = await find_by_provider(db, provider, openid.id)
     if user:
         _sync_avatar(user, openid)
+        await apply_pending_invites(db, user)
         return user
 
     # 2. Existing user via email from another provider?
@@ -165,6 +167,7 @@ async def login_with_provider(
         )
         _sync_avatar(user, openid)
         await db.flush()
+        await apply_pending_invites(db, user)
         return user
 
     # 3. No user — check invitation or bootstrap admin
@@ -196,6 +199,7 @@ async def login_with_provider(
         )
     )
     await db.flush()
+    await apply_pending_invites(db, user)
     return user
 
 
@@ -233,6 +237,7 @@ async def register_with_password(
         )
     )
     await db.flush()
+    await apply_pending_invites(db, user)
     return user
 
 
