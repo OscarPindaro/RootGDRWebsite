@@ -1,4 +1,3 @@
-app_name: Root GDR
 env: dev
 database:
   user: app_user
@@ -16,4 +15,4 @@ auth:
 frontend:
   enabled: true
 backend_host: 127.0.0.1
-backend_port: 8002
+backend_port: 8000
