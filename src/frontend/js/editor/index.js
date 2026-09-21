@@ -726,8 +726,21 @@ function mountAll(root) {
   scope.querySelectorAll("[data-doc-summary]").forEach((block) => mountDocSummary(block));
   scope.querySelectorAll("[data-doc-identity]").forEach((block) => mountDocIdentity(block));
   scope.querySelectorAll("[data-doc-metadata]").forEach((block) => mountDocMetadata(block));
-  const autoField = scope.querySelector("[data-auto-edit='true'] [data-doc-field]");
-  if (autoField) autoField.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+  const autoBlock = scope.querySelector("[data-auto-edit='true']");
+  if (autoBlock) {
+    // Auto-edit is a one-shot for a freshly created document: drop the flag and
+    // the ?edit=1 parameter so a reload (e.g. after picking a shape) does not
+    // reopen the name field.
+    autoBlock.dataset.autoEdit = "false";
+    autoBlock
+      .querySelector("[data-doc-field]")
+      ?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    const url = new URL(location.href);
+    if (url.searchParams.has("edit")) {
+      url.searchParams.delete("edit");
+      window.history.replaceState(null, "", url);
+    }
+  }
 }
 
 mountAll();

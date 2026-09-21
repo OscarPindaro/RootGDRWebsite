@@ -179,3 +179,27 @@ def test_master_fills_the_world_and_the_overview_updates(
     assert "Le regole della Casa" in session.page.locator("#rail").inner_text()
 
     assert session.errors == []
+
+
+def test_picking_a_shape_does_not_reopen_the_name_field(
+    session: BrowserSession, seed_world
+) -> None:
+    """A freshly created place opens its name field once, not on every reload."""
+    world_id = seed_world("Mondo simboli")
+    place = session.expect_api(
+        f"/api/worlds/{world_id}/places/",
+        method="POST",
+        expected_status=201,
+        data={"name": "Radura"},
+    ).json()
+
+    session.goto(f"/worlds/{world_id}/places/{place['id']}?edit=1")
+    session.page.wait_for_selector(".docidentity__input")
+    session.page.keyboard.press("Escape")
+    session.page.wait_for_selector(".docidentity__input", state="detached")
+
+    session.page.locator(".choice-grid--shape .choice-grid__option").nth(2).click()
+    session.page.wait_for_load_state("networkidle")
+
+    assert session.page.locator(".docidentity__input").count() == 0
+    assert session.errors == []
