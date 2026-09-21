@@ -1,6 +1,9 @@
-{#def base, eyebrow=None, locked=False, is_draft=False, can_manage=False #}
+{#def base, eyebrow=None, locked=False, is_draft=False, can_manage=False, badge=None #}
 <div class="docbar">
-  <span class="eyebrow">{{ eyebrow }}</span>
+  <div class="docbar__lead">
+    <span class="eyebrow">{{ eyebrow }}</span>
+    {% if badge %}<span class="pill pill--forest">{{ badge }}</span>{% endif %}
+  </div>
   <div class="docbar__actions">
     {% if is_draft %}
     <span class="pill pill--draft">Bozza</span>

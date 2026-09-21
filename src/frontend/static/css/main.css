@@ -516,7 +516,7 @@ ul, ol { margin: 0; padding: 0; }
   justify-content: center;
   align-items: flex-start;
 }
-.masthead__actions { display: flex; gap: 0.6rem; flex-wrap: wrap; }
+.masthead__actions { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; }
 
 .crumbs {
   display: flex;
@@ -1957,6 +1957,7 @@ html[data-accent="gradiente"] .prose a.mention {
   padding: 0.75rem 0;
   margin-bottom: 2.25rem;
 }
+.docbar__lead { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 .docbar__actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 [data-doc-lock][aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
