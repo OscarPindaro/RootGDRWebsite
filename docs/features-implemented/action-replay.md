@@ -23,6 +23,16 @@ Two recordings:
 recording. `harness replay diff <before> <after>` reports added, removed and
 changed steps with volatile values normalized.
 
+### What the replay asserts
+
+Every step asserts the recorded status. Where the recorded response was a JSON
+object (the API's single-resource bodies), the generated test also compares the
+body: UUIDs and complete ISO timestamps are normalized, and the actor fields
+(`owner`, `createdBy`, `updatedBy`) collapse to `<actor>`, because a replay
+runs as a different user on purpose. Collections and HTML views are asserted by
+status only — their contents depend on whatever else the database holds. The
+ad-hoc runner reports the same comparison as a `[content]` line.
+
 ### Replaying on another database
 
 Ids returned by create operations are captured from the recorded response

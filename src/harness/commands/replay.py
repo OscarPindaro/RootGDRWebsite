@@ -11,6 +11,7 @@ Two kinds of recording:
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Annotated, Literal
@@ -265,6 +266,14 @@ def run(
             f"{response.status_code} (expected {request.expected_status})",
             markup=False,
         )
+        if (
+            request.expected is not None
+            and response.status_code == request.expected_status
+        ):
+            difference = _body_difference(response, request.expected)
+            if difference:
+                failures += 1
+                console.print(f"     [content] {difference}", markup=False)
         if request.bind is not None and response.status_code == request.expected_status:
             identifier = _response_id(response)
             if identifier is None:
@@ -302,6 +311,16 @@ def _bind_text(target: str, bound: dict[str, str]) -> str:
 
 def _is_json(response: httpx.Response) -> bool:
     return "application/json" in response.headers.get("content-type", "")
+
+
+def _body_difference(response: httpx.Response, expected: object) -> str | None:
+    """A short description of how the response body differs, or ``None``."""
+    if not _is_json(response):
+        return None
+    actual = recordings.normalize_response(response.json())
+    if actual == recordings.normalize_response(expected):
+        return None
+    return f"body differs: {json.dumps(actual)[:200]}"
 
 
 def _response_id(response: httpx.Response) -> str | None:

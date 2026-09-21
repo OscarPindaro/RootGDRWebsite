@@ -46,6 +46,7 @@ class PlannedRequest(BaseModel):
     body: object | None = None
     expected_status: int
     bind: str | None = None
+    expected: object | None = None
 
 
 class BackendPlan(BaseModel):
@@ -92,6 +93,31 @@ def load_backend(session: str) -> list[BackendStep]:
         BackendStep.model_validate(step)
         for step in json.loads(path.read_text(encoding="utf-8"))
     ]
+
+
+def normalize_volatile(value: object) -> object:
+    """Normalize UUIDs and complete ISO timestamps, for stable comparisons."""
+    return _normalize_volatile(value)
+
+
+# Fields that identify who acted; a replay runs as a different user on purpose.
+_ACTOR_KEYS = frozenset({"owner", "createdBy", "updatedBy"})
+
+
+def normalize_response(value: object) -> object:
+    """Normalize a response body for comparison: volatile values and the actor."""
+    return _collapse_actors(_normalize_volatile(value))
+
+
+def _collapse_actors(value: object) -> object:
+    if isinstance(value, dict):
+        return {
+            key: "<actor>" if key in _ACTOR_KEYS else _collapse_actors(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_collapse_actors(item) for item in value]
+    return value
 
 
 def _normalize_volatile(value: object) -> object:
@@ -218,6 +244,9 @@ def plan_backend(steps: list[BackendStep]) -> BackendPlan:
                 body=_substitute_value(step.body, variables, external, step.path),
                 expected_status=step.status,
                 bind=bind,
+                # Only single-resource JSON bodies are stable enough to assert:
+                # collections depend on whatever else the database holds.
+                expected=step.response if isinstance(step.response, dict) else None,
             )
         )
     names = _recorded_names(steps)
@@ -362,6 +391,8 @@ def render_backend_test(session: str, steps: list[BackendStep]) -> str:
         )
         if request.bind is not None:
             body.append(f"    {request.bind} = _replay_id(response)")
+        if request.expected is not None:
+            body.append(f"    _replay_body(response, {request.expected!r})")
     if not body:
         body.append("    pass")
 
@@ -427,6 +458,40 @@ def render_backend_test(session: str, steps: list[BackendStep]) -> str:
         "    matches = re.findall(r'[0-9a-f-]{36}', location)",
         "    assert matches, f'create response carries no id: {response.status_code} {location}'",
         "    return matches[-1]",
+        "",
+        "",
+        "_UUID = re.compile(",
+        "    r'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}'",
+        "    r'-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}'",
+        ")",
+        "_TIMESTAMP = re.compile(",
+        "    r'^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(?:\\.\\d+)?(?:Z|[+-]\\d{2}:?\\d{2})?$'",
+        ")",
+        "",
+        "",
+        "_ACTORS = ('owner', 'createdBy', 'updatedBy')",
+        "",
+        "",
+        "def _replay_normalize(value):",
+        "    if isinstance(value, str):",
+        "        if _TIMESTAMP.fullmatch(value):",
+        "            return '<timestamp>'",
+        "        return _UUID.sub('<uuid>', value)",
+        "    if isinstance(value, dict):",
+        "        return {",
+        "            key: '<actor>' if key in _ACTORS else _replay_normalize(item)",
+        "            for key, item in value.items()",
+        "        }",
+        "    if isinstance(value, list):",
+        "        return [_replay_normalize(item) for item in value]",
+        "    return value",
+        "",
+        "",
+        "def _replay_body(response, expected) -> None:",
+        "    actual = response.json()",
+        "    assert _replay_normalize(actual) == _replay_normalize(expected), (",
+        "        f'response body differs\\nactual:   {actual}\\nexpected: {expected}'",
+        "    )",
         "",
         "",
         f"async def test_backend_replay_{name}(async_client, app, db_manager) -> None:",

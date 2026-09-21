@@ -219,7 +219,9 @@ Turn a bug found by hand into a reproducible test, from either side:
 - `uv run harness replay list|show|export <session> [--mode ui|backend]`;
   `export` writes a Playwright test (ui) or an integration test (backend) into
   `tests/e2e/` or `tests/integration/`. Ids created during the session are
-  rebound, so the backend test runs on any database.
+  rebound, so the backend test runs on any database; it asserts the recorded
+  statuses and, for JSON object responses, the body with UUIDs, timestamps and
+  the actor normalized.
 - `uv run harness replay run <session> [--bundle <file>]…` replays a recording
   against the dev stack (or `--base-url`), importing precondition bundles and
   reporting expected vs actual status per step.

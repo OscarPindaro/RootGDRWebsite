@@ -52,6 +52,40 @@ def _replay_id(response) -> str:
     return matches[-1]
 
 
+_UUID = re.compile(
+    r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}"
+    r"-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}"
+)
+_TIMESTAMP = re.compile(
+    r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?$"
+)
+
+
+_ACTORS = ("owner", "createdBy", "updatedBy")
+
+
+def _replay_normalize(value):
+    if isinstance(value, str):
+        if _TIMESTAMP.fullmatch(value):
+            return "<timestamp>"
+        return _UUID.sub("<uuid>", value)
+    if isinstance(value, dict):
+        return {
+            key: "<actor>" if key in _ACTORS else _replay_normalize(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_replay_normalize(item) for item in value]
+    return value
+
+
+def _replay_body(response, expected) -> None:
+    actual = response.json()
+    assert _replay_normalize(actual) == _replay_normalize(expected), (
+        f"response body differs\nactual:   {actual}\nexpected: {expected}"
+    )
+
+
 async def test_backend_replay_b260921183020(async_client, app, db_manager) -> None:
     user = await _replay_user(db_manager)
 
@@ -110,6 +144,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
     )
+    _replay_body(
+        response,
+        {
+            "version": 2,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:09+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": None,
+            "shortDescription": "",
+            "tint": "p1",
+            "animal": "🐈",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": True,
+            "body": "",
+        },
+    )
     response = await async_client.request(
         "PATCH",
         f"/api/worlds/{world_1}/characters/{character_1}",
@@ -117,6 +180,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     )
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
+    )
+    _replay_body(
+        response,
+        {
+            "version": 3,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:13+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": "Pipolo",
+            "shortDescription": "",
+            "tint": "p1",
+            "animal": "🐈",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": True,
+            "body": "",
+        },
     )
     response = await async_client.request(
         "PATCH",
@@ -126,6 +218,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
     )
+    _replay_body(
+        response,
+        {
+            "version": 4,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:24+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": "Pipolo",
+            "shortDescription": "Azzarella",
+            "tint": "p1",
+            "animal": "🐈",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": True,
+            "body": "",
+        },
+    )
     response = await async_client.request(
         "PATCH",
         f"/api/worlds/{world_1}/characters/{character_1}",
@@ -133,6 +254,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     )
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
+    )
+    _replay_body(
+        response,
+        {
+            "version": 5,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:24+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": "Pipolo",
+            "shortDescription": "Azzarella",
+            "tint": "p2",
+            "animal": "🐈",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": True,
+            "body": "",
+        },
     )
     response = await async_client.request(
         "GET", f"/worlds/{world_1}/characters/{character_1}?edit=1"
@@ -148,6 +298,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
     )
+    _replay_body(
+        response,
+        {
+            "version": 6,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:25+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": "Pipolo",
+            "shortDescription": "Azzarella",
+            "tint": "p2",
+            "animal": "🐸",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": True,
+            "body": "",
+        },
+    )
     response = await async_client.request(
         "GET", f"/worlds/{world_1}/characters/{character_1}?edit=1"
     )
@@ -162,6 +341,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
     )
+    _replay_body(
+        response,
+        {
+            "version": 7,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:27+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": "Pipolo",
+            "shortDescription": "Azzarella",
+            "tint": "p2",
+            "animal": "🐍",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": True,
+            "body": "",
+        },
+    )
     response = await async_client.request(
         "GET", f"/worlds/{world_1}/characters/{character_1}?edit=1"
     )
@@ -175,6 +383,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     )
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
+    )
+    _replay_body(
+        response,
+        {
+            "version": 8,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:28+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": "Pipolo",
+            "shortDescription": "Azzarella",
+            "tint": "p8",
+            "animal": "🐍",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": True,
+            "body": "",
+        },
     )
     response = await async_client.request(
         "GET", f"/worlds/{world_1}/characters/{character_1}?edit=1"
@@ -214,6 +451,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
     )
+    _replay_body(
+        response,
+        {
+            "version": 10,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:35+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": "Pipolo",
+            "shortDescription": "Azzarella",
+            "tint": "p8",
+            "animal": "🐁",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": False,
+            "body": "",
+        },
+    )
     response = await async_client.request(
         "GET", f"/worlds/{world_1}/characters/{character_1}"
     )
@@ -227,6 +493,35 @@ async def test_backend_replay_b260921183020(async_client, app, db_manager) -> No
     )
     assert response.status_code == 200, (
         f"PATCH /api/worlds/{world_1}/characters/{character_1} -> {response.status_code}"
+    )
+    _replay_body(
+        response,
+        {
+            "version": 11,
+            "createdAt": "2026-09-21T18:33:06+0000",
+            "updatedAt": "2026-09-21T18:33:36+0000",
+            "id": "01a0c53e-4098-7c81-8a02-1f1d67470c70",
+            "name": "Pippo",
+            "title": "Pipolo",
+            "shortDescription": "Azzarella",
+            "tint": "p8",
+            "animal": "🐍",
+            "imageUrl": None,
+            "owner": {
+                "createdAt": "2026-09-21T18:30:19+0000",
+                "updatedAt": "2026-09-21T18:30:19+0000",
+                "id": "01a0c53b-b52c-7490-b3ee-0567d6ce3007",
+                "name": "user-1@example.test",
+                "email": "user-1@example.test",
+                "avatarUrl": None,
+                "symbolStyle": "icons",
+                "role": "admin",
+                "isActive": True,
+            },
+            "locked": False,
+            "isDraft": False,
+            "body": "",
+        },
     )
     response = await async_client.request(
         "GET", f"/worlds/{world_1}/characters/{character_1}"
