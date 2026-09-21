@@ -1,5 +1,5 @@
-{#def world, world_context, nav, npc, can_manage, crumbs, pages=None, short_html=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css #}
+{#def world, world_context, nav, npc, can_manage, crumbs, animals, tints, pages=None, short_html=None, body_html=None, links=None, current_user=None #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/ChoiceGrid.css, editorial/ImageEditor.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css #}
 <layout.Page :title="npc.name" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="npc">
   <editorial.Crumbs :items="crumbs" />
 
@@ -19,8 +19,14 @@
     <div>
       <div class="document">
         <div class="document__head">
-          <div class="document__face">
-            <editorial.Face :tint="npc.tint" :animal="npc.animal" :image_url="npc.image_url" />
+          <div class="document__face document__face--editor">
+            <editorial.ImageEditor :world_id="world.id" owner_kind="npc" :owner_id="npc.id"
+              :upload_url="'/api/worlds/' ~ world.id ~ '/npcs/' ~ npc.id ~ '/image'"
+              :fallback_action="'/worlds/' ~ world.id ~ '/npcs/' ~ npc.id ~ '/image'"
+              :image_url="npc.image_url" :can_manage="can_manage" :locked="npc.locked"
+              :version="npc.version" :tint="npc.tint" :symbol="npc.animal"
+              symbol_name="animal" symbol_kind="emoji" :symbol_options="animals" :tints="tints"
+              :label="'Immagine di ' ~ npc.name" />
           </div>
           <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/npcs/' ~ npc.id"
             :can_manage="can_manage" :locked="npc.locked" :version="npc.version">

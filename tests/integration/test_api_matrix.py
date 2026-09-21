@@ -91,18 +91,23 @@ async def api(
 
 async def test_world_image_revision_api(api: _Api) -> None:
     image_url = f"/api/worlds/{api.world_id}/image"
-    assert (
-        await api.client.put(image_url, files={"image": ("a.png", PNG, "image/png")})
-    ).status_code == 200
-    assert (
-        await api.client.put(image_url, files={"image": ("b.jpg", JPEG, "image/jpeg")})
-    ).status_code == 200
+    first_upload = await api.client.put(
+        image_url, files={"image": ("a.png", PNG, "image/png")}
+    )
+    assert first_upload.status_code == 200
+    assert first_upload.json()["version"] == 2
+    second_upload = await api.client.put(
+        image_url, files={"image": ("b.jpg", JPEG, "image/jpeg")}
+    )
+    assert second_upload.status_code == 200
+    assert second_upload.json()["version"] == 3
 
     history_url = f"/api/worlds/{api.world_id}/images/world/{api.world_id}/revisions"
     listed = await api.client.get(f"{history_url}/")
     assert listed.status_code == 200
     newest, oldest = listed.json()["data"]
     assert [newest["filename"], oldest["filename"]] == ["b.jpg", "a.png"]
+    assert newest["uploaded_by_name"] == "api-owner"
     assert newest["is_current"] is True
 
     content = await api.client.get(f"{history_url}/{oldest['id']}/content")
@@ -113,9 +118,11 @@ async def test_world_image_revision_api(api: _Api) -> None:
     restored = await api.client.post(f"{history_url}/{oldest['id']}/restore")
     assert restored.status_code == 200
     assert restored.json()["is_current"] is True
+    assert (await api.client.get(f"/api/worlds/{api.world_id}")).json()["version"] == 4
     deleted = await api.client.delete(f"{history_url}/{newest['id']}")
     assert deleted.status_code == 204
     assert (await api.client.delete(f"{history_url}/current")).status_code == 204
+    assert (await api.client.get(f"/api/worlds/{api.world_id}")).json()["version"] == 5
 
     cross_world = await api.client.get(
         f"/api/worlds/{api.other_world_id}/images/world/{api.world_id}/revisions/"

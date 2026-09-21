@@ -1,5 +1,5 @@
 {#def world, members, world_context, nav, crumbs, error=None, pages=None, current_user=None #}
-{#css common/Alert.css, common/Button.css, common/Field.css, common/Pill.css, layout/UserMenu.css, pages/worlds/WorldSettings.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Alert.css, common/Button.css, common/Dialog.css, common/Field.css, common/Pill.css, layout/UserMenu.css, pages/worlds/WorldSettings.css, editorial/ImageEditor.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/ChoiceGrid.css #}
 <layout.Page title="Impostazioni" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="mondo">
   <editorial.Masthead title="Impostazioni" :eyebrow="world.name" :crumbs="crumbs">
     <a class="btn btn--ghost" href="/worlds/{{ world.id }}">Torna al mondo</a>
@@ -61,21 +61,11 @@
     <aside class="stack">
       <section>
         <editorial.SectionHead title="Copertina" eyebrow="Immagine del mondo" />
-        {% if world.image_url %}
-        <img src="{{ world.image_url }}" alt="" class="world-cover-preview">
-        {% else %}
-        <div class="empty">Nessuna immagine caricata.</div>
-        {% endif %}
-        <form style="margin-top: 1rem"
-              hx-post="/worlds/{{ world.id }}/image"
-              hx-ext="ignore:json-enc"
-              hx-encoding="multipart/form-data"
-              hx-swap="none">
-          <input class="input" type="file" name="image" accept="image/*" required aria-label="Nuova immagine di copertina">
-          <div class="row-inline" style="margin-top: 0.75rem">
-            <common.Button type="submit" variant="secondary" size="sm" data-testid="upload-world-cover">Carica immagine</common.Button>
-          </div>
-        </form>
+        <editorial.ImageEditor :world_id="world.id" owner_kind="world" :owner_id="world.id"
+          :upload_url="'/api/worlds/' ~ world.id ~ '/image'"
+          :fallback_action="'/worlds/' ~ world.id ~ '/image'"
+          :image_url="world.image_url" :can_manage="True" :version="world.version"
+          label="Copertina del mondo" />
       </section>
     </aside>
   </div>

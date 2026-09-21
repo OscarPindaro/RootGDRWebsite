@@ -142,6 +142,8 @@ async def character_detail_page(
         nav=nav,
         pages=rail_pages,
         character=character,
+        animals=animal_options(),
+        tints=tint_options(),
         short_html=short_html,
         body_html=body_html,
         links=links,

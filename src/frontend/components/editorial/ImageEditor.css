@@ -1,0 +1,136 @@
+.document__face--editor {
+  grid-column: 1 / -1;
+  aspect-ratio: auto;
+  overflow: visible;
+  border: 0;
+}
+
+.document__face--editor + .docidentity { grid-column: 1 / -1; }
+
+.image-editor {
+  display: grid;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.image-editor--with-choices {
+  grid-template-columns: minmax(11rem, 0.7fr) minmax(18rem, 1.3fr);
+  align-items: stretch;
+}
+
+.image-editor__media,
+.image-editor__form {
+  position: relative;
+  display: grid;
+  min-height: 100%;
+}
+
+.image-editor__surface {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-height: 12rem;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: var(--rule-ink);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.image-editor__surface:focus-visible {
+  outline: 3px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+.image-editor__surface--readonly { cursor: default; }
+.image-editor__surface .face { height: 100%; }
+.image-editor__image { width: 100%; height: 100%; object-fit: cover; }
+.image-editor__world-fallback { color: var(--muted); }
+
+.image-editor__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--sp-4);
+  color: var(--surface);
+  background: color-mix(in srgb, var(--ink) 76%, transparent);
+  font-weight: var(--weight-medium);
+  text-align: center;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+.image-editor__surface:hover .image-editor__overlay,
+.image-editor__surface:focus .image-editor__overlay,
+.image-editor__surface[data-dragging="true"] .image-editor__overlay {
+  opacity: 1;
+}
+
+.image-editor__surface[data-dragging="true"] {
+  outline: 4px solid var(--vermilion);
+  outline-offset: -4px;
+}
+
+.image-editor__input {
+  position: absolute;
+  width: var(--rule-width);
+  height: var(--rule-width);
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.image-editor[data-enhanced="true"] .image-editor__fallback-submit { display: none; }
+.image-editor__fallback-submit { margin-top: var(--sp-2); }
+
+.image-editor__history-trigger {
+  position: absolute;
+  right: var(--sp-2);
+  bottom: var(--sp-2);
+  z-index: 2;
+}
+
+.image-editor__choices {
+  display: grid;
+  grid-template-rows: 1fr 1fr auto;
+  gap: var(--sp-3);
+  min-height: 100%;
+}
+
+.image-editor__choices .choice-grid,
+.image-editor__choices .choice-grid__options { height: 100%; }
+.image-editor__choices .choice-grid { grid-template-rows: auto 1fr; }
+.image-editor__choices .choice-grid__option { aspect-ratio: auto; min-height: 2.5rem; }
+.image-editor__status { min-height: 1.2em; margin: 0; color: var(--muted); font-size: var(--text-sm); }
+.image-editor__status[data-state="error"], .image-editor__error { color: var(--vermilion); }
+.image-editor__error { margin: 0; }
+.image-editor__dialog { max-width: 46rem; }
+.image-editor__history { display: grid; gap: var(--sp-3); max-height: min(65vh, 42rem); overflow: auto; }
+.image-editor__empty { margin: 0; color: var(--muted); }
+
+.image-editor__revision {
+  display: grid;
+  grid-template-columns: 6rem minmax(0, 1fr) auto;
+  gap: var(--sp-3);
+  align-items: center;
+  padding-bottom: var(--sp-3);
+  border-bottom: var(--rule-ink);
+}
+
+.image-editor__thumb { width: 6rem; aspect-ratio: 4 / 3; object-fit: cover; background: var(--paper-deep); }
+.image-editor__revision-meta { min-width: 0; }
+.image-editor__revision-name { margin: 0; overflow-wrap: anywhere; font-weight: var(--weight-medium); }
+.image-editor__revision-detail { margin: var(--sp-1) 0 0; color: var(--muted); font-size: var(--text-sm); }
+.image-editor__revision-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: var(--sp-2); }
+.image-editor__current { color: var(--forest); font-weight: 600; }
+
+@media (max-width: 760px) {
+  .image-editor--with-choices { grid-template-columns: 1fr; }
+  .image-editor__media { max-width: 15rem; }
+  .image-editor__revision { grid-template-columns: 4.5rem 1fr; }
+  .image-editor__thumb { width: 4.5rem; }
+  .image-editor__revision-actions { grid-column: 1 / -1; justify-content: flex-start; }
+}

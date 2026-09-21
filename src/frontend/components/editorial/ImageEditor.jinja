@@ -1,0 +1,74 @@
+{#def world_id, owner_kind, owner_id, upload_url, fallback_action, image_url=None, can_manage=False, locked=False, version=None, tint=None, symbol=None, symbol_name=None, symbol_kind=None, symbol_options=None, tints=None, label="Immagine" #}
+{#css common/Button.css, common/ChoiceGrid.css, common/Dialog.css #}
+{% set editable = can_manage and not locked %}
+<div class="image-editor{% if symbol_options and tints %} image-editor--with-choices{% endif %}"
+     data-image-editor
+     data-owner-kind="{{ owner_kind }}"
+     data-upload-url="{{ upload_url }}"
+     data-history-url="/api/worlds/{{ world_id }}/images/{{ owner_kind }}/{{ owner_id }}/revisions"
+     {% if version %}data-version="{{ version }}"{% endif %}
+     {% if editable %}data-editable="true"{% endif %}>
+  <div class="image-editor__media">
+    {% if editable %}
+    <form class="image-editor__form" action="{{ fallback_action }}" method="post" enctype="multipart/form-data" data-image-form>
+      <label class="image-editor__surface" for="image-{{ owner_kind }}-{{ owner_id }}" tabindex="0"
+             data-image-surface data-testid="image-editor-surface">
+        {% if image_url %}
+        <img class="image-editor__image" src="{{ image_url }}" alt="{{ label }}" data-image-current>
+        {% elif owner_kind == "world" %}
+        <span class="image-editor__world-fallback" aria-hidden="true"><common.Icon name="map" size=48 /></span>
+        {% else %}
+        <editorial.Face :tint="tint" :animal="symbol if symbol_kind == 'emoji' else None"
+                        :shape="symbol if symbol_kind == 'shape' else None" />
+        {% endif %}
+        <span class="image-editor__overlay">{{ "Cambia immagine" if image_url else "Carica immagine" }}</span>
+      </label>
+      <input class="image-editor__input" id="image-{{ owner_kind }}-{{ owner_id }}" type="file"
+             name="image" accept="image/png,image/jpeg,image/gif,image/webp" required data-image-input
+             aria-label="{{ 'Cambia' if image_url else 'Carica' }} {{ label | lower }}">
+      <button class="btn btn-secondary btn-sm btn-round image-editor__fallback-submit" type="submit" data-image-submit>Carica immagine</button>
+    </form>
+    <button class="btn btn-secondary btn-sm btn-round image-editor__history-trigger" type="button"
+            data-image-history-open data-testid="image-history-open">Storico</button>
+    {% else %}
+      <div class="image-editor__surface image-editor__surface--readonly">
+        {% if image_url %}
+        <img class="image-editor__image" src="{{ image_url }}" alt="{{ label }}">
+        {% elif owner_kind == "world" %}
+        <span class="image-editor__world-fallback" aria-hidden="true"><common.Icon name="map" size=48 /></span>
+        {% else %}
+        <editorial.Face :tint="tint" :animal="symbol if symbol_kind == 'emoji' else None"
+                        :shape="symbol if symbol_kind == 'shape' else None" />
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if editable and symbol_options and tints %}
+  <div class="image-editor__choices" data-image-choices data-autosave-url="/api/worlds/{{ world_id }}/{{ owner_kind ~ 's' if owner_kind != 'character' else 'characters' }}/{{ owner_id }}">
+    <common.ChoiceGrid :label="'Animale' if symbol_kind == 'emoji' else 'Forma'" :name="symbol_name"
+                       :kind="symbol_kind" :options="symbol_options" :columns="8" :value="symbol" />
+    <common.ChoiceGrid label="Tinta della scheda" name="tint" kind="tint"
+                       :options="tints" :columns="6" :value="tint" />
+    <p class="image-editor__status" data-image-status role="status" aria-live="polite"></p>
+  </div>
+  {% endif %}
+
+  {% if editable %}
+  <dialog class="dialog image-editor__dialog" data-image-history-dialog data-testid="image-history-dialog" aria-labelledby="image-history-title-{{ owner_kind }}-{{ owner_id }}">
+    <div class="dialog-container">
+      <header class="dialog-header">
+        <h2 class="dialog-title" id="image-history-title-{{ owner_kind }}-{{ owner_id }}">Storico immagini</h2>
+        <button class="dialog-close" type="button" data-image-history-close aria-label="Chiudi storico">×</button>
+      </header>
+      <div class="dialog-body">
+        <p class="image-editor__error" data-image-error role="alert" aria-live="assertive" hidden></p>
+        <div class="image-editor__history" data-image-history-list data-testid="image-history-list"></div>
+        {% if image_url %}
+        <button class="btn btn-ghost btn-sm btn-round" type="button" data-image-clear data-testid="image-clear-current">Rimuovi immagine corrente</button>
+        {% endif %}
+      </div>
+    </div>
+  </dialog>
+  {% endif %}
+</div>
