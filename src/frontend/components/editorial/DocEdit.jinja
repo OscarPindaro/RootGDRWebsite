@@ -1,4 +1,5 @@
 {#def world_id, base, body, body_html, version, locked=False, can_manage=False, field_name="body", label="Testo Markdown" #}
+{#css common/SaveIndicator.css #}
 <div class="docedit" data-doc-edit data-world-id="{{ world_id }}" data-doc-field-name="{{ field_name }}"
      data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
@@ -14,6 +15,6 @@
     <div class="docedit__actions" data-doc-actions hidden>
       <span class="field__hint">Ctrl/⌘+Invio mostra il risultato · Esc esce dalla scrittura</span>
     </div>
-    <p class="autosave-status" data-autosave-status role="status" aria-live="polite"></p>
+    <common.SaveIndicator />
   {% endif %}
 </div>

@@ -1,9 +1,10 @@
 {#def base, version, can_manage=False, locked=False, auto_edit=False #}
+{#css common/SaveIndicator.css #}
 <div class="docidentity" data-doc-identity data-auto-edit="{{ 'true' if auto_edit else 'false' }}" data-autosave-url="/api{{ base }}"
      data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   {{ content }}
   {% if can_manage and not locked %}
-    <p class="autosave-status" data-autosave-status role="status" aria-live="polite"></p>
+    <common.SaveIndicator />
   {% endif %}
 </div>

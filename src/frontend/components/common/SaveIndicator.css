@@ -1,0 +1,42 @@
+/* The autosave script writes the text and data-state onto this element, so the
+   mark has to be a pseudo-element: a child would be wiped by textContent. */
+.save-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  color: var(--muted);
+}
+
+.save-indicator:empty::before { display: none; }
+
+.save-indicator::before {
+  content: "";
+  flex: 0 0 auto;
+  width: var(--sp-2);
+  height: var(--sp-2);
+  box-sizing: border-box;
+  border: var(--rule-width-strong) solid currentColor;
+  border-radius: var(--radius-full);
+}
+
+/* In progress: the mark turns into a dashed ring. */
+.save-indicator[data-state=""]:not(:empty)::before {
+  border-style: dashed;
+  animation: save-indicator-spin 900ms linear infinite;
+}
+
+.save-indicator[data-state="saved"] { color: var(--ok); }
+.save-indicator[data-state="saved"]::before { background: currentColor; }
+
+.save-indicator[data-state="conflict"] { color: var(--warn); }
+
+@keyframes save-indicator-spin {
+  to { transform: rotate(1turn); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .save-indicator[data-state=""]:not(:empty)::before { animation: none; }
+}
