@@ -21,11 +21,20 @@
   document.addEventListener(
     "click",
     function (event) {
-      if (!event.target.closest("[data-replay-toggle]")) return;
+      var toggle = event.target.closest("[data-replay-toggle]");
+      if (!toggle) return;
       event.preventDefault();
-      localStorage.setItem("replay", localStorage.getItem("replay") === ON ? "off" : ON);
-      sessionStorage.removeItem("replay-session");
-      location.reload();
+      var turningOn = localStorage.getItem("replay") !== ON;
+      // The backend recorder is switched on with the same toggle; the browser
+      // steps follow the localStorage flag. If the call fails the page still
+      // reloads with the UI recorder state unchanged.
+      fetch("/api/replay/" + (turningOn ? "start" : "stop"), { method: "POST" })
+        .catch(function () {})
+        .finally(function () {
+          localStorage.setItem("replay", turningOn ? ON : "off");
+          sessionStorage.removeItem("replay-session");
+          location.reload();
+        });
     },
     true,
   );
@@ -53,7 +62,7 @@
     while (queue.length) {
       var batch = queue.splice(0, queue.length);
       try {
-        await fetch("/api/dev/replay", {
+        await fetch("/api/replay", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ session: session, steps: batch }),

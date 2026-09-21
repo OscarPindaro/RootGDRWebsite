@@ -120,7 +120,11 @@ def _build_templates(templates_dir: str):
 
 @lru_cache(maxsize=1)
 def get_catalog(
-    components_dir: str, *, env: str = "dev", app_name: str = "fastapi-template"
+    components_dir: str,
+    *,
+    env: str = "dev",
+    app_name: str = "fastapi-template",
+    replay_enabled: bool = False,
 ) -> Catalog:
     """Build the JinjaX catalog — the object that manages components.
 
@@ -128,7 +132,13 @@ def get_catalog(
     subfolders). CSS/JS files colocated next to a component are
     auto-loaded and served via a StaticFiles mount (see ``server.py``).
     """
-    catalog = jinjax.Catalog(globals={"env": env, "app_name": app_name})
+    catalog = jinjax.Catalog(
+        globals={
+            "env": env,
+            "app_name": app_name,
+            "replay_enabled": env == "dev" or replay_enabled,
+        }
+    )
     catalog.add_folder(components_dir)
     catalog.jinja_env.filters["cat_index"] = _cat_index
     catalog.jinja_env.filters["time"] = _time

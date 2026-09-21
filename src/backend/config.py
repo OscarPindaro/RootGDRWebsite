@@ -173,6 +173,21 @@ class LoggingConfig(BaseModel):
     format: Literal["text", "json"] = Field(default="text")
 
 
+class ReplayConfig(BaseModel):
+    """Action recording outside development.
+
+    Recording is always available in ``env: dev``. Elsewhere it exists only
+    when explicitly enabled, and starting/stopping it requires an admin.
+    Recorded emails and user names are anonymized with per-session
+    deterministic pseudonyms.
+    """
+
+    enabled: bool = Field(
+        default=False,
+        description="Allow recording outside development (admin only).",
+    )
+
+
 class GoogleSSOConfig(BaseModel):
     """Google OAuth/OIDC credentials for fastapi-sso."""
 
@@ -209,6 +224,7 @@ class AppConfig(BaseConfig):
     migrator: MigratorConfig = Field(default_factory=MigratorConfig)
     frontend: Optional[FrontendConfig] = Field(default=None)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
+    replay: ReplayConfig = Field(default_factory=ReplayConfig)
     auth: Optional[AuthConfig] = Field(default=None)
     storage: StorageConfig = Field(default_factory=StorageConfig)
 

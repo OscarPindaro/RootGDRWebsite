@@ -18,9 +18,14 @@ class RecordingOptions(AppBaseModelStripped):
 
 
 class RecordingConfig(RecordingOptions):
-    """Worker-shared state for an active backend recording."""
+    """Worker-shared state for an active backend recording.
+
+    ``aliases`` is the session's anonymization map: original identity value →
+    pseudonym. It never leaves the machine.
+    """
 
     session: NonEmptyString
+    aliases: dict[str, str] = Field(default_factory=dict)
 
 
 class ReplayStep(AppBaseModelStripped):
@@ -39,10 +44,18 @@ class ReplayBatch(AppBaseModelStripped):
 
 
 class BackendStep(AppBaseModelStripped):
-    """One request the backend answered, recorded for a replay test."""
+    """One request the backend answered, recorded for a replay test.
+
+    ``response`` carries the JSON response body (size-capped) so the generated
+    test can rebind the ids a create operation returned.
+    """
 
     method: str
     path: str
     query: Annotated[str | None, Field(default=None, description="Raw query string")]
     body: Annotated[object | None, Field(default=None, description="JSON request body")]
     status: Annotated[int, Field(description="Response status")]
+    response: Annotated[
+        object | None,
+        Field(default=None, description="JSON response body, size-capped"),
+    ]
