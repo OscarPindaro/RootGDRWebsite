@@ -1,4 +1,4 @@
-{#def world_id, owner_kind, owner_id, upload_url, fallback_action, image_url=None, can_manage=False, locked=False, version=None, tint=None, symbol=None, symbol_name=None, symbol_kind=None, symbol_options=None, tints=None, label="Immagine" #}
+{#def world_id, owner_kind, owner_id, upload_url, fallback_action, image_url=None, can_manage=False, locked=False, version=None, tint=None, symbol=None, symbol_name=None, symbol_kind=None, symbol_options=None, tints=None, label="Immagine", ratio="portrait" #}
 {#css common/Button.css, common/ChoiceGrid.css, common/Dialog.css, common/Tooltip.css #}
 {% set editable = can_manage and not locked %}
 <div class="image-editor{% if symbol_options and tints %} image-editor--with-choices{% endif %}"
@@ -8,7 +8,7 @@
      data-history-url="/api/worlds/{{ world_id }}/images/{{ owner_kind }}/{{ owner_id }}/revisions"
      {% if version %}data-version="{{ version }}"{% endif %}
      {% if editable %}data-editable="true"{% endif %}>
-  <div class="image-editor__media">
+  <div class="image-editor__media" style="--media-ratio: var(--media-ratio-{{ ratio }})">
     {% if editable %}
     <form class="image-editor__form" action="{{ fallback_action }}" method="post" enctype="multipart/form-data" data-image-form>
       <label class="image-editor__surface" for="image-{{ owner_kind }}-{{ owner_id }}" tabindex="0"

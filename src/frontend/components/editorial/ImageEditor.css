@@ -34,7 +34,7 @@
   place-items: center;
   width: 100%;
   min-height: 12rem;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: var(--media-ratio, var(--media-ratio-portrait));
   overflow: hidden;
   border: var(--rule-ink);
   background: var(--surface);

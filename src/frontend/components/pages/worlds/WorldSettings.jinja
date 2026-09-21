@@ -65,7 +65,7 @@
           :upload_url="'/api/worlds/' ~ world.id ~ '/image'"
           :fallback_action="'/worlds/' ~ world.id ~ '/image'"
           :image_url="world.image_url" :can_manage="True" :version="world.version"
-          label="Copertina del mondo" />
+          label="Copertina del mondo" ratio="landscape" />
       </section>
     </common.VStack>
   </common.Grid>

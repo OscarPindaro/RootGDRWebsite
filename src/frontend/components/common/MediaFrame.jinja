@@ -1,0 +1,5 @@
+{#def ratio="portrait", fit="cover", src=None, alt="", element="div" #}
+<{{ element }} {{ attrs.render(class="media-frame media-frame--" ~ ratio, style="--media-fit: " ~ fit ~ "; " ~ attrs.get("style", "")) }}>
+  {% if src %}<img class="media-frame__image" src="{{ src }}" alt="{{ alt }}">{% endif %}
+  {{ content }}
+</{{ element }}>

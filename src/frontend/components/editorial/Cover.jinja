@@ -1,13 +1,10 @@
+{#css common/MediaFrame.css #}
+{% set cover_src = world.image_url or '/static/img/plate-' ~ ((world.volume - 1) % 8 + 1) ~ '.svg' %}
 {#def world #}
 <a class="cover" href="/worlds/{{ world.id }}">
-  <div class="cover__media">
-    {% if world.image_url %}
-    <img src="{{ world.image_url }}" alt="">
-    {% else %}
-    <img src="/static/img/plate-{{ (world.volume - 1) % 8 + 1 }}.svg" alt="">
-    {% endif %}
+  <common.MediaFrame ratio="landscape" class="cover__media" :src="cover_src" alt="">
     <span class="cover__badge">Volume {{ world.volume }}</span>
-  </div>
+  </common.MediaFrame>
   <div class="cover__body">
     <span class="eyebrow">Aggiornato {{ world.updated_at | time }}</span>
     <h2 class="cover__title">{{ world.name }}</h2>

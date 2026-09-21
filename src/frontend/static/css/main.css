@@ -577,12 +577,8 @@ ul, ol { margin: 0; padding: 0; }
   box-shadow: 6px 6px 0 var(--ink);
 }
 .cover__media {
-  aspect-ratio: 16 / 7;
   border-bottom: var(--rule-ink);
-  overflow: hidden;
-  position: relative;
 }
-.cover__media img { width: 100%; height: 100%; object-fit: cover; }
 .cover__badge {
   position: absolute;
   top: 0;
@@ -2268,6 +2264,10 @@ html[data-accent="gradiente"] .prose a.mention {
   --grid-min-cover: 310px;
   --grid-min-story: 330px;
   --grid-min-quick: 190px;
+  /* Aspect ratios owned by common.MediaFrame. */
+  --media-ratio-portrait: 4 / 5;
+  --media-ratio-landscape: 16 / 10;
+  --media-ratio-square: 1 / 1;
 }
 
 /* Editorial defaults for bare elements used by components. */
