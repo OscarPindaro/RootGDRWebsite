@@ -212,16 +212,23 @@ uv run harness env teardown
 
 Turn a bug found by hand into a reproducible test, from either side:
 
-- **Browser steps** — in dev, open the user menu and switch on **Registra
-  azioni**, then work normally; every page, field and click is recorded.
-- **Backend calls** — `uv run harness replay start` (dev-only middleware records
-  each request/response), work, then `uv run harness replay stop`.
+- **Browser steps** — open the user menu and switch on **Registra azioni**
+  (admin), then work normally; every page, field and click is recorded.
+- **Backend calls** — `uv run harness replay start` (the middleware records
+  each request plus its response body), work, then `uv run harness replay stop`.
 - `uv run harness replay list|show|export <session> [--mode ui|backend]`;
   `export` writes a Playwright test (ui) or an integration test (backend) into
-  `tests/e2e/` or `tests/integration/`.
+  `tests/e2e/` or `tests/integration/`. Ids created during the session are
+  rebound, so the backend test runs on any database.
+- `uv run harness replay run <session> [--bundle <file>]…` replays a recording
+  against the dev stack (or `--base-url`), importing precondition bundles and
+  reporting expected vs actual status per step.
+- `export --bundle <dir>` writes each referenced world as a content bundle, so
+  a recording can move between environments.
 - Recordings live in `harness-artifacts/replay/` (gitignored) and are mounted
-  into both stacks. Recorder and routes exist only under `env: dev`; recorded
-  ids come from where it was recorded, so a replay may need adjusting elsewhere.
+  into both stacks. Recording is always on in dev; elsewhere it needs
+  `replay.enabled` and an admin. Emails, user names and tokens are anonymized
+  at write time.
 
 ## Content harness (learned)
 
