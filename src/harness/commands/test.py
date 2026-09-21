@@ -59,6 +59,12 @@ def unit() -> None:
 
 
 @test_app.command()
+def frontend() -> None:
+    """Run component tests: real JinjaX components in Chromium, no backend."""
+    _run_suite(runner.TestSuite.FRONTEND)
+
+
+@test_app.command()
 def integration() -> None:
     """Run integration tests against the active test database."""
     _require_environment()

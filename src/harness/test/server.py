@@ -71,7 +71,7 @@ async def _run_tests(
     selectors: list[str] | None,
     options: runner.PytestOptions | None,
 ) -> runner.TestResult | str:
-    if suite != runner.TestSuite.UNIT:
+    if suite not in (runner.TestSuite.UNIT, runner.TestSuite.FRONTEND):
         environment_state, _ = environment.status()
         if environment_state is None:
             return "No active environment for this worktree."

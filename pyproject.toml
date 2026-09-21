@@ -64,6 +64,7 @@ testpaths = ["tests"]
 asyncio_mode = "auto"
 markers = [
     "unit: Unit tests - no external dependencies",
+    "frontend: Component tests - real JinjaX components in Chromium, no backend",
     "integration: Integration tests - requires database",
     "e2e: End-to-end tests - full application stack",
 ]

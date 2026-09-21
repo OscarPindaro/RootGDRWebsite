@@ -151,6 +151,7 @@ uv run harness dev up                     # dev stack: scratch 8001 + showcase 8
 uv run harness dev reset --db show        # recreate the showcase DB + seed it
 uv run harness env up --mode local        # database only, for integration tests
 uv run harness test integration           # uses the active environment
+uv run harness test frontend              # component tests: real JinjaX in Chromium, no backend
 uv run harness env up --mode docker       # database + backend container
 uv run harness test e2e --fresh           # reset only the E2E DB/uploads, then run E2E
 uv run harness doctor                     # environment, ports, DB, browser, replay checks

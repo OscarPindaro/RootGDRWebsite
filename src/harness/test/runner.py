@@ -12,6 +12,7 @@ from . import state
 
 class TestSuite(str, Enum):
     UNIT = "unit"
+    FRONTEND = "frontend"
     INTEGRATION = "integration"
     E2E = "e2e"
 
@@ -42,6 +43,8 @@ def run(
     command = ["uv", "run", "pytest"]
     if suite == TestSuite.UNIT:
         command.append("tests/unit")
+    elif suite == TestSuite.FRONTEND:
+        command.append("tests/frontend")
     else:
         command.extend(["-m", suite.value])
     command.extend(_selectors(root, selectors or []))
@@ -56,7 +59,10 @@ def run(
     command.append(f"--tb={options.traceback}")
     process_environment = os.environ.copy()
     environment_state = state.read(root)
-    if environment_state is not None:
+    if environment_state is not None and suite in (
+        TestSuite.INTEGRATION,
+        TestSuite.E2E,
+    ):
         env_file, config_file = _suite_config(suite, environment_state)
         process_environment.update(
             {
