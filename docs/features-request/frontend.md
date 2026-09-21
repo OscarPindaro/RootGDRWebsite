@@ -57,6 +57,69 @@ The player reads the world and manages only their own characters.
 - A player can create, edit and delete only the characters they own.
 - Masters may edit player-owned characters; players may not edit each other's.
 
+## Reference systems and interaction language
+
+The application does not implement one external design system wholesale. Each
+reference has a narrower role, in this order:
+
+| Concern | Primary reference |
+|---|---|
+| Semantic HTML, keyboard and focus behavior | [WAI-ARIA Authoring Practices Guide](https://www.w3.org/WAI/ARIA/apg/) |
+| Accessibility outcomes, contrast and perceivability | WCAG |
+| Component states, touch targets, sizing vocabulary and control APIs | Material Design 3 |
+| Dense desktop and productivity interactions | Fluent 2 and Adobe Spectrum |
+| Markdown, document and repository-style workflows | GitHub Primer |
+| Typography, colour, geometry and product identity | The Root GDR prototype |
+
+This makes the product **M3-inspired, not M3-faithful**. Material is a useful
+source for mature component anatomy and state coverage; it does not override the
+editorial, printed-atlas language of the prototype.
+
+### Native HTML and ARIA
+
+Use native HTML before reproducing a control with ARIA. A real `button`, radio
+input, fieldset or dialog already supplies semantics and browser behavior that a
+`div` plus a role would have to rebuild in JavaScript.
+
+The ARIA Authoring Practices Guide is the implementation reference when native
+HTML is not sufficient. It defines the expected roles, states, keyboard model
+and focus movement for patterns such as dialogs, menus, radio groups, tabs and
+comboboxes. ARIA is not a visual system and does not make a component accessible
+by itself.
+
+### Stable geometry instead of M3 Expressive morphing
+
+M3 Expressive allows buttons to morph between round and square shapes, and
+standard button groups to expand the pressed item while compressing its direct
+neighbours. Those effects are stylistic feedback, not accessibility
+requirements, and they are not specific to touch devices.
+
+**Product controls keep a stable shape and width across enabled, hovered,
+pressed and selected states.** Communicate interaction through colour, fill,
+border, focus ring and restrained opacity or position changes. Do not make a
+button switch between an oval and a square when clicked, on desktop or phone.
+
+The component showcase may retain an explicitly labelled M3 Expressive specimen
+for comparison, but the default shared component and application pages should
+use stable geometry. A coarse-pointer media query is not the preferred solution:
+the interaction language should remain consistent across mouse, keyboard and
+touch.
+
+Motion must be functional and restrained:
+
+- respect `prefers-reduced-motion`;
+- never use layout motion as the only indication of selection;
+- avoid moving adjacent controls when one is pressed;
+- preserve a minimum 44–48px touch target where a control is used on a phone;
+- keep focus indication visible and independent from hover or animation.
+
+The current T6 `common.Button`/`common.ButtonGroup` implementation still contains
+selected/pressed shape morphing and standard-group width compensation. This
+decision supersedes that default behavior. A follow-up ticket should remove the
+geometry changes from product controls and their behavioral tests. If the M3
+motion is useful as documentation, keep it only as an explicit opt-in expressive
+variant in `/components`, not as the shared default.
+
 ## Visual preferences
 
 Some visual choices are **user preferences**: they change how the interface
