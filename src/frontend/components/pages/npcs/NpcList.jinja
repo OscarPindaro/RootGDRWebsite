@@ -1,5 +1,5 @@
 {#def world, world_context, nav, cards, crumbs, can_manage=False, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css #}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
 <layout.Page title="NPC" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="npc">  <editorial.Masthead
     title="NPC"
@@ -18,7 +18,7 @@
     {% for card in cards %}<editorial.Card :item="card" />{% endfor %}
   </common.Grid>
   {% else %}
-  <div class="empty">Nessun NPC. Creane uno per cominciare.</div>
+  <common.EmptyState icon="user" title="Nessun NPC" description="Creane uno per cominciare." />
   {% endif %}
 
 {% if drafts %}

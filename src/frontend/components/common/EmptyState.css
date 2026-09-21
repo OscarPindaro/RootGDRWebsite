@@ -1,0 +1,23 @@
+.empty-state {
+  display: grid;
+  justify-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-10) var(--sp-6);
+  border: 1px dashed var(--line-ink);
+  text-align: center;
+}
+
+.empty-state--compact { padding: var(--sp-6) var(--sp-4); }
+
+.empty-state__mark { color: var(--muted); }
+
+.empty-state__title {
+  font-family: var(--serif);
+  font-size: var(--text-lg);
+}
+
+.empty-state__description {
+  max-width: 46ch;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}

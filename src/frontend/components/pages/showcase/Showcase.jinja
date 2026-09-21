@@ -1,5 +1,5 @@
 {#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, current_user=None #}
-{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css, common/Grid.css, common/MediaFrame.css #}
+{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css, common/Grid.css, common/MediaFrame.css, common/EmptyState.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -164,6 +164,17 @@
         <common.MediaFrame ratio="portrait" src="/static/img/plate-1.svg" alt="" style="width: 140px" />
         <common.MediaFrame ratio="landscape" src="/static/img/plate-2.svg" alt="" style="width: 220px" />
         <common.MediaFrame ratio="square" src="/static/img/plate-3.svg" alt="" style="width: 140px" />
+      </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Empty states</h2>
+      <p class="showcase-note">What a list shows when it has nothing yet. The action is optional content.</p>
+      <div style="display: grid; gap: var(--sp-4);">
+        <common.EmptyState icon="map-pin" title="Nessun luogo" description="L'atlante è vuoto.">
+          <common.Button variant="secondary" size="sm" icon="plus">Nuovo luogo</common.Button>
+        </common.EmptyState>
+        <common.EmptyState compact icon="calendar" title="Ancora nessuna sessione" description="Il diario comparirà qui." />
       </div>
     </section>
 

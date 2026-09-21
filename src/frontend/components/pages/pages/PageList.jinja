@@ -1,5 +1,5 @@
 {#def world, world_context, nav, pages, rows, can_manage=False, crumbs, drafts=None, current_user=None #}
-{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css #}
 {% set count = rows | length %}
 {% set eyebrow_text = count ~ (' pagina' if count == 1 else ' pagine') %}
 <layout.Page title="Pagine" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
@@ -36,7 +36,7 @@
     {% endfor %}
   </div>
   {% else %}
-  <div class="empty">Nessuna pagina di riferimento.</div>
+  <common.EmptyState icon="file-text" title="Nessuna pagina di riferimento" />
   {% endif %}
 
 {% if drafts %}

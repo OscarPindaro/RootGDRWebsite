@@ -1945,12 +1945,6 @@ html[data-accent="gradiente"] .prose a.mention {
 /* ---------- 30. Utility ---------- */
 .spread { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .hr { border: 0; border-top: var(--rule-ink); margin: 2.5rem 0; }
-.empty {
-  border: 1px dashed var(--line-ink);
-  padding: 2.5rem 1.5rem;
-  text-align: center;
-  color: var(--muted);
-}
 .sr-only {
   position: absolute;
   width: 1px;

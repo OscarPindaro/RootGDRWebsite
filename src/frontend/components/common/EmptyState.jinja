@@ -1,0 +1,8 @@
+{#def title, description=None, icon=None, compact=False #}
+{% set empty_classes = "empty-state" ~ (" empty-state--compact" if compact else "") %}
+<div {{ attrs.render(class=empty_classes) }}>
+  {% if icon %}<span class="empty-state__mark" aria-hidden="true"><common.Icon :name="icon" :size=24 /></span>{% endif %}
+  <p class="empty-state__title">{{ title }}</p>
+  {% if description %}<p class="empty-state__description">{{ description }}</p>{% endif %}
+  {{ content }}
+</div>
