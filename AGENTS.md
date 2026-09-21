@@ -152,7 +152,7 @@ uv run harness dev reset --db show        # recreate the showcase DB + seed it
 uv run harness env up --mode local        # database only, for integration tests
 uv run harness test integration           # uses the active environment
 uv run harness env up --mode docker       # database + backend container
-uv run harness test e2e --fresh           # reset only the test DB/uploads, then run E2E
+uv run harness test e2e --fresh           # reset only the E2E DB/uploads, then run E2E
 uv run harness doctor                     # environment, ports, DB, browser, replay checks
 uv run harness smoke                      # authenticated main-page checks
 uv run harness logs --request-id <id>     # filter structured compose logs
@@ -163,7 +163,10 @@ uv run harness env teardown
 
 - Three environments, never mixed:
   - **test** — `harness env up` / `harness test`, `config.test.yaml` + `test.env`,
-    database `backend_test`. Tests create and drop worlds here.
+    two isolated databases in one PostgreSQL container:
+    `backend_integration_test` (integration) and `backend_e2e_test` (Docker
+    backend + E2E). Tests create and drop worlds here; the suites can run in
+    parallel and `--fresh` only ever resets the E2E one.
   - **work** — `harness dev up`, `config.yaml`/`config.docker.yaml` + `.env`,
     database `root_gdr_dev`, app on **8001**. The agent's scratch space.
   - **showcase** — same stack, database `root_gdr_show`, app on **8002**. What is
@@ -182,8 +185,10 @@ uv run harness env teardown
 - The committed `test.env` is preferred over `.env.test`; the harness and
   `tests/conftest.py` both read it, so a fresh checkout runs tests without
   private secrets.
-- Direct pytest/alembic runs need the active environment's config:
-  `ENV_FILE=$PWD/test.env YAML_CONFIG_FILE=~/.cache/fastapi-template/harness/<worktree>_<hash>/config.test.local.active.yaml`.
+- Direct pytest/alembic runs need the active environment's config, and the env
+  file must match the target database (env vars override the YAML):
+  `ENV_FILE=~/.cache/fastapi-template/harness/<worktree>_<hash>/test.integration.env YAML_CONFIG_FILE=.../config.test.integration.local.yaml`
+  (use `test.e2e.env` + `config.test.e2e.local.yaml` for the E2E database).
 - Playwright's browser is installed with `uv run harness browsers` into the
   repository (`.playwright-browsers/`, gitignored). Do not use
   `playwright install` directly: the default `~/.cache` location is pruned by

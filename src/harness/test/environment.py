@@ -1,9 +1,10 @@
 import os
 from datetime import UTC, datetime
 
+import yaml
 from dotenv import dotenv_values
 
-from . import compose, config, ports, state
+from . import compose, config, databases, ports, state
 
 
 class EnvironmentError(RuntimeError):
@@ -84,7 +85,8 @@ def status() -> tuple[state.EnvironmentState | None, str]:
         raise EnvironmentError(str(error)) from error
 
 
-def reset_test_database() -> state.EnvironmentState:
+def reset_e2e_environment() -> state.EnvironmentState:
+    """Reset only the E2E database and its uploads, leaving integration alone."""
     root = state.worktree_root()
     environment_state = state.read(root)
     if environment_state is None:
@@ -97,35 +99,53 @@ def reset_test_database() -> state.EnvironmentState:
         ".env.test.example",
     }:
         raise EnvironmentError("Refusing to reset a non-test environment file.")
-    values = dotenv_values(environment_state.config.env)
-    app_database = values.get("DATABASE__DB")
-    migrator_database = values.get("MIGRATOR__DB")
-    if (
-        not app_database
-        or app_database != migrator_database
-        or not app_database.endswith("_test")
-    ):
+    values = dotenv_values(environment_state.config.e2e_env)
+    _integration_database, e2e_database = databases.resolve_names(values)
+    active = _e2e_database_name(environment_state)
+    if active != e2e_database:
         raise EnvironmentError(
-            "Refusing to reset a database not named as a test database."
+            "The active Docker configuration does not point at the E2E test database."
         )
     try:
-        compose.down(environment_state)
-        compose.up(environment_state, build=False)
+        compose.stop_service(environment_state, "app")
+        compose.reset_database(environment_state, e2e_database)
+        compose.run_migrations(
+            environment_state.config.e2e_env,
+            environment_state.config.e2e_local_config,
+        )
+        compose.start_service(environment_state, "app")
+        compose.exec_service(
+            environment_state, "app", "find", "/app/data", "-mindepth", "1", "-delete"
+        )
+        assert environment_state.ports.backend is not None
+        compose._wait_for_http(
+            f"http://127.0.0.1:{environment_state.ports.backend}/ping",
+            attempts=30,
+        )
     except compose.ComposeError as error:
         raise EnvironmentError(str(error)) from error
     return environment_state
 
 
+def _e2e_database_name(environment_state: state.EnvironmentState) -> str:
+    config = yaml.safe_load(environment_state.config.e2e_config.read_text())
+    database = config["database"]["db"]
+    if not database.endswith("_test"):
+        raise EnvironmentError(
+            f"Refusing to reset a database not named as a test database: {database}"
+        )
+    return database
+
+
 def activate() -> state.EnvironmentState:
     """Point direct backend imports at the active environment's configuration.
 
-    Commands that touch the database in-process (``content seed``) need
-    ``ENV_FILE`` / ``YAML_CONFIG_FILE`` to name the active environment, the way
-    the documented direct-pytest invocation does.
+    Commands that touch the database in-process (``content seed``) work on the
+    integration database, the same target the integration suite uses.
     """
     environment_state = state.read()
     if environment_state is None:
         raise EnvironmentError("No active environment for this worktree.")
-    os.environ["ENV_FILE"] = str(environment_state.config.env)
-    os.environ["YAML_CONFIG_FILE"] = str(environment_state.config.local)
+    os.environ["ENV_FILE"] = str(environment_state.config.integration_env)
+    os.environ["YAML_CONFIG_FILE"] = str(environment_state.config.integration_config)
     return environment_state

@@ -18,9 +18,12 @@ def _environment_state(tmp_path, *, reload: bool) -> state.EnvironmentState:
         ports=state.PortState(database=5432, backend=8000),
         config=state.ConfigState(
             backup=tmp_path / "backup.yaml",
-            local=tmp_path / "local.yaml",
-            docker=tmp_path / "docker.yaml",
             env=tmp_path / "test.env",
+            integration_config=tmp_path / "integration.local.yaml",
+            integration_env=tmp_path / "integration.env",
+            e2e_config=tmp_path / "e2e.docker.yaml",
+            e2e_env=tmp_path / "e2e.env",
+            e2e_local_config=tmp_path / "e2e.local.yaml",
         ),
         reload=reload,
     )
@@ -112,9 +115,12 @@ def test_failed_startup_retains_state_and_config(
 ) -> None:
     active_config = state.ConfigState(
         backup=tmp_path / "backup.yaml",
-        local=tmp_path / "local.yaml",
-        docker=tmp_path / "docker.yaml",
         env=tmp_path / "test.env",
+        integration_config=tmp_path / "integration.local.yaml",
+        integration_env=tmp_path / "integration.env",
+        e2e_config=tmp_path / "e2e.docker.yaml",
+        e2e_env=tmp_path / "e2e.env",
+        e2e_local_config=tmp_path / "e2e.local.yaml",
     )
     writes = []
     monkeypatch.setattr(state, "worktree_root", lambda: tmp_path)
@@ -166,7 +172,12 @@ def test_environment_sets_the_reload_flag(tmp_path) -> None:
             SimpleNamespace(
                 compose_project="test-project",
                 mode=state.EnvironmentMode.DOCKER,
-                config=SimpleNamespace(env=env_file, docker=tmp_path / "config.yaml"),
+                config=SimpleNamespace(
+                    env=env_file,
+                    integration_env=env_file,
+                    e2e_env=env_file,
+                    e2e_config=tmp_path / "config.yaml",
+                ),
                 ports=SimpleNamespace(database=5432, backend=8000),
                 reload=reload,
             )
@@ -176,45 +187,87 @@ def test_environment_sets_the_reload_flag(tmp_path) -> None:
     assert values(False)["HARNESS_BACKEND_RELOAD"] == ""
 
 
-def test_reset_test_database_recreates_the_docker_environment(
+def test_reset_e2e_environment_resets_only_the_e2e_database(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     existing = _environment_state(tmp_path, reload=False)
     existing.config.env = tmp_path / "test.env"
-    existing.config.env.write_text(
-        "DATABASE__DB=backend_test\nMIGRATOR__DB=backend_test\n"
+    existing.config.env.write_text("TEST_E2E_DB=backend_e2e_test\n")
+    existing.config.e2e_config.write_text(
+        "database:\n  db: backend_e2e_test\nmigrator:\n  db: backend_e2e_test\n"
     )
     calls = []
     monkeypatch.setattr(state, "worktree_root", lambda: tmp_path)
     monkeypatch.setattr(state, "read", lambda root=None: existing)
     monkeypatch.setattr(
-        environment.compose, "down", lambda value: calls.append(("down", value))
+        environment.compose,
+        "stop_service",
+        lambda value, service: calls.append(("stop", service)),
     )
     monkeypatch.setattr(
         environment.compose,
-        "up",
-        lambda value, **kwargs: calls.append(("up", value, kwargs)),
+        "reset_database",
+        lambda value, database: calls.append(("reset", database)),
     )
+    monkeypatch.setattr(
+        environment.compose,
+        "run_migrations",
+        lambda env_file, config_file: calls.append(("migrate", env_file.name)),
+    )
+    monkeypatch.setattr(
+        environment.compose,
+        "start_service",
+        lambda value, service: calls.append(("start", service)),
+    )
+    monkeypatch.setattr(
+        environment.compose,
+        "exec_service",
+        lambda value, service, *command: calls.append(("exec", service)),
+    )
+    monkeypatch.setattr(environment.compose, "_wait_for_http", lambda *a, **k: None)
 
-    result = environment.reset_test_database()
+    result = environment.reset_e2e_environment()
 
     assert result is existing
-    assert calls == [("down", existing), ("up", existing, {"build": False})]
+    assert calls == [
+        ("stop", "app"),
+        ("reset", "backend_e2e_test"),
+        ("migrate", "e2e.env"),
+        ("start", "app"),
+        ("exec", "app"),
+    ]
 
 
-def test_reset_test_database_rejects_a_non_test_database(
+def test_reset_e2e_environment_rejects_a_non_test_database(
     monkeypatch: pytest.MonkeyPatch, tmp_path
 ) -> None:
     existing = _environment_state(tmp_path, reload=False)
     existing.config.env = tmp_path / "test.env"
-    existing.config.env.write_text(
-        "DATABASE__DB=root_gdr_dev\nMIGRATOR__DB=root_gdr_dev\n"
+    existing.config.env.write_text("TEST_E2E_DB=backend_e2e_test\n")
+    existing.config.e2e_config.write_text(
+        "database:\n  db: root_gdr_dev\nmigrator:\n  db: root_gdr_dev\n"
     )
     monkeypatch.setattr(state, "worktree_root", lambda: tmp_path)
     monkeypatch.setattr(state, "read", lambda root=None: existing)
 
     with pytest.raises(environment.EnvironmentError, match="test database"):
-        environment.reset_test_database()
+        environment.reset_e2e_environment()
+
+
+def test_reset_e2e_environment_rejects_a_misconfigured_target(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    existing = _environment_state(tmp_path, reload=False)
+    existing.config.env = tmp_path / "test.env"
+    existing.config.env.write_text("TEST_E2E_DB=backend_e2e_test\n")
+    existing.config.e2e_config.write_text(
+        "database:\n  db: backend_integration_test\nmigrator:\n  db: backend_integration_test\n"
+    )
+    monkeypatch.setattr(state, "worktree_root", lambda: tmp_path)
+    monkeypatch.setattr(state, "read", lambda root=None: existing)
+
+    with pytest.raises(environment.EnvironmentError, match="E2E test database"):
+        environment.reset_e2e_environment()
 
 
 def test_e2e_fresh_resets_before_running(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -226,7 +279,7 @@ def test_e2e_fresh_resets_before_running(monkeypatch: pytest.MonkeyPatch) -> Non
     )
     monkeypatch.setattr(
         test_commands.environment,
-        "reset_test_database",
+        "reset_e2e_environment",
         lambda: calls.append(("reset",)),
     )
     monkeypatch.setattr(

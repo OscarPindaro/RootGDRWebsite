@@ -13,10 +13,12 @@ change" answerable without guessing.
 - `harness prototype serve` opens the static prototype next to the app.
 - `harness browsers` installs Playwright's Chromium into the repository.
 - `harness screenshot --base-url …` captures a page at desktop and phone width.
-- `harness test e2e --fresh` destructively recreates the active test database
-  and clears that environment's uploads before running. It does not touch the
-  scratch or showcase databases, but all earlier data in the active test
-  environment is lost.
+- `harness test e2e --fresh` destructively resets only the E2E test database
+  (`backend_e2e_test`) and clears that environment's uploads before running.
+  Integration tests use a separate `backend_integration_test` database in the
+  same PostgreSQL container, so the two suites — and a fresh E2E — can run in
+  parallel without interfering. Neither touches the scratch or showcase
+  databases; all earlier data in the E2E environment is lost.
 - Browser journeys use `BrowserSession.expect_api(...)` after writes to assert
   persisted server state instead of trusting optimistic text in the page.
 - `harness doctor` checks state, ports, Postgres readiness and connection usage,
@@ -34,6 +36,12 @@ change" answerable without guessing.
   `seed/prototype_map.yaml`, serves the prototype on an ephemeral port, captures
   both sides and writes the report; `src/harness/test/compare.py` computes the
   diff in Chromium (canvas), so no image library is needed.
+- Integration and E2E each get their own database in the single test PostgreSQL
+  container. `src/harness/test/databases.py` creates both idempotently through
+  the container superuser (init scripts only run on an empty volume) and the
+  harness generates per-target env/config under its state directory, so the
+  shared `test.env` cannot override which database a suite uses. `--fresh`
+  drops and recreates only the E2E database after checking its name.
 - `docs/features-request/prototype_map.md` records which JinjaX component
   renders each prototype construct, and how faithful it is.
 - The browser lives in `.playwright-browsers/` (gitignored): Playwright's default

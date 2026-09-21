@@ -55,7 +55,12 @@ def test_compose_command_uses_selected_engine(
     environment = SimpleNamespace(
         compose_project="test-project",
         mode=EnvironmentMode.LOCAL,
-        config=SimpleNamespace(env=env_file, docker=tmp_path / "config.yaml"),
+        config=SimpleNamespace(
+            env=env_file,
+            integration_env=env_file,
+            e2e_env=env_file,
+            e2e_config=tmp_path / "config.yaml",
+        ),
         ports=SimpleNamespace(database=5432, backend=None),
         reload=False,
     )
@@ -86,12 +91,22 @@ def test_up_force_recreates_database_and_backend(
     environment = SimpleNamespace(
         mode=EnvironmentMode.DOCKER,
         ports=SimpleNamespace(backend=8000),
+        config=SimpleNamespace(
+            integration_env="integration.env",
+            integration_config="integration.yaml",
+            e2e_env="e2e.env",
+            e2e_local_config="e2e.local.yaml",
+        ),
     )
     calls = []
     monkeypatch.setattr(compose, "_prepare_recordings", lambda: None)
     monkeypatch.setattr(compose, "_run", lambda state, *args: calls.append(args))
     monkeypatch.setattr(compose, "_wait_for_database", lambda state: None)
-    monkeypatch.setattr(compose, "_run_migrations", lambda state: None)
+    monkeypatch.setattr(compose, "ensure_databases", lambda state: None)
+    migrations = []
+    monkeypatch.setattr(
+        compose, "_run_migrations", lambda env, config: migrations.append(config)
+    )
     monkeypatch.setattr(compose, "_wait_for_http", lambda *args, **kwargs: None)
 
     compose.up(environment, build=False, recreate=True)
@@ -100,3 +115,4 @@ def test_up_force_recreates_database_and_backend(
         ("up", "--detach", "--wait", "--force-recreate", "db"),
         ("up", "--detach", "--force-recreate"),
     ]
+    assert len(migrations) == 2

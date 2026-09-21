@@ -16,7 +16,7 @@ from rich.console import Console
 
 from ..dev import compose as dev_compose
 from ..dev import state as dev_state
-from ..test import compose, ports
+from ..test import compose, databases, ports
 from ..test import state as test_state
 from ..test.browser import BROWSERS_PATH
 
@@ -142,14 +142,16 @@ def _postgres_checks(
 
 def _test_config(environment: test_state.EnvironmentState) -> DoctorCheck:
     paths = (
-        environment.config.local,
-        environment.config.docker,
-        environment.config.env,
+        environment.config.integration_config,
+        environment.config.integration_env,
+        environment.config.e2e_config,
+        environment.config.e2e_env,
+        environment.config.e2e_local_config,
     )
     if not all(path.is_file() for path in paths):
         return _check("config:test", CheckStatus.FAIL, "active config is incomplete")
     try:
-        local = yaml.safe_load(environment.config.local.read_text())
+        local = yaml.safe_load(environment.config.integration_config.read_text())
         valid_ports = all(
             local[section]["port"] == environment.ports.database
             for section in ("database", "migrator")
@@ -246,17 +248,24 @@ def inspect() -> DoctorReport:
         if test_environment.ports.backend is not None:
             expected["test-backend"] = test_environment.ports.backend
         checks.extend(_port_checks(expected))
-        values = dotenv_values(test_environment.config.env)
+        values = dotenv_values(test_environment.config.e2e_env)
         user = values.get("POSTGRES_USER") or "postgres"
-        database = values.get("DATABASE__DB") or "backend_test"
-        checks.extend(
-            _postgres_checks(
-                "test",
-                lambda *args: compose._run(test_environment, *args),
-                user,
-                database,
+        try:
+            integration_db, e2e_db = databases.resolve_names(values)
+        except databases.DatabaseError:
+            integration_db = e2e_db = "backend_test"
+        for name, database in (
+            ("integration", integration_db),
+            ("e2e", e2e_db),
+        ):
+            checks.extend(
+                _postgres_checks(
+                    name,
+                    lambda *args: compose._run(test_environment, *args),
+                    user,
+                    database,
+                )
             )
-        )
         if test_environment.ports.backend is not None:
             checks.append(_ping("test", test_environment.ports.backend))
 

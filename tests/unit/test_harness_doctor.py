@@ -15,11 +15,16 @@ from harness.test.state import ConfigState, EnvironmentMode, EnvironmentState, P
 
 
 def _test_environment(tmp_path: Path) -> EnvironmentState:
-    local = tmp_path / "local.yaml"
-    docker = tmp_path / "docker.yaml"
+    integration = tmp_path / "integration.local.yaml"
+    e2e_docker = tmp_path / "e2e.docker.yaml"
+    e2e_local = tmp_path / "e2e.local.yaml"
     env = tmp_path / "test.env"
-    local.write_text("database:\n  port: 5432\nmigrator:\n  port: 5432\n")
-    docker.write_text("database: {}\nmigrator: {}\n")
+    integration.write_text("database:\n  port: 5432\nmigrator:\n  port: 5432\n")
+    for path in (e2e_docker, e2e_local):
+        path.write_text("database: {}\nmigrator: {}\n")
+    for name in ("integration.env", "e2e.env"):
+        (tmp_path / name).write_text("POSTGRES_USER=postgres\nSECRET=do-not-print\n")
+    env = tmp_path / "test.env"
     env.write_text(
         "POSTGRES_USER=postgres\nDATABASE__DB=backend_test\nSECRET=do-not-print\n"
     )
@@ -32,9 +37,12 @@ def _test_environment(tmp_path: Path) -> EnvironmentState:
         ports=PortState(database=5432, backend=8000),
         config=ConfigState(
             backup=tmp_path / "backup.yaml",
-            local=local,
-            docker=docker,
             env=env,
+            integration_config=integration,
+            integration_env=tmp_path / "integration.env",
+            e2e_config=e2e_docker,
+            e2e_env=tmp_path / "e2e.env",
+            e2e_local_config=e2e_local,
         ),
     )
 
@@ -94,8 +102,10 @@ def test_inspect_reports_active_services_without_exposing_secrets(
     assert {check.name for check in report.checks} >= {
         "container-engine",
         "config:test",
-        "postgres:test",
-        "postgres-connections:test",
+        "postgres:integration",
+        "postgres-connections:integration",
+        "postgres:e2e",
+        "postgres-connections:e2e",
         "backend:test",
         "config:dev",
         "backend:dev-work",
@@ -124,7 +134,8 @@ def test_inspect_warns_for_high_connections_and_recording(
 
     assert report.status == doctor.CheckStatus.WARN
     statuses = {check.name: check.status for check in report.checks}
-    assert statuses["postgres-connections:test"] == doctor.CheckStatus.WARN
+    assert statuses["postgres-connections:integration"] == doctor.CheckStatus.WARN
+    assert statuses["postgres-connections:e2e"] == doctor.CheckStatus.WARN
     assert statuses["replay-recording"] == doctor.CheckStatus.WARN
     assert "private-session-name" not in " ".join(
         check.detail for check in report.checks
@@ -155,7 +166,8 @@ def test_inspect_reports_external_failures(
     assert report.status == doctor.CheckStatus.FAIL
     statuses = {check.name: check.status for check in report.checks}
     assert statuses["port:test-database"] == doctor.CheckStatus.FAIL
-    assert statuses["postgres:test"] == doctor.CheckStatus.FAIL
+    assert statuses["postgres:integration"] == doctor.CheckStatus.FAIL
+    assert statuses["postgres:e2e"] == doctor.CheckStatus.FAIL
     assert statuses["backend:test"] == doctor.CheckStatus.FAIL
 
 

@@ -57,16 +57,17 @@ def run(
     process_environment = os.environ.copy()
     environment_state = state.read(root)
     if environment_state is not None:
+        env_file, config_file = _suite_config(suite, environment_state)
         process_environment.update(
             {
                 key: value
-                for key, value in dotenv_values(environment_state.config.env).items()
+                for key, value in dotenv_values(env_file).items()
                 if value is not None
             }
         )
         process_environment.update(
-            ENV_FILE=str(environment_state.config.env),
-            YAML_CONFIG_FILE=str(environment_state.config.local),
+            ENV_FILE=str(env_file),
+            YAML_CONFIG_FILE=str(config_file),
         )
     result = subprocess.run(
         command,
@@ -82,6 +83,16 @@ def run(
         stdout=result.stdout,
         stderr=result.stderr,
     )
+
+
+def _suite_config(
+    suite: TestSuite, environment_state: state.EnvironmentState
+) -> tuple[Path, Path]:
+    """Env and YAML config for a suite: integration in-process, E2E against Docker."""
+    config = environment_state.config
+    if suite == TestSuite.INTEGRATION:
+        return config.integration_env, config.integration_config
+    return config.e2e_env, config.e2e_local_config
 
 
 def _selectors(root: Path, selectors: list[str]) -> list[str]:

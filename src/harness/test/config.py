@@ -3,11 +3,12 @@ from copy import deepcopy
 from pathlib import Path
 
 import yaml
+from dotenv import dotenv_values
 from pydantic_settings import SettingsConfigDict
 
 from backend.config import AppConfig
 
-from . import state
+from . import databases, state
 
 
 class ConfigError(RuntimeError):
@@ -72,6 +73,13 @@ def _load(path: Path, env_file: Path) -> None:
         raise ConfigError(f"Test configuration is invalid:\n{error}") from error
 
 
+def _with_database(source: dict, database: str, host: str, port: int) -> dict:
+    target = deepcopy(source)
+    for key in ("database", "migrator"):
+        target[key].update(host=host, port=port, db=database)
+    return target
+
+
 def prepare(
     root: Path, database_port: int, backend_port: int | None = None
 ) -> state.ConfigState:
@@ -81,37 +89,61 @@ def prepare(
             "An active test environment already exists for this worktree."
         )
     env_file, config_file = _paths(root)
+    values = {key: value for key, value in dotenv_values(env_file).items() if value}
+    integration_db, e2e_db = databases.resolve_names(values)
     source = yaml.safe_load(config_file.read_text())
-    local = deepcopy(source)
-    docker = deepcopy(source)
-    for key in ("database", "migrator"):
-        local[key].update(host="localhost", port=database_port)
-        docker[key].update(host="db", port=5432)
+
+    integration_local = _with_database(
+        source, integration_db, "localhost", database_port
+    )
+    e2e_docker = _with_database(source, e2e_db, "db", 5432)
+    e2e_local = _with_database(source, e2e_db, "localhost", database_port)
     if backend_port is not None:
-        local.update(backend_host="127.0.0.1", backend_port=backend_port)
-        docker.update(backend_host="0.0.0.0", backend_port=8000)
+        integration_local.update(backend_host="127.0.0.1", backend_port=backend_port)
+        e2e_local.update(backend_host="127.0.0.1", backend_port=backend_port)
+        e2e_docker.update(backend_host="0.0.0.0", backend_port=8000)
 
     directory = state.state_dir(root)
-    backup = directory / "config.test.yaml.backup"
-    local_active = directory / "config.test.local.active.yaml"
-    docker_active = directory / "config.test.docker.active.yaml"
     directory.mkdir(parents=True, exist_ok=True)
-    local_active.write_text(yaml.safe_dump(local, sort_keys=False))
-    docker_active.write_text(yaml.safe_dump(docker, sort_keys=False))
-    _load(local_active, env_file)
-    _load(docker_active, env_file)
+    backup = directory / "config.test.yaml.backup"
+    paths = state.ConfigState(
+        backup=backup,
+        env=env_file,
+        integration_config=directory / "config.test.integration.local.yaml",
+        integration_env=directory / "test.integration.env",
+        e2e_config=directory / "config.test.e2e.docker.yaml",
+        e2e_env=directory / "test.e2e.env",
+        e2e_local_config=directory / "config.test.e2e.local.yaml",
+    )
+    for target, data in (
+        (paths.integration_config, integration_local),
+        (paths.e2e_config, e2e_docker),
+        (paths.e2e_local_config, e2e_local),
+    ):
+        target.write_text(yaml.safe_dump(data, sort_keys=False))
+    paths.integration_env.write_text(_env_text(env_file, integration_db))
+    paths.e2e_env.write_text(_env_text(env_file, e2e_db))
+
+    _load(paths.integration_config, paths.integration_env)
+    _load(paths.e2e_config, paths.e2e_env)
+    _load(paths.e2e_local_config, paths.e2e_env)
     shutil.copy2(config_file, backup)
     try:
-        shutil.copy2(local_active, config_file)
+        shutil.copy2(paths.integration_config, config_file)
     except Exception:
         shutil.copy2(backup, config_file)
         raise
-    return state.ConfigState(
-        backup=backup,
-        local=local_active,
-        docker=docker_active,
-        env=env_file,
-    )
+    return paths
+
+
+def _env_text(source: Path, database: str) -> str:
+    values = dotenv_values(source)
+    lines = []
+    for key, value in values.items():
+        if key in ("DATABASE__DB", "MIGRATOR__DB"):
+            value = database
+        lines.append(f"{key}={value}")
+    return "\n".join(lines) + "\n"
 
 
 def restore(environment_state: state.EnvironmentState) -> None:

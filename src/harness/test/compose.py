@@ -8,6 +8,7 @@ from urllib.request import urlopen
 
 from dotenv import dotenv_values
 
+from . import databases
 from .state import EnvironmentMode, EnvironmentState
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -61,16 +62,24 @@ def _compose_command(engine: str) -> list[str]:
 
 
 def _environment(environment_state: EnvironmentState) -> dict[str, str]:
+    # The Docker backend runs against the E2E database; local mode only needs
+    # the integration one. The generated env files pin DATABASE__DB so the
+    # env vars cannot override the generated YAML with the shared name.
+    env_file = (
+        environment_state.config.e2e_env
+        if environment_state.mode is EnvironmentMode.DOCKER
+        else environment_state.config.integration_env
+    )
     values = {
         key: value
-        for key, value in dotenv_values(environment_state.config.env).items()
+        for key, value in dotenv_values(env_file).items()
         if value is not None
     }
     values.update(
         HARNESS_DB_PORT=str(environment_state.ports.database),
         HARNESS_BACKEND_PORT=str(environment_state.ports.backend or ""),
-        HARNESS_CONFIG_FILE=str(environment_state.config.docker),
-        HARNESS_ENV_FILE=str(environment_state.config.env),
+        HARNESS_CONFIG_FILE=str(environment_state.config.e2e_config),
+        HARNESS_ENV_FILE=str(env_file),
         HARNESS_PROJECT=environment_state.compose_project,
         # Empty when reload is off, so the backend command is unchanged. The
         # excludes matter: running pytest writes ``__pycache__`` under ``src``,
@@ -88,6 +97,21 @@ def _environment(environment_state: EnvironmentState) -> dict[str, str]:
     return {**os.environ, **values}
 
 
+def _compose_prefix(environment_state: EnvironmentState) -> list[str]:
+    engine = _container_engine()
+    return [
+        *_compose_command(engine),
+        # Explicit, so a repository ``.env`` is not auto-loaded and does not
+        # override the test values during interpolation.
+        "--env-file",
+        str(environment_state.config.e2e_env),
+        "--project-name",
+        environment_state.compose_project,
+        "-f",
+        str(_COMPOSE_FILES[environment_state.mode]),
+    ]
+
+
 def _run(environment_state: EnvironmentState, *args: str) -> str:
     engine = _container_engine()
     command = [
@@ -95,7 +119,7 @@ def _run(environment_state: EnvironmentState, *args: str) -> str:
         # Explicit, so a repository ``.env`` is not auto-loaded and does not
         # override the test values during interpolation.
         "--env-file",
-        str(environment_state.config.env),
+        str(environment_state.config.e2e_env),
         "--project-name",
         environment_state.compose_project,
         "-f",
@@ -129,9 +153,16 @@ def up(
     database_args.append("db")
     _run(environment_state, *database_args)
     _wait_for_database(environment_state)
-    _run_migrations(environment_state)
+    ensure_databases(environment_state)
+    _run_migrations(
+        environment_state.config.integration_env,
+        environment_state.config.integration_config,
+    )
     if environment_state.mode == EnvironmentMode.LOCAL:
         return
+    _run_migrations(
+        environment_state.config.e2e_env, environment_state.config.e2e_local_config
+    )
     args = ["up", "--detach"]
     if build:
         args.append("--build")
@@ -145,6 +176,83 @@ def up(
     )
 
 
+def psql(
+    environment_state: EnvironmentState,
+    database: str,
+    sql: str,
+    variables: dict[str, str],
+) -> str:
+    """Run SQL in the db container as the cluster superuser."""
+    values = dotenv_values(environment_state.config.env)
+    user = values.get("POSTGRES_USER") or "postgres"
+    command = [
+        "exec",
+        "-T",
+        "db",
+        "psql",
+        "-v",
+        "ON_ERROR_STOP=1",
+        "-qAt",
+        "-U",
+        user,
+        "-d",
+        database,
+    ]
+    for name, value in variables.items():
+        command.extend(["-v", f"{name}={value}"])
+    result = subprocess.run(
+        [*_compose_prefix(environment_state), *command],
+        cwd=_REPO_ROOT,
+        capture_output=True,
+        text=True,
+        input=sql,
+        env=_environment(environment_state),
+    )
+    if result.returncode != 0:
+        raise ComposeError(f"psql failed:\n{result.stderr.strip()}")
+    return result.stdout.strip()
+
+
+def ensure_databases(environment_state: EnvironmentState) -> None:
+    """Create both test databases (roles, owners, grants) idempotently."""
+    values = dotenv_values(environment_state.config.e2e_env)
+    integration_db, e2e_db = databases.resolve_names(values)
+    targets = (
+        [integration_db]
+        if environment_state.mode is EnvironmentMode.LOCAL
+        else [integration_db, e2e_db]
+    )
+    databases.apply(
+        lambda database, sql, variables: psql(
+            environment_state, database, sql, variables
+        ),
+        databases.ensure_commands(targets, values),
+    )
+
+
+def reset_database(environment_state: EnvironmentState, database: str) -> None:
+    """Drop and recreate one test database with its roles and grants."""
+    values = dotenv_values(environment_state.config.e2e_env)
+    databases.apply(
+        lambda target, sql, variables: psql(environment_state, target, sql, variables),
+        databases.ensure_commands([database], values, reset=[database]),
+    )
+
+
+def start_service(environment_state: EnvironmentState, service: str) -> None:
+    _run(environment_state, "up", "--detach", service)
+
+
+def stop_service(environment_state: EnvironmentState, service: str) -> None:
+    _run(environment_state, "stop", service)
+
+
+def exec_service(
+    environment_state: EnvironmentState, service: str, *command: str
+) -> str:
+    return _run(environment_state, "exec", "-T", service, *command)
+
+
 def _prepare_recordings() -> None:
     """Make the mounted recordings directory writable by the container user."""
     recordings = _REPO_ROOT / "harness-artifacts" / "replay"
@@ -153,13 +261,14 @@ def _prepare_recordings() -> None:
 
 
 def _wait_for_database(environment_state: EnvironmentState) -> None:
-    """Wait until the container has finished creating the database.
+    """Wait until the container accepts connections.
 
     ``compose up --wait`` only waits for the container to be running under
-    podman-compose, so migrations could race the entrypoint and find no database.
+    podman-compose, so migrations could race the entrypoint and find no server.
+    Waits on the ``postgres`` database: the test databases may not exist yet
+    on a volume created before the second database was introduced.
     """
-    values = dotenv_values(environment_state.config.env)
-    database = values.get("DATABASE__DB") or "backend_test"
+    values = dotenv_values(environment_state.config.e2e_env)
     user = values.get("POSTGRES_USER") or "postgres"
     for _ in range(60):
         try:
@@ -172,7 +281,7 @@ def _wait_for_database(environment_state: EnvironmentState) -> None:
                 "-U",
                 user,
                 "-d",
-                database,
+                "postgres",
             )
             return
         except ComposeError:
@@ -180,11 +289,15 @@ def _wait_for_database(environment_state: EnvironmentState) -> None:
     raise ComposeError("the database never became ready")
 
 
-def _run_migrations(environment_state: EnvironmentState) -> None:
-    process_environment = _environment(environment_state)
+def run_migrations(env_file, config_file) -> None:
+    _run_migrations(env_file, config_file)
+
+
+def _run_migrations(env_file, config_file) -> None:
+    process_environment = os.environ.copy()
     process_environment.update(
-        ENV_FILE=str(environment_state.config.env),
-        YAML_CONFIG_FILE=str(environment_state.config.local),
+        ENV_FILE=str(env_file),
+        YAML_CONFIG_FILE=str(config_file),
     )
     result = subprocess.run(
         ["uv", "run", "alembic", "upgrade", "head"],

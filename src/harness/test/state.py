@@ -23,13 +23,16 @@ class PortState(BaseModel):
 
 class ConfigState(BaseModel):
     backup: Path
-    local: Path
-    docker: Path
     env: Path
+    integration_config: Path
+    integration_env: Path
+    e2e_config: Path
+    e2e_env: Path
+    e2e_local_config: Path
 
 
 class EnvironmentState(BaseModel):
-    version: int = 1
+    version: int = 2
     worktree: Path
     mode: EnvironmentMode
     status: str

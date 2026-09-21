@@ -79,7 +79,7 @@ def e2e(
     _require_environment(state.EnvironmentMode.DOCKER)
     if fresh:
         try:
-            environment.reset_test_database()
+            environment.reset_e2e_environment()
         except environment.EnvironmentError as error:
             err_console.print(f"[bold red]{error}[/bold red]")
             raise typer.Exit(1) from error
