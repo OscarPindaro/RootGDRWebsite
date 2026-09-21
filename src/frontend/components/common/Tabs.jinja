@@ -1,0 +1,14 @@
+{#def items, name, value=None, label=None #}
+<fieldset class="tabs" data-tabs {{ attrs.render(class="tabs") }}>
+  <legend class="tabs__legend">{{ label or name }}</legend>
+  <div class="tabs__list">
+    {% for item in items %}
+    <label class="tabs__tab">
+      <input class="tabs__input" type="radio" name="{{ name }}" value="{{ item.value }}"
+             {% if item.value == value %}checked{% endif %}{% if item.disabled %} disabled{% endif %}>
+      <span class="tabs__label">{{ item.label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  {{ content }}
+</fieldset>

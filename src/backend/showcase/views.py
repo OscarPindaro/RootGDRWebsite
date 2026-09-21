@@ -44,4 +44,8 @@ async def showcase(
             ),
             ButtonGroupOption(value="map", label="", icon="map", aria_label="Mappa"),
         ],
+        showcase_tabs=[
+            ButtonGroupOption(value="write", label="Scrivi"),
+            ButtonGroupOption(value="preview", label="Anteprima"),
+        ],
     )

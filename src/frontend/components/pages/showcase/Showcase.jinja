@@ -1,5 +1,5 @@
-{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, current_user=None #}
-{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css, common/Grid.css, common/MediaFrame.css, common/EmptyState.css, common/Switch.css #}
+{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css #}
+{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css, common/Grid.css, common/MediaFrame.css, common/EmptyState.css, common/Switch.css, common/Tabs.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -186,6 +186,19 @@
         <common.Switch label="Accenti pieni" name="showcase-switch-on" :checked="True" helper="La riga sotto i titoli usa una tinta sola." />
         <common.Switch label="Simboli" name="showcase-switch-disabled" disabled helper="Disattivato: la preferenza è bloccata dal mondo." />
       </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Tabs</h2>
+      <p class="showcase-note">A strip for two views of the same thing. Native radios, so the keyboard model is the browser's; the panels are the caller's content.</p>
+      <common.Tabs :items="showcase_tabs" name="showcase-tabs" value="write">
+        <div data-tabs-panel="write">
+          <common.Field label="Testo" name="showcase-tab-body" type="textarea" value="La radura era vuota." />
+        </div>
+        <div data-tabs-panel="preview">
+          <p class="lede">La radura era vuota.</p>
+        </div>
+      </common.Tabs>
     </section>
 
     <section class="showcase-section">

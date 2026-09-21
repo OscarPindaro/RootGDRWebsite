@@ -2250,6 +2250,7 @@ html[data-accent="gradiente"] .prose a.mention {
   --dialog-max: 480px;
   --touch-target: 44px;
   --rule-width: 1px;
+  --rule-width-strong: 2px;
   --z-tooltip: 1000;
   --grid-gap: var(--sp-6);
   --stack-gap: var(--sp-4);
