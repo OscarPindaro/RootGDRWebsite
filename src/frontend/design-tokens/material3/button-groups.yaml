@@ -6,9 +6,9 @@
 # The only command allowed to touch the network is a future `material sync`;
 # this file and `material check` work entirely offline.
 #
-# dp maps to CSS px (logical scale). The Android spring (stiffness/damping) has
-# no portable CSS primitive: the project conserves the tokens but uses a
-# documented web transition — see `web_adaptations`.
+# dp maps to CSS px (logical scale). Values the project does not adopt are
+# recorded as comments rather than as tokens, so `check` never verifies a
+# number that is not in the stylesheet.
 
 component: button-groups
 sources:
@@ -58,22 +58,16 @@ tokens:
   # Connected group gap.
   - {name: md.comp.button-group.connected.small.between-space, value: 2, css: --button-group-connected-gap, selector: m3_comp_button_group_connected_small_between_space}
 
-web_adaptations:
-  - name: press expansion
-    css: --button-group-press-scale
-    value: 1.15
-    source: compose
-    selector: ButtonGroupDefaults.ExpandedRatio
-    rationale: >-
-      Android expands the pressed button by 15% of its width and takes the
-      same width from the direct neighbours; the web port applies the same
-      ratio in JS on pointerdown.
-  - name: spring motion
-    css: "--button-group-spring-stiffness / --button-group-spring-damping"
-    value: "1400 / 0.9"
-    source: project
-    rationale: >-
-      The Android spring (stiffness 1400, damping 0.9) has no portable CSS
-      primitive. The project conserves the tokens but uses a documented web
-      transition (--dur-base / --ease-out); it is not an exact equivalent and
-      must not be described as one.
+# Removed 2026-09-21 with the stable-geometry decision
+# (docs/features-request/frontend.md): product controls keep the same shape
+# and width across states, so the two adaptations below are no longer
+# implemented and their tokens are gone from main.css.
+#
+#   press expansion — Android expands the pressed button by 15% of its width
+#     and takes the same width from the direct neighbours
+#     (ButtonGroupDefaults.ExpandedRatio). No longer applied in JS.
+#   spring motion — Android spring, stiffness 1400 / damping 0.9; it had no
+#     portable CSS primitive and was approximated by --dur-base / --ease-out.
+#     Nothing animates geometry now, so the approximation is gone too.
+
+web_adaptations: []

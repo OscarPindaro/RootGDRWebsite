@@ -113,12 +113,12 @@ Motion must be functional and restrained:
 - preserve a minimum 44–48px touch target where a control is used on a phone;
 - keep focus indication visible and independent from hover or animation.
 
-The current T6 `common.Button`/`common.ButtonGroup` implementation still contains
-selected/pressed shape morphing and standard-group width compensation. This
-decision supersedes that default behavior. A follow-up ticket should remove the
-geometry changes from product controls and their behavioral tests. If the M3
-motion is useful as documentation, keep it only as an explicit opt-in expressive
-variant in `/components`, not as the shared default.
+The morphing was removed on 2026-09-21. `common.Button` and
+`common.ButtonGroup` no longer change shape or width on press or selection; the
+standard-group width compensation and its JavaScript are gone, and the M3 motion
+is not kept as an opt-in variant. `tests/frontend/test_button_group.py` asserts
+the stable geometry, and `design-tokens/material3/button-groups.yaml` records the
+removed adaptations as comments instead of as tokens.
 
 ## Visual preferences
 

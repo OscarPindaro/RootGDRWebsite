@@ -146,7 +146,7 @@
 
     <section class="showcase-section">
       <h2>Button groups</h2>
-      <p class="showcase-note">Standard groups expand the pressed item by 15% and compensate adjacent items. Connected groups keep their width and morph shape only.</p>
+      <p class="showcase-note">Geometry is stable: pressing or selecting never changes width or shape. Standard groups fix the shape of their items; connected groups share their inner corners.</p>
       {% for group_size in ["xs", "sm", "md", "lg", "xl"] %}
       <div class="showcase-group-row">
         <span class="showcase-label">{{ group_size }}</span>

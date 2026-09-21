@@ -157,7 +157,7 @@ def test_disabled_option_cannot_be_selected(component):
     assert page.locator(".button-group-input").nth(0).is_checked()
 
 
-def test_press_expands_the_button_and_compensates_neighbors(component):
+def test_press_and_selection_keep_geometry_stable(component):
     page = component.mount(
         "common.ButtonGroup",
         props={
@@ -168,21 +168,35 @@ def test_press_expands_the_button_and_compensates_neighbors(component):
             "value": "a",
         },
     )
-    option = page.locator(".button-group-option").nth(1)
-    before = option.evaluate("element => element.getBoundingClientRect().width")
-    option.dispatch_event("pointerdown")
-    during = option.evaluate("element => element.getBoundingClientRect().width")
-    neighbor = (
-        page.locator(".button-group-option")
-        .nth(0)
-        .evaluate("element => element.getBoundingClientRect().width")
+    pressed = page.locator(".button-group-option").nth(1)
+    neighbor = page.locator(".button-group-option").nth(0)
+    before = pressed.evaluate("element => element.getBoundingClientRect().width")
+    neighbor_before = neighbor.evaluate(
+        "element => element.getBoundingClientRect().width"
     )
-    assert during == pytest.approx(before * 1.15, rel=0.01)
-    assert neighbor < before
-    option.dispatch_event("pointerup")
-    assert option.evaluate(
+    radius_before = pressed.locator(".btn").evaluate(
+        "element => getComputedStyle(element).borderRadius"
+    )
+
+    pressed.dispatch_event("pointerdown")
+    assert pressed.evaluate(
         "element => element.getBoundingClientRect().width"
     ) == pytest.approx(before)
+    assert neighbor.evaluate(
+        "element => element.getBoundingClientRect().width"
+    ) == pytest.approx(neighbor_before)
+
+    pressed.click()
+    assert pressed.locator(".button-group-input").is_checked()
+    assert pressed.evaluate(
+        "element => element.getBoundingClientRect().width"
+    ) == pytest.approx(before)
+    assert (
+        pressed.locator(".btn").evaluate(
+            "element => getComputedStyle(element).borderRadius"
+        )
+        == radius_before
+    )
 
 
 def test_htmx_after_swap_resyncs_aria_checked(component):
@@ -227,4 +241,4 @@ def test_reduced_motion_disables_transitions(component):
             return getComputedStyle(btn).transitionDuration;
         }"""
     )
-    assert duration in ("0s", "0s, 0s, 0s, 0s, 0s")
+    assert {part.strip() for part in duration.split(",")} == {"0s"}

@@ -17,14 +17,13 @@ SCRIPT = (
 )
 
 
-def test_button_group_selection_keyboard_and_press_compensation() -> None:
+def test_button_group_selection_keyboard_and_stable_press() -> None:
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         page = browser.new_page()
         page.set_content(
             """
             <style>
-              :root { --button-group-press-scale: 1.15; }
               .button-group { display: flex; width: 300px; }
               .button-group-option { display: block; width: 100px; }
               .btn { display: block; width: 100%; }
@@ -49,20 +48,18 @@ def test_button_group_selection_keyboard_and_press_compensation() -> None:
         assert not inputs.nth(1).is_checked()
 
         option = page.locator(".button-group-option").nth(1)
+        neighbor = page.locator(".button-group-option").nth(0)
         before = option.evaluate("element => element.getBoundingClientRect().width")
-        option.dispatch_event("pointerdown")
-        during = option.evaluate("element => element.getBoundingClientRect().width")
-        neighbor = (
-            page.locator(".button-group-option")
-            .nth(0)
-            .evaluate("element => element.getBoundingClientRect().width")
+        neighbor_before = neighbor.evaluate(
+            "element => element.getBoundingClientRect().width"
         )
-        assert during == pytest.approx(before * 1.15)
-        assert neighbor < before
-        option.dispatch_event("pointerup")
+        option.dispatch_event("pointerdown")
         assert option.evaluate(
             "element => element.getBoundingClientRect().width"
         ) == pytest.approx(before)
+        assert neighbor.evaluate(
+            "element => element.getBoundingClientRect().width"
+        ) == pytest.approx(neighbor_before)
         browser.close()
 
 

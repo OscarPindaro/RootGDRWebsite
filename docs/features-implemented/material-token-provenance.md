@@ -13,10 +13,11 @@ came from — an update could silently diverge from the official values.
 - `harness material check` verifies offline that each inventory token and the
   corresponding CSS custom property agree (dp maps to CSS px). It fails on a
   missing token or a value drift, never silently keeps the old value.
-- Web adaptations that have no M3 equivalent — the 15% press expansion and the
-  conserved spring stiffness/damping — live in a separate `web_adaptations`
-  section, each with an explicit rationale. The spring is documented as a
-  conservation, not an exact equivalent.
+- Web values that have no M3 equivalent live in a separate `web_adaptations`
+  section, each with an explicit rationale. The section is empty today: the 15%
+  press expansion and the spring were removed with the stable-geometry decision
+  (`docs/features-request/frontend.md`) and are recorded as comments in the
+  inventory instead of as tokens.
 - The same check runs as a unit test (`tests/unit/test_material_tokens.py`),
   so a CSS edit that forgets the inventory (or vice versa) fails the suite.
 
@@ -31,7 +32,6 @@ came from — an update could silently diverge from the official values.
   androidx commit `3fac28c9daeb1322742860e9dc556efd83b340a0`
   (`ButtonGroupDefaults.ExpandedRatio`). Re-record the SHA/tag when the
   process is repeated — never just `master` or `androidx-main`.
-
 ## Limits
 
 - `material sync` (fetching token values from the sources at a given revision)
