@@ -182,7 +182,7 @@ def start(
         client = _client(url, email)
         try:
             response = client.post(
-                "/api/dev/replay/start",
+                "/api/replay/start",
                 json={"read_only": read_only, "exclude": exclude or []},
             )
             response.raise_for_status()
@@ -213,7 +213,7 @@ def stop(
         url = _dev_base_url(base_url)
         client = _client(url, email)
         try:
-            response = client.post("/api/dev/replay/stop")
+            response = client.post("/api/replay/stop")
             response.raise_for_status()
         finally:
             client.close()

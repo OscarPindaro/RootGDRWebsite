@@ -1,13 +1,16 @@
-"""Dev-only middleware that records the backend calls of a session.
+"""Recorder for the backend calls of a session.
 
-Recording is switched on with ``POST /api/dev/replay/start`` (``harness replay
-start``): a typed JSON config is written to disk, so every worker sees the same
-session and filters without process-local state. While it is on, each JSON request
-the app answers is appended to ``harness-artifacts/replay/backend/<session>.json``, and
-``harness replay export --mode backend`` turns that file into an httpx test.
+Recording is switched on with ``POST /api/replay/start`` (``harness replay
+start``, or the toggle in the user menu): a typed JSON config is written to
+disk, so every worker sees the same session and filters without process-local
+state. While it is on, each JSON request the app answers is appended to
+``harness-artifacts/replay/backend/<session>.json`` together with its response
+body (size-capped), and ``harness replay export --mode backend`` turns that
+file into an integration test.
 
-Pure ASGI rather than ``BaseHTTPMiddleware``: the body has to be read and handed
-on unchanged, which is the one thing the base class makes awkward.
+Pure ASGI rather than ``BaseHTTPMiddleware``: the request and response bodies
+have to be read and handed on unchanged, which is the one thing the base class
+makes awkward.
 """
 
 from __future__ import annotations
@@ -15,12 +18,16 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from .anonymize import Anonymizer, IDENTITY_PATHS
 from .schemas import BackendStep, RecordingConfig
 
 RECORDINGS = Path("harness-artifacts/replay")
 CONFIG = RECORDINGS / ".recording.json"
-SKIP_PREFIXES = ("/static", "/api/dev/replay")
+SKIP_PREFIXES = ("/static", "/api/replay")
 READ_ONLY_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+# Response bodies larger than this are not recorded: replays need ids and
+# small payloads, not downloaded files or bulk exports.
+MAX_RESPONSE_BYTES = 64 * 1024
 
 
 def recording_config() -> RecordingConfig | None:
@@ -32,33 +39,27 @@ def recording_config() -> RecordingConfig | None:
 
 def start(config: RecordingConfig) -> None:
     RECORDINGS.mkdir(parents=True, exist_ok=True)
-    temporary = CONFIG.with_suffix(".tmp")
-    temporary.write_text(config.model_dump_json(indent=2) + "\n", encoding="utf-8")
-    temporary.replace(CONFIG)
+    _write_config(config)
 
 
 def stop() -> None:
     CONFIG.unlink(missing_ok=True)
 
 
-def _body(payload: bytes, content_type: str) -> object | None:
+def _write_config(config: RecordingConfig) -> None:
+    RECORDINGS.mkdir(parents=True, exist_ok=True)
+    temporary = CONFIG.with_suffix(".tmp")
+    temporary.write_text(config.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    temporary.replace(CONFIG)
+
+
+def _json(payload: bytes, content_type: str) -> object | None:
     if not payload or "application/json" not in content_type:
         return None
     try:
         return json.loads(payload)
     except json.JSONDecodeError:
         return None
-
-
-def _append(session: str, step: BackendStep) -> None:
-    directory = RECORDINGS / "backend"
-    directory.mkdir(parents=True, exist_ok=True)
-    path = directory / f"{session}.json"
-    existing = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else []
-    existing.append(step.model_dump(exclude_none=True))
-    path.write_text(
-        json.dumps(existing, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
-    )
 
 
 class ReplayMiddleware:
@@ -94,22 +95,55 @@ class ReplayMiddleware:
         async def replay_receive() -> dict:
             return {"type": "http.request", "body": payload, "more_body": False}
 
-        captured: dict[str, int] = {}
+        captured: dict[str, object] = {"body": b"", "content_type": ""}
 
         async def capture_send(message: dict) -> None:
             if message["type"] == "http.response.start":
                 captured["status"] = message["status"]
+                captured["content_type"] = _header(message.get("headers"), b"content-type")
+            elif message["type"] == "http.response.body":
+                body = captured["body"]
+                if isinstance(body, bytes) and len(body) < MAX_RESPONSE_BYTES:
+                    captured["body"] = body + message.get("body", b"")
             await send(message)
 
         await self.app(scope, replay_receive, capture_send)
 
-        headers = dict(scope.get("headers") or [])
-        content_type = headers.get(b"content-type", b"").decode("latin-1")
         step = BackendStep(
             method=method,
             path=path,
             query=(scope.get("query_string") or b"").decode("latin-1") or None,
-            body=_body(payload, content_type),
+            body=_json(payload, _header(scope.get("headers"), b"content-type")),
             status=captured.get("status", 0),
+            response=_json(
+                captured["body"] if isinstance(captured["body"], bytes) else b"",
+                str(captured["content_type"]),
+            ),
         )
-        _append(config.session, step)
+        _append(config, step)
+
+
+def _header(raw_headers, name: bytes) -> str:
+    for key, value in raw_headers or []:
+        if key.lower() == name:
+            return value.decode("latin-1")
+    return ""
+
+
+def _append(config: RecordingConfig, step: BackendStep) -> None:
+    """Anonymize one step and append it to the session file."""
+    anonymizer = Anonymizer(config.aliases)
+    identity_path = step.path.startswith(IDENTITY_PATHS)
+    step.body = anonymizer.scrub(step.body, identity_path=identity_path)
+    step.response = anonymizer.scrub(step.response, identity_path=identity_path)
+    config.aliases = anonymizer.aliases
+    _write_config(config)
+
+    directory = RECORDINGS / "backend"
+    directory.mkdir(parents=True, exist_ok=True)
+    path = directory / f"{config.session}.json"
+    existing = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else []
+    existing.append(step.model_dump(exclude_none=True))
+    path.write_text(
+        json.dumps(existing, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )

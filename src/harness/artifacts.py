@@ -177,7 +177,7 @@ def list_runs(kind: str | None = None) -> list[RunManifest]:
             manifest = RunManifest.model_validate_json(
                 manifest_file.read_text(encoding="utf-8")
             )
-        except OSError, ValueError:
+        except (OSError, ValueError):
             continue
         if kind is None or manifest.kind == kind:
             runs.append(manifest)
