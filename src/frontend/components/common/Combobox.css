@@ -4,29 +4,31 @@
   gap: var(--sp-1);
 }
 
+/* The combobox is a text control, so it borrows the Field anatomy (height,
+   ink rule, atlas radius and focus colour) instead of keeping a third skin. */
 .combobox__label {
-  font-family: var(--mono);
-  font-size: var(--text-xs);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
   color: var(--muted);
 }
 
 .combobox__input {
   width: 100%;
   box-sizing: border-box;
-  height: var(--touch-target);
-  padding-inline: var(--sp-3);
-  border: var(--rule-ink);
-  border-radius: var(--radius);
+  height: var(--field-height);
+  padding-inline: var(--field-padding-inline);
+  border: var(--field-outline-width) solid var(--clr-border-strong);
+  border-radius: var(--field-radius);
   background: var(--surface);
   color: var(--ink);
   font: inherit;
 }
 
 .combobox__input:focus-visible {
-  outline: var(--rule-width-strong) solid var(--cobalt);
-  outline-offset: calc(var(--rule-width) * -1);
+  outline: none;
+  border-color: var(--clr-accent);
+  border-width: var(--field-outline-width-focus);
 }
 
 .combobox__list {

@@ -59,7 +59,7 @@
             hx-target="body"
             hx-swap="outerHTML">
         <p class="login-subtitle">Modalità sviluppo — inserisci la tua email per accedere senza password.</p>
-        <common.Field label="Email" name="email" type="email" required autocomplete="email" :value="dev_login_email" />
+        <common.Field label="Email" name="email" field_id="dev-login-email" type="email" required autocomplete="email" :value="dev_login_email" />
         <common.Button type="submit" variant="secondary" size="md" block>Accesso di sviluppo</common.Button>
       </form>
       {% endif %}

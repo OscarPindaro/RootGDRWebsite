@@ -1325,29 +1325,10 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
 
 /* ---------- 29. Moduli ---------- */
 .form { display: grid; gap: 1.5rem; max-width: 720px; }
-.field { display: grid; gap: 0.4rem; }
-.field__label {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.field__hint { font-size: 0.82rem; color: var(--muted); }
-.input,
-.textarea,
-.select {
-  width: 100%;
-  border: var(--rule-ink);
-  background: var(--surface);
-  padding: 0.6rem 0.7rem;
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  color: var(--ink);
-  border-radius: var(--radius);
-}
-.textarea { min-height: 9rem; resize: vertical; font-family: var(--serif); font-size: 1.02rem; }
-.input:focus, .textarea:focus, .select:focus { outline: 3px solid var(--cobalt); outline-offset: 1px; }
+/* Secondary helper text under a control or a control group. The Field's own
+   supporting text is `.field__supporting` in common/Field.css; this is the
+   global default for the hints a page writes by hand. */
+.hint { font-size: 0.82rem; color: var(--muted); }
 
 .swatches { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .swatch {
@@ -1412,13 +1393,6 @@ html[data-editor="modulo"] .only-documento { display: none !important; }
 html[data-editor="documento"] .only-modulo { display: none !important; }
 
 /* --- modulo: schede Scrivi / Anteprima sulla descrizione lunga --- */
-.field__bar {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
 .tabs { display: inline-flex; border: var(--rule-ink); }
 .tab {
   border: 0;
@@ -2185,6 +2159,18 @@ html[data-accent="gradiente"] .prose a.mention {
   --media-ratio-portrait: 4 / 5;
   --media-ratio-landscape: 16 / 7;
   --media-ratio-square: 1 / 1;
+  /* Field geometry, transcribed from the M3 text-field spec (see
+     design-tokens/material3/text-fields.yaml). The corner is the atlas
+     --radius, recorded as a web adaptation in the inventory. */
+  --field-height: 56px;
+  --field-padding-inline: 16px;
+  --field-label-size: 16px;
+  --field-label-size-float: 12px;
+  --field-outline-width: 1px;
+  --field-outline-width-focus: 2px;
+  --field-notch-padding: 4px;
+  --field-supporting-gap: 4px;
+  --field-radius: var(--radius);
   /* Switch geometry, transcribed from the M3 spec (see design-tokens). */
   --switch-track-width: 52px;
   --switch-track-height: 32px;

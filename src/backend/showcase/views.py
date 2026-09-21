@@ -51,4 +51,8 @@ async def showcase(
         showcase_people=[
             ButtonGroupOption(value=user.email, label=user.email) for user in users
         ],
+        roles=[
+            ButtonGroupOption(value="player", label="Giocatore"),
+            ButtonGroupOption(value="master", label="Master"),
+        ],
     )

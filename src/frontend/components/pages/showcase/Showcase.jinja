@@ -1,4 +1,4 @@
-{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css, layout/Sidebar.css, common/Combobox.css, common/SaveIndicator.css, common/HStack.css, pages/showcase/Showcase.css #}
+{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, roles=[], current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css, layout/Sidebar.css, common/Combobox.css, common/SaveIndicator.css, common/HStack.css, pages/showcase/Showcase.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -406,17 +406,21 @@
 
     <section class="showcase-section">
       <h2>Fields</h2>
-      <p class="showcase-note">M3 text fields — outlined (default) and filled. Label, input, supporting text, and error state.</p>
+      <p class="showcase-note">M3 text fields — outlined (default) and filled. The label sits inside the container and floats on focus or when populated; a select floats from the start.</p>
       <div class="showcase-row" style="align-items: flex-start; gap: var(--sp-4);">
         <div style="display: flex; flex-direction: column; gap: var(--sp-3); width: 240px;">
           <common.Field label="Name" name="demo-name" placeholder="Jane Doe" helper="As it appears on your ID" />
-          <common.Field label="Email" name="demo-email" type="email" placeholder="jane@example.com" />
+          <common.Field label="Email" name="demo-email" type="email" value="jane@example.com" helper="Populated: the label sits in the notch." />
           <common.Field label="Password" name="demo-pw" type="password" placeholder="At least 8 characters" error="Too short — minimum 8 characters" />
+          <common.Field label="Disabled" name="demo-disabled" value="Locked" disabled />
+          <common.Field label="Ruolo" name="demo-role" type="select" :options="roles" value="player" />
+          <common.Field label="Descrizione" name="demo-bio" type="textarea" placeholder="Un bosco di frontiera." />
         </div>
         <div style="display: flex; flex-direction: column; gap: var(--sp-3); width: 240px;">
           <common.Field label="Name" name="demo-name-filled" variant="filled" placeholder="Jane Doe" />
-          <common.Field label="Email" name="demo-email-filled" type="email" variant="filled" placeholder="jane@example.com" helper="We won't share it." />
+          <common.Field label="Email" name="demo-email-filled" type="email" variant="filled" value="jane@example.com" helper="We won't share it." />
           <common.Field label="Code" name="demo-code-filled" variant="filled" placeholder="6-digit code" error="Invalid code" />
+          <common.Field label="Disabled" name="demo-disabled-filled" variant="filled" value="Locked" disabled />
         </div>
       </div>
     </section>

@@ -1,36 +1,59 @@
-{#def label, name, type="text", placeholder=None, required=False, autocomplete=None, minlength=None, value=None, options=None, variant="outlined", error=None, helper=None #}
+{#def label, name, type="text", placeholder=None, required=False, autocomplete=None, minlength=None, value=None, options=None, variant="outlined", error=None, helper=None, disabled=False, field_id=None #}
 {#css common/Field.css #}
-<label class="field field-{{ variant }}{{ ' field-error' if error else '' }}">
-  <span class="field-label">{{ label }}</span>
-  {% if options is not none %}
-  <select class="field-input"
-    name="{{ name }}"
-    {% if required %}required{% endif %}
-  >
-    {% for opt in options %}
-    <option value="{{ opt.value }}" {{ 'selected' if opt.value == value else '' }}>{{ opt.label }}</option>
-    {% endfor %}
-  </select>
-  {% elif type == "textarea" %}
-  <textarea class="field-input"
-    name="{{ name }}"
-    {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
-    {% if required %}required{% endif %}
-  >{{ value if value is not none else '' }}</textarea>
-  {% else %}
-  <input class="field-input"
-    name="{{ name }}"
-    type="{{ type }}"
-    {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
-    {% if required %}required{% endif %}
-    {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
-    {% if minlength is not none %}minlength="{{ minlength }}"{% endif %}
-    {% if value is not none %}value="{{ value }}"{% endif %}
-  >
-  {% endif %}
+{# `name` is the form field's name; `field_id` is the DOM id the label points at.
+   They differ when one page renders two controls with the same name — the login
+   page has both a login form and a dev-login form, each with an `email` field. #}
+{% set control_id = field_id if field_id else name %}
+{% set is_select = options is not none %}
+{% set described_by = (control_id ~ '-error') if error else ((control_id ~ '-helper') if helper else none) %}
+{% set classes = "field field--" ~ variant
+  ~ (" field--error" if error else "")
+  ~ (" field--disabled" if disabled else "")
+  ~ (" field--select" if is_select else "")
+  ~ (" field--textarea" if type == "textarea" else "") %}
+<div {{ attrs.render(class=classes) }}>
+  <div class="field__box">
+    {% if is_select %}
+    <select class="field__input" id="{{ control_id }}" name="{{ name }}"
+      {% if required %}required{% endif %}
+      {% if disabled %}disabled{% endif %}
+      {% if described_by %}aria-describedby="{{ described_by }}"{% endif %}
+      {% if error %}aria-invalid="true"{% endif %}
+    >
+      {% for opt in options %}
+      <option value="{{ opt.value }}" {{ 'selected' if opt.value == value else '' }}>{{ opt.label }}</option>
+      {% endfor %}
+    </select>
+    {% elif type == "textarea" %}
+    <textarea class="field__input" id="{{ control_id }}" name="{{ name }}"
+      placeholder="{{ placeholder if placeholder else ' ' }}"
+      {% if required %}required{% endif %}
+      {% if disabled %}disabled{% endif %}
+      {% if described_by %}aria-describedby="{{ described_by }}"{% endif %}
+      {% if error %}aria-invalid="true"{% endif %}
+    >{{ value if value is not none else '' }}</textarea>
+    {% else %}
+    <input class="field__input" id="{{ control_id }}" name="{{ name }}" type="{{ type }}"
+      placeholder="{{ placeholder if placeholder else ' ' }}"
+      {% if required %}required{% endif %}
+      {% if disabled %}disabled{% endif %}
+      {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+      {% if minlength is not none %}minlength="{{ minlength }}"{% endif %}
+      {% if value is not none %}value="{{ value }}"{% endif %}
+      {% if described_by %}aria-describedby="{{ described_by }}"{% endif %}
+      {% if error %}aria-invalid="true"{% endif %}
+    >
+    {% endif %}
+    <label class="field__label" for="{{ control_id }}">{{ label }}</label>
+    {% if variant == "outlined" %}
+    <fieldset class="field__outline" aria-hidden="true">
+      <legend class="field__notch"><span>{{ label }}</span></legend>
+    </fieldset>
+    {% endif %}
+  </div>
   {% if error %}
-  <span class="field-supporting field-supporting-error">{{ error }}</span>
+  <span class="field__supporting" id="{{ control_id }}-error">{{ error }}</span>
   {% elif helper %}
-  <span class="field-supporting">{{ helper }}</span>
+  <span class="field__supporting" id="{{ control_id }}-helper">{{ helper }}</span>
   {% endif %}
-</label>
+</div>

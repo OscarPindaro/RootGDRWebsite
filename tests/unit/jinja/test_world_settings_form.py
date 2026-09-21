@@ -55,8 +55,8 @@ def _render(**overrides):
 def test_the_members_form_is_built_from_the_shared_field() -> None:
     html = _render()
 
-    assert '<span class="field-label">Email</span>' in html
-    assert '<span class="field-label">Ruolo</span>' in html
+    assert '<label class="field__label" for="email">Email</label>' in html
+    assert '<label class="field__label" for="role">Ruolo</label>' in html
     assert '<option value="player"' in html
     assert '<option value="master"' in html
 

@@ -3,7 +3,7 @@
 Recorded 2026-09-21, during F2. Each was reproduced on the tree *before* the
 ticket's change, so none of them is caused by a mega-plan ticket.
 
-## `harness test e2e` — 3 failures, 28 passed
+## `harness test e2e` — originally 3 failures, 28 passed (2 / 29 after F4, see #3)
 
 ```
 FAILED tests/e2e/test_master_journey.py::test_overview_matches_the_prototype_geometry
@@ -31,3 +31,9 @@ FAILED tests/e2e/test_master_journey.py::test_mapped_lists_and_drafts_do_not_ove
 3. **World Settings overflows at 412px.** On `/worlds/<id>/settings` at a Pixel 7
    viewport the document scrolls horizontally by 48px. F21's "no unexplained
    horizontal overflow at 390px" is the acceptance that should close this.
+
+   *Update 2026-09-22, during F4:* the new Field anatomy (the label moved inside
+   the container, `min-width: 0` on the field) removes the members-form
+   overflow. The test now passes; reverting `common/Field.*` to F3 reproduces
+   the 48px. The expected `harness test e2e` count is therefore 2 failed / 29
+   passed until a regression brings it back.

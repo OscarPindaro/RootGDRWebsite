@@ -37,5 +37,6 @@ came from — an update could silently diverge from the official values.
 - `material sync` (fetching token values from the sources at a given revision)
   is a planned follow-up; today the inventory is updated by hand and `check`
   guards the agreement.
-- Only button groups are inventoried so far; other M3 components can add their
-  own YAML files under `design-tokens/material3/`.
+- Button groups, the switch and text fields are inventoried so far
+  (`design-tokens/material3/*.yaml`); other M3 components can add their own
+  YAML files there.

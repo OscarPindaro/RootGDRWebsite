@@ -43,9 +43,9 @@ which assets happened to be collected.
 - The ownership guard only watches six roots. Roots outside that list, and the
   kebab-case variants that shadow a root (`.card-elevated` beside `.card--npc`),
   are not reported yet.
-- `MIGRATION_ALLOWLIST` holds four live exceptions — `btn` and `pill` (F3),
-  `card` (F14), `field` (F4). The seam is not closed until those entries are
-  gone.
+- `MIGRATION_ALLOWLIST` holds one live exception — `card` (F14). The `btn` and
+  `pill` entries left with F3 and `field` left with F4; the seam is not fully
+  closed until `card` follows.
 - A component declaring its own colocated stylesheet collects it twice, because
   JinjaX loads colocated CSS on its own. The application deduplicates when it
   writes the tags, so the emitted `<link>` set is unchanged; `collected_css`

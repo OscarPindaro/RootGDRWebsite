@@ -1,95 +1,184 @@
-/* ---------- Field (M3 Text field) ---------- */
+/* ---------- Field (M3 text field) ----------
+   Atlas skin: Root GDR paper, ink rule, --radius corner and the vermilion
+   focus. Two real variants:
+   - filled draws a bottom active indicator and keeps the label inside the
+     container, moving it to the top when the field is focused or populated;
+   - outlined draws a full rule with a notch and moves the label onto the
+     rule in the same states.
+   The notch is a decorative <fieldset>/<legend> pair: the legend carves a real
+   gap in the border, so the label needs no background and the field keeps
+   working on paper, on a card and on any future surface. The legend is
+   aria-hidden; the visible <label for> carries the association. */
+
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-1);
+  gap: var(--field-supporting-gap);
+  min-width: 0;
 }
 
-.field-label {
-  font-size: var(--text-sm);
+.field__box {
+  position: relative;
+  display: flex;
+  min-width: 0;
+}
+
+.field__input {
+  width: 100%;
+  height: var(--field-height);
+  box-sizing: border-box;
+  padding: 0 var(--field-padding-inline);
+  border: 0;
+  border-radius: var(--field-radius);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-tight);
+}
+
+.field__input:focus { outline: none; }
+
+/* M3 keeps the label as the resting placeholder and only shows the real
+   placeholder once the label has floated up, i.e. on focus. */
+.field__input::placeholder { color: transparent; }
+.field__input:focus::placeholder { color: var(--clr-text-muted); }
+
+.field--textarea .field__input {
+  height: auto;
+  min-height: var(--field-height);
+  padding-block: var(--sp-3);
+  resize: vertical;
+}
+
+/* The label floats with the geometry, so it never leaves a separate top row. */
+.field__label {
+  position: absolute;
+  left: var(--field-padding-inline);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--clr-text-muted);
+  font-size: var(--field-label-size);
   font-weight: var(--weight-medium);
-  color: var(--clr-text-secondary);
+  line-height: 1;
+  pointer-events: none;
+  transition: top var(--dur-base) var(--ease-out),
+    font-size var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out);
 }
 
-/* ---------- Outlined variant ---------- */
-.field-outlined .field-input {
-  padding: var(--sp-2) var(--sp-3);
-  border: 1px solid var(--clr-border);
-  border-radius: var(--radius-md);
-  font-size: var(--text-sm);
-  background: var(--clr-surface);
-  color: var(--clr-text);
-  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
+/* ---------- Filled ---------- */
+.field--filled .field__box {
+  background: var(--surface-sunk);
+  border-bottom: var(--field-outline-width) solid var(--clr-border-strong);
+  border-radius: var(--field-radius) var(--field-radius) 0 0;
 }
 
-.field-outlined .field-input:hover {
-  border-color: var(--clr-border-strong);
+.field--filled .field__input {
+  padding-block: var(--sp-4) var(--sp-2);
 }
 
-.field-outlined .field-input:focus {
-  outline: none;
-  border-color: var(--clr-accent);
-  box-shadow: var(--shadow-focus);
+.field--filled:not(.field--error):not(:focus-within) .field__box:hover {
+  border-bottom-color: var(--ink);
 }
 
-/* ---------- Filled variant ---------- */
-.field-filled .field-input {
-  padding: var(--sp-3) var(--sp-3) var(--sp-2);
-  border: none;
-  border-bottom: 1px solid var(--clr-border);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  font-size: var(--text-sm);
-  background: var(--clr-bg);
-  color: var(--clr-text);
-  transition: border-color var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
-}
-
-.field-filled .field-input:hover {
-  border-bottom-color: var(--clr-border-strong);
-}
-
-.field-filled .field-input:focus {
-  outline: none;
+.field--filled:focus-within .field__box {
   border-bottom-color: var(--clr-accent);
-  box-shadow: 0 1px 0 0 var(--clr-accent);
+  /* extend the 1px rule to the 2px active indicator without moving anything */
+  box-shadow: 0 var(--field-outline-width) 0 0 var(--clr-accent);
+}
+
+.field--filled:focus-within .field__label,
+.field--filled .field__input:not(:placeholder-shown) ~ .field__label,
+.field--filled.field--select .field__label {
+  top: var(--sp-1);
+  transform: none;
+  font-size: var(--field-label-size-float);
+}
+
+/* ---------- Outlined ---------- */
+.field--outlined .field__outline {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: var(--field-outline-width) solid var(--clr-border-strong);
+  border-radius: var(--field-radius);
+  pointer-events: none;
+}
+
+/* The legend is the notch: hidden text, but its width carves the gap. */
+.field--outlined .field__notch {
+  margin-left: calc(var(--field-padding-inline) - var(--field-notch-padding));
+  max-width: 0;
+  padding: 0;
+  overflow: hidden;
+  visibility: hidden;
+  white-space: nowrap;
+  transition: max-width var(--dur-base) var(--ease-out);
+}
+
+.field--outlined .field__notch span {
+  display: inline-block;
+  padding-inline: var(--field-notch-padding);
+  font-size: var(--field-label-size-float);
+}
+
+.field--outlined:not(.field--error):not(:focus-within) .field__box:hover .field__outline {
+  border-color: var(--ink);
+}
+
+.field--outlined:focus-within .field__outline {
+  border-color: var(--clr-accent);
+  border-width: var(--field-outline-width-focus);
+}
+
+.field--outlined:focus-within .field__label,
+.field--outlined .field__input:not(:placeholder-shown) ~ .field__label,
+.field--outlined.field--select .field__label {
+  top: 0;
+  font-size: var(--field-label-size-float);
+}
+
+.field--outlined:focus-within .field__notch,
+.field--outlined .field__input:not(:placeholder-shown) ~ .field__outline .field__notch,
+.field--outlined.field--select .field__notch {
+  max-width: 100%;
 }
 
 /* ---------- Disabled ---------- */
-.field-input:disabled {
-  opacity: .45;
-  cursor: not-allowed;
-}
+.field--disabled .field__box { opacity: .45; }
+.field--disabled .field__input { cursor: not-allowed; }
+.field--disabled .field__label { color: var(--clr-text-muted); }
 
-/* ---------- Error state ---------- */
-.field-error .field-input {
-  border-color: var(--status-danger);
-}
-
-.field-error .field-input:focus {
-  border-color: var(--status-danger);
-  box-shadow: 0 0 0 3px var(--status-danger-bg);
-}
-
-.field-error .field-label {
-  color: var(--status-danger);
+/* ---------- Error ---------- */
+.field--error .field__label,
+.field--error .field__supporting { color: var(--status-danger); }
+.field--error.field--outlined .field__outline { border-color: var(--status-danger); }
+.field--error.field--outlined:focus-within .field__outline { border-color: var(--status-danger); }
+.field--error.field--filled .field__box { border-bottom-color: var(--status-danger); }
+.field--error.field--filled:focus-within .field__box {
+  border-bottom-color: var(--status-danger);
+  box-shadow: 0 var(--field-outline-width) 0 0 var(--status-danger);
 }
 
 /* ---------- Supporting text ---------- */
-.field-supporting {
+.field__supporting {
   font-size: var(--text-xs);
   color: var(--clr-text-muted);
 }
 
-.field-supporting-error {
-  color: var(--status-danger);
-}
-
 /* ---------- Select ---------- */
-select.field-input {
+.field--select .field__input {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23808080' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2317150f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right var(--sp-3) center;
+  background-position: right var(--field-padding-inline) center;
   padding-right: var(--sp-8);
   cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .field__label,
+  .field--outlined .field__notch { transition-duration: 0s; }
 }

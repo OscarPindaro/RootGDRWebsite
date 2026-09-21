@@ -1,0 +1,52 @@
+# Material 3 token inventory — text fields.
+#
+# Every value the project took from Material 3, with its provenance.
+# `harness material check` verifies offline that this inventory and the CSS
+# custom properties in main.css agree; the unit test suite runs the same check.
+# dp maps to CSS px (logical scale). Values the project does not adopt are
+# recorded as comments rather than as tokens, so `check` never verifies a
+# number that is not in the stylesheet.
+
+component: text-fields
+sources:
+  android-tokens:
+    repository: https://github.com/material-components/material-components-android
+    revision: 66c334b7946dabf33adfe1a2b7cad6bcaa4ea3ad  # tag 1.14.0
+    files:
+      tokens_textfield: lib/java/com/google/android/material/textfield/res/values/tokens_textfield.xml
+      dimens: lib/java/com/google/android/material/textfield/res/values/dimens.xml
+    retrieved_at: 2026-09-21
+  m3-web-spec:
+    page: https://m3.material.io/components/text-fields/specs
+    retrieved_at: 2026-09-21
+
+tokens:
+  # Container height, shared by the filled and outlined variants.
+  - {name: md.comp.text-field.container.height, value: 56, css: --field-height, source: m3-web-spec}
+  # Outlined leading/trailing space.
+  - {name: mtrl_textinput_outline_box_expanded_padding, value: 16, css: --field-padding-inline, selector: mtrl_textinput_outline_box_expanded_padding}
+  # Label type: body-large at rest, body-small once floated.
+  - {name: md.sys.typescale.body-large.size, value: 16, css: --field-label-size, source: m3-web-spec}
+  - {name: md.sys.typescale.body-small.size, value: 12, css: --field-label-size-float, source: m3-web-spec}
+  # Outline rule and its focused width.
+  - {name: md.comp.outlined-text-field.outline.width, value: 1, css: --field-outline-width, selector: m3_comp_outlined_text_field_outline_width}
+  - {name: md.comp.outlined-text-field.focus.outline.width, value: 2, css: --field-outline-width-focus, selector: m3_comp_outlined_text_field_focus_outline_width}
+  # Space around the label in the outline notch.
+  - {name: mtrl_textinput_box_label_cutout_padding, value: 4, css: --field-notch-padding, selector: mtrl_textinput_box_label_cutout_padding}
+  # Gap between the container and its supporting text.
+  - {name: material_helper_text_default_padding_top, value: 4, css: --field-supporting-gap, selector: material_helper_text_default_padding_top}
+
+web_adaptations:
+  - name: atlas corner
+    css: --field-radius
+    value: var(--radius)
+    source: project
+    rationale: >-
+      M3 uses shapeAppearanceCornerExtraSmall (4dp) for both variants. The atlas
+      keeps its 3px --radius so the field matches every other control, and the
+      filled variant keeps the project's square lower corners.
+
+# Not adopted: the M3 container fill (?attr/colorSurfaceContainerHighest) and
+# the M3 outline/label colours (?attr/colorOutline, ?attr/colorOnSurfaceVariant).
+# Root GDR keeps --surface-sunk, --ink and --clr-text-muted; the focused outline
+# keeps the atlas vermilion (--clr-accent) instead of colorPrimary.

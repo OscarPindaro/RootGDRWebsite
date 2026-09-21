@@ -68,13 +68,6 @@ MIGRATION_ALLOWLIST: dict[str, tuple[str, tuple[str, str]]] = {
             "src/frontend/static/css/main.css",
         ),
     ),
-    "field": (
-        "F4",
-        (
-            "src/frontend/components/common/Field.css",
-            "src/frontend/static/css/main.css",
-        ),
-    ),
 }
 
 COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)

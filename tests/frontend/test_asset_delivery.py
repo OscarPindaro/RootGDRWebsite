@@ -40,12 +40,16 @@ def _assert_button_is_styled(page) -> None:
 
 
 def _assert_field_is_styled(page) -> None:
-    """Field.css stacks label, input and supporting text in a column."""
+    """Field.css stacks label, input and supporting text in a column.
+
+    The label is the floating M3 label (``.field__label``), so the assertion
+    pins the anatomy's own class rather than the legacy ``.field-label``.
+    """
     field = page.locator(FIELD).first
 
     assert field.evaluate("el => getComputedStyle(el).display") == "flex"
     assert field.evaluate("el => getComputedStyle(el).flexDirection") == "column"
-    assert page.locator(".field-label").first.evaluate(
+    assert page.locator(".field__label").first.evaluate(
         "el => getComputedStyle(el).fontWeight"
     ) == _token(page, "--weight-medium")
 

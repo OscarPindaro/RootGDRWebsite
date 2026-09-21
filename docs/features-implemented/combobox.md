@@ -19,8 +19,10 @@ trovato") or accepted it, with no way to see who is already in the app.
   the list is plain markup the component renders, not a portal.
 - The input keeps its own value: choosing copies the label into it and fires a
   `change` event, so the existing htmx form keeps working unchanged.
-- `common/Combobox.css` reuses the rule and surface tokens; the list is
-  positioned under the field with the tooltip's z-index.
+- `common/Combobox.css` borrows the Field anatomy — the `--field-*` height,
+  rule, atlas radius and focus colour — instead of keeping a third
+  text-control skin; the list is positioned under the field with the tooltip's
+  z-index.
 
 ## Limits
 
