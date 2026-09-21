@@ -19,7 +19,7 @@ from ..db.enums import UserRole, WorldRole
 from ..dependencies import get_catalog_dep, get_db_session
 from ..filesystem.base import FileSystem
 from ..filesystem.dependencies import get_filesystem
-from ..navigation import Crumb, PageLink, WorldContext, build_quicks, world_nav
+from ..navigation import Crumb, Option, PageLink, WorldContext, build_quicks, world_nav
 from ..users.schemas import User
 from .invites import invite_email, list_world_invites, revoke_world_invite
 from .models import WorldModel
@@ -169,6 +169,10 @@ async def world_settings_page(
         description_html=description_html,
         members=_member_responses(world),
         invites=await list_world_invites(db, world.id),
+        roles=[
+            Option(value=WorldRole.PLAYER.value, label="Giocatore"),
+            Option(value=WorldRole.MASTER.value, label="Master"),
+        ],
         world_context=_world_context(world, role_for_world(world, user)),
         nav=world_nav(str(world.id), None),
         pages=pages,

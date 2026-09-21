@@ -16,5 +16,5 @@
 @media (max-width: 700px) {
   .world-identity .display { font-size: 1.8rem; }
   .world-settings__members { align-items: stretch; }
-  .world-settings__members .input { flex: 1 1 100%; }
+  .world-settings__members .field { flex: 1 1 100%; }
 }
