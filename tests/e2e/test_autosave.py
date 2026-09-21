@@ -30,6 +30,10 @@ def _open_body(session: BrowserSession) -> None:
     session.page.locator("[data-doc-render]").dblclick()
     session.page.wait_for_selector(".cm-editor")
     session.page.locator(".cm-content").click()
+    # The editor places the caret where the click landed; the tests below type
+    # at the end, so move there explicitly (wrapped lines make the click
+    # position depend on the paragraph height).
+    session.page.keyboard.press("Control+End")
 
 
 def _wait_saved(session: BrowserSession) -> None:
