@@ -23,6 +23,15 @@ Two recordings:
 recording. `harness replay diff <before> <after>` reports added, removed and
 changed steps with volatile values normalized.
 
+### Naming a recording
+
+`harness replay describe <session> --name "Creazione personaggio" --description "…"`
+labels a recording; both are editable at any time, including after the test was
+generated. `list` and `show` print them. The name becomes the generated test's
+function and file name (`test_replay_creazione_personaggio.py`), so renaming a
+recording renames its test; the description lands in the test docstring. Without
+a name, the session id is used.
+
 ### What the replay asserts
 
 Every step asserts the recorded status. Where the recorded response was a JSON

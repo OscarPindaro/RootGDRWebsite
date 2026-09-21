@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from backend.replay.schemas import BackendStep, ReplayStep
+from harness import replay as recordings
 from harness.replay import (
     Precondition,
     _path,
@@ -241,3 +242,39 @@ def test_plan_lists_uncreated_references_as_preconditions() -> None:
             name="Boschetto",
         )
     ]
+
+
+def test_recording_meta_names_the_test_and_fills_the_docstring(
+    tmp_path, monkeypatch
+) -> None:
+    monkeypatch.setattr(recordings, "META", tmp_path / "meta")
+    recordings.save_meta(
+        recordings.RecordingMeta(
+            session="b123",
+            name="Creazione personaggio",
+            description="Registrato dal browser: login, crea personaggio, pubblica.",
+        )
+    )
+
+    source = render_backend_test(
+        "b123",
+        [BackendStep(method="GET", path="/worlds", status=200)],
+    )
+
+    assert "async def test_backend_replay_creazione_personaggio(" in source
+    assert "Creazione personaggio — replays the requests it answered." in source
+    assert "login, crea personaggio, pubblica." in source
+    assert recordings.test_name("b123") == "creazione_personaggio"
+
+
+def test_meta_is_editable_and_clearable(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(recordings, "META", tmp_path / "meta")
+    recordings.save_meta(
+        recordings.RecordingMeta(session="b1", name="Prima", description="d")
+    )
+    meta = recordings.load_meta("b1")
+    meta.name = "Dopo"
+    recordings.save_meta(meta)
+
+    assert recordings.load_meta("b1").name == "Dopo"
+    assert recordings.load_meta("mai-visto").name is None

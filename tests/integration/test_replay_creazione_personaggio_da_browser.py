@@ -1,5 +1,8 @@
-"""Recorded backend session b260921183020 — replays the requests it answered.
+"""Creazione personaggio da browser — replays the requests it answered.
 
+Flusso reale: login, crea mondo, crea personaggio draft, autosave di nome/titolo/tinta/animale, pubblicazione, letture.
+
+Recorded session: b260921183020.
 Ids created during the session are captured from the responses and
 reused, so the test runs on any database. Ids that predate the session
 are listed as preconditions below.
@@ -86,7 +89,9 @@ def _replay_body(response, expected) -> None:
     )
 
 
-async def test_backend_replay_b260921183020(async_client, app, db_manager) -> None:
+async def test_backend_replay_creazione_personaggio_da_browser(
+    async_client, app, db_manager
+) -> None:
     user = await _replay_user(db_manager)
 
     async def _session():

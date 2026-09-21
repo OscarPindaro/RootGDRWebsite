@@ -19,6 +19,7 @@ from backend.replay.schemas import BackendStep, ReplayStep
 
 RECORDINGS = Path("harness-artifacts/replay")
 BACKEND = RECORDINGS / "backend"
+META = RECORDINGS / "meta"
 Mode = Literal["ui", "backend"]
 ReplayRecord = ReplayStep | BackendStep
 UUID_VALUE = re.compile(
@@ -36,6 +37,37 @@ class Precondition(BaseModel):
     id: str
     path: str
     name: str | None = None
+
+
+class RecordingMeta(BaseModel):
+    """What a recording is about, editable after the fact."""
+
+    session: str
+    name: str | None = None
+    description: str | None = None
+
+
+def load_meta(session: str) -> RecordingMeta:
+    """The recording's name and description, or an empty one."""
+    path = META / f"{session}.json"
+    if not path.is_file():
+        return RecordingMeta(session=session)
+    return RecordingMeta.model_validate_json(path.read_text(encoding="utf-8"))
+
+
+def save_meta(meta: RecordingMeta) -> RecordingMeta:
+    META.mkdir(parents=True, exist_ok=True)
+    path = META / f"{meta.session}.json"
+    path.write_text(meta.model_dump_json(indent=2) + "\n", encoding="utf-8")
+    return meta
+
+
+def test_name(session: str, meta: RecordingMeta | None = None) -> str:
+    """The function and file suffix for a recording: its name, else its id."""
+    meta = meta or load_meta(session)
+    source = meta.name or session
+    slug = re.sub(r"[^A-Za-z0-9]+", "_", source).strip("_").lower()
+    return slug or session
 
 
 class PlannedRequest(BaseModel):
@@ -375,7 +407,9 @@ def render_backend_test(session: str, steps: list[BackendStep]) -> str:
     preconditions.
     """
     plan = plan_backend(steps)
-    name = re.sub(r"[^A-Za-z0-9_]", "_", session)
+    meta = load_meta(session)
+    name = test_name(session, meta)
+    title = meta.name or f"Recorded backend session {session}"
     body: list[str] = []
     for request in plan.requests:
         call = (
@@ -408,8 +442,10 @@ def render_backend_test(session: str, steps: list[BackendStep]) -> str:
         )
 
     header = [
-        f'"""Recorded backend session {session} — replays the requests it answered.',
+        f'"""{title} — replays the requests it answered.',
         "",
+        *([meta.description, ""] if meta.description else []),
+        f"Recorded session: {session}.",
         "Ids created during the session are captured from the responses and",
         "reused, so the test runs on any database. Ids that predate the session",
         "are listed as preconditions below.",
@@ -539,7 +575,9 @@ def _python_value(value: object) -> str:
 
 def render_test(session: str, steps: list[ReplayStep]) -> str:
     """The Playwright test source for one recorded session."""
-    name = re.sub(r"[^A-Za-z0-9_]", "_", session)
+    meta = load_meta(session)
+    name = test_name(session, meta)
+    title = meta.name or f"Recorded session {session}"
     body: list[str] = []
     for step in steps:
         if step.kind == "goto":
@@ -557,8 +595,10 @@ def render_test(session: str, steps: list[ReplayStep]) -> str:
     body.append("    assert session.errors == []")
 
     header = [
-        f'"""Recorded session {session} — a replay of what was done by hand.',
+        f'"""{title} — a replay of what was done by hand.',
         "",
+        *([meta.description, ""] if meta.description else []),
+        f"Recorded session: {session}.",
         "Add the assertions that matter to you; this only reproduces the journey.",
         "Ids and names come from the recording, so it runs where it was recorded",
         "unless you adjust them.",

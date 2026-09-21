@@ -78,7 +78,44 @@ def list_sessions(
             if mode == "backend"
             else recordings.load(session)
         )
-        console.print(f"{session}  ({count} steps)")
+        meta = recordings.load_meta(session)
+        label = meta.name or "(unnamed)"
+        console.print(f"{session}  {count:4d} steps  {label}", markup=False)
+        if meta.description:
+            console.print(f"      {meta.description}", markup=False)
+
+
+@replay_app.command()
+def describe(
+    session: Annotated[str, typer.Argument(help="Recorded session id.")],
+    name: Annotated[
+        str | None,
+        typer.Option("--name", help="Short name: labels the session and the test."),
+    ] = None,
+    description: Annotated[
+        str | None,
+        typer.Option("--description", help="What the recording is about."),
+    ] = None,
+    clear: Annotated[
+        bool, typer.Option("--clear", help="Remove the name and description.")
+    ] = False,
+) -> None:
+    """Name a recording and describe it; editable at any time."""
+    meta = recordings.load_meta(session)
+    if clear:
+        meta.name = None
+        meta.description = None
+    if name is not None:
+        meta.name = name
+    if description is not None:
+        meta.description = description
+    if not any((name, description, clear)):
+        err_console.print("Nothing to change: pass --name, --description or --clear.")
+        raise typer.Exit(1)
+    recordings.save_meta(meta)
+    console.print(
+        f"[green]Updated[/green] {session}: {meta.name or '(unnamed)'}", markup=False
+    )
 
 
 @replay_app.command()
@@ -87,6 +124,11 @@ def show(
     mode: Annotated[str, MODE_OPTION] = "ui",
 ) -> None:
     """Print the steps of one recording."""
+    meta = recordings.load_meta(session)
+    if meta.name or meta.description:
+        console.print(f"[bold]{meta.name or session}[/bold]", markup=False)
+        if meta.description:
+            console.print(meta.description, markup=False)
     try:
         if mode == "backend":
             for index, step in enumerate(recordings.load_backend(session), start=1):
@@ -158,11 +200,16 @@ def export(
                 session, recordings.load_backend(session)
             )
             destination = (
-                output or Path("tests/integration") / f"test_replay_{session}.py"
+                output
+                or Path("tests/integration")
+                / f"test_replay_{recordings.test_name(session)}.py"
             )
         else:
             source = recordings.render_test(session, recordings.load(session))
-            destination = output or Path("tests/e2e") / f"test_replay_{session}.py"
+            destination = (
+                output
+                or Path("tests/e2e") / f"test_replay_{recordings.test_name(session)}.py"
+            )
     except FileNotFoundError as error:
         err_console.print(f"[bold red]{error}[/bold red]")
         raise typer.Exit(1) from error

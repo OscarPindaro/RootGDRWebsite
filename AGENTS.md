@@ -216,6 +216,9 @@ Turn a bug found by hand into a reproducible test, from either side:
   (admin), then work normally; every page, field and click is recorded.
 - **Backend calls** — `uv run harness replay start` (the middleware records
   each request plus its response body), work, then `uv run harness replay stop`.
+- `uv run harness replay describe <session> --name "…" --description "…"` names a
+  recording (editable any time); the name becomes the generated test's function
+  and file name, the description its docstring.
 - `uv run harness replay list|show|export <session> [--mode ui|backend]`;
   `export` writes a Playwright test (ui) or an integration test (backend) into
   `tests/e2e/` or `tests/integration/`. Ids created during the session are
