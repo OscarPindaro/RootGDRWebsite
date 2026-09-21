@@ -33,9 +33,10 @@ side-by-side.
 | `.face`, `.mark`, `.mark__svg` | `editorial.Face`, `common.Mark` | faithful |
 | `.cover` | `editorial.Cover` | faithful |
 | `.ledger` | `pages.*.List` | faithful |
-| `.story`, `.story__band/body/title/sum` | `editorial.Story` (inline in pages) | faithful |
+| `.story`, `.story__band/body/title/sum` | Inline in `pages.stories.StoryList` and `pages.worlds.WorldOverview` | faithful |
 | `.timeline` | `editorial.Timeline` | faithful |
-| `.wherenow`, `.plogo` | `editorial.Plogo` (inline in `WorldOverview`) | faithful |
+| `.wherenow` | Inline in `pages.worlds.WorldOverview` | faithful |
+| `.plogo` | `editorial.Plogo` | faithful |
 | `.section`, `.section__head` | `editorial.SectionHead` | faithful |
 | `.docbar`, `.pill--draft/plain` | `editorial.Docbar` | faithful |
 | `.mention` | `content/markdown.py` output | faithful |

@@ -92,10 +92,11 @@ def redact(value: Any, *, key: str | None = None) -> Any:
     if isinstance(value, SecretStr):
         return _mask_secret(value)
     if isinstance(value, BaseModel):
+        values = value.model_dump()
         return {
             name: _MASK
             if _field_is_sensitive(field) or name.lower() in _SENSITIVE_NAMES
-            else redact(getattr(value, name), key=name)
+            else redact(values[name], key=name)
             for name, field in type(value).model_fields.items()
         }
     if isinstance(value, dict):
@@ -134,7 +135,7 @@ class TextFormatter(logging.Formatter):
 
     def format(self, record: logging.LogRecord) -> str:
         rendered = super().format(record)
-        context = getattr(record, _CONTEXT_ATTR, None)
+        context = record.__dict__.get(_CONTEXT_ATTR)
         if not context:
             return rendered
         return f"{rendered} {json.dumps(jsonable_encoder(context), default=str)}"
@@ -153,7 +154,7 @@ class JsonFormatter(logging.Formatter):
         # Correlation identifiers sit at the top level so log collectors can
         # index them without knowing the context shape.
         payload.update(correlation.current().as_dict())
-        context = getattr(record, _CONTEXT_ATTR, None)
+        context = record.__dict__.get(_CONTEXT_ATTR)
         if context:
             payload["context"] = context
         if record.exc_info:
@@ -166,14 +167,18 @@ def get_logger(name: str) -> StructuredLogger:
     return logging.getLogger(name)  # type: ignore[return-value]
 
 
+class AppStreamHandler(logging.StreamHandler):
+    pass
+
+
 def setup_logging(config: LoggingConfig) -> None:
     """Configure the root logger's single console handler."""
-    level = getattr(logging, config.level.upper(), logging.INFO)
+    level = logging.getLevelNamesMapping().get(config.level.upper(), logging.INFO)
     root = logging.getLogger()
     root.setLevel(level)
 
     for handler in list(root.handlers):
-        if getattr(handler, "_app_handler", False):
+        if isinstance(handler, AppStreamHandler):
             root.removeHandler(handler)
 
     formatter: logging.Formatter
@@ -182,10 +187,9 @@ def setup_logging(config: LoggingConfig) -> None:
     else:
         formatter = TextFormatter(_LOG_FORMAT, datefmt=_DATE_FORMAT)
 
-    console = logging.StreamHandler()
+    console = AppStreamHandler()
     console.setLevel(level)
     console.setFormatter(formatter)
-    console._app_handler = True  # type: ignore[attr-defined]
     root.addHandler(console)
 
     for noisy in ("httpx", "httpcore", "watchfiles"):

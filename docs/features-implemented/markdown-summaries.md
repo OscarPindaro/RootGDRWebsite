@@ -1,20 +1,22 @@
 # Markdown summaries
 
-Every character, NPC, place, session, story and page has a short description
-written in CommonMark. The server renders it with raw HTML disabled and resolves
-`@[Name]` references with the same links, type metadata and tint used in document
-bodies. Missing or ambiguous names remain visible placeholders.
+Campaign documents have short CommonMark descriptions with the same semantic references as their bodies.
 
-Editors open the rendered summary in place with a double click. A compact
-CodeMirror field provides the active-line preview, visible caret and the `@`
-suggestion menu. Suggestions show the content type; names shared by more than one
-type insert qualified labels such as `@[luogo:Roccianera]`. `Ctrl/⌘+Enter` returns
-to the server-rendered result. The field uses the document autosave queue,
-optimistic version, offline draft and conflict recovery shared by names, titles
-and bodies. Names and titles remain single-line fields.
+## What it does
 
-Reference indexing scans the summary and body together on every create, update,
-import or rebuild. Labels are deduplicated before rows are written, so a mention
-in either field creates one backlink. Readers receive rendered HTML and do not
-download the editor bundle; CodeMirror is loaded only on editable pages and
-forms.
+- Characters, NPCs, places, sessions, stories and pages render summaries with raw HTML disabled.
+- `@[Name]` references resolve to typed, tinted links. Missing or ambiguous names remain visible placeholders; duplicate names can use qualified labels such as `@[luogo:Roccianera]`.
+- An authorized user edits the rendered summary in place. The compact CodeMirror editor provides active-line preview and the `@` suggestion menu; `Ctrl/⌘+Enter` returns to the server-rendered result.
+- Summary changes use the document autosave queue, optimistic version, local recovery and conflict handling. Names and titles remain single-line text.
+
+## How it is built
+
+- The server CommonMark renderer produces safe HTML and resolves mentions for both summary and body.
+- Reference indexing scans both fields on create, update, import and rebuild, then deduplicates labels before writing backlinks.
+- CodeMirror is loaded only on editable document pages. Readers receive rendered HTML without the editor bundle.
+
+## Notes and limits
+
+- Summary Markdown follows the same safe renderer as body Markdown; raw HTML is not supported.
+- Ambiguous unqualified references are not guessed.
+- Autosave failures retain the local draft; stale versions return HTTP 409 and locked documents return HTTP 423.

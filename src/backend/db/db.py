@@ -29,11 +29,19 @@ class Base(DeclarativeBase):
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
     def __repr__(self) -> str:
-        cols = {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        state = inspect(self)
+        cols = {
+            column.key: state.attrs[column.key].value
+            for column in state.mapper.column_attrs
+        }
         return f"<{self.__class__.__name__} {cols}>"
 
     def to_dict(self) -> dict:
-        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        state = inspect(self)
+        return {
+            column.key: state.attrs[column.key].value
+            for column in state.mapper.column_attrs
+        }
 
     @declared_attr.directive
     def __tablename__(cls) -> str:

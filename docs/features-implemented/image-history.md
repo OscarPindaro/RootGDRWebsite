@@ -1,33 +1,24 @@
 # Image history
 
-Worlds, characters, NPCs and places keep an immutable history of uploaded images. Their existing `image_file_id` remains the current-image pointer, so existing image URLs and responses continue to work.
+Worlds, characters, NPCs and places keep immutable uploaded-image revisions while preserving their existing current-image URL.
 
-Each upload creates a `FileModel` and an `ImageRevisionModel` in the same database transaction, then moves the owner's current pointer. Older objects remain available intentionally. Upload validation still limits actual streamed bytes to 10 MiB, accepts only PNG, JPEG, GIF and WebP magic, and sanitizes filenames.
+## What it does
 
-## API
+- Every upload becomes a history revision and moves the owner's `image_file_id` current pointer. Previous revisions remain readable and can be restored.
+- The history dialog lists thumbnails, original filenames, timestamps, uploader names and current state. Authorized users can restore or delete a revision, or clear the current pointer.
+- Deleting a non-current revision removes its database file row and stored object. Deleting the current revision requires a same-owner replacement or `clear=true`; clearing `/current` retains all history.
+- Deleting an entity purges all its revision objects. Deleting a world purges all revision objects in that world.
 
-History uses a shared typed route:
+## How it is built
 
-`/api/worlds/{world_id}/images/{owner_kind}/{owner_id}/revisions`
+- Upload creates `FileModel` and `ImageRevisionModel` in the same database transaction, then updates the owner pointer. The shared API is `/api/worlds/{world_id}/images/{owner_kind}/{owner_id}/revisions` for `world`, `character`, `npc` and `place`.
+- `GET /` lists newest first, `GET /{revision_id}/content` serves historical bytes with `nosniff`, `POST /{revision_id}/restore` restores, and DELETE routes remove or clear.
+- `editorial.ImageEditor` supplies the picker, drag-and-drop surface and accessible native history dialog. Character, NPC and place symbol/shape and tint controls PATCH the typed document API with `expected_version`.
+- The migration backfills each existing current image as its owner's first revision. Its downgrade removes history metadata while retaining current pointers and files.
 
-Owner kinds are `world`, `character`, `npc` and `place`.
+## Notes and limits
 
-- `GET /` lists newest first and marks the current revision.
-- `GET /{revision_id}/content` reads historical content with `X-Content-Type-Options: nosniff`.
-- `POST /{revision_id}/restore` makes a revision current.
-- `DELETE /{revision_id}` deletes a non-current revision. A current revision requires `replacement_id=<revision>` or `clear=true`.
-- `DELETE /current` clears the pointer without deleting history.
-
-Reads use each feature's normal world/content visibility rules. Restore, deletion and clear use that feature's normal image-management rule: world owner/admin, character owner/world master, or world master for NPCs and places. Revision and replacement IDs must belong to the same typed owner and world. List responses include the original filename, timestamp, uploader name and current state.
-
-## Editor
-
-`editorial.ImageEditor` is the shared JinjaX surface for all four owner kinds. Its CSS and JavaScript are colocated with the component. The current image, or the owner's generated symbol fallback, opens the file chooser and accepts keyboard activation or drag-and-drop. The multipart form remains usable without JavaScript; the native file input is visually hidden and is never the primary interface.
-
-Editable surfaces expose an accessible native dialog. It lists authenticated revision thumbnails and metadata, and supports restore, revision deletion and clearing the current pointer with confirmation. Escape closes the dialog and focus returns to its trigger. Errors are announced in Italian through live regions. Read-only and locked documents render only the image or fallback.
-
-Character, NPC and place documents place their symbol/shape and tint grids beside the image. Those controls PATCH the existing typed document endpoint with `expected_version`; image uploads and history mutations reload after success. This keeps every document autosave controller on the current optimistic-lock version. An uploaded image hides the generated symbol without removing its stored animal/shape or tint.
-
-Deleting an entity removes its revisions and stored objects. Deleting a world removes all revision objects in that world. Database cascades are a final guard for revision rows. Filesystem and database transactions cannot be fully atomic on local storage; failed uploads remove the newly written object, and cleanup tolerates already-missing objects.
-
-The migration backfills every existing current image as its owner's first revision. Downgrade removes history metadata but leaves current pointers and files intact.
+- Uploads accept PNG, JPEG, GIF and WebP magic and at most 10 MiB of streamed bytes; filenames are sanitized.
+- Reads follow normal content visibility. Mutations follow each feature's normal image-management permissions and reject revisions from another owner or world.
+- Read-only and locked documents show only the image or generated fallback.
+- Filesystem and database transactions cannot be fully atomic on local storage. Failed uploads discard the new object when possible, and cleanup tolerates an already-missing object.

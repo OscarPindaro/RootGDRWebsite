@@ -13,8 +13,10 @@ change" answerable without guessing.
 - `harness prototype serve` opens the static prototype next to the app.
 - `harness browsers` installs Playwright's Chromium into the repository.
 - `harness screenshot --base-url …` captures a page at desktop and phone width.
-- `harness test e2e --fresh` recreates only the active `_test` database and its
-  upload volume before running, so browser tests do not depend on an earlier run.
+- `harness test e2e --fresh` destructively recreates the active test database
+  and clears that environment's uploads before running. It does not touch the
+  scratch or showcase databases, but all earlier data in the active test
+  environment is lost.
 - Browser journeys use `BrowserSession.expect_api(...)` after writes to assert
   persisted server state instead of trusting optimistic text in the page.
 - `harness doctor` checks state, ports, Postgres readiness and connection usage,

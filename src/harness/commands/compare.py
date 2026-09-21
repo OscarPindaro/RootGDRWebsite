@@ -166,7 +166,7 @@ def register_command(app: typer.Typer) -> None:
                     phone=phone,
                     wait_for=".rail__inner",
                 )
-                app_png = getattr(app_shots, viewport)
+                app_png = app_shots.phone if phone else app_shots.desktop
                 diff_png = destination / f"diff-{viewport}.png"
                 stats = pixel_diff(
                     app_png, prototype_png, diff_png, threshold=threshold

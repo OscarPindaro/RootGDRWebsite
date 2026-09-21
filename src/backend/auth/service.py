@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 import uuid
 
+from fastapi_sso.sso.base import OpenID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -42,13 +43,13 @@ async def find_by_provider(
     return result.scalar_one_or_none()
 
 
-def _provider_avatar(openid) -> str | None:
+def _provider_avatar(openid: OpenID) -> str | None:
     """Return the provider's profile picture URL, if the payload has one."""
-    picture = getattr(openid, "picture", None)
-    return picture.strip() if isinstance(picture, str) and picture.strip() else None
+    picture = openid.picture
+    return picture.strip() if picture and picture.strip() else None
 
 
-def _sync_avatar(user: UserModel, openid) -> None:
+def _sync_avatar(user: UserModel, openid: OpenID) -> None:
     """Refresh a user's avatar from the provider when one is available."""
     avatar = _provider_avatar(openid)
     if avatar:
@@ -137,7 +138,7 @@ async def revoke_invitation(db: AsyncSession, invitation_id: int) -> None:
 
 
 async def login_with_provider(
-    db: AsyncSession, provider: str, openid, config: AppConfig
+    db: AsyncSession, provider: str, openid: OpenID, config: AppConfig
 ) -> UserModel:
     """Core login logic — link or create a user from a provider OpenID payload.
 

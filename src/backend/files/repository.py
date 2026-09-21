@@ -38,8 +38,12 @@ class FileRepository:
         if file is None:
             return None
 
-        for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(file, field, value)
+        if "name" in data.model_fields_set:
+            file.name = data.name
+        if "location" in data.model_fields_set:
+            file.location = data.location
+        if "storage_type" in data.model_fields_set:
+            file.storage_type = data.storage_type
 
         await self.db.flush()
         await self.db.refresh(file)

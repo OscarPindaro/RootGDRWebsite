@@ -1,9 +1,22 @@
 # Draft-first content creation
 
-The six campaign document types—characters, NPCs, places, sessions, stories and static pages—are created as private drafts from their list or the world overview. Creation controls send POST requests and redirect to the normal detail page in editing mode. Legacy `/new` GET URLs only redirect to their list.
+The six campaign document types start as private drafts and open on their normal reading page in editing mode.
 
-Each placeholder is created by its feature service with an Italian working title. Sessions also start with `Data da definire`, stories are open, and generated page slugs gain a numeric suffix when needed. Drafts are visible only to their author and are separated from published content on lists. `Annulla bozza` checks that the document is still a draft before deleting it.
+## What it does
 
-The reusable `editorial.Metadata` component autosaves typed text, date, number, select and multiselect fields through the UUID API with optimistic version checks. It covers session dates and tint, story period/status/sessions/tint, and page slug/menu position/tint. A successful page slug save replaces the browser URL with the canonical slug URL; API calls continue to use the page UUID.
+- Characters, NPCs, places, sessions, stories and static pages are created from their list or the world overview. Creation sends a POST and redirects to the detail page with in-place editing active.
+- Services assign an Italian working title. Sessions also start with `Data da definire`, stories are open, and generated page slugs receive a numeric suffix when needed.
+- Drafts appear separately from published content and are visible only to their author. `Annulla bozza` deletes only an item that is still a draft; published documents retain their normal delete action.
+- Session, story and page metadata autosaves with optimistic version checks. A changed page slug replaces the browser URL with its canonical slug URL while API writes continue to use the page UUID.
 
-Character and NPC animal/tint and place shape/tint remain in the image editor. Published documents retain their normal delete action.
+## How it is built
+
+- Each feature service creates its typed placeholder and enforces draft visibility and cancellation.
+- `editorial.Metadata` handles text, date, number, select and multiselect fields through the typed UUID API. Character and NPC animal/tint and place shape/tint remain in `editorial.ImageEditor`.
+- Legacy `/new` GET routes redirect to the corresponding list; they do not render creation forms.
+
+## Notes and limits
+
+- Creating a draft is a write and immediately leaves a private database row.
+- Draft cancellation is intentionally unavailable after publication.
+- Metadata shares document autosave behavior: stale versions return HTTP 409, locked content returns HTTP 423, and failed writes preserve recoverable local state.

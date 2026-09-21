@@ -19,8 +19,9 @@ Two recordings, both dev-only:
 
 `harness replay list` and `show <session> [--mode ui|backend]` inspect a
 recording. `harness replay diff <before> <after> --mode ui|backend` reports
-added, removed and changed steps. Exact ISO timestamps and UUIDs are normalized
-for this comparison so routine generated values do not hide meaningful changes.
+added, removed and changed steps. Complete ISO timestamp values become
+`<timestamp>` and UUID substrings become `<uuid>` recursively in the comparison
+key; export and replay retain the recorded values.
 
 ## How it is built
 

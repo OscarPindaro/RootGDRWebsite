@@ -148,8 +148,7 @@ def run_check(
             route_paths.append(route.path)
     routes = Routes(route_paths, mounts)
 
-    config = getattr(app.state, "config", None)
-    env = config.env if config is not None else "dev"
+    env = app.state.config.env
 
     diagnostics: list[tuple[Path, int, str]] = []
     navigation = Path("src/backend/navigation.py")

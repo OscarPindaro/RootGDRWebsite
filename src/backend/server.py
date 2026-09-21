@@ -24,9 +24,7 @@ from fastapi.staticfiles import StaticFiles
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    config = getattr(app.state, "config", None)
-    if config is None:
-        config = get_app_config()
+    config: AppConfig = app.state.config
     db_manager = DatabaseManager(config.database)
     app.state.db_manager = db_manager
     try:

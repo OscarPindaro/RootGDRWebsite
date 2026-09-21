@@ -37,7 +37,7 @@ async def create_place_route(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PlaceResponse:
-    """Create an Luogo (master only)."""
+    """Create a place (master only)."""
     return _to_response(await create_place(db, world_id, data, user))
 
 
@@ -47,7 +47,7 @@ async def list_places_route(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[PlaceSummary]:
-    """List the Luogos of an accessible world."""
+    """List the places of an accessible world."""
     return ListResponse(
         data=[
             PlaceSummary.model_validate(n)
@@ -65,7 +65,7 @@ async def upload_place_image_route(
     filesystem: FileSystem = Depends(get_filesystem),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PlaceResponse:
-    """Replace an Luogo image (master only)."""
+    """Replace a place image (master only)."""
     return _to_response(
         await upload_place_image(db, world_id, place_id, image, user, filesystem)
     )
@@ -79,7 +79,7 @@ async def get_place_image_route(
     filesystem: FileSystem = Depends(get_filesystem),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> Response:
-    """Return an Luogo image for a readable world."""
+    """Return a place image for a readable world."""
     image, content = await read_place_image(db, world_id, place_id, user, filesystem)
     media_type = mimetypes.guess_type(image.name)[0] or "application/octet-stream"
     return Response(
@@ -99,7 +99,7 @@ async def get_place_route(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PlaceResponse:
-    """Return one Luogo."""
+    """Return one place."""
     return _to_response(await get_place(db, world_id, place_id, user))
 
 
@@ -111,7 +111,7 @@ async def update_place_route(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> PlaceResponse:
-    """Update an Luogo (master only)."""
+    """Update a place (master only)."""
     return _to_response(await update_place(db, world_id, place_id, data, user))
 
 
@@ -123,5 +123,5 @@ async def delete_place_route(
     filesystem: FileSystem = Depends(get_filesystem),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
-    """Delete an Luogo (master only)."""
+    """Delete a place (master only)."""
     await delete_place(db, world_id, place_id, user, filesystem)

@@ -42,8 +42,14 @@ class TaskRepository:
         if task is None:
             return None
 
-        for field, value in data.model_dump(exclude_unset=True).items():
-            setattr(task, field, value)
+        if "name" in data.model_fields_set:
+            task.name = data.name
+        if "status" in data.model_fields_set:
+            task.status = data.status
+        if "completion" in data.model_fields_set:
+            task.completion = data.completion
+        if "message" in data.model_fields_set:
+            task.message = data.message
 
         await self.db.flush()
         await self.db.refresh(task)

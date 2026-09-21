@@ -34,8 +34,8 @@ The reading page is where a document is written: no separate edit form, no
   with the latest `expected_version` to the existing per-feature endpoint.
 - The same file mounts CodeMirror for the body. `live-preview.js` hides Markdown
   markers outside the active line. The document remains Markdown.
-- The editor bundle is loaded on demand only for editable pages/forms. Readers
-  do not download CodeMirror.
+- The editor bundle is loaded only on editable document and world-settings
+  pages. Readers do not download CodeMirror.
 - Every change snapshots dirty fields and its base version in `localStorage`.
   Confirmed fields alone are removed. On mount, a differing local snapshot is
   never applied silently: the user chooses whether to restore or discard it.
