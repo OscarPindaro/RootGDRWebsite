@@ -41,3 +41,4 @@ Template:
 | The page's single save indicator | [save-indicator.md](save-indicator.md) |
 | Choose from a known list, or type freely | [combobox.md](combobox.md) |
 | Grid, VStack, HStack: layout as components | [layout-primitives.md](layout-primitives.md) |
+| One owner per root selector, one asset declaration per component | [css-ownership.md](css-ownership.md) |

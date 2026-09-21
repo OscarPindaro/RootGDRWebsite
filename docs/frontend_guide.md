@@ -15,7 +15,7 @@ frontend code here. The design process behind the visual language is in
 | `src/frontend/components/editorial/` | The product's vocabulary and its atlas identity: Masthead, Cover, Face, Docbar, DocIdentity, DocEdit, DocSummary, ImageEditor, Links, Quick, SectionHead, Stat, Timeline, Crumbs, Plogo | worlds, characters, sessions, the printed-atlas look |
 | `src/frontend/components/layout/` | Page shells: BlankPage, Page, Sidebar, Rail, Topbar, UserMenu | the shell, not the content |
 | `src/frontend/components/pages/` | Full pages composed from the three above, one folder per module | the domain |
-| `src/frontend/static/css/main.css` | Every design token, plus the editorial classes that pages used to write by hand | — |
+| `src/frontend/static/css/main.css` | Identity and alias tokens, reset, base typography, prose, and genuinely global document defaults | — |
 | `src/frontend/static/js/` | Application scripts (editor, htmx helpers, lucide) | — |
 | `src/frontend/design-tokens/material3/` | Provenance for every value adopted from Material 3 | — |
 | `tests/frontend/` | Component tests, one file per component | — |
@@ -45,9 +45,36 @@ Rules:
    number. Name the token by role (`--grid-min-card`), never by value.
 3. **Prefer an existing token over a new one.** The spacing scale is
    `--sp-1 … --sp-20`; there is no `--sp-7`.
-4. `main.css` holds tokens and the editorial classes that predate the component
-   layer. **New layout CSS does not go there**: use `common.Grid`,
-   `common.VStack`, `common.HStack` (see §5).
+4. **`main.css` has a restricted role**: identity and alias tokens, the reset,
+   base typography, prose, and genuinely global document defaults. The editorial
+   classes it still carries are migration debt, not a place to add to.
+   **New layout CSS does not go there**: use `common.Grid`, `common.VStack`,
+   `common.HStack` (see §5).
+
+### Selector ownership
+
+Every reusable root selector has **one** owner:
+
+| Layer | Owns | Examples |
+|---|---|---|
+| `main.css` | identity and alias tokens, reset, base typography, prose, global document defaults | `.prose`, `.container`, `.shell` |
+| colocated component CSS | structure and states for that component only | `.btn`, `.field`, `.card`, `.dialog` |
+| page CSS (`components/pages/**/<Page>.css`) | exceptional page composition, never a reusable primitive | `.login-page`, `.admin-*` |
+| `design-tokens/material3/` | provenance for adopted mechanics and dimensions, not a second visual identity | — |
+
+A **root** is the class a selector starts with, stripped of its BEM suffix:
+`.card__body` and `.card--npc` both belong to root `card`. A selector whose first
+compound carries no class (`.rail .btn`, `html[data-accent] .btn--text`) belongs
+to no class root. A domain component that needs its own look takes a domain name
+(`entity-card`, `document-layout`, `collection-create`) instead of colliding
+with a common primitive.
+
+`tests/unit/jinja/test_component_conventions.py` fails when two stylesheets own
+the same root. Roots that are still owned twice are listed in
+`MIGRATION_ALLOWLIST` in that file with the ticket that removes the losing
+rules, and the test also fails on an entry that has outlived its collision. The
+roots the guard watches today are `card`, `pill`, `field`, `btn`, `dialog` and
+`table` — `btn` is Button's root class, and there is no `.button` selector.
 
 ## 3. Anatomy of a component
 
@@ -86,11 +113,14 @@ src/frontend/components/common/Switch.js     # only when it needs behaviour
 - **Forwarding.** To pass caller attributes to a child component use
   `_attrs={{ attrs }}`. Never put `{{ attrs.render() }}` inside a component
   invocation.
-- **`{#css … #}` declares assets the component itself needs** (the CSS of the
-  components it composes). JinjaX collects assets from the rendered tree, so a
-  page that renders a component gets its colocated CSS automatically; the
-  explicit line is what makes an htmx-loaded fragment carry its own styles.
-  The `jinjax-css-dependencies` hook adds missing ones for you.
+- **`{#css … #}` declares the assets the component needs** — its own sibling
+  stylesheet, then the CSS of the components it composes. JinjaX collects assets
+  from the rendered tree, so a page that renders a component gets its colocated
+  CSS automatically; the explicit line is what makes the dependency visible to a
+  render that never goes through `layout.BlankPage`, which is every htmx
+  fragment. The `jinjax-css-dependencies` hook adds what is missing and merges
+  every directive in a file into one; `--check` fails naming the component and
+  the asset.
 - **Composition over duplication.** `common.IconButton` is `Tooltip` +
   `Button`; `common.EmptyState` reuses `Icon`. Do not re-implement a control.
 - **Values in Jinja.** `size=32` is the **string** `"32"`. Use `size={{ 32 }}`,
@@ -129,7 +159,9 @@ src/frontend/components/common/Switch.js     # only when it needs behaviour
 2. If the token is inventoried in `design-tokens/material3/`, update the YAML in
    the same commit; `uv run harness material check` and the unit suite both fail
    otherwise.
-3. Run `uv run harness test frontend` and take a screenshot: a CSS change is
+3. Adding a rule for a reusable root to a second stylesheet fails the ownership
+   guard in §2 — give the domain component a domain name instead.
+4. Run `uv run harness test frontend` and take a screenshot: a CSS change is
    invisible to every other check.
 
 ## 5. Layout
@@ -168,7 +200,7 @@ A new grid ratio belongs in `Grid.css` as a variant, not in a page as an inline
 | Layer | Command | Covers |
 |---|---|---|
 | Component | `uv run harness test frontend` | real JinjaX markup in Chromium, CSS applied, keyboard, focus, timers, htmx lifecycle. No backend, no database. |
-| Compile | `uv run harness test unit` | every component compiles (`tests/integration/jinja/test_templates_compile.py`) and the conventions in §3 hold (`tests/unit/jinja/test_component_conventions.py`) |
+| Compile | `uv run harness test unit` | every component compiles (`tests/integration/jinja/test_templates_compile.py`), the conventions in §3 hold and the selector ownership in §2 holds (`tests/unit/jinja/test_component_conventions.py`) |
 | Tokens | `uv run harness material check` | the M3 inventory and `main.css` agree |
 | Pages | `uv run harness smoke`, `harness screenshot` | authenticated pages render, no console errors |
 

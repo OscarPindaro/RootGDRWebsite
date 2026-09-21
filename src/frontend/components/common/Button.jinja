@@ -1,4 +1,5 @@
 {#def variant="primary", size="md", href=None, block=False, shape="round", icon=None, icon_position="start", icon_only=False, label=None, selected=None #}
+{#css common/Button.css #}
 {% set classes = "btn btn-" ~ variant ~ " btn-" ~ size ~ " btn-" ~ shape %}
 {% if block %}{% set classes = classes ~ " btn-block" %}{% endif %}
 {% if icon %}{% set classes = classes ~ (" btn-icon-only" if icon_only else " btn-mixed") %}{% endif %}

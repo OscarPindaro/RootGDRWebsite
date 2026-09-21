@@ -1,4 +1,5 @@
 {#def gap=4, align="stretch", element="div" #}
+{#css common/VStack.css #}
 {% set stack_style = "--stack-gap: var(--sp-" ~ gap ~ "); " ~ attrs.get("style", "") %}
 <{{ element }} {{ attrs.render(class="v-stack v-stack-align-" ~ align, style=stack_style) }}>
   {{ content }}

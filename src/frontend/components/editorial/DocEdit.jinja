@@ -1,4 +1,5 @@
 {#def world_id, base, body, body_html, version, locked=False, can_manage=False, field_name="body", label="Testo Markdown" #}
+{#css editorial/DocEdit.css #}
 <div class="docedit" data-doc-edit data-world-id="{{ world_id }}" data-doc-field-name="{{ field_name }}"
      data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>

@@ -1,4 +1,5 @@
 {#def base, version, can_manage=False, locked=False, auto_edit=False #}
+{#css editorial/DocIdentity.css #}
 <div class="docidentity" data-doc-identity data-auto-edit="{{ 'true' if auto_edit else 'false' }}" data-autosave-url="/api{{ base }}"
      data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>

@@ -1,4 +1,5 @@
 {#def state=None, visible=False #}
+{#css common/SaveIndicator.css #}
 <p class="save-indicator" data-autosave-status
    {%- if state %} data-state="{{ state }}"{% endif %}
    role="status" aria-live="polite"{% if not visible %} hidden{% endif %}></p>

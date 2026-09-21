@@ -34,6 +34,17 @@ class RenderedPage(BaseModel):
     asset_urls: list[str]
 
 
+def _unique(urls: list[str]) -> list[str]:
+    """First occurrence wins, as the app's own asset emission does.
+
+    A component that declares its colocated stylesheet collects it twice: once
+    because JinjaX loads it automatically, once because the ``{#css #}``
+    directive names it. The application deduplicates when it writes the tags;
+    the test shell has to do the same or it measures phantom payload.
+    """
+    return list(dict.fromkeys(urls))
+
+
 def render_component(
     components_dir: Path,
     component: str,
@@ -52,20 +63,16 @@ def render_component(
     if content:
         kwargs["_content"] = content
     html = catalog.render(component, **kwargs)
+    css = _unique(catalog.collected_css)
+    js = _unique(catalog.collected_js)
     tags = "\n".join(
-        [
-            f'<link rel="stylesheet" href="{catalog.root_url}{url}">'
-            for url in catalog.collected_css
-        ]
+        [f'<link rel="stylesheet" href="{catalog.root_url}{url}">' for url in css]
         + [
             f'<script type="module" src="{catalog.root_url}{url}"></script>'
-            for url in catalog.collected_js
+            for url in js
         ]
     )
-    assets = [
-        f"{catalog.root_url}{url}"
-        for url in (*catalog.collected_css, *catalog.collected_js)
-    ]
+    assets = [f"{catalog.root_url}{url}" for url in (*css, *js)]
     scripts = (
         """
     <script src="/static/js/htmx.min.js"></script>
