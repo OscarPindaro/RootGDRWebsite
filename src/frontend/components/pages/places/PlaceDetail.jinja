@@ -11,16 +11,16 @@
     :can_manage="can_manage"
     :badge="'Scena corrente' if is_current else None">
     {% if is_current %}
-    <button class="btn btn--ghost btn--sm" type="button"
-            hx-post="/worlds/{{ world.id }}/places/current/clear" hx-swap="none">Rimuovi scena corrente</button>
+    <common.Button variant="text" size="sm"
+            :hx-post="'/worlds/' ~ world.id ~ '/places/current/clear'" hx-swap="none">Rimuovi scena corrente</common.Button>
     {% else %}
-    <button class="btn btn--ghost btn--sm" type="button"
-            hx-post="/worlds/{{ world.id }}/places/{{ place.id }}/current" hx-swap="none">Scena corrente</button>
+    <common.Button variant="text" size="sm"
+            :hx-post="'/worlds/' ~ world.id ~ '/places/' ~ place.id ~ '/current'" hx-swap="none">Scena corrente</common.Button>
     {% endif %}
     {% if place.is_draft %}
-    <button class="btn btn--ghost btn--sm" type="button" data-testid="cancel-place-draft" hx-post="/worlds/{{ world.id }}/places/{{ place.id }}/cancel-draft" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</button>
+    <common.Button variant="text" size="sm" data-testid="cancel-place-draft" :hx-post="'/worlds/' ~ world.id ~ '/places/' ~ place.id ~ '/cancel-draft'" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</common.Button>
     {% else %}
-    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-place" hx-delete="/worlds/{{ world.id }}/places/{{ place.id }}" hx-confirm="Eliminare {{ place.name }}?" hx-swap="none">Elimina</button>
+    <common.Button variant="text" size="sm" data-testid="delete-place" :hx-delete="'/worlds/' ~ world.id ~ '/places/' ~ place.id" :hx-confirm="'Eliminare ' ~ place.name ~ '?'" hx-swap="none">Elimina</common.Button>
     {% endif %}
   </editorial.Docbar>
 

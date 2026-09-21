@@ -10,9 +10,9 @@
     :is_draft="story.is_draft"
     :can_manage="can_manage">
     {% if story.is_draft %}
-    <button class="btn btn--ghost btn--sm" type="button" data-testid="cancel-story-draft" hx-post="/worlds/{{ world.id }}/stories/{{ story.id }}/cancel-draft" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</button>
+    <common.Button variant="text" size="sm" data-testid="cancel-story-draft" :hx-post="'/worlds/' ~ world.id ~ '/stories/' ~ story.id ~ '/cancel-draft'" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</common.Button>
     {% else %}
-    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-story" hx-delete="/worlds/{{ world.id }}/stories/{{ story.id }}" hx-confirm="Eliminare «{{ story.title }}»?" hx-swap="none">Elimina</button>
+    <common.Button variant="text" size="sm" data-testid="delete-story" :hx-delete="'/worlds/' ~ world.id ~ '/stories/' ~ story.id" :hx-confirm="'Eliminare «' ~ story.title ~ '»?'" hx-swap="none">Elimina</common.Button>
     {% endif %}
   </editorial.Docbar>
 

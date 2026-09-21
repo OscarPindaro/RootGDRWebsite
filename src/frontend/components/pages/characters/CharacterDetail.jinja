@@ -11,9 +11,9 @@
     :can_manage="can_manage">
     <span class="pill pill--plain">Giocato da {{ character.owner.name }}</span>
     {% if character.is_draft %}
-    <button class="btn btn--ghost btn--sm" type="button" data-testid="cancel-character-draft" hx-post="/worlds/{{ world.id }}/characters/{{ character.id }}/cancel-draft" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</button>
+    <common.Button variant="text" size="sm" data-testid="cancel-character-draft" :hx-post="'/worlds/' ~ world.id ~ '/characters/' ~ character.id ~ '/cancel-draft'" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</common.Button>
     {% else %}
-    <button class="btn btn--ghost btn--sm" type="button" data-testid="delete-character" hx-delete="/worlds/{{ world.id }}/characters/{{ character.id }}" hx-confirm="Eliminare {{ character.name }}?" hx-swap="none">Elimina</button>
+    <common.Button variant="text" size="sm" data-testid="delete-character" :hx-delete="'/worlds/' ~ world.id ~ '/characters/' ~ character.id" :hx-confirm="'Eliminare ' ~ character.name ~ '?'" hx-swap="none">Elimina</common.Button>
     {% endif %}
   </editorial.Docbar>
 

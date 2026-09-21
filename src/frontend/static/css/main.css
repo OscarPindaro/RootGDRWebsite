@@ -326,6 +326,13 @@ ul, ol { margin: 0; padding: 0; }
 .navitem[aria-current="page"] .navitem__mark { color: var(--vermilion); }
 .navitem[aria-current="page"] .navitem__count { color: var(--muted); }
 
+/* The label wraps the button's content, so a two-part label needs its own gap. */
+.rail__foot .btn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
 .rail__foot {
   margin-top: auto;
   border-top: 1px solid var(--rail-line);
@@ -410,42 +417,9 @@ ul, ol { margin: 0; padding: 0; }
 }
 .scrim.is-open { display: block; }
 
-/* ---------- 7. Bottoni ---------- */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.55rem 1rem;
-  border: 1px solid var(--ink);
-  background: var(--surface);
-  color: var(--ink);
-  border-radius: var(--radius);
-  font-size: 0.88rem;
-  font-weight: 500;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background 120ms ease, color 120ms ease, transform 120ms ease;
-}
-.btn:hover { background: var(--paper-deep); }
-.btn:active { transform: translateY(1px); }
-
-.btn--primary {
-  background: var(--ink);
-  color: var(--paper);
-}
-.btn--primary:hover { background: var(--vermilion); border-color: var(--vermilion); color: var(--surface); }
-
-.btn--accent {
-  background: var(--vermilion);
-  border-color: var(--vermilion);
-  color: var(--surface);
-}
-.btn--accent:hover { background: var(--ink); border-color: var(--ink); }
-
-.btn--ghost { background: transparent; }
-.btn--ghost:hover { background: var(--paper-deep); }
-
+/* ---------- 7. Link d'azione ----------
+   I pulsanti sono common.Button. Resta qui lo stile dei link testuali
+   che il prototipo usa nella prosa e nelle testate. */
 .btn--text {
   border: 0;
   background: none;
@@ -458,16 +432,6 @@ ul, ol { margin: 0; padding: 0; }
   border-radius: 0;
 }
 .btn--text:hover { color: var(--vermilion); background: none; }
-
-.btn--sm { padding: 0.35rem 0.7rem; font-size: 0.8rem; }
-.btn--icon { padding: 0.45rem 0.55rem; }
-
-.btn-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  align-items: center;
-}
 
 /* ---------- 8. Pill ---------- */
 .pill {
@@ -2296,15 +2260,3 @@ html[data-accent="gradiente"] .prose a.mention {
 
 /* Editorial defaults for bare elements used by components. */
 h1, h2, h3 { font-family: var(--serif); font-weight: 500; }
-
-/* ---------- Editorial buttons used as raw classes ----------
-   Templates write <a class="btn btn--ghost"> for secondary actions. The
-   component library's .btn sets a transparent border and is loaded after this
-   file, so it would win; scoping to .main (the rail has its own rule) restores
-   the prototype's ink border. */
-.main .btn.btn--ghost {
-  border-color: var(--ink);
-}
-.main .btn.btn--ghost:hover {
-  background: var(--paper-deep);
-}
