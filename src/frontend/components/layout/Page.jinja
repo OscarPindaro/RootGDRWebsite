@@ -10,6 +10,7 @@
       <layout.Topbar :title="title" />
       <main id="main">
         <div class="container{{ ' container--wide' if wide else '' }}">
+          <p class="page-status" data-autosave-status role="status" aria-live="polite" hidden></p>
           {{ content }}
         </div>
       </main>

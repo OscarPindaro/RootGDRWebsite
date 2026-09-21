@@ -7,16 +7,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import owner_world, readable_world
 from ..auth.dependencies import get_current_user
+from ..auth.exceptions import InvitationAlreadyExists
+from ..auth.schemas import InvitationCreate
+from ..auth.service import create_invitation as create_invitation_service
 from ..auth.service import find_by_email
+from ..config import AppConfig, get_app_config
 from ..correlation import set_world_id
 from ..content.markdown import render_markdown
 from ..content.references import resolve_text
-from ..db.enums import WorldRole
+from ..db.enums import UserRole, WorldRole
 from ..dependencies import get_catalog_dep, get_db_session
 from ..filesystem.base import FileSystem
 from ..filesystem.dependencies import get_filesystem
 from ..navigation import Crumb, PageLink, WorldContext, build_quicks, world_nav
 from ..users.schemas import User
+from .invites import invite_email, list_world_invites, revoke_world_invite
 from .models import WorldModel
 from .overview import build_overview
 from ..pages.service import rail_pages
@@ -143,6 +148,7 @@ async def world_overview_page(
 async def world_settings_page(
     world_id: uuid.UUID,
     error: str | None = Query(None),
+    notice: str | None = Query(None),
     catalog: Catalog = Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
@@ -162,10 +168,12 @@ async def world_settings_page(
         world=world,
         description_html=description_html,
         members=_member_responses(world),
+        invites=await list_world_invites(db, world.id),
         world_context=_world_context(world, role_for_world(world, user)),
         nav=world_nav(str(world.id), None),
         pages=pages,
         error=error,
+        notice=notice,
         crumbs=[
             Crumb(label="Mondi", href="/worlds"),
             Crumb(label=world.name, href=f"/worlds/{world.id}"),
@@ -207,16 +215,43 @@ async def world_member_add(
     role: WorldRole = Form(WorldRole.PLAYER),
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
+    config: AppConfig = Depends(get_app_config),
 ) -> Response:
-    """Add a member by email."""
+    """Add a member by email, or invite them when they have no account yet."""
+    world = await owner_world(db, world_id, user, include_members=True)
     target = await find_by_email(db, email)
     if target is None:
-        return _htmx_redirect(f"/worlds/{world_id}/settings?error=Utente non trovato")
-    world = await owner_world(db, world_id, user, include_members=True)
+        expire_days = config.auth.invitation_expire_days if config.auth else 7
+        await invite_email(db, world_id, email, role, user.id, expire_days=expire_days)
+        try:
+            await create_invitation_service(
+                db,
+                InvitationCreate(email=email, role=UserRole.MEMBER),
+                user.id,
+                expire_days=expire_days,
+            )
+        except InvitationAlreadyExists:
+            pass
+        return _htmx_redirect(
+            f"/worlds/{world_id}/settings?notice=Invito inviato a {email}"
+        )
     entries = members_to_inputs(world)
     if all(entry.user_id != target.id for entry in entries):
         entries.append(WorldMemberInput(user_id=target.id, role=role))
     await set_members(db, world_id, entries, user)
+    return _htmx_redirect(f"/worlds/{world_id}/settings")
+
+
+@router.delete("/worlds/{world_id}/invites/{email}")
+async def world_invite_revoke(
+    world_id: uuid.UUID,
+    email: str,
+    db: AsyncSession = Depends(get_db_session, scope="function"),
+    user: User = Depends(get_current_user),
+) -> Response:
+    """Cancel a pending invite."""
+    await owner_world(db, world_id, user)
+    await revoke_world_invite(db, world_id, email)
     return _htmx_redirect(f"/worlds/{world_id}/settings")
 
 

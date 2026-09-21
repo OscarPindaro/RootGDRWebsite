@@ -11,6 +11,7 @@ from ...config import AppConfig, get_app_config
 from ...db.enums import UserRole
 from ...dependencies import get_db_session
 from ...users.models import UserModel
+from ...worlds.invites import apply_pending_invites
 from ..exceptions import AuthError, InvalidCredentials, InvalidToken
 from ..schemas import LoginRequest, RefreshRequest, RegisterRequest, TokenResponse
 from ..service import (
@@ -287,6 +288,8 @@ async def auth_dev_login(
         user = UserModel(name=email, email=email, role=role)
         db.add(user)
         await db.flush()
+
+    await apply_pending_invites(db, user)
 
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)

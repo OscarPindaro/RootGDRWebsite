@@ -1,4 +1,10 @@
 /* ---------- DocIdentity (name, title and description written in place) ---------- */
+/* Small visible labels above the editable name/title fields. */
+.docidentity > .eyebrow {
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
 .docidentity [data-doc-field] {
   cursor: text;
   border-left: 3px solid transparent;

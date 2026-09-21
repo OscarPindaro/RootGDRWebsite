@@ -146,8 +146,10 @@
   border-start-end-radius: var(--button-group-square-outer);
   border-end-end-radius: var(--button-group-square-outer);
 }
-.button-group-connected .button-group-input:checked + .btn,
-.button-group-connected > .btn[aria-pressed="true"] { border-radius: var(--radius-full); }
+
+/* A connected group is a row of edges: the selected segment keeps its shape,
+   it does not turn into a pill. Two options are the left and the right edge;
+   a third option in the middle stays rectangular. */
 
 @media (prefers-reduced-motion: reduce) {
   .button-group .btn,

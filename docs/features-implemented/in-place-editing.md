@@ -22,7 +22,11 @@ The reading page is where a document is written: no separate edit form, no
   Markdown description. It shares one optimistic world version, local recovery,
   conflict handling and server preview while members and cover stay on the page.
 - Italian live status text reports saving, saved, offline, validation/access
-  errors and conflicts. A locked document does not enter writing at all.
+  errors and conflicts. It is a single indicator per page, at the top of the
+  content and coloured by state, because the identity, summary and body blocks
+  share one document. A locked document does not enter writing at all.
+- Auto-editing a freshly created document (`?edit=1`) happens once: the flag is
+  cleared from the URL, so a later reload does not reopen the name field.
 
 ## How it is built
 

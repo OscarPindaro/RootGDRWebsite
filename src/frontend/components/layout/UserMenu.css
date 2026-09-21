@@ -18,6 +18,10 @@
   transition: background var(--dur-base) var(--ease-out);
 }
 
+/* common.Button wraps slotted content in .btn-label: let the trigger's flex
+   lay out avatar, name and chevron directly instead of a single wrapper. */
+.user-menu .btn-label { display: contents; }
+
 .user-menu .btn:hover {
   background: rgba(255, 255, 255, 0.06);
 }

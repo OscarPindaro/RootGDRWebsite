@@ -30,6 +30,10 @@ def _open_body(session: BrowserSession) -> None:
     session.page.locator("[data-doc-render]").dblclick()
     session.page.wait_for_selector(".cm-editor")
     session.page.locator(".cm-content").click()
+    # The editor places the caret where the click landed; the tests below type
+    # at the end, so move there explicitly (wrapped lines make the click
+    # position depend on the paragraph height).
+    session.page.keyboard.press("Control+End")
 
 
 def _wait_saved(session: BrowserSession) -> None:
@@ -87,6 +91,22 @@ def test_idle_hard_max_threshold_and_explicit_flushes(
     session.page.locator("[data-doc-edit-open]").focus()
     _wait_saved(session)
     assert session.expect_api(api_path).json()["body"].endswith(" blur")
+    assert session.errors == []
+
+
+def test_long_line_wraps_instead_of_scrolling_horizontally(
+    session: BrowserSession, seed_world
+) -> None:
+    _character(session, seed_world, "a capo")
+    _open_body(session)
+    session.page.keyboard.type("parola " * 60)
+    session.page.wait_for_timeout(1_200)
+
+    overflow = session.page.evaluate(
+        "() => { const s = document.querySelector('.cm-scroller');"
+        " return s.scrollWidth - s.clientWidth; }"
+    )
+    assert overflow <= 1
     assert session.errors == []
 
 

@@ -27,6 +27,7 @@
             </span>
             <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
               :can_manage="can_manage" :locked="story.locked" :version="story.version" :auto_edit="auto_edit">
+              <span class="eyebrow">Titolo</span>
               <h1 class="display" data-doc-field="title">{{ story.title }}</h1>
               <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
                 :value="story.short_description" :value_html="short_html" :version="story.version"

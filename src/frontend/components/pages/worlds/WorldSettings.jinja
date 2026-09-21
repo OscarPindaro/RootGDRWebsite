@@ -1,20 +1,18 @@
-{#def world, members, world_context, nav, crumbs, description_html, error=None, pages=None, current_user=None #}
+{#def world, members, world_context, nav, crumbs, description_html, error=None, notice=None, invites=None, pages=None, current_user=None #}
 {#css common/Alert.css, common/Button.css, common/Dialog.css, common/Field.css, common/Pill.css, layout/UserMenu.css, pages/worlds/WorldSettings.css, editorial/ImageEditor.css, editorial/DocEdit.css, editorial/DocIdentity.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/ChoiceGrid.css #}
 <layout.Page title="Impostazioni" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="mondo">
   <editorial.Masthead title="Impostazioni" :eyebrow="world.name" :crumbs="crumbs">
     <a class="btn btn--ghost" href="/worlds/{{ world.id }}">Torna al mondo</a>
   </editorial.Masthead>
 
-  {% if error %}<common.Alert variant="danger">{{ error }}</common.Alert>{% endif %}
-
   <div class="grid grid--two">
     <div class="stack stack--lg">
       <section class="world-identity">
-        <editorial.SectionHead title="Identità" eyebrow="Nome e descrizione" />
+        <span class="eyebrow">Nome</span>
         <editorial.DocIdentity :base="'/worlds/' ~ world.id" :version="world.version" :can_manage="True">
           <h2 class="display display--sm" data-doc-field="name" data-doc-label="Nome del mondo">{{ world.name }}</h2>
         </editorial.DocIdentity>
-        <span class="eyebrow">Descrizione Markdown</span>
+        <span class="eyebrow">Descrizione</span>
         <editorial.DocEdit world_id={{ world.id }} :base="'/worlds/' ~ world.id"
           :body="world.description" :body_html="description_html" field_name="description"
           label="Descrizione del mondo" :version="world.version" :can_manage="True" />
@@ -43,8 +41,21 @@
               {% endif %}
             </div>
             {% endfor %}
+            {% for invite in invites or [] %}
+            <div class="links__item">
+              <span class="links__dot" style="--c: var(--clr-text-muted)"></span>
+              {{ invite.email }}
+              <span class="mono muted">Invitato · {{ 'Master' if invite.role == 'master' else 'Giocatore' }}</span>
+              <button class="btn--text" type="button"
+                      hx-delete="/worlds/{{ world.id }}/invites/{{ invite.email | urlencode }}"
+                      hx-confirm="Annullare l'invito a {{ invite.email }}?"
+                      hx-swap="none">Annulla invito</button>
+            </div>
+            {% endfor %}
           </div>
         </div>
+        {% if error %}<common.Alert variant="danger">{{ error }}</common.Alert>{% endif %}
+        {% if notice %}<common.Alert variant="success">{{ notice }}</common.Alert>{% endif %}
         <form class="row-inline" style="margin-top: 1rem"
               hx-post="/worlds/{{ world.id }}/members"
               hx-ext="ignore:json-enc" hx-swap="none">
@@ -55,6 +66,7 @@
           </select>
           <common.Button type="submit" variant="secondary" size="md" data-testid="add-world-member">Aggiungi</common.Button>
         </form>
+        <p class="field__hint">Aggiungi chi ha già un account, oppure invita un'email esterna: entrerà nel mondo al primo accesso.</p>
       </section>
     </div>
 

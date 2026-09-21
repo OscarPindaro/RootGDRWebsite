@@ -30,18 +30,6 @@
   margin-top: var(--sp-3);
 }
 
-.autosave-status {
-  min-height: 1.25rem;
-  margin: var(--sp-2) 0 0;
-  color: var(--muted);
-  font: 0.82rem/1.4 var(--sans);
-}
-
-.autosave-status[data-state="error"],
-.autosave-status[data-state="conflict"] {
-  color: var(--vermilion);
-}
-
 .autosave-recovery {
   margin-top: var(--sp-3);
   padding: var(--sp-3);

@@ -68,7 +68,16 @@ const theme = EditorView.theme({
     padding: "0 0.15em",
   },
   ".cm-lp-link": { color: "var(--cobalt)", textDecoration: "underline" },
-  ".cm-lp-mention": { color: "var(--vermilion)", fontWeight: "600" },
+  /* A mention reads the same while writing and while reading: the pill the
+     renderer produces, not a bare link. */
+  ".cm-lp-mention": {
+    color: "var(--ink)",
+    background: "rgba(23, 21, 15, 0.06)",
+    borderRadius: "5px",
+    padding: "0.05em 0.4em",
+    fontWeight: "500",
+    boxShadow: "inset 0 0 0 1px rgba(23, 21, 15, 0.08)",
+  },
 });
 
 function mentionSource(worldId) {
@@ -91,6 +100,7 @@ function mentionSource(worldId) {
           label: entry.name,
           filterText: `@${entry.name}`,
           detail: entry.kind,
+          type: entry.tint,
           apply: `@[${entry.insert}] `,
         })),
       };
@@ -105,6 +115,7 @@ function extensions({ worldId, onDocChanged, onModEnter, onEscape = null }) {
     history(),
     drawSelection(),
     highlightActiveLine(),
+    EditorView.lineWrapping,
     markdown(),
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
     livePreview,
@@ -225,8 +236,9 @@ class AutosaveController {
     this.restoreChecked = false;
   }
 
-  register(name, value, apply, status, root) {
+  register(name, value, apply, root) {
     if (!this.fields.has(name)) this.fields.set(name, { saved: value, apply });
+    const status = document.querySelector("[data-autosave-status]");
     if (status) this.statuses.add(status);
     if (!this.root) this.root = root;
     queueMicrotask(() => this.offerRestore());
@@ -236,6 +248,7 @@ class AutosaveController {
     this.statuses.forEach((node) => {
       node.textContent = text;
       node.dataset.state = state;
+      node.hidden = !text;
     });
   }
 
@@ -505,7 +518,7 @@ function mountDocEdit(block) {
   if (!render || !host || !source) return;
   const autosave = controllerFor(block);
   const fieldName = block.dataset.docFieldName || "body";
-  autosave.register(fieldName, source.value, (value) => { source.value = value; }, block.querySelector("[data-autosave-status]"), block);
+  autosave.register(fieldName, source.value, (value) => { source.value = value; }, block);
 
   let view = null;
   let caret = 0;
@@ -581,7 +594,6 @@ function mountDocSummary(block) {
     "short_description",
     source.value,
     (value) => { source.value = value; },
-    block.querySelector("[data-autosave-status]"),
     block,
   );
 
@@ -640,7 +652,7 @@ function mountDocIdentity(block) {
     const name = field.dataset.docField;
     const initial = field.textContent.trim();
     const apply = (value) => { field.textContent = value; field.dataset.empty = String(!value); };
-    autosave.register(name, initial, apply, block.querySelector("[data-autosave-status]"), block);
+    autosave.register(name, initial, apply, block);
     field.tabIndex = 0;
     field.setAttribute("role", "textbox");
     field.setAttribute("aria-label", field.dataset.docLabel || name);
@@ -697,7 +709,7 @@ function mountDocMetadata(block) {
     autosave.register(field.name, initial, (value) => {
       if (field.multiple) [...field.options].forEach((option) => { option.selected = value.includes(option.value); });
       else field.value = value ?? "";
-    }, block.querySelector("[data-autosave-status]"), block);
+    }, block);
     field.addEventListener("change", () => { autosave.change(field.name, metadataValue(field)); autosave.flush(); });
     field.addEventListener("input", () => autosave.change(field.name, metadataValue(field)));
     field.addEventListener("blur", () => autosave.flush());
@@ -714,8 +726,21 @@ function mountAll(root) {
   scope.querySelectorAll("[data-doc-summary]").forEach((block) => mountDocSummary(block));
   scope.querySelectorAll("[data-doc-identity]").forEach((block) => mountDocIdentity(block));
   scope.querySelectorAll("[data-doc-metadata]").forEach((block) => mountDocMetadata(block));
-  const autoField = scope.querySelector("[data-auto-edit='true'] [data-doc-field]");
-  if (autoField) autoField.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+  const autoBlock = scope.querySelector("[data-auto-edit='true']");
+  if (autoBlock) {
+    // Auto-edit is a one-shot for a freshly created document: drop the flag and
+    // the ?edit=1 parameter so a reload (e.g. after picking a shape) does not
+    // reopen the name field.
+    autoBlock.dataset.autoEdit = "false";
+    autoBlock
+      .querySelector("[data-doc-field]")
+      ?.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    const url = new URL(location.href);
+    if (url.searchParams.has("edit")) {
+      url.searchParams.delete("edit");
+      window.history.replaceState(null, "", url);
+    }
+  }
 }
 
 mountAll();

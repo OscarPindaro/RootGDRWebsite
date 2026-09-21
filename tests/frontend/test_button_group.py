@@ -210,6 +210,43 @@ def test_htmx_after_swap_resyncs_aria_checked(component):
     )
 
 
+def test_connected_group_keeps_each_segment_an_edge(component):
+    page = component.mount(
+        "common.ButtonGroup",
+        props={
+            "label": "Simboli",
+            "options": _options("icons", "shapes"),
+            "selection": "single",
+            "name": "symbol_style",
+            "value": "icons",
+            "variant": "connected",
+            "required": True,
+        },
+    )
+    radii = page.evaluate(
+        """() => [...document.querySelectorAll('.button-group-option > .btn')].map(
+            (btn) => {
+                const style = getComputedStyle(btn);
+                return [
+                    style.borderTopLeftRadius,
+                    style.borderTopRightRadius,
+                    style.borderBottomLeftRadius,
+                    style.borderBottomRightRadius,
+                ];
+            }
+        )"""
+    )
+    # First segment: rounded outer left, inner right square-ish. The selected
+    # state must not turn it into a pill.
+    assert radii[0][0] == radii[0][2]
+    assert radii[0][1] == radii[0][3]
+    assert radii[0][0] != radii[0][1]
+    # Last segment mirrors it.
+    assert radii[1][1] == radii[1][3]
+    assert radii[1][0] == radii[1][2]
+    assert radii[1][1] != radii[1][0]
+
+
 def test_reduced_motion_disables_transitions(component):
     page = component.mount(
         "common.ButtonGroup",

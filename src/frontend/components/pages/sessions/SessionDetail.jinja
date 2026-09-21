@@ -20,6 +20,7 @@
     <div class="document__head document__head--plain">
       <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
         :can_manage="can_manage" :locked="session.locked" :version="session.version" :auto_edit="auto_edit">
+        <span class="eyebrow">Titolo</span>
         <h1 class="display" data-doc-field="title">{{ session.title }}</h1>
         <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
           :value="session.short_description" :value_html="short_html" :version="session.version"

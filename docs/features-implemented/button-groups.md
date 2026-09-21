@@ -19,5 +19,7 @@
 ## Notes and limits
 
 - Groups are horizontal and may scroll in narrow showcase rows.
+- A connected group is a row of edges: the selected segment keeps its shape
+  (left edge, middle, right edge) and never turns into a pill.
 - Callers own submitted values and server-side validation.
 - Icon-only choices need a meaningful group legend, a recognizable icon and an accessible label.

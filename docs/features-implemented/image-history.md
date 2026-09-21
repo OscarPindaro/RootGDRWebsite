@@ -21,4 +21,7 @@ Worlds, characters, NPCs and places keep immutable uploaded-image revisions whil
 - Uploads accept PNG, JPEG, GIF and WebP magic and at most 10 MiB of streamed bytes; filenames are sanitized.
 - Reads follow normal content visibility. Mutations follow each feature's normal image-management permissions and reject revisions from another owner or world.
 - Read-only and locked documents show only the image or generated fallback.
+- The history command sits under the image, in a command row, so it never covers
+  the picture. The world cover preview uses the world list proportion (16 / 7);
+  document faces keep the vertical 4 / 5.
 - Filesystem and database transactions cannot be fully atomic on local storage. Failed uploads discard the new object when possible, and cleanup tolerates an already-missing object.
