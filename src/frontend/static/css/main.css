@@ -2262,6 +2262,13 @@ html[data-accent="gradiente"] .prose a.mention {
   --media-ratio-portrait: 4 / 5;
   --media-ratio-landscape: 16 / 10;
   --media-ratio-square: 1 / 1;
+  /* Switch geometry, transcribed from the M3 spec (see design-tokens). */
+  --switch-track-width: 52px;
+  --switch-track-height: 32px;
+  --switch-track-outline: 2px;
+  --switch-thumb-size: 16px;
+  --switch-thumb-size-checked: 24px;
+  --switch-radius: var(--radius-sm);
 }
 
 /* Editorial defaults for bare elements used by components. */

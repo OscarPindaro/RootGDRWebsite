@@ -1,0 +1,42 @@
+# Material 3 token inventory — switch.
+#
+# Every value the project took from Material 3, with its provenance.
+# `harness material check` verifies offline that this inventory and the CSS
+# custom properties in main.css agree; the unit test suite runs the same check.
+#
+# dp maps to CSS px (logical scale). The track and handle sizes come from the
+# published spec; the Android dimens file for the same release only points at
+# the generated `m3_comp_switch_*` values, so it is cited for reference and not
+# as the source of a token.
+
+component: switch
+sources:
+  m3-web-spec:
+    page: https://m3.material.io/components/switch/specs
+    retrieved_at: 2026-09-21
+  android-dimens:
+    repository: https://github.com/material-components/material-components-android
+    revision: 66c334b7946dabf33adfe1a2b7cad6bcaa4ea3ad  # tag 1.14.0
+    files:
+      dimens: lib/java/com/google/android/material/materialswitch/res/values/dimens.xml
+    retrieved_at: 2026-09-21
+
+tokens:
+  # Track: 52 x 32 dp, 2 dp outline.
+  - {name: md.comp.switch.track.width, value: 52, css: --switch-track-width, source: m3-web-spec}
+  - {name: md.comp.switch.track.height, value: 32, css: --switch-track-height, source: m3-web-spec}
+  - {name: md.comp.switch.track.outline.width, value: 2, css: --switch-track-outline, source: m3-web-spec}
+  # Handle: 16 dp unselected, 24 dp selected. The 28 dp pressed size is not
+  # adopted: it would change the geometry on press, which the project rejects.
+  - {name: md.comp.switch.handle.width.unselected, value: 16, css: --switch-thumb-size, source: m3-web-spec}
+  - {name: md.comp.switch.handle.width.selected, value: 24, css: --switch-thumb-size-checked, source: m3-web-spec}
+
+web_adaptations:
+  - name: square track and handle
+    css: --switch-radius
+    value: var(--radius-sm)
+    source: project
+    rationale: >-
+      M3 uses md.sys.shape.corner.full for both the track and the handle. The
+      atlas uses square controls, so the switch takes the project's small
+      radius instead of a full corner.

@@ -1,5 +1,5 @@
 {#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, current_user=None #}
-{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css, common/Grid.css, common/MediaFrame.css, common/EmptyState.css #}
+{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css, common/Grid.css, common/MediaFrame.css, common/EmptyState.css, common/Switch.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -175,6 +175,16 @@
           <common.Button variant="secondary" size="sm" icon="plus">Nuovo luogo</common.Button>
         </common.EmptyState>
         <common.EmptyState compact icon="calendar" title="Ancora nessuna sessione" description="Il diario comparirà qui." />
+      </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Switches</h2>
+      <p class="showcase-note">An on/off setting. The track is 52×32 and the handle grows from 16 to 24 when on; pressing changes nothing.</p>
+      <div style="display: grid; gap: var(--sp-4);">
+        <common.Switch label="Accenti pieni" name="showcase-switch-off" />
+        <common.Switch label="Accenti pieni" name="showcase-switch-on" :checked="True" helper="La riga sotto i titoli usa una tinta sola." />
+        <common.Switch label="Simboli" name="showcase-switch-disabled" disabled helper="Disattivato: la preferenza è bloccata dal mondo." />
       </div>
     </section>
 
