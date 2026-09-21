@@ -1547,7 +1547,7 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   margin-bottom: 2.75rem;
 }
 .document__face { aspect-ratio: 4 / 5; border: var(--rule-ink); overflow: hidden; }
-.document__id { padding-top: 0.4rem; }
+.document__id { padding-top: 0.4rem; display: grid; gap: 1.5rem; align-content: start; }
 .document__rule { border: 0; border-top: var(--rule-ink); margin: 1.4rem 0 1.15rem; }
 .document__controls {
   display: grid;
@@ -1730,8 +1730,11 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   .mention:hover { background: color-mix(in srgb, var(--c, var(--ink)) 24%, transparent); }
 }
 
-/* l'icona del tipo: disegnata qui, non spedita nel markup */
-.mention::before {
+/* l'icona del tipo: disegnata qui, non spedita nel markup.
+   Vale anche per la menzione mentre si scrive (.cm-lp-mention), ma solo
+   quando il tipo è esplicito: senza --icon resterebbe un quadrato pieno. */
+.mention::before,
+.cm-lp-mention[data-kind]::before {
   content: "";
   width: 0.9em;
   height: 0.9em;
@@ -1746,22 +1749,28 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   -webkit-mask-size: contain;
   mask-size: contain;
 }
-.mention[data-kind="personaggio"] {
+.mention[data-kind="personaggio"],
+.cm-lp-mention[data-kind="personaggio"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M4.8 20.4a7.2 7.2 0 0 1 14.4 0'/%3E%3C/svg%3E");
 }
-.mention[data-kind="npc"] {
+.mention[data-kind="npc"],
+.cm-lp-mention[data-kind="npc"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='9' cy='8.6' r='3.2'/%3E%3Cpath d='M3.2 19.8a5.8 5.8 0 0 1 11.6 0'/%3E%3Cpath d='M16.4 6.4a3 3 0 0 1 0 5.4'/%3E%3Cpath d='M18 19.8a5.6 5.6 0 0 0-2.5-4.6'/%3E%3C/svg%3E");
 }
-.mention[data-kind="luogo"] {
+.mention[data-kind="luogo"],
+.cm-lp-mention[data-kind="luogo"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z'/%3E%3Ccircle cx='12' cy='10' r='2.6'/%3E%3C/svg%3E");
 }
-.mention[data-kind="sessione"] {
+.mention[data-kind="sessione"],
+.cm-lp-mention[data-kind="sessione"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='3' y='5.5' width='18' height='15.5'/%3E%3Cline x1='3' y1='10.5' x2='21' y2='10.5'/%3E%3Cline x1='8' y1='3' x2='8' y2='7.5'/%3E%3Cline x1='16' y1='3' x2='16' y2='7.5'/%3E%3C/svg%3E");
 }
-.mention[data-kind="storia"] {
+.mention[data-kind="storia"],
+.cm-lp-mention[data-kind="storia"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M4 5.6A2.6 2.6 0 0 1 6.6 3H19.5v15.5H6.6A2.6 2.6 0 0 0 4 21z'/%3E%3Cline x1='8.5' y1='7.8' x2='15.5' y2='7.8'/%3E%3Cline x1='8.5' y1='11.4' x2='15.5' y2='11.4'/%3E%3C/svg%3E");
 }
-.mention[data-kind="pagina"] {
+.mention[data-kind="pagina"],
+.cm-lp-mention[data-kind="pagina"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M6 3h8l4.5 4.5V21H6z'/%3E%3Cpolyline points='14,3 14,7.5 18.5,7.5'/%3E%3Cline x1='9' y1='12.5' x2='15' y2='12.5'/%3E%3Cline x1='9' y1='16' x2='15' y2='16'/%3E%3C/svg%3E");
 }
 
@@ -1803,52 +1812,64 @@ html[data-accent="gradiente"] .prose a.mention {
   padding: 0.05em 0.4em 0.05em 0.32em;
 }
 
-/* menu dei suggerimenti mentre si scrive @ */
-.mention-menu {
-  position: absolute;
-  z-index: 5;
-  min-width: 240px;
-  max-width: 340px;
-  /* otto voci entrano senza barra */
-  max-height: 340px;
-  overflow-y: auto;
+/* menu dei suggerimenti mentre si scrive @: è l'autocomplete di CodeMirror,
+   a cui va data la pelle dell'app (il vecchio .mention-menu era del prototipo) */
+.cm-tooltip.cm-tooltip-autocomplete {
   border: var(--rule-ink);
   background: var(--surface);
   box-shadow: 5px 5px 0 rgba(23, 21, 15, 0.8);
+  min-width: 240px;
+  max-width: 340px;
+  font-family: var(--sans);
+}
+.cm-tooltip.cm-tooltip-autocomplete > ul {
+  font-family: var(--sans);
+  max-height: 340px;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
-.mention-menu::-webkit-scrollbar { width: 8px; }
-.mention-menu::-webkit-scrollbar-thumb { background: var(--line); }
-.mention-menu::-webkit-scrollbar-track { background: transparent; }
-.mention-menu__item {
+.cm-tooltip.cm-tooltip-autocomplete > ul > li {
   display: grid;
   grid-template-columns: 12px minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.6rem;
-  width: 100%;
-  border: 0;
-  border-bottom: var(--rule);
-  background: transparent;
-  text-align: left;
   padding: 0.45rem 0.7rem;
-  cursor: pointer;
-  font: inherit;
+  border-bottom: var(--rule);
   color: var(--ink);
 }
-.mention-menu__item:last-child { border-bottom: 0; }
-.mention-menu__item[aria-selected="true"] { background: var(--paper-deep); }
-.mention-menu__dot { width: 12px; height: 12px; background: var(--c, var(--ink)); }
-.mention-menu__name { font-size: 0.92rem; }
-.mention-menu__name mark { background: none; color: var(--vermilion); font-weight: 600; }
-.mention-menu__kind {
+.cm-tooltip.cm-tooltip-autocomplete > ul > li:last-child { border-bottom: 0; }
+.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--paper-deep);
+  color: var(--ink);
+}
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--muted);
+  opacity: 1;
+}
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p1 { background: var(--p1); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p2 { background: var(--p2); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p3 { background: var(--p3); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p4 { background: var(--p4); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p5 { background: var(--p5); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p6 { background: var(--p6); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p7 { background: var(--p7); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p8 { background: var(--p8); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p9 { background: var(--p9); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p10 { background: var(--p10); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p11 { background: var(--p11); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p12 { background: var(--p12); }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionLabel { font-size: 0.92rem; }
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionDetail {
   font-family: var(--mono);
   font-size: 0.58rem;
+  font-style: normal;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
 }
-.mention-menu__empty { padding: 0.6rem 0.7rem; font-size: 0.86rem; color: var(--muted); }
 
 /* il volto è il comando per cambiare l'immagine */
 .face--editable { cursor: pointer; }

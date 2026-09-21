@@ -37,22 +37,23 @@
               symbol_name="shape" symbol_kind="shape" :symbol_options="shapes" :tints="tints"
               :label="'Immagine di ' ~ place.name" />
           </div>
-          <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
-            :can_manage="can_manage" :locked="place.locked" :version="place.version" :auto_edit="auto_edit">
-            <h1 class="display" data-doc-field="name">{{ place.name }}</h1>
-            <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
-              :value="place.short_description" :value_html="short_html" :version="place.version"
-              :can_manage="can_manage" :locked="place.locked" />
-          </editorial.DocIdentity>
+          <div class="document__id">
+            <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
+              :can_manage="can_manage" :locked="place.locked" :version="place.version" :auto_edit="auto_edit">
+              <h1 class="display" data-doc-field="name">{{ place.name }}</h1>
+              <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
+                :value="place.short_description" :value_html="short_html" :version="place.version"
+                :can_manage="can_manage" :locked="place.locked" />
+            </editorial.DocIdentity>
+            <div class="document__page">
+              <span class="eyebrow">Descrizione</span>
+              <editorial.DocEdit world_id={{ world.id }}
+                :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
+                :body="place.body" :body_html="body_html"
+                :locked="place.locked" :version="place.version" :can_manage="can_manage" />
+            </div>
+          </div>
         </div>
-        <div class="document__page">
-          <span class="eyebrow">Descrizione</span>
-          <editorial.DocEdit world_id={{ world.id }}
-            :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
-            :body="place.body" :body_html="body_html"
-            :locked="place.locked" :version="place.version" :can_manage="can_manage" />
-        </div>
-      </div>
     </div>
     {% if links %}<editorial.Links :groups="links" />{% endif %}
   </div>

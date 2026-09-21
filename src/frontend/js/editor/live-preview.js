@@ -34,6 +34,30 @@ const LINK = Decoration.mark({ class: "cm-lp-link" });
 const MENTION = Decoration.mark({ class: "cm-lp-mention" });
 
 const MENTION_RE = /@\[[^\]]+\]/g;
+const MENTION_KINDS = new Set([
+  "personaggio",
+  "npc",
+  "luogo",
+  "sessione",
+  "storia",
+  "pagina",
+]);
+const MENTION_WITH_KIND = Object.fromEntries(
+  [...MENTION_KINDS].map((kind) => [
+    kind,
+    Decoration.mark({
+      class: "cm-lp-mention",
+      attributes: { "data-kind": kind },
+    }),
+  ]),
+);
+
+/* `@[luogo:Nome]` carries the kind so the pill can show the same symbol as
+   the rendered page; `@[Nome]` stays a plain pill. */
+function mentionKind(inner) {
+  const kind = inner.split(":", 1)[0];
+  return MENTION_KINDS.has(kind) ? kind : null;
+}
 
 function children(node) {
   const list = [];
@@ -131,10 +155,17 @@ function buildDecorations(view) {
       const start = from + match.index;
       const line = state.doc.lineAt(start);
       if (!active.has(line.number)) {
-        // Hide the brackets, keep the name.
+        // Hide the brackets, keep the name, tagged with its kind.
+        const inner = match[0].slice(2, -1);
+        const kind = mentionKind(inner);
         decorations.push(hide.range(start, start + 2));
         decorations.push(hide.range(start + match[0].length - 1, start + match[0].length));
-        decorations.push(MENTION.range(start + 2, start + match[0].length - 1));
+        decorations.push(
+          (kind ? MENTION_WITH_KIND[kind] : MENTION).range(
+            start + 2,
+            start + match[0].length - 1,
+          ),
+        );
       }
       match = MENTION_RE.exec(text);
     }

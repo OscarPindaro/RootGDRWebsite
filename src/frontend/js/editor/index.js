@@ -68,7 +68,16 @@ const theme = EditorView.theme({
     padding: "0 0.15em",
   },
   ".cm-lp-link": { color: "var(--cobalt)", textDecoration: "underline" },
-  ".cm-lp-mention": { color: "var(--vermilion)", fontWeight: "600" },
+  /* A mention reads the same while writing and while reading: the pill the
+     renderer produces, not a bare link. */
+  ".cm-lp-mention": {
+    color: "var(--ink)",
+    background: "rgba(23, 21, 15, 0.06)",
+    borderRadius: "5px",
+    padding: "0.05em 0.4em",
+    fontWeight: "500",
+    boxShadow: "inset 0 0 0 1px rgba(23, 21, 15, 0.08)",
+  },
 });
 
 function mentionSource(worldId) {
@@ -91,6 +100,7 @@ function mentionSource(worldId) {
           label: entry.name,
           filterText: `@${entry.name}`,
           detail: entry.kind,
+          type: entry.tint,
           apply: `@[${entry.insert}] `,
         })),
       };
@@ -105,6 +115,7 @@ function extensions({ worldId, onDocChanged, onModEnter, onEscape = null }) {
     history(),
     drawSelection(),
     highlightActiveLine(),
+    EditorView.lineWrapping,
     markdown(),
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
     livePreview,
