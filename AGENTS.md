@@ -12,6 +12,7 @@ If there is a bug, the bug should be as much as possible local to the place wher
 Do not use `getattr` or `setattr`. Use explicit typed attributes.
 Use Pydantic models instead of untyped dictionaries for domain data and internal boundaries.
 DO NOT COAUTHOR THE COMMITS
+Never ask questions through multiple-choice polls: ask in plain prose.
 
 ## Working process
 
