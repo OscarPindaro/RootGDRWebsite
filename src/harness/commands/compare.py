@@ -149,7 +149,7 @@ def _compare_landmarks(
 ) -> list[str]:
     app_base = base_url or _environment_base_url()
     app_metrics = _measure_authenticated(
-        f"{app_base}{app_path}",
+        app_base,
         app_path,
         {name: landmark.app for name, landmark in entry.landmarks.items()},
         email,
