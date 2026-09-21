@@ -225,6 +225,7 @@ test-results/
 
 # Harness screenshot/test artifacts
 harness-artifacts/
+data/
 
 # Playwright browser build (installed by `harness browsers`)
 .playwright-browsers/

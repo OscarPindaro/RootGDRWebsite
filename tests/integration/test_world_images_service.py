@@ -9,13 +9,21 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.backend.db.enums import WorldRole
 from src.backend.files.models import FileModel
 from src.backend.filesystem.local import LocalFileSystem
-from src.backend.images import ImageValidationError
+from src.backend.images import ImageOwnerKind, ImageValidationError
+from src.backend.images.schemas import ImageOwner
+from src.backend.images.service import (
+    delete_revision,
+    list_revisions,
+    read_image,
+    restore_revision,
+)
 from src.backend.users.models import UserModel
 from src.backend.users.schemas import User
 from src.backend.worlds.exceptions import WorldAccessDeniedException
 from src.backend.worlds.schemas import WorldCreate, WorldMemberInput
 from src.backend.worlds.service import (
     create_world,
+    delete_world,
     read_world_image,
     upload_world_image,
 )
@@ -60,7 +68,7 @@ async def test_world_owner_can_replace_and_read_an_image(
     assert content == PNG
 
 
-async def test_replacing_an_image_cleans_up_the_previous_one(
+async def test_replacing_an_image_retains_ordered_history(
     db_session: AsyncSession, tmp_path
 ) -> None:
     creator = await _user(db_session, "creator")
@@ -86,9 +94,108 @@ async def test_replacing_an_image_cleans_up_the_previous_one(
     )
 
     assert second.image.id != first_id
-    assert not (tmp_path / first_location).exists()
+    assert (tmp_path / first_location).exists()
     remaining = list((await db_session.scalars(select(FileModel))).all())
-    assert first_id not in {f.id for f in remaining}
+    assert first_id in {f.id for f in remaining}
+    owner, revisions = await list_revisions(
+        db_session,
+        ImageOwner(
+            world_id=world.id,
+            kind=ImageOwnerKind.WORLD,
+            owner_id=world.id,
+        ),
+    )
+    assert owner.image_file_id == second.image.id
+    assert [revision.file.name for revision in revisions] == [
+        "second.jpg",
+        "first.png",
+    ]
+
+
+async def test_restore_delete_clear_and_world_cleanup(
+    db_session: AsyncSession, tmp_path
+) -> None:
+    creator = await _user(db_session, "history-owner")
+    world = await _world(db_session, creator)
+    filesystem = LocalFileSystem(tmp_path)
+    reference = ImageOwner(
+        world_id=world.id, kind=ImageOwnerKind.WORLD, owner_id=world.id
+    )
+
+    await upload_world_image(
+        db_session,
+        world.id,
+        UploadFile(filename="a.png", file=BytesIO(PNG)),
+        creator,
+        filesystem,
+    )
+    await upload_world_image(
+        db_session,
+        world.id,
+        UploadFile(filename="b.jpg", file=BytesIO(JPEG)),
+        creator,
+        filesystem,
+    )
+    owner, revisions = await list_revisions(db_session, reference)
+    revision_b, revision_a = revisions
+    assert await read_image(filesystem, revision_a.file) == PNG
+
+    await restore_revision(db_session, reference, revision_a.id)
+    assert owner.image_file_id == revision_a.file_id
+    revision_b_location = revision_b.file.location
+    await delete_revision(db_session, filesystem, reference, revision_b.id)
+    assert not (tmp_path / revision_b_location).exists()
+
+    with pytest.raises(ImageValidationError):
+        await delete_revision(db_session, filesystem, reference, revision_a.id)
+    await delete_revision(db_session, filesystem, reference, revision_a.id, clear=True)
+    assert owner.image_file_id is None
+
+    await upload_world_image(
+        db_session,
+        world.id,
+        UploadFile(filename="c.png", file=BytesIO(PNG)),
+        creator,
+        filesystem,
+    )
+    location = world.image.location
+    await delete_world(db_session, world.id, creator, filesystem)
+    assert not (tmp_path / location).exists()
+
+
+async def test_current_revision_can_be_deleted_with_replacement(
+    db_session: AsyncSession, tmp_path
+) -> None:
+    creator = await _user(db_session, "replacement-owner")
+    world = await _world(db_session, creator)
+    filesystem = LocalFileSystem(tmp_path)
+    reference = ImageOwner(
+        world_id=world.id, kind=ImageOwnerKind.WORLD, owner_id=world.id
+    )
+    await upload_world_image(
+        db_session,
+        world.id,
+        UploadFile(filename="a.png", file=BytesIO(PNG)),
+        creator,
+        filesystem,
+    )
+    await upload_world_image(
+        db_session,
+        world.id,
+        UploadFile(filename="b.jpg", file=BytesIO(JPEG)),
+        creator,
+        filesystem,
+    )
+    owner, revisions = await list_revisions(db_session, reference)
+    current, replacement = revisions
+    await delete_revision(
+        db_session,
+        filesystem,
+        reference,
+        current.id,
+        replacement_id=replacement.id,
+    )
+    assert owner.image_file_id == replacement.file_id
 
 
 async def test_non_image_and_oversized_uploads_are_rejected(
@@ -127,6 +234,35 @@ async def test_non_image_and_oversized_uploads_are_rejected(
             creator,
             filesystem,
         )
+
+
+async def test_storage_failure_does_not_create_a_revision(
+    db_session: AsyncSession, tmp_path
+) -> None:
+    class FailingFileSystem(LocalFileSystem):
+        async def write_async(self, path, data) -> None:
+            raise OSError("storage unavailable")
+
+    creator = await _user(db_session, "storage-failure")
+    world = await _world(db_session, creator)
+    with pytest.raises(ImageValidationError):
+        await upload_world_image(
+            db_session,
+            world.id,
+            UploadFile(filename="map.png", file=BytesIO(PNG)),
+            creator,
+            FailingFileSystem(tmp_path),
+        )
+    _, revisions = await list_revisions(
+        db_session,
+        ImageOwner(
+            world_id=world.id,
+            kind=ImageOwnerKind.WORLD,
+            owner_id=world.id,
+        ),
+    )
+    assert revisions == []
+    assert world.image_file_id is None
 
 
 async def test_shared_user_cannot_replace_a_world_image(

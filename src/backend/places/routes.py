@@ -120,7 +120,8 @@ async def delete_place_route(
     world_id: uuid.UUID,
     place_id: uuid.UUID,
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete an Luogo (master only)."""
-    await delete_place(db, world_id, place_id, user)
+    await delete_place(db, world_id, place_id, user, filesystem)

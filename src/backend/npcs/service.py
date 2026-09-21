@@ -8,7 +8,8 @@ from sqlalchemy.orm import selectinload
 from ..access import master_world, readable_world
 from ..files.models import FileModel
 from ..filesystem.base import FileSystem
-from ..images import ImageNotFoundError, read_image, store_image
+from ..images import ImageNotFoundError, read_image
+from ..images.service import purge_owner_revisions, owner_reference, upload_revision
 from ..content.constants import ContentKind
 from ..content.policy import require_content_update
 from ..content.references import refresh_references
@@ -130,12 +131,17 @@ async def update_npc(
 
 
 async def delete_npc(
-    db: AsyncSession, world_id: uuid.UUID, npc_id: uuid.UUID, user: User
+    db: AsyncSession,
+    world_id: uuid.UUID,
+    npc_id: uuid.UUID,
+    user: User,
+    filesystem: FileSystem,
 ) -> None:
     await master_world(db, world_id, user)
     npc = await _get(db, world_id, npc_id)
     if npc is None:
         raise NpcNotFoundException(npc_id)
+    await purge_owner_revisions(db, filesystem, owner_reference(npc))
     await db.delete(npc)
     await db.flush()
 
@@ -152,15 +158,14 @@ async def upload_npc_image(
     npc = await _get(db, world_id, npc_id)
     if npc is None:
         raise NpcNotFoundException(npc_id)
-    image = await store_image(
+    await upload_revision(
         db,
         filesystem,
         upload,
+        npc,
+        user,
         location_prefix=f"worlds/{world_id}/npcs/{npc_id}",
-        previous=npc.image,
     )
-    npc.image = image
-    await db.flush()
     await db.refresh(npc, ["updated_at"])
     return npc
 

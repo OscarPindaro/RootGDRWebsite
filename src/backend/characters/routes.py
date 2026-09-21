@@ -124,7 +124,8 @@ async def delete_character_route(
     world_id: uuid.UUID,
     character_id: uuid.UUID,
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete a character (owner or master)."""
-    await delete_character(db, world_id, character_id, user)
+    await delete_character(db, world_id, character_id, user, filesystem)

@@ -54,6 +54,7 @@ def test_real_registry_registers_all_tables() -> None:
         "StoryModel",
         "PageModel",
         "FileModel",
+        "ImageRevisionModel",
         "InvitationModel",
         "TaskModel",
         "UserAuthProviderModel",

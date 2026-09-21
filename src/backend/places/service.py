@@ -8,7 +8,8 @@ from sqlalchemy.orm import selectinload
 from ..access import master_world, readable_world
 from ..files.models import FileModel
 from ..filesystem.base import FileSystem
-from ..images import ImageNotFoundError, read_image, store_image
+from ..images import ImageNotFoundError, read_image
+from ..images.service import purge_owner_revisions, owner_reference, upload_revision
 from ..content.constants import ContentKind
 from ..content.policy import require_content_update
 from ..content.references import refresh_references
@@ -127,12 +128,17 @@ async def update_place(
 
 
 async def delete_place(
-    db: AsyncSession, world_id: uuid.UUID, place_id: uuid.UUID, user: User
+    db: AsyncSession,
+    world_id: uuid.UUID,
+    place_id: uuid.UUID,
+    user: User,
+    filesystem: FileSystem,
 ) -> None:
     await master_world(db, world_id, user)
     place = await _get(db, world_id, place_id)
     if place is None:
         raise PlaceNotFoundException(place_id)
+    await purge_owner_revisions(db, filesystem, owner_reference(place))
     await db.delete(place)
     await db.flush()
 
@@ -149,15 +155,14 @@ async def upload_place_image(
     place = await _get(db, world_id, place_id)
     if place is None:
         raise PlaceNotFoundException(place_id)
-    image = await store_image(
+    await upload_revision(
         db,
         filesystem,
         upload,
+        place,
+        user,
         location_prefix=f"worlds/{world_id}/places/{place_id}",
-        previous=place.image,
     )
-    place.image = image
-    await db.flush()
     await db.refresh(place, ["updated_at"])
     return place
 

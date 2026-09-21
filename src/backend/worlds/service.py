@@ -7,7 +7,8 @@ from ..concurrency import require_expected_version
 from ..db.enums import UserRole, WorldRole
 from ..files.models import FileModel
 from ..filesystem.base import FileSystem
-from ..images import ImageNotFoundError, read_image, store_image
+from ..images import ImageNotFoundError, read_image
+from ..images.service import purge_world_revisions, upload_revision
 from ..log import get_logger
 from ..users.schemas import User
 from .exceptions import (
@@ -149,15 +150,15 @@ async def upload_world_image(
     except Exception:
         await upload.close()
         raise
-    image = await store_image(
+    await upload_revision(
         db,
         filesystem,
         upload,
+        world,
+        user,
         location_prefix=f"worlds/{world.id}",
-        previous=world.image,
     )
-    world.image = image
-    await db.flush()
+    await db.refresh(world, ["updated_at"])
     logger.info("World image uploaded", world_id=world_id, uploaded_by_id=user.id)
     return world
 
@@ -174,8 +175,11 @@ async def read_world_image(
     return world.image, await read_image(filesystem, world.image)
 
 
-async def delete_world(db: AsyncSession, world_id: uuid.UUID, user: User) -> None:
+async def delete_world(
+    db: AsyncSession, world_id: uuid.UUID, user: User, filesystem: FileSystem
+) -> None:
     world = await get_world(db, world_id, user)
     _ensure_owner(world, user)
+    await purge_world_revisions(db, filesystem, world_id)
     await WorldRepository(db).delete(world)
     logger.info("World deleted", world_id=world_id, deleted_by_id=user.id)

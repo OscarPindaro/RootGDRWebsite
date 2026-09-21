@@ -8,7 +8,8 @@ from sqlalchemy.orm import selectinload
 from ..access import is_admin, readable_world
 from ..files.models import FileModel
 from ..filesystem.base import FileSystem
-from ..images import ImageNotFoundError, read_image, store_image
+from ..images import ImageNotFoundError, read_image
+from ..images.service import purge_owner_revisions, owner_reference, upload_revision
 from ..content.constants import ContentKind
 from ..content.policy import require_content_update
 from ..content.references import refresh_references
@@ -171,13 +172,19 @@ async def update_character(
 
 
 async def delete_character(
-    db: AsyncSession, world_id: uuid.UUID, character_id: uuid.UUID, user: User
+    db: AsyncSession,
+    world_id: uuid.UUID,
+    character_id: uuid.UUID,
+    user: User,
+    filesystem: FileSystem | None = None,
 ) -> None:
     world = await readable_world(db, world_id, user)
     character = await _get(db, world_id, character_id)
     if character is None:
         raise CharacterNotFoundException(character_id)
     await _require_manage(db, world, character, user)
+    if filesystem is not None:
+        await purge_owner_revisions(db, filesystem, owner_reference(character))
     await db.delete(character)
     await db.flush()
 
@@ -195,15 +202,14 @@ async def upload_character_image(
     if character is None:
         raise CharacterNotFoundException(character_id)
     await _require_manage(db, world, character, user)
-    image = await store_image(
+    await upload_revision(
         db,
         filesystem,
         upload,
+        character,
+        user,
         location_prefix=f"worlds/{world_id}/characters/{character_id}",
-        previous=character.image,
     )
-    character.image = image
-    await db.flush()
     await db.refresh(character, ["updated_at"])
     return character
 

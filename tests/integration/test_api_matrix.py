@@ -26,6 +26,9 @@ from src.backend.worlds.models import WorldModel
 
 pytestmark = pytest.mark.integration
 
+PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 8
+JPEG = b"\xff\xd8\xff\xe0" + b"0" * 12
+
 
 class _Api:
     def __init__(
@@ -84,6 +87,40 @@ async def api(
         )
         await session.execute(delete(UserModel).where(UserModel.id == created["user"]))
     await session.close()
+
+
+async def test_world_image_revision_api(api: _Api) -> None:
+    image_url = f"/api/worlds/{api.world_id}/image"
+    assert (
+        await api.client.put(image_url, files={"image": ("a.png", PNG, "image/png")})
+    ).status_code == 200
+    assert (
+        await api.client.put(image_url, files={"image": ("b.jpg", JPEG, "image/jpeg")})
+    ).status_code == 200
+
+    history_url = f"/api/worlds/{api.world_id}/images/world/{api.world_id}/revisions"
+    listed = await api.client.get(f"{history_url}/")
+    assert listed.status_code == 200
+    newest, oldest = listed.json()["data"]
+    assert [newest["filename"], oldest["filename"]] == ["b.jpg", "a.png"]
+    assert newest["is_current"] is True
+
+    content = await api.client.get(f"{history_url}/{oldest['id']}/content")
+    assert content.status_code == 200
+    assert content.content == PNG
+    assert content.headers["x-content-type-options"] == "nosniff"
+
+    restored = await api.client.post(f"{history_url}/{oldest['id']}/restore")
+    assert restored.status_code == 200
+    assert restored.json()["is_current"] is True
+    deleted = await api.client.delete(f"{history_url}/{newest['id']}")
+    assert deleted.status_code == 204
+    assert (await api.client.delete(f"{history_url}/current")).status_code == 204
+
+    cross_world = await api.client.get(
+        f"/api/worlds/{api.other_world_id}/images/world/{api.world_id}/revisions/"
+    )
+    assert cross_world.status_code == 404
 
 
 async def test_world_version_and_stale_update(api: _Api) -> None:

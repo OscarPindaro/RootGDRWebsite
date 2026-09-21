@@ -117,7 +117,8 @@ async def delete_npc_route(
     world_id: uuid.UUID,
     npc_id: uuid.UUID,
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete an NPC (master only)."""
-    await delete_npc(db, world_id, npc_id, user)
+    await delete_npc(db, world_id, npc_id, user, filesystem)

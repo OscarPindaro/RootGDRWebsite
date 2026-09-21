@@ -117,7 +117,8 @@ async def update_world_route(
 async def delete_world_route(
     world_id: uuid.UUID,
     user: User = Depends(get_current_user),
+    filesystem: FileSystem = Depends(get_filesystem),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> None:
     """Delete a world when the current user owns it or is an administrator."""
-    await delete_world(db, world_id, user)
+    await delete_world(db, world_id, user, filesystem)
