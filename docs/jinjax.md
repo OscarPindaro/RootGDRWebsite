@@ -672,7 +672,7 @@ Components and their variants:
 - **Dialog** — native `<dialog>` opened with `showModal()`
 - **Divider** — full width, or with a centred label
 - **IconButton**, **MediaFrame**, **EmptyState**, **Switch**, **Tabs**,
-  **Combobox**, **Grid**, **VStack**, **HStack** — see
+  **SaveIndicator**, **Combobox**, **Grid**, **VStack**, **HStack** — see
   `docs/features-implemented/`
 
 See [frontend_guide.md](frontend_guide.md) §2 for the token layers, and

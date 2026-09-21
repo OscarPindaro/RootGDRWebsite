@@ -1,0 +1,31 @@
+/* One indicator per page, in `layout.Page`, at the top of the content: the
+   identity, the summary and the body share one document, so they share one
+   status. The editor script writes the text and `data-state` onto this
+   element, so the mark is a pseudo-element — a child would be wiped by
+   `textContent`. */
+.save-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sp-2);
+  margin: 0 0 var(--sp-3);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--muted);
+}
+
+.save-indicator::before {
+  content: "";
+  flex: 0 0 auto;
+  width: var(--sp-2);
+  height: var(--sp-2);
+  border-radius: var(--radius-full);
+  background: currentColor;
+}
+
+.save-indicator[data-state="saving"],
+.save-indicator[data-state="dirty"] { color: var(--ochre); }
+.save-indicator[data-state="saved"] { color: var(--forest); }
+.save-indicator[data-state="error"],
+.save-indicator[data-state="conflict"] { color: var(--vermilion); }

@@ -1,5 +1,5 @@
 {#def title, current_user=None, active=None, world=None, nav=None, pages=None, symbol_style=None, wide=False #}
-{#css common/Avatar.css, common/Button.css, common/Menu.css, common/Tooltip.css, layout/UserMenu.css #}
+{#css common/Avatar.css, common/Button.css, common/Menu.css, common/SaveIndicator.css, common/Tooltip.css, layout/UserMenu.css #}
 {% set resolved_nav = nav if nav is not none else global_nav(active, (current_user.role == 'admin') if current_user else False, env) %}
 {% set resolved_style = symbol_style if symbol_style else ((current_user.symbol_style if current_user and current_user.symbol_style else 'icons')) %}
 <layout.BlankPage :title="title">
@@ -10,7 +10,7 @@
       <layout.Topbar :title="title" />
       <main id="main">
         <div class="container{{ ' container--wide' if wide else '' }}">
-          <p class="page-status" data-autosave-status role="status" aria-live="polite" hidden></p>
+          <common.SaveIndicator />
           {{ content }}
         </div>
       </main>

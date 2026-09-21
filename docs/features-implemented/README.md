@@ -38,6 +38,6 @@ Template:
 | What a list shows when it is empty | [empty-state.md](empty-state.md) |
 | On/off settings | [switch.md](switch.md) |
 | Two views of the same document | [tabs.md](tabs.md) |
-| One save indicator per page | [save-indicator.md](save-indicator.md) |
+| The page's single save indicator | [save-indicator.md](save-indicator.md) |
 | Choose from a known list, or type freely | [combobox.md](combobox.md) |
 | Grid, VStack, HStack: layout as components | [layout-primitives.md](layout-primitives.md) |

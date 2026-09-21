@@ -1964,31 +1964,6 @@ html[data-accent="gradiente"] .prose a.mention {
 .face__shape .mark__svg { fill: var(--surface); stroke: var(--ink); stroke-width: 1.4; }
 .face--photo .face__shape { visibility: hidden; }
 
-/* Un solo indicatore di salvataggio per pagina, in cima al contenuto:
-   identità, sommario e corpo condividono lo stesso documento. */
-.page-status {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 0.4rem;
-  margin: 0 0 0.75rem;
-  font: 0.82rem/1.4 var(--sans);
-  color: var(--muted);
-}
-.page-status[hidden] { display: none; }
-.page-status::before {
-  content: "";
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 50%;
-  background: currentColor;
-}
-.page-status[data-state="saving"],
-.page-status[data-state="dirty"] { color: var(--ochre); }
-.page-status[data-state="saved"] { color: var(--forest); }
-.page-status[data-state="error"],
-.page-status[data-state="conflict"] { color: var(--vermilion); }
-
 /* ---------- 30. Utility ---------- */
 .spread { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .hr { border: 0; border-top: var(--rule-ink); margin: 2.5rem 0; }

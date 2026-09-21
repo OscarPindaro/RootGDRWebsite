@@ -11,7 +11,7 @@ frontend code here. The design process behind the visual language is in
 
 | Path | Holds | Knows about |
 |---|---|---|
-| `src/frontend/components/common/` | Reusable primitives: Button, Card, Field, Menu, Dialog, Pill, Table, Avatar, Alert, Divider, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, IconButton, MediaFrame, EmptyState, Switch, Tabs, Combobox | nothing domain-specific |
+| `src/frontend/components/common/` | Reusable primitives: Button, Card, Field, Menu, Dialog, Pill, Table, Avatar, Alert, Divider, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, IconButton, MediaFrame, EmptyState, Switch, Tabs, SaveIndicator, Combobox | nothing domain-specific |
 | `src/frontend/components/editorial/` | The product's vocabulary and its atlas identity: Masthead, Cover, Face, Docbar, DocIdentity, DocEdit, DocSummary, ImageEditor, Links, Quick, SectionHead, Stat, Timeline, Crumbs, Plogo | worlds, characters, sessions, the printed-atlas look |
 | `src/frontend/components/layout/` | Page shells: BlankPage, Page, Sidebar, Rail, Topbar, UserMenu | the shell, not the content |
 | `src/frontend/components/pages/` | Full pages composed from the three above, one folder per module | the domain |

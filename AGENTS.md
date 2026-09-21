@@ -67,7 +67,7 @@ Features under `src/backend/` should be self-contained. Routes and views handle 
 
 The frontend uses [JinjaX](https://jinjax.scaletti.dev/) for server-rendered components and [htmx](https://htmx.org/) for dynamic interactions — no client-side framework. The [`json-enc`](https://github.com/bigskysoftware/htmx-extensions/blob/main/src/json-enc/README.md) htmx extension encodes form submissions as JSON payloads.
 
-- **`common/`** — Reusable primitives, no domain knowledge: Button, Card, Field, Dialog, Alert, Divider, Pill, Table, Icon, Avatar, Menu, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, IconButton, MediaFrame, EmptyState, Switch, Tabs, Combobox
+- **`common/`** — Reusable primitives, no domain knowledge: Button, Card, Field, Dialog, Alert, Divider, Pill, Table, Icon, Avatar, Menu, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, IconButton, MediaFrame, EmptyState, Switch, Tabs, SaveIndicator, Combobox
 - **`editorial/`** — The product's vocabulary and its atlas identity: Masthead, Cover, Face, Docbar, DocIdentity, DocEdit, DocSummary, ImageEditor, Links, Quick, SectionHead, Stat, Timeline
 - **`layout/`** — Page shells: BlankPage (bare HTML), Page (with sidebar), Sidebar, Rail, Topbar, UserMenu
 - **`pages/`** — Full pages composed from the three above, one folder per module

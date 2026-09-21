@@ -1,0 +1,4 @@
+{#def state=None, visible=False #}
+<p class="save-indicator" data-autosave-status
+   {%- if state %} data-state="{{ state }}"{% endif %}
+   role="status" aria-live="polite"{% if not visible %} hidden{% endif %}></p>
