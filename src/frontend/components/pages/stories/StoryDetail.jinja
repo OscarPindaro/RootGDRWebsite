@@ -1,5 +1,5 @@
 {#def world, world_context, nav, story, can_manage=False, crumbs, pages=None, short_html=None, body_html=None, links=None, current_user=None, metadata=None, auto_edit=False #}
-{#css common/Button.css, common/Pill.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/SaveIndicator.css #}
+{#css common/Button.css, common/Pill.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/SaveIndicator.css, common/Grid.css #}
 <layout.Page :title="story.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
   <editorial.Crumbs :items="crumbs" />
 
@@ -16,7 +16,7 @@
     {% endif %}
   </editorial.Docbar>
 
-  <div class="docpage">
+  <common.Grid document>
     <div>
       <div class="document">
         <div class="document__head document__head--plain">
@@ -46,8 +46,9 @@
       </div>
     </div>
 
-    {% if story.sessions %}
+    {% if story.sessions or links %}
     <common.VStack element="aside">
+      {% if story.sessions %}
       <div class="links">
         <div class="links__head">
           <span class="eyebrow">Sessioni incluse</span>
@@ -61,8 +62,9 @@
           {% endfor %}
         </div>
       </div>
+      {% endif %}
+      {% if links %}<editorial.Links :groups="links" />{% endif %}
     </common.VStack>
     {% endif %}
-    {% if links %}<editorial.Links :groups="links" />{% endif %}
-  </div>
+  </common.Grid>
 </layout.Page>

@@ -1,5 +1,5 @@
 {#def world, world_context, nav, session, previous=None, following=None, can_manage=False, crumbs, pages=None, short_html=None, body_html=None, links=None, current_user=None, metadata=None, auto_edit=False #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/VStack.css, common/SaveIndicator.css #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/VStack.css, common/SaveIndicator.css, common/Grid.css #}
 <layout.Page :title="session.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="sessioni">
   <editorial.Crumbs :items="crumbs" />
 
@@ -16,50 +16,59 @@
     {% endif %}
   </editorial.Docbar>
 
-  <div class="document">
-    <div class="document__head document__head--plain">
-      <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
-        :can_manage="can_manage" :locked="session.locked" :version="session.version" :auto_edit="auto_edit">
-        <span class="eyebrow">Titolo</span>
-        <h1 class="display" data-doc-field="title">{{ session.title }}</h1>
-        <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
-          :value="session.short_description" :value_html="short_html" :version="session.version"
-          :can_manage="can_manage" :locked="session.locked" />
-      </editorial.DocIdentity>
-      <editorial.Metadata :fields="metadata" :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id" :version="session.version" :can_manage="can_manage" :locked="session.locked" />
-    </div>
-    <div class="document__page">
-      <span class="eyebrow">Resoconto</span>
-      <editorial.DocEdit world_id={{ world.id }}
-        :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
-        :body="session.body" :body_html="body_html"
-        :locked="session.locked" :version="session.version" :can_manage="can_manage" />
-    </div>
-  </div>
+  <common.Grid document>
+    <div>
+      <div class="document">
+        <div class="document__head document__head--plain">
+          <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
+            :can_manage="can_manage" :locked="session.locked" :version="session.version" :auto_edit="auto_edit">
+            <span class="eyebrow">Titolo</span>
+            <h1 class="display" data-doc-field="title">{{ session.title }}</h1>
+            <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
+              :value="session.short_description" :value_html="short_html" :version="session.version"
+              :can_manage="can_manage" :locked="session.locked" />
+          </editorial.DocIdentity>
+          <editorial.Metadata :fields="metadata" :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id" :version="session.version" :can_manage="can_manage" :locked="session.locked" />
+        </div>
+        <div class="document__page">
+          <span class="eyebrow">Resoconto</span>
+          <editorial.DocEdit world_id={{ world.id }}
+            :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
+            :body="session.body" :body_html="body_html"
+            :locked="session.locked" :version="session.version" :can_manage="can_manage" />
+        </div>
+      </div>
 
-    {% if links %}<editorial.Links :groups="links" />{% endif %}
-  <nav class="pager" aria-label="Navigazione fra sessioni" style="margin-top: 2.5rem">
-    {% if previous %}
-    <a href="/worlds/{{ world.id }}/sessions/{{ previous[1].id }}">
-      <span class="pager__dir">← Sessione precedente</span>
-      <span class="pager__title">{{ '%02d' | format(previous[0]) }} · {{ previous[1].title }}</span>
-    </a>
-    {% else %}
-    <a class="is-empty" href="#">
-      <span class="pager__dir">← Sessione precedente</span>
-      <span class="pager__title">Nessuna sessione precedente</span>
-    </a>
+      <nav class="pager" aria-label="Navigazione fra sessioni" style="margin-top: 2.5rem">
+        {% if previous %}
+        <a href="/worlds/{{ world.id }}/sessions/{{ previous[1].id }}">
+          <span class="pager__dir">← Sessione precedente</span>
+          <span class="pager__title">{{ '%02d' | format(previous[0]) }} · {{ previous[1].title }}</span>
+        </a>
+        {% else %}
+        <a class="is-empty" href="#">
+          <span class="pager__dir">← Sessione precedente</span>
+          <span class="pager__title">Nessuna sessione precedente</span>
+        </a>
+        {% endif %}
+        {% if following %}
+        <a href="/worlds/{{ world.id }}/sessions/{{ following[1].id }}">
+          <span class="pager__dir">Sessione successiva →</span>
+          <span class="pager__title">{{ '%02d' | format(following[0]) }} · {{ following[1].title }}</span>
+        </a>
+        {% else %}
+        <a class="is-empty" href="#">
+          <span class="pager__dir">Sessione successiva →</span>
+          <span class="pager__title">Nessuna sessione successiva</span>
+        </a>
+        {% endif %}
+      </nav>
+    </div>
+
+    {% if links %}
+    <common.VStack element="aside">
+      <editorial.Links :groups="links" />
+    </common.VStack>
     {% endif %}
-    {% if following %}
-    <a href="/worlds/{{ world.id }}/sessions/{{ following[1].id }}">
-      <span class="pager__dir">Sessione successiva →</span>
-      <span class="pager__title">{{ '%02d' | format(following[0]) }} · {{ following[1].title }}</span>
-    </a>
-    {% else %}
-    <a class="is-empty" href="#">
-      <span class="pager__dir">Sessione successiva →</span>
-      <span class="pager__title">Nessuna sessione successiva</span>
-    </a>
-    {% endif %}
-  </nav>
+  </common.Grid>
 </layout.Page>

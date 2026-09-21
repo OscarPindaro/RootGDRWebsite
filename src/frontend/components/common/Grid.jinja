@@ -1,6 +1,6 @@
-{#def columns=None, min=None, gap=6, flush=False, split=False #}
+{#def columns=None, min=None, gap=6, flush=False, split=False, document=False #}
 {#css common/Grid.css #}
-{% set grid_classes = "grid" ~ (" grid-columns-" ~ columns if columns else "") ~ (" grid-auto" if min else "") ~ (" grid-flush" if flush else "") ~ (" grid-split" if split else "") %}
+{% set grid_classes = "grid" ~ (" grid-columns-" ~ columns if columns else "") ~ (" grid-auto" if min else "") ~ (" grid-flush" if flush else "") ~ (" grid-split" if split else "") ~ (" grid-document" if document else "") %}
 {% set grid_style = "--grid-gap: var(--sp-" ~ gap ~ ");" ~ (" --grid-min: var(--grid-min-" ~ min ~ ");" if min else "") ~ " " ~ attrs.get("style", "") %}
 <div {{ attrs.render(class=grid_classes, style=grid_style) }}>
   {{ content }}

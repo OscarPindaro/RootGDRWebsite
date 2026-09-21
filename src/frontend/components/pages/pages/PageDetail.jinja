@@ -1,5 +1,5 @@
 {#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, short_html=None, body_html=None, links=None, current_user=None, metadata=None, auto_edit=False #}
-{#css common/Button.css, common/Pill.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/SaveIndicator.css #}
+{#css common/Button.css, common/Pill.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/SaveIndicator.css, common/Grid.css #}
 <layout.Page :title="page.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
   <editorial.Crumbs :items="crumbs" />
 
@@ -26,7 +26,7 @@
   </editorial.DocIdentity>
   <editorial.Metadata :fields="metadata" :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id" :version="page.version" :can_manage="can_manage" :locked="page.locked" :canonical_prefix="'/worlds/' ~ world.id ~ '/pages'" />
 
-  <div class="article">
+  <common.Grid document>
     <article>
       <editorial.DocEdit world_id={{ world.id }}
         :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
@@ -40,7 +40,7 @@
         <a href="/worlds/{{ world.id }}/pages/{{ other.slug }}">{{ other.title }}</a>
         {% endfor %}
       </div>
+      {% if links %}<editorial.Links :groups="links" />{% endif %}
     </common.VStack>
-  </div>
-    {% if links %}<editorial.Links :groups="links" />{% endif %}
+  </common.Grid>
 </layout.Page>

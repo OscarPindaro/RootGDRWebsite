@@ -844,7 +844,6 @@ ul, ol { margin: 0; padding: 0; }
 }
 
 /* ---------- 20. Prosa (pagine statiche) ---------- */
-.article { display: grid; grid-template-columns: minmax(0, 1fr) 15rem; gap: 3rem; align-items: start; }
 .prose {
   font-family: var(--serif);
   font-size: 1.16rem;
@@ -1490,7 +1489,6 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
 .md-empty { color: var(--muted); font-size: 0.92rem; }
 
 /* --- documento --- */
-.document { max-width: 900px; }
 .document__head {
   display: grid;
   grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
@@ -1913,15 +1911,6 @@ html[data-accent="gradiente"] .prose a.mention {
 .docbar__actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
 [data-doc-lock][aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 
-/* documento + colonna dei collegamenti */
-.docpage {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 16rem;
-  gap: clamp(1.5rem, 4vw, 3rem);
-  align-items: start;
-}
-.docpage .document { max-width: none; }
-
 /* una radura ha una forma al posto dell'animale: campita chiara e
    contornata, così si legge su qualunque tinta */
 .face__shape { width: 42%; max-width: 96px; aspect-ratio: 1; color: var(--ink); }
@@ -1946,7 +1935,6 @@ html[data-accent="gradiente"] .prose a.mention {
 /* ---------- 31. Responsive ---------- */
 @media (max-width: 1100px) {
   .grid--two { grid-template-columns: 1fr; gap: 2rem; }
-  .article { grid-template-columns: 1fr; gap: 2rem; }
   .toc { position: static; }
 }
 
@@ -2074,7 +2062,6 @@ html[data-accent="gradiente"] .prose a.mention {
   /* nel documento il volto va sopra l'identità e non a tutta larghezza */
   .document__head { grid-template-columns: 1fr; gap: 1.5rem; }
   .document__face { max-width: 220px; }
-  .docpage { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2245,6 +2232,9 @@ html[data-accent="gradiente"] .prose a.mention {
   --grid-min-cover: 310px;
   --grid-min-story: 330px;
   --grid-min-quick: 190px;
+  /* The backlinks column of a document layout (common.Grid `document`). */
+  --grid-aside: 16rem;
+  --grid-document-gap: clamp(1.5rem, 4vw, 3rem);
   /* Aspect ratios owned by common.MediaFrame. */
   --media-ratio-portrait: 4 / 5;
   --media-ratio-landscape: 16 / 7;
