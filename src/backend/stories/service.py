@@ -75,7 +75,12 @@ async def create_story(
     reloaded = await _get(db, world_id, story.id)
     assert reloaded is not None
     await refresh_references(
-        db, world_id, ContentKind.STORY, reloaded.id, reloaded.body
+        db,
+        world_id,
+        ContentKind.STORY,
+        reloaded.id,
+        reloaded.short_description,
+        reloaded.body,
     )
     return reloaded
 
@@ -142,7 +147,9 @@ async def update_story(
         story.is_draft = data.is_draft
     await db.flush()
     await db.refresh(story, ["updated_at"])
-    await refresh_references(db, world_id, ContentKind.STORY, story.id, story.body)
+    await refresh_references(
+        db, world_id, ContentKind.STORY, story.id, story.short_description, story.body
+    )
     return story
 
 

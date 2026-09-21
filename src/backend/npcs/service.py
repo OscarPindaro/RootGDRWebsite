@@ -56,7 +56,14 @@ async def create_npc(
     logger.info("NPC created", world_id=world_id, npc_id=npc.id)
     reloaded = await _get(db, world_id, npc.id)
     assert reloaded is not None
-    await refresh_references(db, world_id, ContentKind.NPC, reloaded.id, reloaded.body)
+    await refresh_references(
+        db,
+        world_id,
+        ContentKind.NPC,
+        reloaded.id,
+        reloaded.short_description,
+        reloaded.body,
+    )
     return reloaded
 
 
@@ -116,7 +123,9 @@ async def update_npc(
         npc.is_draft = data.is_draft
     await db.flush()
     await db.refresh(npc, ["updated_at"])
-    await refresh_references(db, world_id, ContentKind.NPC, npc.id, npc.body)
+    await refresh_references(
+        db, world_id, ContentKind.NPC, npc.id, npc.short_description, npc.body
+    )
     return npc
 
 

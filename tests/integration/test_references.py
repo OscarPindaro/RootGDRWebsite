@@ -106,6 +106,31 @@ async def test_backlinks_track_references_in_both_directions(
     assert await backlinks(db_session, world.id, ContentKind.PLACE, place.id) == {}
 
 
+async def test_backlinks_include_mentions_from_short_descriptions(
+    db_session: AsyncSession,
+) -> None:
+    master = await _user(db_session, "summary-master")
+    world = await create_world(
+        db_session, WorldCreate(name="Mondo dei sommari", description="x"), master
+    )
+    place = await create_place(
+        db_session, world.id, PlaceCreate(name="Radura Alta", tint="p7"), master
+    )
+    await create_character(
+        db_session,
+        world.id,
+        CharacterCreate(
+            name="Talpa",
+            short_description="Custode di **@[Radura Alta]**.",
+            body="Nessun riferimento qui.",
+        ),
+        master,
+    )
+
+    links = await backlinks(db_session, world.id, ContentKind.PLACE, place.id)
+    assert links[ContentKind.CHARACTER][0].name == "Talpa"
+
+
 async def test_refresh_references_records_missing_labels(
     db_session: AsyncSession,
 ) -> None:
@@ -118,6 +143,7 @@ async def test_refresh_references_records_missing_labels(
         world.id,
         ContentKind.CHARACTER,
         uuid.uuid4(),
+        "",
         "Vedi @[Non Esiste].",
     )
     assert await resolve_label(db_session, world.id, "Non Esiste") is None

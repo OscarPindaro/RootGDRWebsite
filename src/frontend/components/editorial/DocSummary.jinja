@@ -1,0 +1,16 @@
+{#def world_id, base, value, value_html, version, can_manage=False, locked=False #}
+<div class="docsummary" data-doc-summary data-world-id="{{ world_id }}"
+     data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
+     {% if locked or not can_manage %}data-readonly="true"{% endif %}>
+  <textarea name="body" data-summary-source hidden>{{ value }}</textarea>
+  <div class="docsummary__editor" data-summary-editor hidden></div>
+  <div class="docsummary__render prose" data-summary-render tabindex="0">{{ value_html }}</div>
+  <button type="button" hidden data-summary-preview
+          hx-post="/worlds/{{ world_id }}/preview"
+          hx-include="closest [data-doc-summary]"
+          hx-target="previous [data-summary-render]"
+          hx-swap="innerHTML"></button>
+  {% if can_manage and not locked %}
+    <p class="autosave-status" data-autosave-status role="status" aria-live="polite"></p>
+  {% endif %}
+</div>

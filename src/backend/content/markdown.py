@@ -12,7 +12,7 @@ import re
 from dataclasses import dataclass
 
 from markdown_it import MarkdownIt
-from markupsafe import Markup
+from markupsafe import Markup, escape
 
 from .constants import ContentKind
 
@@ -39,20 +39,24 @@ def mention_labels(text: str) -> list[str]:
 
 
 def _render_missing(label: str) -> str:
+    safe_label = escape(label)
     return (
         '<span class="mention mention--missing" '
         'title="Nessun contenuto con questo nome">@'
-        f"{label}</span>"
+        f"{safe_label}</span>"
     )
 
 
 def _render_mention(label: str, target: MentionTarget | None) -> str:
     if target is None:
         return _render_missing(label)
-    kind = target.kind.value
+    kind = escape(target.kind.value)
+    href = escape(target.href)
+    tint = escape(target.tint)
+    name = escape(target.name)
     return (
-        f'<a class="mention" href="{target.href}" data-kind="{kind}" '
-        f'data-color="{target.tint}" title="{kind}">{target.name}</a>'
+        f'<a class="mention" href="{href}" data-kind="{kind}" '
+        f'data-color="{tint}" title="{kind}">{name}</a>'
     )
 
 

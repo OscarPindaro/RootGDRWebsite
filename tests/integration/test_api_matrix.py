@@ -216,6 +216,25 @@ async def test_concurrent_updates_return_one_conflict(api: _Api) -> None:
     assert fetched.json()["title"] in {"A", "B"}
 
 
+async def test_mention_suggestions_qualify_ambiguous_names(api: _Api) -> None:
+    character = await api.client.post(api.url("/"), json={"name": "Roccianera"})
+    place = await api.client.post(
+        f"/api/worlds/{api.world_id}/places/", json={"name": "Roccianera"}
+    )
+    assert character.status_code == 201
+    assert place.status_code == 201
+
+    response = await api.client.get(
+        f"/api/worlds/{api.world_id}/mentions", params={"q": "Roccia"}
+    )
+    assert response.status_code == 200
+    suggestions = response.json()["data"]
+    assert {(item["kind"], item["insert"]) for item in suggestions} == {
+        ("personaggio", "personaggio:Roccianera"),
+        ("luogo", "luogo:Roccianera"),
+    }
+
+
 async def test_validation_rejects_unknown_animal(api: _Api) -> None:
     response = await api.client.post(
         api.url("/"), json={"name": "X", "animal": "not-an-animal"}

@@ -115,7 +115,9 @@ async def session_detail_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "sessioni")
     session = await get_session(db, world_id, session_id, user)
-    body_html, links = await render_document(db, world_id, ContentKind.SESSION, session)
+    short_html, body_html, links = await render_document(
+        db, world_id, ContentKind.SESSION, session
+    )
     previous, following = await get_neighbours(db, world_id, session_id, user)
     return catalog.render(
         "pages.sessions.SessionDetail",
@@ -124,6 +126,7 @@ async def session_detail_page(
         nav=nav,
         pages=rail_pages,
         session=session,
+        short_html=short_html,
         body_html=body_html,
         links=links,
         previous=previous,

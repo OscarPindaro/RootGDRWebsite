@@ -130,7 +130,9 @@ async def npc_detail_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "npc")
     npc = await get_npc(db, world_id, npc_id, user)
-    body_html, links = await render_document(db, world_id, ContentKind.NPC, npc)
+    short_html, body_html, links = await render_document(
+        db, world_id, ContentKind.NPC, npc
+    )
     return catalog.render(
         "pages.npcs.NpcDetail",
         world=world,
@@ -138,6 +140,7 @@ async def npc_detail_page(
         nav=nav,
         pages=rail_pages,
         npc=npc,
+        short_html=short_html,
         body_html=body_html,
         links=links,
         can_manage=await is_master(db, world, user),

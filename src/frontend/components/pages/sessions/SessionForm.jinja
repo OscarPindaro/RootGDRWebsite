@@ -1,5 +1,5 @@
 {#def world, world_context, nav, session, tints, crumbs, pages=None, current_user=None #}
-{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/MarkdownField.css #}
 {% if session %}
 {% set title = "Modifica sessione" %}
 {% set action = "/worlds/" ~ world.id ~ "/sessions/" ~ session.id %}
@@ -19,8 +19,9 @@
     <common.Field label="Data reale" name="real_date" type="date"
                   helper="Opzionale. Ordina il registro quando è presente."
                   :value="session.real_date.isoformat() if session and session.real_date else None" />
-    <common.Field label="Sintesi" name="short_description" type="text" maxlength=1000
-                  :value="session.short_description if session else None" />
+    <common.MarkdownField label="Sintesi" name="short_description" :compact="True"
+                  helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :world_id="world.id" :value="session.short_description if session else ''" />
     <common.Field label="Tinta della sessione" name="tint" type="select" :options="tints"
                   :value="session.tint if session else 'p1'" />
     <common.MarkdownField label="Resoconto" name="body"

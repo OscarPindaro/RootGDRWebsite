@@ -141,7 +141,9 @@ def rebuild(
                     await db.scalars(select(model).where(model.world_id == world.id))
                 ).all()
                 for item in items:
-                    await refresh_references(db, world.id, kind, item.id, item.body)
+                    await refresh_references(
+                        db, world.id, kind, item.id, item.short_description, item.body
+                    )
                     total += 1
         console.print(f"[green]Rebuilt[/green] {total} documents")
 

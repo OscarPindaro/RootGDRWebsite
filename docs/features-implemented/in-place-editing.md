@@ -12,9 +12,9 @@ The reading page is where a document is written: no separate edit form, no
   line is rendered — headings, bold, italic, code, links and mentions. `Ctrl/⌘
   + Enter` shows the result, rendered by the same server renderer readers get,
   and coming back resumes at the same caret position.
-- The name, title and short description are written in place too. A double click
-  turns the text into a plain field. `Enter` and blur flush it; `Escape` exits
-  while preserving the draft.
+- The name and title remain single-line fields. The short description opens a
+  compact Markdown editor with the same preview and `@` menu as the body. All
+  three use the same autosave and conflict controller.
 - Body and identity changes save automatically after about one idle second. A
   five-second ceiling covers continuous typing and changes of 200 characters
   flush immediately. `Ctrl/⌘ + Enter`, blur and navigation also flush.
@@ -53,5 +53,5 @@ The reading page is where a document is written: no separate edit form, no
 - `visibilitychange` and htmx/navigation intent flush normally. `pagehide` sends
   one best-effort keepalive request, while retaining the local snapshot because
   the browser may terminate before acknowledging it.
-- Identity fields remain plain short text in this iteration; Markdown support is
-  a separate feature.
+- Names and titles remain plain short text. Short descriptions support CommonMark
+  and semantic mentions; see `markdown-summaries.md`.

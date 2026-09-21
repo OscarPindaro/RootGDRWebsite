@@ -130,6 +130,47 @@ def test_offline_pagehide_and_restore_recovery(
     )
 
 
+def test_summary_markdown_autocomplete_persists_and_renders_after_reload(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id, character_id, api_path = _character(session, seed_world, "sommario")
+    place = session.expect_api(
+        f"/api/worlds/{world_id}/places/",
+        method="POST",
+        expected_status=201,
+        data={"name": "Autore sommario"},
+    ).json()
+    assert place["name"] == "Autore sommario"
+
+    summary = session.page.locator("[data-summary-render]")
+    summary.dblclick()
+    editor = session.page.locator("[data-doc-summary] .cm-content")
+    editor.click()
+    session.page.keyboard.press("Control+A")
+    session.page.keyboard.type("**Custode** di ")
+    session.page.keyboard.type("@")
+    session.page.wait_for_selector(".cm-tooltip-autocomplete")
+    place_option = session.page.locator(".cm-tooltip-autocomplete li", has_text="luogo")
+    assert place_option.is_visible()
+    place_option.click()
+    session.page.keyboard.type("e di @[Sconosciuto].")
+    session.page.keyboard.press("Control+Enter")
+    _wait_saved(session)
+
+    persisted_payload = session.expect_api(api_path).json()
+    assert "shortDescription" in persisted_payload, persisted_payload
+    persisted = persisted_payload["shortDescription"]
+    assert "@[luogo:Autore sommario]" in persisted
+    assert "@[Sconosciuto]" in persisted
+
+    session.page.reload(wait_until="networkidle")
+    rendered = session.page.locator("[data-summary-render]")
+    assert rendered.locator("strong").inner_text() == "Custode"
+    assert rendered.locator(f'a[href$="/places/{place["id"]}"]').is_visible()
+    assert rendered.locator(".mention--missing").inner_text() == "@Sconosciuto"
+    assert session.errors == []
+
+
 def test_two_tabs_keep_stale_draft_and_offer_recovery(
     session: BrowserSession, seed_world
 ) -> None:

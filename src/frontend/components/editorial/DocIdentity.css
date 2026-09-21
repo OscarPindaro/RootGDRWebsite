@@ -1,6 +1,15 @@
 /* ---------- DocIdentity (name, title and description written in place) ---------- */
 .docidentity [data-doc-field] {
   cursor: text;
+  border-left: 3px solid transparent;
+  margin-left: -0.7rem;
+  padding-left: 0.7rem;
+}
+
+.docidentity [data-doc-field="title"] {
+  font-family: var(--serif);
+  font-size: 1.25rem;
+  font-style: italic;
 }
 
 .docidentity [data-doc-field][data-empty="true"] {
@@ -8,7 +17,12 @@
 }
 
 .docidentity [data-doc-field]:hover {
+  border-left-color: var(--line);
   background: var(--paper-deep);
+}
+
+.docidentity [data-doc-field]:focus-within {
+  border-left-color: var(--vermilion);
 }
 
 .docidentity__input {

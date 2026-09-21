@@ -63,7 +63,14 @@ async def create_page(
     logger.info("Page created", world_id=world_id, page_id=page.id, slug=slug)
     reloaded = await _get(db, world_id, page.id)
     assert reloaded is not None
-    await refresh_references(db, world_id, ContentKind.PAGE, reloaded.id, reloaded.body)
+    await refresh_references(
+        db,
+        world_id,
+        ContentKind.PAGE,
+        reloaded.id,
+        reloaded.short_description,
+        reloaded.body,
+    )
     return reloaded
 
 
@@ -142,7 +149,9 @@ async def update_page(
         page.is_draft = data.is_draft
     await db.flush()
     await db.refresh(page, ["updated_at"])
-    await refresh_references(db, world_id, ContentKind.PAGE, page.id, page.body)
+    await refresh_references(
+        db, world_id, ContentKind.PAGE, page.id, page.short_description, page.body
+    )
     return page
 
 

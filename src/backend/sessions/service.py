@@ -59,7 +59,12 @@ async def create_session(
     reloaded = await _get(db, world_id, session.id)
     assert reloaded is not None
     await refresh_references(
-        db, world_id, ContentKind.SESSION, reloaded.id, reloaded.body
+        db,
+        world_id,
+        ContentKind.SESSION,
+        reloaded.id,
+        reloaded.short_description,
+        reloaded.body,
     )
     return reloaded
 
@@ -137,7 +142,12 @@ async def update_session(
     await db.flush()
     await db.refresh(session, ["updated_at"])
     await refresh_references(
-        db, world_id, ContentKind.SESSION, session.id, session.body
+        db,
+        world_id,
+        ContentKind.SESSION,
+        session.id,
+        session.short_description,
+        session.body,
     )
     return session
 

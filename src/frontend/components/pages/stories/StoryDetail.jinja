@@ -1,5 +1,5 @@
-{#def world, world_context, nav, story, can_manage=False, crumbs, pages=None, body_html=None, links=None, current_user=None #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css #}
+{#def world, world_context, nav, story, can_manage=False, crumbs, pages=None, short_html=None, body_html=None, links=None, current_user=None #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css #}
 <layout.Page :title="story.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
   <editorial.Crumbs :items="crumbs" />
 
@@ -26,8 +26,9 @@
             <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
               :can_manage="can_manage" :locked="story.locked" :version="story.version">
               <h1 class="display" data-doc-field="title">{{ story.title }}</h1>
-              <p class="lede" data-doc-field="short_description"
-                 {% if not story.short_description %}data-empty="true"{% endif %}>{{ story.short_description or '' }}</p>
+              <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
+                :value="story.short_description" :value_html="short_html" :version="story.version"
+                :can_manage="can_manage" :locked="story.locked" />
             </editorial.DocIdentity>
           </div>
         </div>

@@ -84,7 +84,12 @@ async def create_character(
     reloaded = await _get(db, world_id, character.id)
     assert reloaded is not None
     await refresh_references(
-        db, world_id, ContentKind.CHARACTER, reloaded.id, reloaded.body
+        db,
+        world_id,
+        ContentKind.CHARACTER,
+        reloaded.id,
+        reloaded.short_description,
+        reloaded.body,
     )
     return reloaded
 
@@ -155,7 +160,12 @@ async def update_character(
     await db.flush()
     await db.refresh(character, ["updated_at"])
     await refresh_references(
-        db, world_id, ContentKind.CHARACTER, character.id, character.body
+        db,
+        world_id,
+        ContentKind.CHARACTER,
+        character.id,
+        character.short_description,
+        character.body,
     )
     return character
 

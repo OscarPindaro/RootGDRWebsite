@@ -191,7 +191,9 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
     session.goto(f"/worlds/{world_id}/characters/new")
     session.page.fill('input[name="name"]', "Rugginosa")
     session.page.wait_for_selector("[data-markdown-editor]")
-    session.page.locator(".cm-content").click()
+    session.page.locator('textarea[name="body"]').locator("..").locator(
+        ".cm-content"
+    ).click()
     session.page.keyboard.type("Testo iniziale.")
     session.submit(
         '[data-testid="save-character"]', expect_url=r"/characters/[0-9a-f-]{36}$"

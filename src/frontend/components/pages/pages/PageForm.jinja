@@ -1,5 +1,5 @@
 {#def world, world_context, nav, pages, page, tints, crumbs, current_user=None #}
-{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/MarkdownField.css #}
 {% if page %}
 {% set title = "Modifica pagina" %}
 {% set action = "/worlds/" ~ world.id ~ "/pages/" ~ page.id %}
@@ -18,8 +18,9 @@
                   :value="page.slug if page else None" />
     <common.Field label="Posizione nel menu" name="menu_position" type="number" min=0
                   :value="page.menu_position if page else 0" />
-    <common.Field label="Descrizione breve" name="short_description" type="text" maxlength=1000
-                  :value="page.short_description if page else None" />
+    <common.MarkdownField label="Descrizione breve" name="short_description" :compact="True"
+                  helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :world_id="world.id" :value="page.short_description if page else ''" />
     <common.Field label="Tinta" name="tint" type="select" :options="tints"
                   :value="page.tint if page else 'p3'" />
     <common.MarkdownField label="Testo" name="body"

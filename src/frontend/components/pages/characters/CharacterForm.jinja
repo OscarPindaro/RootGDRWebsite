@@ -1,5 +1,5 @@
 {#def world, world_context, nav, character, animals, tints, crumbs, pages=None, current_user=None #}
-{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/ChoiceGrid.css #}
+{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/ChoiceGrid.css, common/MarkdownField.css #}
 {% if character %}
 {% set title = "Modifica personaggio" %}
 {% set action = "/worlds/" ~ world.id ~ "/characters/" ~ character.id %}
@@ -19,8 +19,9 @@
     <common.Field label="Titolo" name="title" type="text" maxlength=255
                   helper="Opzionale. Appare sotto il nome."
                   :value="character.title if character else None" />
-    <common.Field label="Descrizione breve" name="short_description" type="text" maxlength=1000
-                  :value="character.short_description if character else None" />
+    <common.MarkdownField label="Descrizione breve" name="short_description" :compact="True"
+                  helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :world_id="world.id" :value="character.short_description if character else ''" />
     <div class="form-pair">
       <common.ChoiceGrid label="Animale" name="animal" kind="emoji" :options="animals"
                          :columns="8" :value="character.animal if character else '🐈'" />

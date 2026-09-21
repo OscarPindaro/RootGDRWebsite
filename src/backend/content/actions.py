@@ -16,24 +16,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import readable_world
 from ..auth.dependencies import get_current_user
+from ..characters.models import CharacterModel
 from ..characters.schemas import CharacterUpdate
 from ..characters.service import get_character, update_character
 from ..dependencies import get_db_session
+from ..npcs.models import NpcModel
 from ..npcs.schemas import NpcUpdate
 from ..npcs.service import get_npc, update_npc
+from ..pages.models import PageModel
 from ..pages.schemas import PageUpdate
 from ..pages.service import get_page, update_page
+from ..places.models import PlaceModel
 from ..places.schemas import PlaceUpdate
 from ..places.service import get_place, update_place
 from ..schemas import AppBaseModel, ListResponse
+from ..sessions.models import SessionModel
 from ..sessions.schemas import SessionUpdate
 from ..sessions.service import get_session, update_session
+from ..stories.models import StoryModel
 from ..stories.schemas import StoryUpdate
 from ..stories.service import get_story, update_story
 from ..users.schemas import User
 from ..worlds.views import _htmx_redirect
 from .markdown import render_markdown
-from .references import _NAME_FIELD, KIND_MODELS, resolve_body
+from .constants import ContentKind
+from .references import resolve_text
 
 router = APIRouter(tags=["content-actions"])
 
@@ -113,14 +120,16 @@ async def toggle_document(
 
 class MentionSuggestion(AppBaseModel):
     name: Annotated[str, Field(description="Display name")]
-    kind: Annotated[str, Field(description="Content kind")]
+    kind: Annotated[ContentKind, Field(description="Content kind")]
     tint: Annotated[str, Field(description="Tint token")]
+    insert: Annotated[str, Field(description="Unambiguous mention label")]
 
 
 class PreviewRequest(AppBaseModel):
-    """A document body to render, from the editor's live preview."""
+    """One Markdown field to render with the authoritative server renderer."""
 
     body: Annotated[str, Field(default="", max_length=100_000)]
+    short_description: Annotated[str | None, Field(default=None, max_length=1000)]
 
 
 @router.get(
@@ -135,23 +144,63 @@ async def mention_suggestions(
 ) -> ListResponse[MentionSuggestion]:
     """Fuzzy-enough suggestions for the editor's ``@`` menu."""
     await readable_world(db, world_id, user)
-    suggestions: list[MentionSuggestion] = []
-    for kind, (model, _) in KIND_MODELS.items():
-        field = getattr(model, _NAME_FIELD[kind])
-        stmt = (
-            select(model)
-            .where(model.world_id == world_id, field.ilike(f"%{q}%"))
-            .limit(8)
+    matches: list[tuple[str, ContentKind, str]] = []
+    character_stmt = select(CharacterModel).where(
+        CharacterModel.world_id == world_id, CharacterModel.name.ilike(f"%{q}%")
+    )
+    npc_stmt = select(NpcModel).where(
+        NpcModel.world_id == world_id, NpcModel.name.ilike(f"%{q}%")
+    )
+    place_stmt = select(PlaceModel).where(
+        PlaceModel.world_id == world_id, PlaceModel.name.ilike(f"%{q}%")
+    )
+    session_stmt = select(SessionModel).where(
+        SessionModel.world_id == world_id, SessionModel.title.ilike(f"%{q}%")
+    )
+    story_stmt = select(StoryModel).where(
+        StoryModel.world_id == world_id, StoryModel.title.ilike(f"%{q}%")
+    )
+    page_stmt = select(PageModel).where(
+        PageModel.world_id == world_id, PageModel.title.ilike(f"%{q}%")
+    )
+    matches.extend(
+        (item.name, ContentKind.CHARACTER, item.tint)
+        for item in (await db.scalars(character_stmt)).all()
+    )
+    matches.extend(
+        (item.name, ContentKind.NPC, item.tint)
+        for item in (await db.scalars(npc_stmt)).all()
+    )
+    matches.extend(
+        (item.name, ContentKind.PLACE, item.tint)
+        for item in (await db.scalars(place_stmt)).all()
+    )
+    matches.extend(
+        (item.title, ContentKind.SESSION, item.tint)
+        for item in (await db.scalars(session_stmt)).all()
+    )
+    matches.extend(
+        (item.title, ContentKind.STORY, item.tint)
+        for item in (await db.scalars(story_stmt)).all()
+    )
+    matches.extend(
+        (item.title, ContentKind.PAGE, item.tint)
+        for item in (await db.scalars(page_stmt)).all()
+    )
+    suggestions = [
+        MentionSuggestion(
+            name=name,
+            kind=kind,
+            tint=tint,
+            insert=(
+                f"{kind.value}:{name}"
+                if sum(candidate_name == name for candidate_name, _, _ in matches) > 1
+                else name
+            ),
         )
-        for item in (await db.scalars(stmt)).all():
-            suggestions.append(
-                MentionSuggestion(
-                    name=getattr(item, _NAME_FIELD[kind]),
-                    kind=kind.value,
-                    tint=item.tint,
-                )
-            )
-    return ListResponse(data=suggestions[:8])
+        for name, kind, tint in matches[:8]
+    ]
+    return ListResponse(data=suggestions)
 
 
 @router.post("/worlds/{world_id}/preview", response_class=HTMLResponse)
@@ -163,5 +212,6 @@ async def preview_body(
 ) -> HTMLResponse:
     """Render a body with the server's renderer, for the editor preview tab."""
     await readable_world(db, world_id, user)
-    mentions = await resolve_body(db, world_id, data.body)
-    return HTMLResponse(str(render_markdown(data.body, mentions)))
+    text = data.short_description if data.short_description is not None else data.body
+    mentions = await resolve_text(db, world_id, text)
+    return HTMLResponse(str(render_markdown(text, mentions)))

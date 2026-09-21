@@ -15,7 +15,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from .access import readable_world
 from .auth.dependencies import get_current_user
 from .content.constants import KIND_LABELS, ContentKind
-from .content.references import _NAME_FIELD, KIND_MODELS
+from .characters.models import CharacterModel
+from .content.references import content_href
+from .npcs.models import NpcModel
+from .pages.models import PageModel
+from .places.models import PlaceModel
+from .sessions.models import SessionModel
+from .stories.models import StoryModel
 from .dependencies import get_db_session
 from .schemas import AppBaseModel, ListResponse
 from .users.schemas import User
@@ -28,13 +34,6 @@ class PaletteItem(AppBaseModel):
     kind: Annotated[str, Field(description="Grouping label")]
     name: Annotated[str, Field(description="Display name")]
     href: Annotated[str, Field(description="Navigation target")]
-
-
-def _href(world_id: uuid.UUID, kind: ContentKind, item) -> str:
-    _, section = KIND_MODELS[kind]
-    if kind == ContentKind.PAGE:
-        return f"/worlds/{world_id}/pages/{item.slug}"
-    return f"/worlds/{world_id}/{section}/{item.id}"
 
 
 @router.get("/api/palette", response_model=ListResponse[PaletteItem])
@@ -56,19 +55,29 @@ async def palette(
 
     if world_id is not None:
         world = await readable_world(db, world_id, user)
-        for kind, (model, _) in KIND_MODELS.items():
-            field = getattr(model, _NAME_FIELD[kind])
-            stmt = (
-                select(model)
-                .where(model.world_id == world_id, field.ilike(f"%{q}%"))
-                .limit(5)
+        named_queries = (
+            (ContentKind.CHARACTER, CharacterModel, CharacterModel.name),
+            (ContentKind.NPC, NpcModel, NpcModel.name),
+            (ContentKind.PLACE, PlaceModel, PlaceModel.name),
+            (ContentKind.SESSION, SessionModel, SessionModel.title),
+            (ContentKind.STORY, StoryModel, StoryModel.title),
+            (ContentKind.PAGE, PageModel, PageModel.title),
+        )
+        for kind, model, name_column in named_queries:
+            stmt = select(model).where(
+                model.world_id == world_id, name_column.ilike(f"%{q}%")
             )
-            for item in (await db.scalars(stmt)).all():
+            for content in (await db.scalars(stmt.limit(5))).all():
+                name = (
+                    content.name
+                    if isinstance(content, (CharacterModel, NpcModel, PlaceModel))
+                    else content.title
+                )
                 items.append(
                     PaletteItem(
                         kind=KIND_LABELS[kind],
-                        name=getattr(item, _NAME_FIELD[kind]),
-                        href=_href(world_id, kind, item),
+                        name=name,
+                        href=content_href(kind, world_id, content),
                     )
                 )
         if await is_master(db, world, user):

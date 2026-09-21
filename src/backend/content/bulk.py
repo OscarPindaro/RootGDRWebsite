@@ -373,7 +373,12 @@ async def _import_characters(db, world, bundle, actor) -> None:
         model.locked = item.locked
         await db.flush()
         await refresh_references(
-            db, world.id, ContentKind.CHARACTER, model.id, model.body
+            db,
+            world.id,
+            ContentKind.CHARACTER,
+            model.id,
+            model.short_description,
+            model.body,
         )
 
 
@@ -402,7 +407,9 @@ async def _import_npcs(db, world, bundle, actor) -> None:
         model.is_draft = item.is_draft
         model.locked = item.locked
         await db.flush()
-        await refresh_references(db, world.id, ContentKind.NPC, model.id, model.body)
+        await refresh_references(
+            db, world.id, ContentKind.NPC, model.id, model.short_description, model.body
+        )
     await db.flush()
 
 
@@ -430,7 +437,14 @@ async def _import_places(db, world, bundle, actor) -> None:
         model.is_draft = item.is_draft
         model.locked = item.locked
         await db.flush()
-        await refresh_references(db, world.id, ContentKind.PLACE, model.id, model.body)
+        await refresh_references(
+            db,
+            world.id,
+            ContentKind.PLACE,
+            model.id,
+            model.short_description,
+            model.body,
+        )
     await db.flush()
 
 
@@ -463,7 +477,12 @@ async def _import_sessions(db, world, bundle, actor) -> None:
         model.locked = item.locked
         await db.flush()
         await refresh_references(
-            db, world.id, ContentKind.SESSION, model.id, model.body
+            db,
+            world.id,
+            ContentKind.SESSION,
+            model.id,
+            model.short_description,
+            model.body,
         )
     await db.flush()
 
@@ -517,7 +536,14 @@ async def _import_stories(db, world, bundle, actor) -> None:
             sessions[title] for title in item.session_titles if title in sessions
         ]
         await db.flush()
-        await refresh_references(db, world.id, ContentKind.STORY, story.id, story.body)
+        await refresh_references(
+            db,
+            world.id,
+            ContentKind.STORY,
+            story.id,
+            story.short_description,
+            story.body,
+        )
     await db.flush()
 
 
@@ -548,5 +574,12 @@ async def _import_pages(db, world, bundle, actor) -> None:
         model.is_draft = item.is_draft
         model.locked = item.locked
         await db.flush()
-        await refresh_references(db, world.id, ContentKind.PAGE, model.id, model.body)
+        await refresh_references(
+            db,
+            world.id,
+            ContentKind.PAGE,
+            model.id,
+            model.short_description,
+            model.body,
+        )
     await db.flush()

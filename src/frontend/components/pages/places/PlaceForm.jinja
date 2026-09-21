@@ -1,5 +1,5 @@
 {#def world, world_context, nav, place, shapes, tints, crumbs, pages=None, current_user=None #}
-{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/ChoiceGrid.css #}
+{#css common/Button.css, common/Field.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/ChoiceGrid.css, common/MarkdownField.css #}
 {% if place %}
 {% set title = "Modifica Luogo" %}
 {% set action = "/worlds/" ~ world.id ~ "/places/" ~ place.id %}
@@ -16,8 +16,9 @@
   <form class="form" hx-post="{{ action }}" hx-swap="none">
     <common.Field label="Nome completo" name="name" type="text" required maxlength=255
                   :value="place.name if place else None" />
-    <common.Field label="Descrizione breve" name="short_description" type="text" maxlength=1000
-                  :value="place.short_description if place else None" />
+    <common.MarkdownField label="Descrizione breve" name="short_description" :compact="True"
+                  helper="Markdown. Puoi usare @[Nome] per collegare altri contenuti."
+                  :world_id="world.id" :value="place.short_description if place else ''" />
     <div class="form-pair">
       <common.ChoiceGrid label="Forma" name="shape" kind="shape" :options="shapes"
                          :columns="6" :value="place.shape if place else 'cerchio'" />

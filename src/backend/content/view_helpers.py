@@ -21,7 +21,7 @@ from .constants import (
     ContentKind,
 )
 from .markdown import render_markdown
-from .references import backlinks, resolve_body
+from .references import Backlink, ContentModel, backlinks, resolve_text
 
 
 def tint_options() -> list[Option]:
@@ -78,10 +78,12 @@ def split_published_drafts(
 
 
 async def render_document(
-    db: AsyncSession, world_id: uuid.UUID, kind: ContentKind, item
-) -> tuple[Markup, dict]:
-    """Render a document body with resolved references and fetch its backlinks."""
-    mentions = await resolve_body(db, world_id, item.body)
-    body_html = render_markdown(item.body, mentions)
+    db: AsyncSession, world_id: uuid.UUID, kind: ContentKind, item: ContentModel
+) -> tuple[Markup, Markup, dict[ContentKind, list[Backlink]]]:
+    """Render both Markdown fields and fetch the document's backlinks."""
+    short_mentions = await resolve_text(db, world_id, item.short_description)
+    body_mentions = await resolve_text(db, world_id, item.body)
+    short_html = render_markdown(item.short_description, short_mentions)
+    body_html = render_markdown(item.body, body_mentions)
     links = await backlinks(db, world_id, kind, item.id)
-    return body_html, links
+    return short_html, body_html, links

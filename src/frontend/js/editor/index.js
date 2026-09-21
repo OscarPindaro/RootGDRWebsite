@@ -86,10 +86,12 @@ function mentionSource(worldId) {
       const payload = await response.json();
       return {
         from: before.from,
+        filter: false,
         options: payload.data.map((entry) => ({
           label: entry.name,
+          filterText: `@${entry.name}`,
           detail: entry.kind,
-          apply: `@[${entry.name}] `,
+          apply: `@[${entry.insert}] `,
         })),
       };
     } catch (error) {
@@ -549,6 +551,70 @@ function mountDocEdit(block) {
   });
 }
 
+/* ---------- Markdown summaries ---------- */
+
+function mountDocSummary(block) {
+  if (block.dataset.summaryReady === "true") return;
+  block.dataset.summaryReady = "true";
+  if (block.dataset.readonly === "true") return;
+  const render = block.querySelector("[data-summary-render]");
+  const host = block.querySelector("[data-summary-editor]");
+  const source = block.querySelector("[data-summary-source]");
+  const preview = block.querySelector("[data-summary-preview]");
+  if (!render || !host || !source) return;
+  const autosave = controllerFor(block);
+  autosave.register(
+    "short_description",
+    source.value,
+    (value) => { source.value = value; },
+    block.querySelector("[data-autosave-status]"),
+    block,
+  );
+
+  let view = null;
+  let caret = 0;
+  function close() {
+    if (!view) return;
+    caret = view.state.selection.main.head;
+    view.destroy();
+    view = null;
+    host.hidden = true;
+    render.hidden = false;
+    preview?.click();
+  }
+  function open(event) {
+    if (view || event?.target.closest("a")) return;
+    host.hidden = false;
+    render.hidden = true;
+    view = new EditorView({
+      state: EditorState.create({
+        doc: source.value,
+        selection: { anchor: Math.min(caret, source.value.length) },
+        extensions: extensions({
+          worldId: block.dataset.worldId,
+          onDocChanged: (value) => {
+            source.value = value;
+            autosave.change("short_description", value);
+          },
+          onModEnter: () => { autosave.flush(); close(); },
+          onEscape: close,
+        }),
+      }),
+      parent: host,
+    });
+    view.dom.addEventListener("focusout", (blurEvent) => {
+      if (!view?.dom.contains(blurEvent.relatedTarget)) autosave.flush();
+    });
+    view.focus();
+    if (event) {
+      const position = view.posAtCoords({ x: event.clientX, y: event.clientY });
+      if (position != null) view.dispatch({ selection: { anchor: position } });
+    }
+  }
+  render.addEventListener("dblclick", open);
+  block.summaryOpen = open;
+}
+
 /* ---------- identity fields ---------- */
 
 function mountDocIdentity(block) {
@@ -596,6 +662,7 @@ function mountAll(root) {
   scope.querySelectorAll("[data-md-tabs]").forEach((field) => setupTabs(field));
   scope.querySelectorAll("[data-markdown-field]").forEach((textarea) => mount(textarea));
   scope.querySelectorAll("[data-doc-edit]").forEach((block) => mountDocEdit(block));
+  scope.querySelectorAll("[data-doc-summary]").forEach((block) => mountDocSummary(block));
   scope.querySelectorAll("[data-doc-identity]").forEach((block) => mountDocIdentity(block));
 }
 

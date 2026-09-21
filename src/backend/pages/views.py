@@ -113,7 +113,9 @@ async def page_detail_page(
     set_world_id(str(world_id))
     world, context, nav, rail = await world_page(db, world_id, user, "pagine")
     page = await get_page_by_slug(db, world_id, slug, user)
-    body_html, links = await render_document(db, world_id, ContentKind.PAGE, page)
+    short_html, body_html, links = await render_document(
+        db, world_id, ContentKind.PAGE, page
+    )
     others = [
         other for other in await list_pages(db, world_id, user) if other.id != page.id
     ]
@@ -124,6 +126,7 @@ async def page_detail_page(
         nav=nav,
         pages=rail,
         page=page,
+        short_html=short_html,
         body_html=body_html,
         links=links,
         others=others,

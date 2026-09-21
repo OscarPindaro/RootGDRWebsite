@@ -1,0 +1,33 @@
+/* Compact Markdown summary, rendered in place until editing is requested. */
+.docsummary {
+  position: relative;
+  border-left: 3px solid transparent;
+  margin-left: -0.7rem;
+  padding-left: 0.7rem;
+}
+
+.docsummary:not([data-readonly="true"]):hover {
+  border-left-color: var(--line);
+}
+
+.docsummary:focus-within {
+  border-left-color: var(--vermilion);
+}
+
+.docsummary__render {
+  outline: none;
+}
+
+.docsummary__render > :first-child { margin-top: 0; }
+.docsummary__render > :last-child { margin-bottom: 0; }
+.docsummary__render:empty { min-height: 1.2em; }
+
+.docsummary__editor .cm-editor {
+  border: 0;
+  background: transparent;
+}
+
+.docsummary__editor .cm-content {
+  min-height: 4.5rem;
+  padding: var(--sp-1) 0;
+}

@@ -56,7 +56,12 @@ async def create_place(
     reloaded = await _get(db, world_id, place.id)
     assert reloaded is not None
     await refresh_references(
-        db, world_id, ContentKind.PLACE, reloaded.id, reloaded.body
+        db,
+        world_id,
+        ContentKind.PLACE,
+        reloaded.id,
+        reloaded.short_description,
+        reloaded.body,
     )
     return reloaded
 
@@ -115,7 +120,9 @@ async def update_place(
         place.is_draft = data.is_draft
     await db.flush()
     await db.refresh(place, ["updated_at"])
-    await refresh_references(db, world_id, ContentKind.PLACE, place.id, place.body)
+    await refresh_references(
+        db, world_id, ContentKind.PLACE, place.id, place.short_description, place.body
+    )
     return place
 
 

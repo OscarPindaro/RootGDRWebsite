@@ -131,7 +131,9 @@ async def place_detail_page(
     set_world_id(str(world_id))
     world, context, nav, rail_pages = await world_page(db, world_id, user, "luoghi")
     place = await get_place(db, world_id, place_id, user)
-    body_html, links = await render_document(db, world_id, ContentKind.PLACE, place)
+    short_html, body_html, links = await render_document(
+        db, world_id, ContentKind.PLACE, place
+    )
     return catalog.render(
         "pages.places.PlaceDetail",
         world=world,
@@ -139,6 +141,7 @@ async def place_detail_page(
         nav=nav,
         pages=rail_pages,
         place=place,
+        short_html=short_html,
         body_html=body_html,
         links=links,
         is_current=world.current_place_id == place.id,
