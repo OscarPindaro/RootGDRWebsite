@@ -1,6 +1,7 @@
 {#def worlds #}
-<div class="grid grid--covers">
+{#css common/Grid.css, common/MediaFrame.css #}
+<common.Grid min="cover" gap=5>
   {% for world in worlds %}
   <editorial.Cover :world="world" />
   {% endfor %}
-</div>
+</common.Grid>

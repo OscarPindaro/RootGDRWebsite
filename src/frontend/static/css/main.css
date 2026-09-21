@@ -558,14 +558,8 @@ ul, ol { margin: 0; padding: 0; }
 .section__head h2 { font-family: var(--serif); font-size: 1.5rem; font-weight: 500; }
 .section__head .eyebrow { display: block; margin-bottom: 0.25rem; }
 
-/* ---------- 11. Griglie ---------- */
-.grid { display: grid; gap: 1.25rem; }
-.grid--covers { grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); }
-.grid--cards { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-.grid--quick { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0; }
-.grid--stories { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
-.grid--two { grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; --grid-gap: 2.5rem; }
-.grid--stats { grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0; }
+/* ---------- 11. Griglie ----------
+   Le griglie sono common.Grid (src/frontend/components/common/Grid.css). */
 
 /* ---------- 12. Cover (mondi) ---------- */
 .cover {
@@ -583,12 +577,8 @@ ul, ol { margin: 0; padding: 0; }
   box-shadow: 6px 6px 0 var(--ink);
 }
 .cover__media {
-  aspect-ratio: 16 / 7;
   border-bottom: var(--rule-ink);
-  overflow: hidden;
-  position: relative;
 }
-.cover__media img { width: 100%; height: 100%; object-fit: cover; }
 .cover__badge {
   position: absolute;
   top: 0;
@@ -1418,8 +1408,6 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
 
 /* ---------- 29. Moduli ---------- */
 .form { display: grid; gap: 1.5rem; max-width: 720px; }
-.form-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
-@media (max-width: 700px) { .form-pair { grid-template-columns: 1fr; } }
 .field { display: grid; gap: 0.4rem; }
 .field__label {
   font-family: var(--mono);
@@ -2002,18 +1990,8 @@ html[data-accent="gradiente"] .prose a.mention {
 .page-status[data-state="conflict"] { color: var(--vermilion); }
 
 /* ---------- 30. Utility ---------- */
-.stack { display: grid; gap: 1rem; }
-.stack--sm { gap: 0.5rem; }
-.stack--lg { gap: 1.75rem; }
-.row-inline { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
 .spread { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .hr { border: 0; border-top: var(--rule-ink); margin: 2.5rem 0; }
-.empty {
-  border: 1px dashed var(--line-ink);
-  padding: 2.5rem 1.5rem;
-  text-align: center;
-  color: var(--muted);
-}
 .sr-only {
   position: absolute;
   width: 1px;
@@ -2113,12 +2091,9 @@ html[data-accent="gradiente"] .prose a.mention {
   }
   .docbar__actions > * { flex: 0 0 auto; }
   .docbar__actions .btn { min-height: 44px; }
-  .row-inline > .input,
-  .row-inline > .select { min-width: 0; }
   .autosave-recovery .btn { margin: 0.25rem 0.25rem 0 0; }
 
   /* le categorie diventano righe compatte invece di blocchi alti */
-  .grid--quick { grid-template-columns: 1fr; }
   .quick {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
@@ -2243,30 +2218,17 @@ html[data-accent="gradiente"] .prose a.mention {
   --button-square-md: 16px;
   --button-square-lg: 28px;
   --button-square-xl: 28px;
-  --button-pressed-xs: 8px;
-  --button-pressed-sm: 8px;
-  --button-pressed-md: 12px;
-  --button-pressed-lg: 16px;
-  --button-pressed-xl: 16px;
   --button-group-gap-xs: 18px;
   --button-group-gap-sm: 12px;
   --button-group-gap-md: 8px;
   --button-group-gap-lg: 8px;
   --button-group-gap-xl: 8px;
   --button-group-connected-gap: 2px;
-  --button-group-press-scale: 1.15;
-  --button-group-spring-damping: .9;
-  --button-group-spring-stiffness: 1400;
   --button-group-inner-xs: 8px;
   --button-group-inner-sm: 8px;
   --button-group-inner-md: 8px;
   --button-group-inner-lg: 16px;
   --button-group-inner-xl: 20px;
-  --button-group-inner-pressed-xs: 4px;
-  --button-group-inner-pressed-sm: 4px;
-  --button-group-inner-pressed-md: 4px;
-  --button-group-inner-pressed-lg: 12px;
-  --button-group-inner-pressed-xl: 16px;
   --button-group-square-outer-xs: 4px;
   --button-group-square-outer-sm: 8px;
   --button-group-square-outer-md: 8px;
@@ -2335,9 +2297,26 @@ html[data-accent="gradiente"] .prose a.mention {
   --dialog-max: 480px;
   --touch-target: 44px;
   --rule-width: 1px;
+  --rule-width-strong: 2px;
   --z-tooltip: 1000;
   --grid-gap: var(--sp-6);
   --stack-gap: var(--sp-4);
+  /* Minimum column widths for auto-fit grids. */
+  --grid-min-card: 240px;
+  --grid-min-cover: 310px;
+  --grid-min-story: 330px;
+  --grid-min-quick: 190px;
+  /* Aspect ratios owned by common.MediaFrame. */
+  --media-ratio-portrait: 4 / 5;
+  --media-ratio-landscape: 16 / 7;
+  --media-ratio-square: 1 / 1;
+  /* Switch geometry, transcribed from the M3 spec (see design-tokens). */
+  --switch-track-width: 52px;
+  --switch-track-height: 32px;
+  --switch-track-outline: 2px;
+  --switch-thumb-size: 16px;
+  --switch-thumb-size-checked: 24px;
+  --switch-radius: var(--radius-sm);
 }
 
 /* Editorial defaults for bare elements used by components. */

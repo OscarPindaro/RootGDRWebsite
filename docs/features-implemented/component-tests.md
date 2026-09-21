@@ -39,10 +39,10 @@ without Docker, migrations, login or seed data.
 ## Coverage
 
 The first slice covers `common.ButtonGroup`: single optional/required and
-multi selection, arrow/Home/End/Space navigation, disabled options, the 15%
-press expansion with neighbor compensation, `htmx:afterSwap` resync, and
-reduced motion. The previous hand-built HTML checks in `tests/e2e/` were
-replaced by these component tests.
+multi selection, arrow/Home/End/Space navigation, disabled options, stable
+geometry on press and selection, `htmx:afterSwap` resync, and reduced motion.
+The previous hand-built HTML checks in `tests/e2e/` were replaced by these
+component tests.
 
 ## Limits
 

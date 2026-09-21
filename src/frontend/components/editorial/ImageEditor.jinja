@@ -1,5 +1,5 @@
 {#def world_id, owner_kind, owner_id, upload_url, fallback_action, image_url=None, can_manage=False, locked=False, version=None, tint=None, symbol=None, symbol_name=None, symbol_kind=None, symbol_options=None, tints=None, label="Immagine" #}
-{#css common/Button.css, common/ChoiceGrid.css, common/Dialog.css #}
+{#css common/Button.css, common/ChoiceGrid.css, common/Dialog.css, common/Tooltip.css #}
 {% set editable = can_manage and not locked %}
 <div class="image-editor image-editor--{{ owner_kind }}{% if symbol_options and tints %} image-editor--with-choices{% endif %}"
      data-image-editor
@@ -29,8 +29,8 @@
       <button class="btn btn-secondary btn-sm btn-round image-editor__fallback-submit" type="submit" data-image-submit>Carica immagine</button>
     </form>
     <div class="image-editor__tools">
-      <button class="btn btn-secondary btn-sm btn-round image-editor__history-trigger" type="button"
-              data-image-history-open data-testid="image-history-open">Storico</button>
+      <common.IconButton icon="history" label="Storico immagini"
+                         data-image-history-open data-testid="image-history-open" />
     </div>
     {% else %}
       <div class="image-editor__surface image-editor__surface--readonly">

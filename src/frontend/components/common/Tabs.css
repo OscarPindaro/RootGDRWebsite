@@ -1,0 +1,59 @@
+/* A tab strip built on native radios: the keyboard model is the browser's,
+   and the panels are the caller's content, toggled by the colocated script. */
+.tabs {
+  display: grid;
+  gap: var(--sp-4);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.tabs__legend {
+  position: absolute;
+  width: var(--rule-width);
+  height: var(--rule-width);
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.tabs__list {
+  display: flex;
+  gap: var(--sp-5);
+  border-bottom: var(--rule);
+}
+
+.tabs__tab { position: relative; display: inline-flex; }
+
+.tabs__input {
+  position: absolute;
+  width: var(--rule-width);
+  height: var(--rule-width);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tabs__label {
+  margin-bottom: calc(var(--rule-width) * -1);
+  padding: var(--sp-2) 0;
+  border-bottom: var(--rule-width-strong) solid transparent;
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tabs__input:checked + .tabs__label {
+  color: var(--ink);
+  border-bottom-color: var(--vermilion);
+}
+
+.tabs__input:focus-visible + .tabs__label {
+  outline: var(--rule-width) solid currentColor;
+  outline-offset: var(--sp-1);
+}
+
+.tabs__input:disabled + .tabs__label { opacity: .45; cursor: not-allowed; }

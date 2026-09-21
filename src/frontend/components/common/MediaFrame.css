@@ -1,0 +1,19 @@
+/* A frame owns the aspect ratio and the crop, so the same image cannot be
+   landscape in a list and portrait somewhere else. */
+.media-frame {
+  position: relative;
+  display: grid;
+  overflow: hidden;
+  background: var(--surface-sunk);
+  aspect-ratio: var(--media-ratio, var(--media-ratio-square));
+}
+
+.media-frame--portrait { --media-ratio: var(--media-ratio-portrait); }
+.media-frame--landscape { --media-ratio: var(--media-ratio-landscape); }
+.media-frame--square { --media-ratio: var(--media-ratio-square); }
+
+.media-frame__image {
+  width: 100%;
+  height: 100%;
+  object-fit: var(--media-fit, cover);
+}

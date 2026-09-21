@@ -1,8 +1,9 @@
 {#def groups #}
+{#css common/VStack.css #}
 {% set ns = namespace(total=0) %}
 {% for items in groups.values() %}{% set ns.total = ns.total + (items | length) %}{% endfor %}
 {% if ns.total %}
-<aside class="stack">
+<common.VStack element="aside">
   <div class="links">
     <div class="links__head">
       <span class="eyebrow">Collegamenti</span>
@@ -19,5 +20,5 @@
     </div>
     {% endfor %}
   </div>
-</aside>
+</common.VStack>
 {% endif %}

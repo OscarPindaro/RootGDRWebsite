@@ -1,5 +1,5 @@
 {#def current_user=None, symbol_style_options=None #}
-{#css common/Alert.css, common/Button.css, common/ButtonGroup.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
+{#css common/Alert.css, common/Button.css, common/ButtonGroup.css, common/HStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css #}
 <layout.Page title="Impostazioni" current_user={{ current_user }} active="settings">
   <editorial.Masthead
     title="Impostazioni"
@@ -9,12 +9,12 @@
   <form class="form" style="max-width: 900px"
         hx-post="/settings" hx-ext="ignore:json-enc" hx-trigger="change"
         hx-target="#settings-status" hx-swap="innerHTML">
-    <div class="row-inline">
+    <common.HStack gap=3>
       <common.ButtonGroup label="Simboli" name="symbol_style" selection="single"
                           :options="symbol_style_options" :value="current_user.symbol_style"
                           required variant="connected" size="sm" />
       <p class="field__hint">Icone: un disegno lineare dice cosa fa una voce. Forme: una geometria piena dice dove sta nella struttura.</p>
-    </div>
+    </common.HStack>
     <div id="settings-status" aria-live="polite" aria-atomic="true"></div>
   </form>
 </layout.Page>

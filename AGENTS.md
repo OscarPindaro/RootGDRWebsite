@@ -65,13 +65,20 @@ Features under `src/backend/` should be self-contained. Routes and views handle 
 
 ### Frontend
 
-The frontend uses [JinjaX](https://jinjax.scaletti.dev/) for server-rendered components and [htmx](https://htmx.org/) for dynamic interactions — no client-side framework. The [`json-enc`](https://github.com/bigskysoftware/htmx-extensions/blob/main/src/json-enc/README.md) htmx extension encodes form submissions as JSON payloads. Components live in `src/frontend/components/` and follow Material Design 3-inspired patterns with CSS custom-property design tokens.
+The frontend uses [JinjaX](https://jinjax.scaletti.dev/) for server-rendered components and [htmx](https://htmx.org/) for dynamic interactions — no client-side framework. The [`json-enc`](https://github.com/bigskysoftware/htmx-extensions/blob/main/src/json-enc/README.md) htmx extension encodes form submissions as JSON payloads.
 
-- **`common/`** — Reusable primitives: Button, Card, Field, Dialog, Alert, Divider, Pill, Table, Icon, Avatar
-- **`layout/`** — Page shells: BlankPage (bare HTML), Page (with sidebar), Sidebar (M3 navigation drawer)
-- **`pages/`** — Full pages composed from common + layout: admin dashboard, home, login, showcase
+- **`common/`** — Reusable primitives, no domain knowledge: Button, Card, Field, Dialog, Alert, Divider, Pill, Table, Icon, Avatar, Menu, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, IconButton, MediaFrame, EmptyState, Switch, Tabs, SaveIndicator, Combobox
+- **`editorial/`** — The product's vocabulary and its atlas identity: Masthead, Cover, Face, Docbar, DocIdentity, DocEdit, DocSummary, ImageEditor, Links, Quick, SectionHead, Stat, Timeline
+- **`layout/`** — Page shells: BlankPage (bare HTML), Page (with sidebar), Sidebar, Rail, Topbar, UserMenu
+- **`pages/`** — Full pages composed from the three above, one folder per module
 
-See `docs/jinjax.md` for component conventions, htmx patterns, and asset loading rules.
+**Read `docs/frontend_guide.md` before touching the frontend.** It holds the
+folder rules, the anatomy of a component, the token rules, the checklists for
+adding or changing a component, and the test commands. `docs/design_guide.md` is
+the portable process behind the visual language (reusable on other projects),
+`docs/features-request/frontend.md` holds the settled visual decisions, and
+`docs/jinjax.md` is the JinjaX mechanics reference.
+
 Each new module generally gets its own page.
 
 ## Testing

@@ -1,5 +1,5 @@
-{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, current_user=None #}
-{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css #}
+{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css #}
+{#css common/Alert.css, common/Avatar.css, common/Button.css, common/Card.css, common/Dialog.css, common/Divider.css, common/Field.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/ChoiceGrid.css, common/ButtonGroup.css, editorial/ImageEditor.css, common/Grid.css, common/MediaFrame.css, common/EmptyState.css, common/Switch.css, common/Tabs.css, common/Combobox.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -145,8 +145,74 @@
     </section>
 
     <section class="showcase-section">
+      <h2>Icon buttons</h2>
+      <p class="showcase-note">Icon-only actions. The label is required: it becomes both the accessible name and the tooltip.</p>
+      <div class="showcase-row">
+        <common.IconButton icon="plus" label="Nuovo" variant="primary" />
+        <common.IconButton icon="settings" label="Impostazioni" />
+        <common.IconButton icon="history" label="Storico" />
+        <common.IconButton icon="trash-2" label="Elimina" variant="danger" />
+        <common.IconButton icon="star" label="Preferito" :selected="True" />
+        <common.IconButton icon="download" label="Scarica" size="md" />
+      </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Media frames</h2>
+      <p class="showcase-note">One frame owns the ratio and the crop, so the same image cannot be landscape in a list and portrait somewhere else.</p>
+      <div class="showcase-row" style="align-items: flex-start; gap: var(--sp-4);">
+        <common.MediaFrame ratio="portrait" src="/static/img/plate-1.svg" alt="" style="width: 140px" />
+        <common.MediaFrame ratio="landscape" src="/static/img/plate-2.svg" alt="" style="width: 220px" />
+        <common.MediaFrame ratio="square" src="/static/img/plate-3.svg" alt="" style="width: 140px" />
+      </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Empty states</h2>
+      <p class="showcase-note">What a list shows when it has nothing yet. The action is optional content.</p>
+      <div style="display: grid; gap: var(--sp-4);">
+        <common.EmptyState icon="map-pin" title="Nessun luogo" description="L'atlante è vuoto.">
+          <common.Button variant="secondary" size="sm" icon="plus">Nuovo luogo</common.Button>
+        </common.EmptyState>
+        <common.EmptyState compact icon="calendar" title="Ancora nessuna sessione" description="Il diario comparirà qui." />
+      </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Switches</h2>
+      <p class="showcase-note">An on/off setting. The track is 52×32 and the handle grows from 16 to 24 when on; pressing changes nothing.</p>
+      <div style="display: grid; gap: var(--sp-4);">
+        <common.Switch label="Accenti pieni" name="showcase-switch-off" />
+        <common.Switch label="Accenti pieni" name="showcase-switch-on" :checked="True" helper="La riga sotto i titoli usa una tinta sola." />
+        <common.Switch label="Simboli" name="showcase-switch-disabled" disabled helper="Disattivato: la preferenza è bloccata dal mondo." />
+      </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Tabs</h2>
+      <p class="showcase-note">A strip for two views of the same thing. Native radios, so the keyboard model is the browser's; the panels are the caller's content.</p>
+      <common.Tabs :items="showcase_tabs" name="showcase-tabs" value="write">
+        <div data-tabs-panel="write">
+          <common.Field label="Testo" name="showcase-tab-body" type="textarea" value="La radura era vuota." />
+        </div>
+        <div data-tabs-panel="preview">
+          <p class="lede">La radura era vuota.</p>
+        </div>
+      </common.Tabs>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Combobox</h2>
+      <p class="showcase-note">A text field that suggests from a known list. The submitted value is the option label, which is what the invite form needs.</p>
+      <div style="max-width: 360px;">
+        <common.Combobox name="showcase-invite" label="Invita" :options="showcase_people"
+                         placeholder="Cerca per nome" helper="Scrivi per filtrare, frecce per scegliere." />
+      </div>
+    </section>
+
+    <section class="showcase-section">
       <h2>Button groups</h2>
-      <p class="showcase-note">Standard groups expand the pressed item by 15% and compensate adjacent items. Connected groups keep their width and morph shape only.</p>
+      <p class="showcase-note">Geometry is stable: pressing or selecting never changes width or shape. Standard groups fix the shape of their items; connected groups share their inner corners.</p>
       {% for group_size in ["xs", "sm", "md", "lg", "xl"] %}
       <div class="showcase-group-row">
         <span class="showcase-label">{{ group_size }}</span>
@@ -328,13 +394,13 @@
     <section class="showcase-section">
       <h2>Choice grids</h2>
       <p class="showcase-note">A radio group drawn as an attached grid — emoji, tint or shape. No JavaScript.</p>
-      <div class="form-pair" style="max-width: 720px;">
+      <common.Grid columns=2 gap=6 style="max-width: 720px">
         <common.ChoiceGrid label="Animale" name="demo-animal" kind="emoji" :options="animals" :columns="8" value="🐈" />
         <common.ChoiceGrid label="Tinta" name="demo-tint" kind="tint" :options="tints" :columns="6" value="p8" />
-      </div>
-      <div class="form-pair" style="max-width: 720px; margin-top: var(--sp-4);">
+      </common.Grid>
+      <common.Grid columns=2 gap=6 style="max-width: 720px; margin-top: var(--sp-4)">
         <common.ChoiceGrid label="Forma" name="demo-shape" kind="shape" :options="shapes" :columns="6" value="rombo" />
-      </div>
+      </common.Grid>
     </section>
 
     <section class="showcase-section">

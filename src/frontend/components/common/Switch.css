@@ -1,0 +1,70 @@
+/* M3 switch geometry, square: the atlas does not use full-round corners. */
+.switch {
+  --switch-thumb-inset: calc((var(--switch-track-height) - var(--switch-thumb-size-checked)) / 2 - var(--switch-track-outline));
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  cursor: pointer;
+}
+
+.switch--disabled { cursor: not-allowed; }
+
+.switch__input {
+  position: absolute;
+  width: var(--rule-width);
+  height: var(--rule-width);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.switch__track {
+  position: relative;
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  width: var(--switch-track-width);
+  height: var(--switch-track-height);
+  border: var(--switch-track-outline) solid var(--clr-border-strong);
+  border-radius: var(--switch-radius);
+  background: var(--surface-sunk);
+  transition: background var(--dur-base) var(--ease-out), border-color var(--dur-base) var(--ease-out);
+}
+
+.switch__thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--switch-thumb-inset);
+  width: var(--switch-thumb-size);
+  height: var(--switch-thumb-size);
+  transform: translateY(-50%);
+  background: var(--ink);
+  border-radius: var(--switch-radius);
+  transition: left var(--dur-base) var(--ease-out), width var(--dur-base) var(--ease-out), height var(--dur-base) var(--ease-out), background var(--dur-base) var(--ease-out);
+}
+
+.switch__input:checked + .switch__track {
+  background: var(--clr-accent);
+  border-color: var(--clr-accent);
+}
+
+.switch__input:checked + .switch__track .switch__thumb {
+  left: calc(var(--switch-track-width) - var(--switch-thumb-size-checked) - var(--switch-thumb-inset) - var(--switch-track-outline) * 2);
+  width: var(--switch-thumb-size-checked);
+  height: var(--switch-thumb-size-checked);
+  background: var(--clr-text-on-accent);
+}
+
+.switch__input:focus-visible + .switch__track {
+  outline: var(--rule-width) solid currentColor;
+  outline-offset: var(--sp-1);
+}
+
+.switch__input:disabled + .switch__track { opacity: .45; }
+
+.switch__text { display: grid; gap: var(--sp-1); }
+.switch__label { font-size: var(--text-base); }
+.switch__helper { color: var(--muted); font-size: var(--text-sm); }
+
+@media (prefers-reduced-motion: reduce) {
+  .switch__track,
+  .switch__thumb { transition-duration: 0s; }
+}
