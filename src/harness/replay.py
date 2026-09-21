@@ -196,13 +196,19 @@ def plan_backend(steps: list[BackendStep]) -> BackendPlan:
     counts: dict[str, int] = {}
     external: dict[str, str] = {}
     requests: list[PlannedRequest] = []
-    for step in steps:
+    created_by_index = _created_ids_by_index(steps)
+    has_authentication = any(step.path.startswith("/auth/") for step in steps)
+    authenticated = not has_authentication
+    for index, step in enumerate(steps):
         if step.path.startswith("/auth/"):
+            authenticated = True
+            continue
+        if not authenticated:
             continue
         target = step.path + (f"?{step.query}" if step.query else "")
         planned_target = _substitute(target, variables, external, step.path)
         bind = None
-        created = _created_id(step)
+        created = created_by_index.get(index)
         if created is not None:
             bind = _variable_for(created, step.path, variables, counts)
         requests.append(
@@ -275,7 +281,7 @@ def _recorded_names(steps: list[BackendStep]) -> dict[str, str]:
 
 
 def _created_id(step: BackendStep) -> str | None:
-    """The id a successful create returned, to rebind in later steps."""
+    """The id a successful JSON create returned."""
     if step.method != "POST" or not 200 <= step.status < 300:
         return None
     if not isinstance(step.response, dict):
@@ -286,12 +292,45 @@ def _created_id(step: BackendStep) -> str | None:
     return None
 
 
+def _created_ids_by_index(steps: list[BackendStep]) -> dict[int, str]:
+    """Created ids from JSON responses or the navigation after an HTML create.
+
+    Draft-first HTML endpoints return 204 and navigate to the new resource.
+    For ``POST …/new``, the first UUID in a following request that was not in
+    the create path is therefore the new object's id.
+    """
+    created: dict[int, str] = {}
+    for index, step in enumerate(steps):
+        explicit = _created_id(step)
+        if explicit is not None:
+            created[index] = explicit
+            continue
+        if (
+            step.method != "POST"
+            or not 200 <= step.status < 300
+            or not step.path.rstrip("/").endswith("/new")
+        ):
+            continue
+        existing = set(UUID_VALUE.findall(step.path))
+        for following in steps[index + 1 :]:
+            candidates = [
+                value
+                for value in UUID_VALUE.findall(following.path)
+                if value not in existing
+            ]
+            if candidates:
+                created[index] = candidates[0]
+                break
+    return created
+
+
 def _variable_for(
     created: str, path: str, variables: dict[str, str], counts: dict[str, int]
 ) -> str:
     """A fresh variable name for one created id, based on the resource."""
     segments = [part for part in path.split("/") if part]
-    resource = segments[-1].rstrip("s") or "item"
+    segment = segments[-2] if segments[-1] == "new" else segments[-1]
+    resource = segment.rstrip("s") or "item"
     count = counts.get(resource, 0) + 1
     counts[resource] = count
     variable = f"{resource}_{count}"
@@ -322,7 +361,7 @@ def render_backend_test(session: str, steps: list[BackendStep]) -> str:
             f'f"{request.method} {request.target} -> {{response.status_code}}"'
         )
         if request.bind is not None:
-            body.append(f'    {request.bind} = response.json()["id"]')
+            body.append(f"    {request.bind} = _replay_id(response)")
     if not body:
         body.append("    pass")
 
@@ -348,12 +387,62 @@ def render_backend_test(session: str, steps: list[BackendStep]) -> str:
         "",
         "from __future__ import annotations",
         "",
+        "import re",
+        "import uuid",
+        "",
         "import pytest",
+        "",
+        "from src.backend.auth.dependencies import get_current_user, get_optional_user",
+        "from src.backend.db.enums import UserRole",
+        "from src.backend.dependencies import get_db_session",
+        "from src.backend.users.models import UserModel",
+        "from src.backend.users.schemas import User",
         "",
         "pytestmark = pytest.mark.integration",
         "",
         "",
-        f"async def test_backend_replay_{name}(async_client) -> None:",
+        "async def _replay_user(db_manager) -> User:",
+        "    session = db_manager.async_session_maker()",
+        "    async with session.begin():",
+        "        model = UserModel(",
+        '            name="Replay",',
+        '            email=f"replay-{uuid.uuid4()}@example.com",',
+        "            role=UserRole.ADMIN,",
+        "        )",
+        "        session.add(model)",
+        "        await session.flush()",
+        "        user = User.model_validate(model)",
+        "    await session.close()",
+        "    return user",
+        "",
+        "",
+        "def _replay_id(response) -> str:",
+        "    try:",
+        "        identifier = response.json().get('id')",
+        "    except Exception:",
+        "        identifier = None",
+        "    if identifier:",
+        "        return identifier",
+        "    location = response.headers.get('hx-redirect') or response.headers.get('location', '')",
+        "    matches = re.findall(r'[0-9a-f-]{36}', location)",
+        "    assert matches, f'create response carries no id: {response.status_code} {location}'",
+        "    return matches[-1]",
+        "",
+        "",
+        f"async def test_backend_replay_{name}(async_client, app, db_manager) -> None:",
+        "    user = await _replay_user(db_manager)",
+        "",
+        "    async def _session():",
+        "        request_session = db_manager.async_session_maker()",
+        "        try:",
+        "            async with request_session.begin():",
+        "                yield request_session",
+        "        finally:",
+        "            await request_session.close()",
+        "",
+        "    app.dependency_overrides[get_db_session] = _session",
+        "    app.dependency_overrides[get_current_user] = lambda: user",
+        "    app.dependency_overrides[get_optional_user] = lambda: user",
     ]
     return "\n".join([*header, *body, ""])
 

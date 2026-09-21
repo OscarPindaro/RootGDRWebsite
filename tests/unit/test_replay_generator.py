@@ -8,7 +8,6 @@ from harness.replay import (
     _path,
     plan_backend,
     preconditions,
-    preconditions,
     render_backend_test,
     render_diff,
     render_test,
@@ -84,7 +83,7 @@ def test_created_ids_are_rebound_in_later_requests() -> None:
 
     source = render_backend_test("b123", steps)
 
-    assert 'world_1 = response.json()["id"]' in source
+    assert "world_1 = _replay_id(response)" in source
     assert "await async_client.request('GET', f\"/api/worlds/{world_1}\")" in source
     assert "json={'name': 'Eroina', 'world_id': world_1}" in source
 
@@ -120,8 +119,8 @@ def test_a_created_character_gets_its_own_variable() -> None:
 
     source = render_backend_test("b123", steps)
 
-    assert 'world_1 = response.json()["id"]' in source
-    assert 'character_1 = response.json()["id"]' in source
+    assert "world_1 = _replay_id(response)" in source
+    assert "character_1 = _replay_id(response)" in source
 
 
 def test_replay_diff_ignores_volatile_uuid_and_timestamp_values() -> None:
@@ -185,6 +184,41 @@ def test_plan_binds_created_ids_and_collects_preconditions() -> None:
     plan = plan_backend(steps)
 
     assert plan.requests[1].target == "/api/worlds/{world_1}"
+    assert plan.preconditions == []
+
+
+def test_html_create_ids_are_inferred_from_the_following_navigation() -> None:
+    character_id = "01a0c41e-201e-74a3-93d6-0e29017a4e02"
+    plan = plan_backend(
+        [
+            BackendStep(
+                method="POST",
+                path="/worlds/new",
+                body={"name": "Boschetto"},
+                status=204,
+            ),
+            BackendStep(method="GET", path=f"/worlds/{WORLD_ID}", status=200),
+            BackendStep(
+                method="POST",
+                path=f"/worlds/{WORLD_ID}/characters/new",
+                body={},
+                status=204,
+            ),
+            BackendStep(
+                method="GET",
+                path=f"/worlds/{WORLD_ID}/characters/{character_id}?edit=1",
+                status=200,
+            ),
+        ]
+    )
+
+    assert plan.requests[0].bind == "world_1"
+    assert plan.requests[1].target == "/worlds/{world_1}"
+    assert plan.requests[2].bind == "character_1"
+    assert plan.requests[2].target == "/worlds/{world_1}/characters/new"
+    assert plan.requests[3].target == (
+        "/worlds/{world_1}/characters/{character_1}?edit=1"
+    )
     assert plan.preconditions == []
 
 

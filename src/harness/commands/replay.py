@@ -51,6 +51,7 @@ def _client(base_url: str, email: str) -> httpx.Client:
     client = httpx.Client(base_url=base_url, timeout=10)
     response = client.post("/auth/dev-login", json={"email": email})
     response.raise_for_status()
+    client.headers["Authorization"] = f"Bearer {response.json()['access_token']}"
     return client
 
 
@@ -265,9 +266,13 @@ def run(
             markup=False,
         )
         if request.bind is not None and response.status_code == request.expected_status:
-            payload = response.json() if _is_json(response) else {}
-            identifier = payload.get("id") if isinstance(payload, dict) else None
-            if isinstance(identifier, str):
+            identifier = _response_id(response)
+            if identifier is None:
+                err_console.print(
+                    f"[bold red]Create response carries no id: {request.method} {target}[/bold red]"
+                )
+                failures += 1
+            else:
                 bound[request.bind] = identifier
     if failures:
         raise typer.Exit(1)
@@ -297,6 +302,19 @@ def _bind_text(target: str, bound: dict[str, str]) -> str:
 
 def _is_json(response: httpx.Response) -> bool:
     return "application/json" in response.headers.get("content-type", "")
+
+
+def _response_id(response: httpx.Response) -> str | None:
+    """Created id from a JSON response or an htmx/HTTP redirect header."""
+    if _is_json(response):
+        payload = response.json()
+        if isinstance(payload, dict) and isinstance(payload.get("id"), str):
+            return payload["id"]
+    location = response.headers.get("hx-redirect") or response.headers.get(
+        "location", ""
+    )
+    matches = recordings.UUID_VALUE.findall(location)
+    return matches[-1] if matches else None
 
 
 def _report_preconditions(plan: recordings.BackendPlan) -> None:
