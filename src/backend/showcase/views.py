@@ -48,4 +48,7 @@ async def showcase(
             ButtonGroupOption(value="write", label="Scrivi"),
             ButtonGroupOption(value="preview", label="Anteprima"),
         ],
+        showcase_people=[
+            ButtonGroupOption(value=user.email, label=user.email) for user in users
+        ],
     )

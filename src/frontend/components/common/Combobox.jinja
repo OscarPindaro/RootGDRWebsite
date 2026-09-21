@@ -1,0 +1,16 @@
+{#def name, label, options, value=None, placeholder=None, helper=None, required=False #}
+<div class="combobox" data-combobox>
+  <label class="combobox__label" for="{{ name }}">{{ label }}</label>
+  <input class="combobox__input" id="{{ name }}" name="{{ name }}" type="text"
+         role="combobox" aria-expanded="false" aria-controls="{{ name }}-list"
+         aria-autocomplete="list" autocomplete="off"
+         {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+         {% if value %}value="{{ value }}"{% endif %}
+         {% if required %}required{% endif %}>
+  <ul class="combobox__list" id="{{ name }}-list" role="listbox" hidden>
+    {% for option in options %}
+    <li class="combobox__option" role="option" aria-selected="false" data-value="{{ option.value }}">{{ option.label }}</li>
+    {% endfor %}
+  </ul>
+  {% if helper %}<p class="combobox__helper">{{ helper }}</p>{% endif %}
+</div>
