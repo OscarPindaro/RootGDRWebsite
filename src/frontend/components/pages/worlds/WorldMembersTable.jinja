@@ -1,0 +1,72 @@
+{#def world, members, invites, notice=None #}
+{#css common/Table.css, common/Alert.css, common/Avatar.css, common/Button.css, common/Pill.css, common/Tooltip.css, pages/worlds/WorldMembersTable.css #}
+{# The access table for one world: active memberships and pending invites share
+   one row shape so role and status are readable as columns, not as sentences.
+   The owner row is marked and offers no remove action. #}
+{% if notice %}
+<common.Alert variant="success">{{ notice }}</common.Alert>
+{% endif %}
+<common.Table headers={{ ["Persona", "Ruolo", "Stato", "Azioni"] }}>
+  {% for member in members %}
+  {% set is_owner = member.user.id | string == world.created_by.id | string %}
+  <tr data-testid="world-member-row" data-member-id="{{ member.user.id }}">
+    <td>
+      <div class="world-members__person">
+        <common.Avatar :name="member.user.name" :avatar_url="member.user.avatar_url" size={{ 28 }} />
+        <div class="world-members__identity">
+          <span class="world-members__name">{{ member.user.name }}</span>
+          <span class="world-members__email">{{ member.user.email }}</span>
+        </div>
+      </div>
+    </td>
+    <td>
+      {% if is_owner %}
+      <common.Pill variant="master">Proprietario</common.Pill>
+      {% elif member.role == 'master' %}
+      <common.Pill variant="master">Master</common.Pill>
+      {% else %}
+      <common.Pill variant="player">Giocatore</common.Pill>
+      {% endif %}
+    </td>
+    <td><common.Pill variant="success">Attivo</common.Pill></td>
+    <td>
+      <div class="world-members__actions">
+        {% if not is_owner %}
+        <common.IconButton icon="trash-2" :label="'Rimuovi ' ~ member.user.name"
+                           :hx-get="'/worlds/' ~ world.id ~ '/members/' ~ member.user.id ~ '/remove'"
+                           hx-target="#world-member-confirm" hx-swap="innerHTML"
+                           data-testid="world-member-remove" />
+        {% endif %}
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+  {% for invite in invites %}
+  <tr data-testid="world-invite-row" data-invite-email="{{ invite.email }}">
+    <td>
+      <div class="world-members__person">
+        <span class="world-members__pending" aria-hidden="true"></span>
+        <div class="world-members__identity">
+          <span class="world-members__name">{{ invite.email }}</span>
+        </div>
+      </div>
+    </td>
+    <td>
+      {% if invite.role == 'master' %}
+      <common.Pill variant="master">Master</common.Pill>
+      {% else %}
+      <common.Pill variant="player">Giocatore</common.Pill>
+      {% endif %}
+    </td>
+    <td><common.Pill variant="warning">In attesa</common.Pill></td>
+    <td>
+      <div class="world-members__actions">
+        <common.IconButton icon="x" :label="'Annulla invito per ' ~ invite.email"
+                           :hx-get="'/worlds/' ~ world.id ~ '/invites/' ~ (invite.email | urlencode) ~ '/revoke'"
+                           hx-target="#world-member-confirm" hx-swap="innerHTML"
+                           data-testid="world-invite-revoke" />
+      </div>
+    </td>
+  </tr>
+  {% endfor %}
+</common.Table>

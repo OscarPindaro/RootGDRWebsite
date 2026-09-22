@@ -1,0 +1,12 @@
+/* ---------- Add-player dialog (page-domain) ---------- */
+.world-member-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.world-member-form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sp-3);
+}

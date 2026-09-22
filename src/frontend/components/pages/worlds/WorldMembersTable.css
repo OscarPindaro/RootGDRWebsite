@@ -1,0 +1,37 @@
+/* ---------- World members table (page-domain) ---------- */
+.world-members__person {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.world-members__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.world-members__name {
+  font-weight: var(--weight-medium);
+}
+
+.world-members__email {
+  color: var(--clr-text-muted);
+  font-size: var(--text-xs);
+}
+
+/* A hollow mark for a pending invitation, the counterpart of the avatar. */
+.world-members__pending {
+  width: var(--sp-6);
+  height: var(--sp-6);
+  flex: 0 0 auto;
+  border: var(--rule);
+  border-style: dashed;
+  border-radius: var(--radius-full);
+}
+
+.world-members__actions {
+  display: flex;
+  justify-content: flex-end;
+}

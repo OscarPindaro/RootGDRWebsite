@@ -78,3 +78,73 @@ def test_capture_important_pages() -> None:
         assert result.desktop.exists()
         assert result.phone.exists()
         assert result.console_errors == [], f"{path}: {result.console_errors}"
+
+
+def _world_access_world(base_url: str) -> str:
+    """A world with one active player and one pending invite, for the shots."""
+    player_email = f"player-{uuid.uuid4().hex[:8]}@example.com"
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        context = browser.new_context()
+        try:
+            authenticate_context(context, base_url, ADMIN)
+            expect_api(
+                context,
+                base_url,
+                "/users/",
+                method="POST",
+                expected_status=201,
+                data={"name": "Player Screenshot", "email": player_email},
+            )
+            world = expect_api(
+                context,
+                base_url,
+                "/api/worlds/",
+                method="POST",
+                expected_status=201,
+                data={
+                    "name": f"Mondo Accessi {uuid.uuid4().hex[:6]}",
+                    "description": "Mondo per la schermata degli accessi.",
+                },
+            ).json()
+            world_id = world["id"]
+            for email, role in (
+                (player_email, "player"),
+                (f"ospite-{uuid.uuid4().hex[:8]}@example.com", "master"),
+            ):
+                expect_api(
+                    context,
+                    base_url,
+                    f"/worlds/{world_id}/members",
+                    method="POST",
+                    expected_status=200,
+                    form={"email": email, "role": role},
+                    headers={"HX-Request": "true"},
+                )
+            return world_id
+        finally:
+            context.close()
+            browser.close()
+
+
+def test_capture_world_access_table_and_dialog() -> None:
+    base_url = _base_url()
+    world_id = _world_access_world(base_url)
+
+    table = capture_screenshots(
+        f"/worlds/{world_id}/settings", email=ADMIN, name="world-access-table"
+    )
+    assert table.desktop.exists()
+    assert table.phone.exists()
+    assert table.console_errors == [], table.console_errors
+
+    dialog = capture_screenshots(
+        f"/worlds/{world_id}/settings",
+        email=ADMIN,
+        name="world-access-dialog",
+        click='[data-testid="world-member-add"]',
+        expect_visible="dialog[data-dialog]",
+    )
+    assert dialog.desktop.exists()
+    assert dialog.phone.exists()
+    assert dialog.console_errors == [], dialog.console_errors

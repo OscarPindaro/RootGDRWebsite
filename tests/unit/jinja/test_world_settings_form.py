@@ -1,15 +1,16 @@
-"""The world settings page builds its forms from the shared components.
+"""The world settings page owns no inline membership form.
 
-The members form used raw ``input.input`` and ``select.select`` next to a
-``common.Button``, so the same control looked different from every other form
-in the application and carried no visible label.
+The old section exposed a raw email/role form and listed members as prose
+links. F9 replaced both with a page-domain table and a dialog; this test pins
+the page contract: the Giocatori heading, the plus that opens the dialog, and
+the absence of the legacy inline form.
 """
 
 from pathlib import Path
 from types import SimpleNamespace
 
 from backend.jinja import get_catalog
-from backend.navigation import Crumb, Option
+from backend.navigation import Crumb
 
 COMPONENTS_DIR = Path(__file__).parents[3] / "src" / "frontend" / "components"
 
@@ -31,10 +32,6 @@ def _render(**overrides):
         "world": world,
         "members": [],
         "invites": [],
-        "roles": [
-            Option(value="player", label="Giocatore"),
-            Option(value="master", label="Master"),
-        ],
         "world_context": None,
         "nav": None,
         "pages": None,
@@ -52,26 +49,37 @@ def _render(**overrides):
     return str(_catalog().render("pages.worlds.WorldSettings", **props))
 
 
-def test_the_members_form_is_built_from_the_shared_field() -> None:
+def test_the_access_section_is_titled_giocatori() -> None:
     html = _render()
 
-    assert '<label class="field__label" for="email">Email</label>' in html
-    assert '<label class="field__label" for="role">Ruolo</label>' in html
-    assert '<option value="player"' in html
-    assert '<option value="master"' in html
+    assert ">Giocatori</h2>" in html
+    assert ">Membri</h2>" not in html
 
 
-def test_the_members_form_keeps_the_legacy_classes_out() -> None:
+def test_the_section_offers_the_dialog_through_a_plus_icon_button() -> None:
     html = _render()
 
+    assert 'data-testid="world-member-add"' in html
+    assert 'data-lucide="plus"' in html
+    assert 'hx-target="#world-member-dialog"' in html
+
+
+def test_no_inline_add_form_remains_on_the_page() -> None:
+    html = _render()
+
+    # The form lived here with raw input/select classes and a submit button.
     assert 'class="input"' not in html
     assert 'class="select"' not in html
     assert 'class="row-inline"' not in html
+    assert 'data-testid="add-world-member"' not in html
+    assert 'name="email"' not in html
+    assert 'name="role"' not in html
 
 
-def test_the_role_options_come_from_the_view() -> None:
-    html = _render(roles=[Option(value="master", label="Solo master")])
+def test_the_members_are_rendered_by_the_table_component() -> None:
+    html = _render()
 
-    assert '<option value="master"' in html
-    assert "Solo master" in html
-    assert '<option value="player"' not in html
+    assert 'id="world-members"' in html
+    assert 'class="table"' in html
+    assert ">Persona</th>" in html
+    assert ">Stato</th>" in html

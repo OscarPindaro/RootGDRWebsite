@@ -46,14 +46,16 @@ surface with one named action.
   caller configures with `hx-delete` / `hx-target` / `hx-swap`.
 - `editorial.ImageEditor` — the history dialog and the restore, delete-revision
   and remove-current-image confirmations.
+- `pages.worlds.WorldMemberDialog` and the remove/revoke confirmations
+  (`src/backend/worlds/views.py`) — the add-player surface and the two
+  destructive actions of the Giocatori section.
 
 ## Limits
 
 - The migration is deliberately partial. Native `hx-confirm` remains on the
-  destructive document actions in the six detail pages and on the World
-  Settings member/invite controls; Docbar's toggles stay with it until F10
-  moves those actions into the document bar. Inventory at the time of writing:
-  - `pages/worlds/WorldSettings.jinja` — remove member, cancel invite.
+  destructive document actions in the six detail pages; Docbar's toggles stay
+  with it until F10 moves those actions into the document bar. Inventory at the
+  time of writing:
   - `pages/characters/CharacterDetail.jinja`, `pages/npcs/NpcDetail.jinja`,
     `pages/places/PlaceDetail.jinja`, `pages/sessions/SessionDetail.jinja`,
     `pages/stories/StoryDetail.jinja`, `pages/pages/PageDetail.jinja` — cancel

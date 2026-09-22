@@ -1,0 +1,27 @@
+{#def world, roles, error=None, email="", role="player" #}
+{#css common/Dialog.css, common/Alert.css, common/Button.css, common/Field.css, common/Tooltip.css, pages/worlds/WorldMemberDialog.css #}
+{# The add-player dialog for one world. It carries no route of its own: the view
+   that owns the section renders it, and the form posts the same endpoint the
+   old inline form used. The table is the swap target, so a successful add
+   updates the rows and the shared Dialog script closes the surface. #}
+<common.Dialog title="Aggiungi al mondo">
+  <form class="world-member-form"
+        hx-post="/worlds/{{ world.id }}/members"
+        hx-target="#world-members"
+        hx-swap="innerHTML"
+        hx-ext="ignore:json-enc">
+    {% if error %}
+    <common.Alert variant="danger">{{ error }}</common.Alert>
+    {% endif %}
+    <common.Field label="Email" name="email" type="email" required
+                  placeholder="email@example.com" :value="email" />
+    <common.Field label="Ruolo" name="role" type="select" :options="roles"
+                  :value="role" />
+    <div class="world-member-form__actions">
+      <common.Button type="button" variant="secondary" size="md"
+                     data-dialog-close>Annulla</common.Button>
+      <common.Button type="submit" variant="primary" size="md"
+                     data-testid="world-member-submit">Aggiungi</common.Button>
+    </div>
+  </form>
+</common.Dialog>

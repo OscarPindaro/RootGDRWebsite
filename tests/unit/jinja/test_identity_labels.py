@@ -10,7 +10,6 @@ from types import SimpleNamespace
 
 from backend.content.view_helpers import animal_options, tint_options
 from backend.jinja import get_catalog
-from backend.navigation import Option
 
 COMPONENTS_DIR = Path(__file__).parents[3] / "src" / "frontend" / "components"
 
@@ -55,7 +54,12 @@ def test_world_settings_labels_the_fields_and_drops_the_section_title() -> None:
             world=world,
             members=[
                 SimpleNamespace(
-                    user=SimpleNamespace(id=OWNER_ID, name="Ada", avatar_url=None),
+                    user=SimpleNamespace(
+                        id=OWNER_ID,
+                        name="Ada",
+                        email="ada@example.com",
+                        avatar_url=None,
+                    ),
                     role="master",
                 )
             ],
@@ -63,12 +67,7 @@ def test_world_settings_labels_the_fields_and_drops_the_section_title() -> None:
             nav=[],
             crumbs=[],
             description_html="<p>x</p>",
-            error=None,
             pages=[],
-            roles=[
-                Option(value="player", label="Giocatore"),
-                Option(value="master", label="Master"),
-            ],
             current_user=_user(),
         )
     )

@@ -318,15 +318,19 @@ def test_player_cannot_manage_places(base_url: str) -> None:
             player = browser.new_context()
             try:
                 authenticate_context(player, base_url, email)
-                expect_api(
+                # F9: the membership endpoint returns the updated table fragment
+                # instead of a 204 + HX-Redirect full-page reload.
+                added = expect_api(
                     context,
                     base_url,
                     f"/worlds/{world_id}/members",
                     method="POST",
-                    expected_status=204,
+                    expected_status=200,
                     form={"email": email, "role": "player"},
                     headers={"HX-Request": "true"},
                 )
+                assert email in added.text()
+                assert "Attivo" in added.text()
 
                 page = player.new_page()
                 page.goto(

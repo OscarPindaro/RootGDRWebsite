@@ -4,17 +4,15 @@
   min-width: 0;
 }
 
+/* The grid item must be allowed to shrink below the members table's
+   min-content width, or the table pushes the page wider than the viewport. */
+.world-settings__main {
+  min-width: 0;
+}
+
 .world-identity .docidentity .display { margin: 0; }
 .world-identity .docedit__render { min-height: 7rem; }
 
-.links__item .btn-text {
-  margin-left: auto;
-}
-
-.world-settings__members { margin-top: var(--sp-4); }
-
 @media (max-width: 700px) {
   .world-identity .display { font-size: 1.8rem; }
-  .world-settings__members { align-items: stretch; }
-  .world-settings__members .field { flex: 1 1 100%; }
 }

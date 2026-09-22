@@ -5,15 +5,15 @@ un'email esterna che non è ancora nell'app.
 
 ## Cosa fa
 
-- Nella sezione **Membri** il form accetta un'email e un ruolo. Se l'email
-  appartiene a un utente, la membership è aggiunta subito.
+- Nella sezione **Giocatori** il dialog di aggiunta accetta un'email e un ruolo.
+  Se l'email appartiene a un utente, la membership è aggiunta subito.
 - Se l'email non esiste, il mondo registra un invito in sospeso e crea anche
   l'invito di piattaforma: al primo accesso con quell'email l'utente entra nel
   mondo col ruolo scelto, senza altri passaggi.
-- Gli inviti in sospeso compaiono nella lista dei membri come "Invitato" e si
-  possono annullare.
-- Il messaggio di esito (invito inviato o errore) sta accanto al form, non in
-  cima alla pagina.
+- Gli inviti in sospeso compaiono nella tabella come righe con stato `In attesa`
+  e si possono annullare con una conferma condivisa.
+- Il messaggio di esito (invito inviato o membro aggiunto) aggiorna la tabella
+  con lo swap, senza ricaricare la pagina.
 
 ## Come è costruito
 
