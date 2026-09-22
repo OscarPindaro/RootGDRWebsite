@@ -1,5 +1,5 @@
 {#def world, world_context, nav, pages, page, others, can_manage=False, crumbs, short_html=None, body_html=None, links=None, current_user=None, metadata=None, auto_edit=False #}
-{#css common/Button.css, common/Pill.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/SaveIndicator.css, common/Grid.css #}
+{#css common/Button.css, common/Pill.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/SaveIndicator.css, common/Grid.css, editorial/Docbar.css, common/ConfirmDialog.css #}
 <layout.Page :title="page.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
   <editorial.Crumbs :items="crumbs" />
 
@@ -8,13 +8,7 @@
     :eyebrow="'Pagina · posizione ' ~ '%02d'|format(page.menu_position) ~ ' · slug ' ~ page.slug"
     :locked="page.locked"
     :is_draft="page.is_draft"
-    :can_manage="can_manage">
-    {% if page.is_draft %}
-    <common.Button variant="text" size="sm" data-testid="cancel-page-draft" :hx-post="'/worlds/' ~ world.id ~ '/pages/' ~ page.id ~ '/cancel-draft'" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</common.Button>
-    {% else %}
-    <common.Button variant="text" size="sm" data-testid="delete-page" :hx-delete="'/worlds/' ~ world.id ~ '/pages/' ~ page.id" :hx-confirm="'Eliminare «' ~ page.title ~ '»?'" hx-swap="none">Elimina</common.Button>
-    {% endif %}
-  </editorial.Docbar>
+    :can_manage="can_manage" />
 
   <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
     :can_manage="can_manage" :locked="page.locked" :version="page.version" :auto_edit="auto_edit">

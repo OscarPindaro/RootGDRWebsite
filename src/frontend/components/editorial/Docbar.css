@@ -1,0 +1,51 @@
+/* ---------- Docbar ----------
+   The document bar has two regions and never mixes them: the status region
+   keeps the facts about the document (eyebrow, publication, ownership, the
+   current scene), the command region keeps the actions (edit, lock, publish,
+   the document-specific command, delete). A status pill is never a child of
+   the command region, so a command is never read as a fact. Migrated out of
+   main.css so Docbar owns its own structure. */
+.docbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-4);
+  flex-wrap: wrap;
+  border-top: 3px solid var(--ink);
+  border-bottom: var(--rule-ink);
+  padding: var(--sp-3) 0;
+  margin-bottom: var(--sp-10);
+}
+
+.docbar__status {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.docbar__commands {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  flex-wrap: wrap;
+}
+
+@media (max-width: 700px) {
+  /* The phone bar stacks: the facts wrap above, the commands wrap below in a
+     compact block. Nothing is a horizontal strip, so no command is reachable
+     only by scrolling sideways and no fact is hidden behind the commands. */
+  .docbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--sp-3);
+  }
+  .docbar__status,
+  .docbar__commands {
+    width: 100%;
+  }
+  .docbar__commands .btn {
+    flex: 1 1 auto;
+  }
+}

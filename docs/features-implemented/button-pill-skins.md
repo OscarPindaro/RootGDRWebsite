@@ -28,8 +28,9 @@ identity.
   every `.pill--*` variant) were deleted, and the `btn`/`pill` entries were
   removed from `MIGRATION_ALLOWLIST`, so each root has one owner again.
 - The phone touch target moved into `Button.css`: `@media (max-width: 700px)`
-  gives `.btn { min-height: var(--touch-target) }`. The redundant
-  `.docbar__actions .btn` override in `main.css` is gone.
+  gives `.btn { min-height: var(--touch-target) }`. The redundant per-bar
+  override in `main.css` is gone; Docbar's own `Docbar.css` only sizes the
+  command row on a phone (`.docbar__commands .btn { flex: 1 1 auto }`).
 - The editorial text action and its `html[data-accent="gradiente"]` gradient
   underline were migrated from `main.css`; the corner is no longer driven by
   Material `--button-square-*` tokens, which were deleted from `main.css`.

@@ -8,8 +8,9 @@ stays in the service layer.
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse
+from jinjax.catalog import Catalog
 from pydantic import Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +20,7 @@ from ..auth.dependencies import get_current_user
 from ..characters.models import CharacterModel
 from ..characters.schemas import CharacterUpdate
 from ..characters.service import get_character, update_character
-from ..dependencies import get_db_session
+from ..dependencies import get_catalog_dep, get_db_session
 from ..npcs.models import NpcModel
 from ..npcs.schemas import NpcUpdate
 from ..npcs.service import get_npc, update_npc
@@ -116,6 +117,72 @@ async def toggle_document(
         page_data.is_draft = value
     page = await update_page(db, world_id, item_id, page_data, user)
     return _htmx_redirect(f"/worlds/{world_id}/pages/{page.slug}")
+
+
+_CONFIRM_ACTIONS = {"delete", "cancel-draft"}
+
+
+async def _document_label(
+    db: AsyncSession, world_id: uuid.UUID, kind: str, item_id: uuid.UUID, user: User
+) -> str:
+    """The name a confirmation names: a document's name, or its title."""
+    if kind == "characters":
+        return (await get_character(db, world_id, item_id, user)).name
+    if kind == "npcs":
+        return (await get_npc(db, world_id, item_id, user)).name
+    if kind == "places":
+        return (await get_place(db, world_id, item_id, user)).name
+    if kind == "sessions":
+        return (await get_session(db, world_id, item_id, user)).title
+    if kind == "stories":
+        return (await get_story(db, world_id, item_id, user)).title
+    return (await get_page(db, world_id, item_id, user)).title
+
+
+@router.get(
+    "/worlds/{world_id}/{kind}/{item_id}/confirm/{action}", response_class=HTMLResponse
+)
+async def document_action_confirm(
+    world_id: uuid.UUID,
+    kind: str,
+    item_id: uuid.UUID,
+    action: str,
+    catalog: Catalog = Depends(get_catalog_dep),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
+    user: User = Depends(get_current_user),
+) -> HTMLResponse:
+    """Return the delete/cancel-draft confirmation for the shared dialog.
+
+    Authorization is not repeated here: this fragment only renders a document's
+    own name, which the reader can already see, and the mutation route it
+    forwards to enforces the same manage permission as every other write.
+    """
+    if kind not in _KINDS or action not in _CONFIRM_ACTIONS:
+        raise HTTPException(status_code=404, detail="Unknown document action")
+    label = await _document_label(db, world_id, kind, item_id, user)
+    if action == "delete":
+        title, message, confirm_label = (
+            "Elimina",
+            f"Eliminare «{label}»?",
+            "Elimina",
+        )
+        request = {"hx-delete": f"/worlds/{world_id}/{kind}/{item_id}"}
+    else:
+        title, message, confirm_label = (
+            "Annulla bozza",
+            "Annullare questa bozza?",
+            "Annulla bozza",
+        )
+        request = {"hx-post": f"/worlds/{world_id}/{kind}/{item_id}/cancel-draft"}
+    return catalog.render(
+        "common.ConfirmDialog",
+        title=title,
+        message=message,
+        confirm_label=confirm_label,
+        confirm_variant="danger",
+        confirm_icon="trash-2",
+        _attrs=request,
+    )
 
 
 class MentionSuggestion(AppBaseModel):

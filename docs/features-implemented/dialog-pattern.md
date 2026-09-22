@@ -49,17 +49,13 @@ surface with one named action.
 - `pages.worlds.WorldMemberDialog` and the remove/revoke confirmations
   (`src/backend/worlds/views.py`) — the add-player surface and the two
   destructive actions of the Giocatori section.
+- `editorial.Docbar` — the six detail pages' delete and cancel-draft actions.
+  The bar asks `GET /worlds/{world}/{kind}/{item}/confirm/{action}` for a
+  `common.ConfirmDialog` and swaps it into `#docbar-confirm`
+  (`src/backend/content/actions.py`). No `hx-confirm` remains in a component.
 
 ## Limits
 
-- The migration is deliberately partial. Native `hx-confirm` remains on the
-  destructive document actions in the six detail pages; Docbar's toggles stay
-  with it until F10 moves those actions into the document bar. Inventory at the
-  time of writing:
-  - `pages/characters/CharacterDetail.jinja`, `pages/npcs/NpcDetail.jinja`,
-    `pages/places/PlaceDetail.jinja`, `pages/sessions/SessionDetail.jinja`,
-    `pages/stories/StoryDetail.jinja`, `pages/pages/PageDetail.jinja` — cancel
-    draft, delete document.
 - `ImageEditor` updates the media and the revision list in place after a
   confirmed mutation; a completion that rebuilds the list cannot return focus to
   the invoking control because the swap removed it, while cancel still does.

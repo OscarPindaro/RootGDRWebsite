@@ -50,3 +50,4 @@ Template:
 | One ordered keyboard sequence across document blocks | [document-navigator.md](document-navigator.md) |
 | Icons or shapes for every role mark, applied on selection | [symbol-style.md](symbol-style.md) |
 | See and change who can access a world | [world-access.md](world-access.md) |
+| Document bar: facts and commands in two regions | [docbar-regions.md](docbar-regions.md) |

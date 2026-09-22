@@ -1830,22 +1830,6 @@ html[data-accent="gradiente"] .prose a.mention {
 .links__dot { width: 10px; height: 10px; flex: 0 0 10px; background: var(--c, var(--ink)); }
 
 /* ---------- 29d. Pagina di un contenuto ---------- */
-/* barra dei comandi in cima a un documento */
-.docbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  border-top: 3px solid var(--ink);
-  border-bottom: var(--rule-ink);
-  padding: 0.75rem 0;
-  margin-bottom: 2.25rem;
-}
-.docbar__lead { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.docbar__actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-[data-doc-lock][aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
-
 /* una radura ha una forma al posto dell'animale: campita chiara e
    contornata, così si legge su qualunque tinta */
 .face__shape { width: 42%; max-width: 96px; aspect-ratio: 1; color: var(--ink); }
@@ -1941,17 +1925,6 @@ html[data-accent="gradiente"] .prose a.mention {
 
 @media (max-width: 700px) {
   .container { min-width: 0; padding-bottom: 3.5rem; }
-  .docbar { display: block; }
-  .docbar > .eyebrow { display: block; margin-bottom: 0.6rem; }
-  .docbar__actions {
-    width: 100%;
-    flex-wrap: nowrap;
-    gap: 0.4rem;
-    overflow-x: auto;
-    overscroll-behavior-inline: contain;
-    padding: 0.2rem 0.15rem 0.45rem;
-  }
-  .docbar__actions > * { flex: 0 0 auto; }
   .autosave-recovery .btn { margin: 0.25rem 0.25rem 0 0; }
 
   /* le categorie diventano righe compatte invece di blocchi alti */

@@ -1,5 +1,5 @@
 {#def world, world_context, nav, session, previous=None, following=None, can_manage=False, crumbs, pages=None, short_html=None, body_html=None, links=None, current_user=None, metadata=None, auto_edit=False #}
-{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/VStack.css, common/SaveIndicator.css, common/Grid.css #}
+{#css common/Button.css, common/Pill.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, editorial/DocEdit.css, editorial/DocIdentity.css, editorial/DocSummary.css, editorial/Metadata.css, common/VStack.css, common/SaveIndicator.css, common/Grid.css, editorial/Docbar.css, common/ConfirmDialog.css #}
 <layout.Page :title="session.title" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="sessioni">
   <editorial.Crumbs :items="crumbs" />
 
@@ -8,13 +8,7 @@
     :eyebrow="session.in_world_date ~ (' · ' ~ session.real_date|string if session.real_date else '')"
     :locked="session.locked"
     :is_draft="session.is_draft"
-    :can_manage="can_manage">
-    {% if session.is_draft %}
-    <common.Button variant="text" size="sm" data-testid="cancel-session-draft" :hx-post="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id ~ '/cancel-draft'" hx-confirm="Annullare questa bozza?" hx-swap="none">Annulla bozza</common.Button>
-    {% else %}
-    <common.Button variant="text" size="sm" data-testid="delete-session" :hx-delete="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id" :hx-confirm="'Eliminare «' ~ session.title ~ '»?'" hx-swap="none">Elimina</common.Button>
-    {% endif %}
-  </editorial.Docbar>
+    :can_manage="can_manage" />
 
   <common.Grid document>
     <div>
