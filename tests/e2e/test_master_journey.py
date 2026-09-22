@@ -332,11 +332,12 @@ def test_mobile_drawer_opens_and_closes(session: BrowserSession) -> None:
 def test_the_shell_is_one_layout_on_every_authenticated_route(
     session: BrowserSession, seed_world
 ) -> None:
-    """Rail, topbar, skip link and identity trigger are the same on Home,
-    Worlds, a world overview, a content list, Settings and Admin."""
+    """Rail, topbar, skip link and identity trigger are the same on Worlds,
+    a world overview, a content list, Settings and Admin. `/` is included
+    because it now redirects to the Worlds shell instead of a Home page."""
     world_id = seed_world("Mondo Shell")
     routes = [
-        "/",
+        "/",  # F17: redirects to /worlds, which must still carry the shell
         "/worlds",
         f"/worlds/{world_id}",
         f"/worlds/{world_id}/characters",

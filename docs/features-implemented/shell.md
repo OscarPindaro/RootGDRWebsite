@@ -7,7 +7,7 @@ every authenticated route.
 
 - `layout.Page` renders the shell: a skip link, the rail column, the scrim, the
   topbar and the content measure. Worlds, content lists and detail pages,
-  Settings, Admin and Home all render through it, so the landmarks and the
+  Settings and Admin all render through it, so the landmarks and the
   keyboard model are the same everywhere.
 - The **rail** is the dark navigation column. On the desktop it is absolutely
   positioned inside `.shell`, so its background spans the whole document height,
@@ -69,7 +69,9 @@ popover before closing.
 
 - Every page composed from `layout.Page`: `pages.worlds`, `pages.characters`,
   `pages.npcs`, `pages.places`, `pages.sessions`, `pages.stories`,
-  `pages.pages`, `pages.settings`, `pages.home` and `pages.admin`.
+  `pages.pages`, `pages.settings` and `pages.admin`. The unauthenticated
+  `pages.login` is the exception: it renders through `layout.BlankPage` so the
+  auth surface carries no shell controls (see [auth-surface.md](auth-surface.md)).
 
 ## Limits
 

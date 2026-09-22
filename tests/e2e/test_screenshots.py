@@ -7,6 +7,7 @@ and every page must render with the expected status.
 from __future__ import annotations
 
 import uuid
+from pathlib import Path
 
 import pytest
 from playwright.sync_api import sync_playwright
@@ -148,3 +149,72 @@ def test_capture_world_access_table_and_dialog() -> None:
     assert dialog.desktop.exists()
     assert dialog.phone.exists()
     assert dialog.console_errors == [], dialog.console_errors
+
+
+# --- F17: the auth surface and the authenticated landing ---------------------
+
+AUTH_PAGES = [
+    ("/login", "auth-login"),
+    ("/login?mode=register", "auth-register"),
+    ("/login?error=Email%20o%20password%20non%20validi", "auth-error"),
+]
+
+
+def test_capture_auth_pages() -> None:
+    """The cover/colophon page renders standalone on desktop and phone."""
+    base_url = _base_url()
+    root = Path("harness-artifacts") / "f17-auth"
+    root.mkdir(parents=True, exist_ok=True)
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        try:
+            for path, name in AUTH_PAGES:
+                for phone in (False, True):
+                    profile = "phone" if phone else "desktop"
+                    options = (
+                        playwright.devices["Pixel 7"]
+                        if phone
+                        else {"viewport": {"width": 1440, "height": 900}}
+                    )
+                    context = browser.new_context(**options)
+                    try:
+                        page = context.new_page()
+                        errors: list[str] = []
+                        page.on(
+                            "console",
+                            lambda message: (
+                                errors.append(message.text)
+                                if message.type == "error"
+                                else None
+                            ),
+                        )
+                        page.on("pageerror", lambda error: errors.append(str(error)))
+
+                        response = page.goto(
+                            f"{base_url}{path}", wait_until="networkidle"
+                        )
+                        assert response is not None and response.status == 200
+                        assert page.locator(".login-cover").count() == 1
+                        assert page.locator(".login-panel").count() == 1
+                        assert page.locator("#rail").count() == 0
+                        assert page.locator(".topbar").count() == 0
+                        assert page.locator("#drawer-toggle").count() == 0
+                        assert page.locator("#user-menu-trigger").count() == 0
+                        assert page.locator("#palette").count() == 0
+                        assert errors == [], f"{path} ({profile}): {errors}"
+
+                        page.screenshot(path=str(root / f"{name}-{profile}.png"))
+                    finally:
+                        context.close()
+        finally:
+            browser.close()
+
+
+def test_capture_authenticated_landing() -> None:
+    """`/` now redirects to the Worlds shell; both viewports must show it."""
+    result = capture_screenshots("/", email=ADMIN, name="authenticated-landing")
+
+    assert result.desktop.exists()
+    assert result.phone.exists()
+    assert result.console_errors == [], result.console_errors

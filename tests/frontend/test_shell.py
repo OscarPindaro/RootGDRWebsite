@@ -129,11 +129,11 @@ def test_in_world_nav_labels_counts_and_current_page(component):
 def test_global_nav_renders_without_a_world(component):
     page = component.mount(
         "layout.Page",
-        props={"title": "Home", "current_user": _user(), "active": "worlds"},
+        props={"title": "Mondi", "current_user": _user(), "active": "worlds"},
     )
 
     labels = page.locator("#rail .rail__nav .navitem__text").all_inner_texts()
-    assert labels == ["Home", "Mondi"]
+    assert labels == ["Mondi"]
     assert page.locator("#rail .rail__world").inner_text() == "Archivio"
     current = page.locator('#rail .navitem[aria-current="page"]')
     assert current.count() == 1

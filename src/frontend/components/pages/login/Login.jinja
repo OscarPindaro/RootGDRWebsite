@@ -1,68 +1,77 @@
 {#def error=None, mode="login", google_enabled=False, dev_login_enabled=False, dev_login_email="" #}
-{#css common/Alert.css, common/Button.css, common/Card.css, common/Divider.css, common/Field.css, pages/login/Login.css #}
-<layout.BlankPage title="Accedi">
+{#css common/Alert.css, common/Button.css, common/Divider.css, common/Field.css, common/MediaFrame.css, pages/login/Login.css #}
+{#js pages/login/Login.js #}
+{% set is_register = mode == "register" %}
+{% set action = "/auth/register-form" if is_register else "/auth/login-form" %}
+{% set page_title = "Registrati" if is_register else "Accedi" %}
+<layout.BlankPage :title="page_title">
   <div class="login-page">
-    <common.Card variant="elevated" max_width={{ 400 }}>
-      <div class="login-brand">
-        <span class="login-brand-mark">{{ app_name[0] | upper }}</span>
-        <span class="login-brand-name">{{ app_name }}</span>
+    <section class="login-cover" aria-label="{{ app_name }}">
+      <span class="eyebrow">Atlante di campagna</span>
+      <p class="display display--sm login-cover__name">{{ app_name }}</p>
+      <div class="rule-accent"></div>
+      <p class="lede">Ogni campagna è un volume: personaggi, luoghi, sessioni, storie e pagine di riferimento raccolti sotto un'unica copertina.</p>
+      <common.MediaFrame ratio="landscape" src="/static/img/plate-1.svg" alt="" class="login-cover__plate" />
+      <span class="eyebrow login-cover__foot">Accesso riservato</span>
+    </section>
+
+    <section class="login-panel" aria-labelledby="login-heading">
+      <div class="login-panel__inner">
+        <span class="eyebrow">{{ "Registrazione" if is_register else "Accesso" }}</span>
+        <h1 class="login-title" id="login-heading">{{ "Crea il tuo account" if is_register else "Accedi" }}</h1>
+        <p class="login-subtitle">{{ "Inserisci i tuoi dati per registrarti." if is_register else "Inserisci la tua email e la password." }}</p>
+
+        <form class="login-form" method="post" action="{{ action }}"
+              hx-post="{{ action }}" hx-target="body" hx-swap="outerHTML"
+              hx-ext="ignore:json-enc">
+          {% if error %}
+          <div class="login-summary" tabindex="-1" data-login-error>
+            <common.Alert variant="danger">{{ error }}</common.Alert>
+          </div>
+          {% endif %}
+          {% if is_register %}
+          <common.Field label="Nome" name="name" type="text" placeholder="Jane Doe" required autocomplete="name" />
+          <common.Field label="Email" name="email" type="email" placeholder="jane@example.com" required autocomplete="email" />
+          <common.Field label="Password" name="password" type="password" placeholder="Almeno 8 caratteri" required :minlength="8" autocomplete="new-password" />
+          <common.Button type="submit" variant="primary" size="md" block>Crea account</common.Button>
+          {% else %}
+          <common.Field label="Email" name="email" type="email" placeholder="jane@example.com" required autocomplete="email" />
+          <common.Field label="Password" name="password" type="password" placeholder="La tua password" required autocomplete="current-password" />
+          <common.Button type="submit" variant="primary" size="md" block>Accedi</common.Button>
+          {% endif %}
+        </form>
+        <p class="login-switch">
+          {% if is_register %}
+          Hai già un account? <a href="/login">Accedi</a>
+          {% else %}
+          Non hai un account? <a href="/login?mode=register">Registrati</a>
+          {% endif %}
+        </p>
+
+        {% if google_enabled %}
+        <common.Divider label="oppure" />
+        <common.Button variant="secondary" size="md" href="/auth/google" block>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" fill="#EA4335"/>
+          </svg>
+          Continua con Google
+        </common.Button>
+        {% endif %}
+
+        {% if dev_login_enabled %}
+        <common.Divider label="dev" />
+        <form class="login-form" method="post" action="/auth/dev-login-form"
+              hx-post="/auth/dev-login-form" hx-target="body" hx-swap="outerHTML"
+              hx-ext="ignore:json-enc">
+          <p class="login-subtitle">Modalità sviluppo — inserisci la tua email per accedere senza password.</p>
+          <common.Field label="Email" name="email" field_id="dev-login-email" type="email" required autocomplete="email" :value="dev_login_email" />
+          <common.Button type="submit" variant="secondary" size="md" block>Accesso di sviluppo</common.Button>
+        </form>
+        {% endif %}
       </div>
-
-      {% if error %}
-      <common.Alert variant="danger">{{ error }}</common.Alert>
-      {% endif %}
-
-      {% if mode == "register" %}
-      <form class="login-form"
-            hx-post="/auth/register-form"
-            hx-target="body"
-            hx-swap="outerHTML">
-        <h1 class="login-title">Crea il tuo account</h1>
-        <p class="login-subtitle">Inserisci i tuoi dati per registrarti.</p>
-        <common.Field label="Nome" name="name" type="text" placeholder="Jane Doe" required autocomplete="name" />
-        <common.Field label="Email" name="email" type="email" placeholder="jane@example.com" required autocomplete="email" />
-        <common.Field label="Password" name="password" type="password" placeholder="Almeno 8 caratteri" required minlength=8 autocomplete="new-password" />
-        <common.Button type="submit" variant="primary" size="md" block>Crea account</common.Button>
-      </form>
-      <p class="login-switch">Hai già un account? <a href="/login">Accedi</a></p>
-      {% else %}
-      <form class="login-form"
-            hx-post="/auth/login-form"
-            hx-target="body"
-            hx-swap="outerHTML">
-        <h1 class="login-title">Accedi</h1>
-        <p class="login-subtitle">Inserisci la tua email e la password.</p>
-        <common.Field label="Email" name="email" type="email" placeholder="jane@example.com" required autocomplete="email" />
-        <common.Field label="Password" name="password" type="password" placeholder="La tua password" required autocomplete="current-password" />
-        <common.Button type="submit" variant="primary" size="md" block>Accedi</common.Button>
-      </form>
-      <p class="login-switch">Non hai un account? <a href="/login?mode=register">Registrati</a></p>
-      {% endif %}
-
-      {% if google_enabled %}
-      <common.Divider label="oppure" />
-      <common.Button variant="secondary" size="md" href="/auth/google" block>
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" fill="#EA4335"/>
-        </svg>
-        Continua con Google
-      </common.Button>
-      {% endif %}
-
-      {% if dev_login_enabled %}
-      <common.Divider label="dev" />
-      <form class="login-form"
-            hx-post="/auth/dev-login-form"
-            hx-target="body"
-            hx-swap="outerHTML">
-        <p class="login-subtitle">Modalità sviluppo — inserisci la tua email per accedere senza password.</p>
-        <common.Field label="Email" name="email" field_id="dev-login-email" type="email" required autocomplete="email" :value="dev_login_email" />
-        <common.Button type="submit" variant="secondary" size="md" block>Accesso di sviluppo</common.Button>
-      </form>
-      {% endif %}
-    </common.Card>
+    </section>
   </div>
 </layout.BlankPage>

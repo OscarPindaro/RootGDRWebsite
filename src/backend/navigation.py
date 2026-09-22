@@ -100,7 +100,6 @@ class MetadataField(BaseModel):
 def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
     """Navigation shown outside a world."""
     items = [
-        NavItem(id="home", label="Home", href="/", mark="mondo"),
         NavItem(id="worlds", label="Mondi", href="/worlds", mark="mondi"),
     ]
     if is_admin:

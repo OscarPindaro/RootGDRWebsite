@@ -168,8 +168,8 @@ async def get_optional_user(
 ) -> User | None:
     """Like ``get_current_user`` but returns ``None`` instead of raising 401.
 
-    Used by view routes that render pages for both authenticated and
-    anonymous visitors (e.g. the home page).
+    Used by view routes that serve both authenticated and anonymous visitors
+    (e.g. the root route, which sends each to a different door).
     """
     try:
         return await get_current_user(request, response, db, config)

@@ -1,49 +1,70 @@
-/* ---------- Login page ---------- */
+/* ---------- Auth surface: an atlas cover beside its colophon ----------
+   The page is the product's first impression, so it is built from the same
+   vocabulary as a world page: a paper cover with the editorial type (serif
+   display, mono eyebrow, the vermilion rule) beside a surface panel that
+   hosts the form. No shell controls, no elevated card, no second language. */
+
 .login-page {
   min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  background: var(--paper);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* --- Cover --- */
+.login-cover {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--sp-4);
+  padding: clamp(2rem, 5vw, 5rem);
+  background: var(--paper-deep);
+  border-right: var(--rule-ink);
+}
+
+.login-cover__name {
+  color: var(--ink);
+}
+
+.login-cover__plate {
+  margin-top: var(--sp-4);
+  border: var(--rule-ink);
+}
+
+.login-cover__foot {
+  margin-top: var(--sp-2);
+}
+
+/* --- Colophon --- */
+.login-panel {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--clr-bg);
-  padding: var(--sp-4);
+  padding: clamp(2rem, 5vw, 5rem);
+  background: var(--surface);
 }
 
-.login-brand {
+.login-panel__inner {
+  width: 100%;
+  max-width: 26rem;
   display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-bottom: var(--sp-6);
-}
-
-.login-brand-mark {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--sp-8);
-  height: var(--sp-8);
-  border-radius: var(--radius-md);
-  background: var(--clr-accent);
-  color: var(--clr-text-on-accent);
-  font-weight: var(--weight-bold);
-  font-size: var(--text-lg);
-}
-
-.login-brand-name {
-  font-size: var(--text-lg);
-  font-weight: var(--weight-bold);
-  color: var(--clr-text);
+  flex-direction: column;
+  gap: var(--sp-4);
 }
 
 .login-title {
-  font-size: var(--text-xl);
-  font-weight: var(--weight-bold);
-  margin-bottom: var(--sp-1);
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
 }
 
 .login-subtitle {
-  font-size: var(--text-sm);
   color: var(--clr-text-secondary);
-  margin-bottom: var(--sp-1);
+  font-size: var(--text-sm);
 }
 
 .login-form {
@@ -52,11 +73,16 @@
   gap: var(--sp-4);
 }
 
+/* The error summary is the focus target after an htmx replacement; the ring
+   would otherwise flash around the whole block. */
+.login-summary:focus {
+  outline: none;
+}
+
 .login-switch {
   text-align: center;
   font-size: var(--text-sm);
   color: var(--clr-text-secondary);
-  margin-top: var(--sp-4);
 }
 
 .login-switch a {
@@ -68,6 +94,20 @@
   color: var(--clr-accent-hover);
 }
 
-.login-page .divider {
-  margin: var(--sp-5) 0;
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-cover {
+    justify-content: flex-start;
+    gap: var(--sp-3);
+    border-right: 0;
+    border-bottom: var(--rule-ink);
+  }
+
+  /* Keep the phone cover short: the plate is the first thing to go. */
+  .login-cover__plate {
+    display: none;
+  }
 }

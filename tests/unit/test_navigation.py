@@ -47,6 +47,8 @@ def test_counts_are_keyed_by_section_id() -> None:
 
 
 def test_global_nav_has_the_expected_targets() -> None:
-    hrefs = [item.href for item in global_nav("home", is_admin=True, env="dev")]
+    hrefs = [item.href for item in global_nav("worlds", is_admin=True, env="dev")]
 
-    assert hrefs == ["/", "/worlds", "/admin/users", "/components"]
+    # There is no Home destination: the authenticated landing is /worlds, so the
+    # rail must not offer a placeholder.
+    assert hrefs == ["/worlds", "/admin/users", "/components"]

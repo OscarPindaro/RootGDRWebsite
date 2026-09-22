@@ -105,12 +105,15 @@ async def test_backend_replay_creazione_personaggio_da_browser(
     app.dependency_overrides[get_db_session] = _session
     app.dependency_overrides[get_current_user] = lambda: user
     app.dependency_overrides[get_optional_user] = lambda: user
+    # F17: the authenticated landing is /worlds, so the recorded GET / is now a
+    # 303 redirect there instead of the retired Home page.
     response = await async_client.request("GET", "/")
-    assert response.status_code == 200, f"GET / -> {response.status_code}"
+    assert response.status_code == 303, f"GET / -> {response.status_code}"
+    assert response.headers["location"] == "/worlds"
     response = await async_client.request("GET", "/worlds")
     assert response.status_code == 200, f"GET /worlds -> {response.status_code}"
     response = await async_client.request("GET", "/")
-    assert response.status_code == 200, f"GET / -> {response.status_code}"
+    assert response.status_code == 303, f"GET / -> {response.status_code}"
     response = await async_client.request("GET", "/worlds")
     assert response.status_code == 200, f"GET /worlds -> {response.status_code}"
     response = await async_client.request("GET", "/worlds/new")

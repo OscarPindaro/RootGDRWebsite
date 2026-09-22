@@ -1,7 +1,7 @@
-import json
 from datetime import UTC, datetime
+from typing import Annotated
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -29,6 +29,17 @@ def _htmx_redirect(url: str) -> Response:
     return Response(status_code=204, headers={"HX-Redirect": location})
 
 
+def _redirect(request: Request, url: str) -> Response:
+    """Follow the same URL from an htmx request and from a plain form post.
+
+    htmx is told to navigate with ``HX-Redirect``; a browser without JavaScript
+    gets a real 303, so both paths land on the same page.
+    """
+    if request.headers.get("HX-Request") == "true":
+        return _htmx_redirect(url)
+    return RedirectResponse(url, status_code=303)
+
+
 @router.get("/login", response_class=HTMLResponse)
 async def login_page(
     mode: str = Query("login", pattern="^(login|register)$"),
@@ -50,11 +61,20 @@ async def login_page(
 
 @router.post("/auth/login-form")
 async def login_form(
-    body: LoginRequest,
+    request: Request,
+    body: Annotated[LoginRequest, Form()],
     db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
-    """Browser form-based login (JSON body) — sets cookies and redirects to /."""
+    """Browser form-based login — sets cookies and redirects to /.
+
+    The body is form-encoded so the form also submits without JavaScript; htmx
+    posts the same encoding (the form carries ``hx-ext="ignore:json-enc"``). A
+    refused login keeps the plain 303: htmx follows it and swaps the login page
+    back in with the error summary, which is where focus then lands. Success
+    navigates for real (``_redirect``), because swapping only the ``<body>``
+    would leave the destination without its own head assets.
+    """
     try:
         user = await login_with_password(db, body.email, body.password)
     except InvalidCredentials:
@@ -63,18 +83,23 @@ async def login_form(
         )
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)
-    response = RedirectResponse(url="/", status_code=303)
+    response = _redirect(request, "/")
     set_auth_cookies(response, access_token, refresh_token, config)
     return response
 
 
 @router.post("/auth/register-form")
 async def register_form(
-    body: RegisterRequest,
+    request: Request,
+    body: Annotated[RegisterRequest, Form()],
     db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
-    """Browser form-based registration (JSON body) — sets cookies and redirects to /."""
+    """Browser form-based registration — sets cookies and redirects to /.
+
+    Errors keep the plain 303 (htmx swaps the register page back in with the
+    summary); success navigates for real, for the same reason as login.
+    """
     try:
         user = await register_with_password(db, body, config)
     except NotInvited:
@@ -82,13 +107,17 @@ async def register_form(
             url="/login?mode=register&error=Questa email non è invitata",
             status_code=303,
         )
-    except AuthError as e:
+    except AuthError:
+        # The only AuthError registration raises is an existing account; the
+        # detail is English (it also serves the JSON API), so the page copy is
+        # written here.
         return RedirectResponse(
-            url=f"/login?mode=register&error={e.detail}", status_code=303
+            url="/login?mode=register&error=Esiste già un account con questa email",
+            status_code=303,
         )
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)
-    response = RedirectResponse(url="/", status_code=303)
+    response = _redirect(request, "/")
     set_auth_cookies(response, access_token, refresh_token, config)
     return response
 
@@ -96,19 +125,17 @@ async def register_form(
 @router.post("/auth/dev-login-form")
 async def dev_login_form(
     request: Request,
+    email: Annotated[str, Form()] = "",
     db: AsyncSession = Depends(get_db_session, scope="function"),
     config: AppConfig = Depends(get_app_config),
 ):
     """Sign in an invited or bootstrap user without a password in development."""
     if config.env != "dev":
-        return _htmx_redirect("/login?error=Accesso di sviluppo disattivato")
+        return _redirect(request, "/login?error=Accesso di sviluppo disattivato")
 
-    try:
-        email = json.loads(await request.body()).get("email", "").strip()
-    except AttributeError, json.JSONDecodeError:
-        email = ""
+    email = email.strip()
     if not email:
-        return _htmx_redirect("/login?error=Email obbligatoria")
+        return _redirect(request, "/login?error=Email obbligatoria")
 
     user = await db.scalar(select(UserModel).where(UserModel.email == email))
     if user is None:
@@ -116,8 +143,8 @@ async def dev_login_form(
         if invitation is None:
             bootstrap_email = config.auth.bootstrap_admin_email if config.auth else None
             if email != bootstrap_email:
-                return _htmx_redirect(
-                    f"/login?error=Nessun utente o invito per {email}"
+                return _redirect(
+                    request, f"/login?error=Nessun utente o invito per {email}"
                 )
             role = UserRole.ADMIN
         else:
@@ -129,7 +156,7 @@ async def dev_login_form(
 
     access_token = create_access_token(user.id, user.email, user.role)
     refresh_token = create_refresh_token(user.id)
-    response = _htmx_redirect("/")
+    response = _redirect(request, "/")
     set_auth_cookies(response, access_token, refresh_token, config)
     return response
 
