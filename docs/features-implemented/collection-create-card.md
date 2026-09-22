@@ -1,52 +1,49 @@
-# Collection create card
+# The collection create card
 
-The disputed visual direction for a collection's creation affordance: a literal
-card in the grid instead of a masthead plus. **F12 is a prototype awaiting
-visual approval; F13/F14 own deleting or generalising it and rolling it out.**
+The literal creation affordance for a collection grid: one grid cell shaped like
+an `editorial.Card`, dashed and empty, so it reads as the card that is not there
+yet.
 
 ## What it does
 
-- Renders the creation action as one grid cell beside the entity cards — the
-  warm paper surface, an ink border, and a stable square plus.
-- Reuses the existing draft-first POST route (`/worlds/{id}/characters/new`), so
-  activating it persists a draft and lands in the one-shot name editor exactly
-  as the masthead plus did.
-- Is a real `<button type="button">` with a required `label` that becomes its
-  accessible name; focus is visible and hover changes the surface without
-  moving the card.
-- Carries an optional `hint` line. On Characters the hint is used only when the
-  collection is empty, so the create card *is* the empty collection instead of
-  an empty panel with a second action beside it.
+- `editorial.CollectionCreate` is a real `<button>` with a required `label` that
+  reaches `aria-label`, so the keyboard and a screen reader reach it and it
+  carries one clear name.
+- It is one grid cell with an entity card's structure: a media area at the card
+  media ratio where the picture would be, and a body box with the same padding
+  where the name would be. Dashed ink border, transparent fill — the page
+  background shows through.
+- Hover is the entity cards' own lift onto a hard ink offset; focus is the
+  atlas accent ring, independent of hover.
+- Activating it reuses the existing draft-first POST route and lands in the same
+  one-shot name editing. When a collection is empty the card *is* the
+  collection, with a `hint` line instead of a separate empty panel.
 
 ## How it is built
 
-- `editorial.CollectionCreate.jinja` takes `action`, `label` and `hint`. It is
-  named for the collection grammar, not for characters, because F13/F14 will
-  generalise it.
-- `editorial/CollectionCreate.css` owns the `collection-create` root. It is one
-  grid cell because it is a plain grid child of `common.Grid min="card"`, the
-  same grid the entity cards use; the row stretches it to the tallest card.
-- Two alias tokens in `main.css` hold the only raw numbers:
-  `--collection-create-min-height` (the empty collection's presence) and
-  `--collection-create-plus` (the square plus, matching the prototype).
-- It declares its own stylesheet with `{#css #}`; the page's directive lists it
-  too, so an htmx swap carries the CSS.
-- The button is an htmx POST with `hx-swap="none"`, mirroring the masthead plus.
-  **No-JavaScript behaviour is unchanged, and was already absent:** the POST
-  route always answers `204` with an `HX-Redirect` header, so a plain form or
-  link cannot create today either. The GET `/characters/new` route is a
-  non-mutating redirect by design.
+- `editorial/CollectionCreate.jinja` — the button, its media and body slots, and
+  the `hx-post` to the caller's `action`.
+- `editorial/CollectionCreate.css` — the `collection-create` root. The media
+  area reads `--media-ratio-portrait`, the same token the entity card's media
+  uses, and the body repeats `.card__body`'s box so the two cards line up.
+- `--collection-create-plus` sizes the plus; `--lift-shift` and `--lift-shadow`
+  are the shared hard-offset hover the editorial cards use.
+- `pages/characters/CharacterList.jinja` renders one card after the entity cards
+  and no longer offers creation from the masthead.
 
 ## Used by
 
-- `pages.characters.CharacterList` only. F12 deliberately touches no other
-  collection; the prototype exists so the direction can be judged before F13
-  applies it anywhere else.
+- `pages.characters.CharacterList`, and the `pages/showcase` specimen.
 
 ## Limits
 
-- Prototype scope: one caller, one shape, no `size`/`variant` props.
-- The empty-state hint is a single optional line; there is no separate title.
-- The masthead plus on Characters is removed for the comparison, so the card is
-  the only creation affordance there. Every other collection keeps its masthead
-  plus until F13.
+- **Prototype.** F13 decides the grammar and F14 generalises or deletes this
+  component; nothing else may adopt it before that.
+- The card and an entity card are the same width and the same structure, so in a
+  shared grid row they stretch to the same height. Alone in a row the card is
+  its media plus its own body, which is shorter than an entity card carrying
+  name, title and owner.
+- Creation needs JavaScript. The masthead action it replaces was also htmx-only,
+  and `GET /worlds/{id}/characters/new` deliberately redirects back to the list,
+  so a plain link or form cannot create. This ticket preserved that behaviour
+  rather than adding a fallback.

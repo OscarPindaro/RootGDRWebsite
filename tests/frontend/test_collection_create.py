@@ -90,7 +90,7 @@ def test_the_hint_does_not_leak_into_the_accessible_name(component):
     assert "Nessun personaggio" in hint.inner_text()
 
 
-def test_focus_is_visible_and_does_not_move_the_card(component):
+def test_focus_is_visible_without_resizing_the_card(component):
     page = _mount(component)
     card = page.locator(".collection-create")
     before = card.bounding_box()
@@ -100,19 +100,66 @@ def test_focus_is_visible_and_does_not_move_the_card(component):
     assert card.evaluate("el => el === document.activeElement")
     assert card.evaluate("el => getComputedStyle(el).outlineStyle") != "none"
     assert card.evaluate("el => getComputedStyle(el).outlineWidth") != "0px"
-    assert card.bounding_box() == before
+    # Focusing must not resize the card; where it sits on screen may shift if
+    # the browser scrolls it into view.
+    after = card.bounding_box()
+    assert after["width"] == pytest.approx(before["width"], abs=0.5)
+    assert after["height"] == pytest.approx(before["height"], abs=0.5)
 
 
-def test_hover_changes_the_surface_not_the_geometry(component):
+def test_the_card_is_a_missing_card_not_a_filled_one(component):
+    """Dashed ink frame and a transparent fill, so the page shows through."""
     page = _mount(component)
     card = page.locator(".collection-create")
-    before = card.bounding_box()
-    resting = card.evaluate("el => getComputedStyle(el).backgroundColor")
 
-    card.hover()
+    assert card.evaluate("el => getComputedStyle(el).borderTopStyle") == "dashed"
+    assert card.evaluate("el => getComputedStyle(el).backgroundColor") == (
+        "rgba(0, 0, 0, 0)"
+    )
 
-    assert card.evaluate("el => getComputedStyle(el).backgroundColor") != resting
-    assert card.bounding_box() == before
+
+def test_hover_lifts_the_card_exactly_like_an_entity_card(component):
+    """The two read as peers, so they share one hover."""
+    page = component.mount(
+        "pages.characters.CharacterList",
+        props=_list_props([_card("Uno")]),
+        reduced_motion=True,
+    )
+    create = page.locator(".collection-create")
+    entity = page.locator(".grid > .card").first
+
+    create.hover()
+    lifted = create.evaluate(
+        "el => [getComputedStyle(el).transform, getComputedStyle(el).boxShadow]"
+    )
+    entity.hover()
+    peer = entity.evaluate(
+        "el => [getComputedStyle(el).transform, getComputedStyle(el).boxShadow]"
+    )
+
+    assert lifted == peer
+    assert lifted[0] != "none"
+
+
+def test_the_card_mirrors_an_entity_card_structure(component):
+    """Same media ratio and same body box as an entity card, so a shared grid row
+    stretches the two to the same height."""
+    page = component.mount(
+        "pages.characters.CharacterList",
+        props=_list_props([_card("Uno")]),
+    )
+    card_media = page.locator(".collection-create__media")
+    card_body = page.locator(".collection-create__body")
+    entity_media = page.locator(".grid > .card .card__media")
+    entity_body = page.locator(".grid > .card .card__body")
+
+    assert card_media.evaluate(
+        "el => getComputedStyle(el).aspectRatio"
+    ) == entity_media.evaluate("el => getComputedStyle(el).aspectRatio")
+    for edge in ("paddingLeft", "paddingRight", "paddingBottom"):
+        assert card_body.evaluate(
+            f"el => getComputedStyle(el).{edge}"
+        ) == entity_body.evaluate(f"el => getComputedStyle(el).{edge}")
 
 
 def test_it_occupies_exactly_one_entity_card_cell(component):

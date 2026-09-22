@@ -1,9 +1,17 @@
 {#def action, label, hint=None #}
 {#css editorial/CollectionCreate.css #}
+{# One grid cell shaped like an editorial.Card: a dashed, empty media area where
+   the picture would be and the label where the name would be, so it reads as
+   the card that is not there yet. Prototype only — F13/F14 own deleting or
+   generalising it. #}
 <button type="button" aria-label="{{ label }}"
         hx-post="{{ action }}" hx-swap="none"
         {{ attrs.render(class="collection-create") }}>
-  <span class="collection-create__plus" aria-hidden="true">+</span>
-  <span class="collection-create__label">{{ label }}</span>
-  {% if hint %}<span class="collection-create__hint">{{ hint }}</span>{% endif %}
+  <span class="collection-create__media" aria-hidden="true">
+    <span class="collection-create__plus">+</span>
+  </span>
+  <span class="collection-create__body">
+    <span class="collection-create__label">{{ label }}</span>
+    {% if hint %}<span class="collection-create__hint">{{ hint }}</span>{% endif %}
+  </span>
 </button>
