@@ -294,7 +294,7 @@ def test_document_is_written_in_place(session: BrowserSession, seed_world) -> No
 def test_command_palette_opens_and_searches(session: BrowserSession) -> None:
     session.goto("/worlds")
     session.page.keyboard.press("Alt+Space")
-    session.page.wait_for_selector("#palette.is-open")
+    session.page.wait_for_selector("#palette[open]")
     session.page.fill(".palette__input", "Mondo")
     session.page.wait_for_selector(".palette__item")
     assert session.errors == []

@@ -22,6 +22,11 @@ every authenticated route.
 - The **user menu** is a dedicated identity trigger — avatar, name/email and
   chevron — that opens a `common.Menu` popover. It is not a `common.Button`; no
   button skin is overridden to make an identity row.
+- The rail and the topbar both carry the **command-palette opener** (`Cerca`),
+  documenting `Alt+Spazio` and `Ctrl/⌘K` with a visible hint and
+  `aria-keyshortcuts`. `Page.js` closes the drawer before the palette opens, so
+  the dialog never lands inside the inert background (see
+  [palette.md](palette.md)).
 - Navigation keeps **native Tab order**. The rail is a landmark, not an ARIA
   composite widget, so Arrow Up/Down no longer move through its links.
   `common.Menu` keeps its own APG arrow model inside the popover.

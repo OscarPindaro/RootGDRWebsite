@@ -8,6 +8,7 @@ teardown does it unconditionally).
 
 import json
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -15,11 +16,32 @@ from urllib.parse import urlsplit
 from pydantic import BaseModel, Field
 
 
+class JsonResponse(BaseModel):
+    status: int = 200
+    body: dict | list = Field(default_factory=dict)
+    delay_ms: int = 0
+
+
 class JsonRoute(BaseModel):
     method: str
     path: str
     status: int = 200
     body: dict | list = Field(default_factory=dict)
+    delay_ms: int = 0
+    # When set, each matching request consumes the next response in order, so a
+    # test can make the first reply slower or different from the second (e.g.
+    # to prove that a stale response never repaints the list).
+    responses: list[JsonResponse] = Field(default_factory=list)
+    served: int = 0
+
+    def next_response(self) -> JsonResponse:
+        if not self.responses:
+            return JsonResponse(
+                status=self.status, body=self.body, delay_ms=self.delay_ms
+            )
+        response = self.responses[min(self.served, len(self.responses) - 1)]
+        self.served += 1
+        return response
 
 
 class ComponentServer:
@@ -96,8 +118,11 @@ class ComponentServer:
                 server._requests.append((method, path))
                 for route in server._routes:
                     if route.method == method and route.path == path:
-                        payload = json.dumps(route.body).encode()
-                        self._send(route.status, payload, "application/json")
+                        response = route.next_response()
+                        if response.delay_ms:
+                            time.sleep(response.delay_ms / 1000)
+                        payload = json.dumps(response.body).encode()
+                        self._send(response.status, payload, "application/json")
                         return
                 if method == "GET":
                     if path in server._pages:

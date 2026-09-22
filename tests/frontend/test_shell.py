@@ -194,7 +194,9 @@ def test_scrim_closes_the_drawer_and_restores_focus(component):
     page = _mount(component)
     _open_drawer(page)
 
-    page.click("#scrim")
+    # The open drawer covers the scrim's centre; click the visible strip beside
+    # it so the click is not intercepted by the rail mid-transition.
+    page.click("#scrim", position={"x": PHONE["width"] - 10, "y": PHONE["height"] // 2})
 
     page.wait_for_selector("#rail.is-open", state="detached")
     assert page.evaluate("() => document.activeElement.id === 'drawer-toggle'")
@@ -223,7 +225,7 @@ def test_opening_the_palette_from_the_drawer_closes_the_drawer(component):
     _open_drawer(page)
 
     page.click("[data-open-palette]")
-    page.wait_for_selector("#palette.is-open")
+    page.wait_for_selector("#palette[open]")
 
     assert not page.evaluate(
         "() => document.getElementById('rail').classList.contains('is-open')"

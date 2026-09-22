@@ -55,3 +55,4 @@ Template:
 | The collection creation grammar: a card in grids, a masthead command elsewhere | [collection-create-card.md](collection-create-card.md) |
 | One collection language: entity cards, story bands, ledgers and rows | [collection-language.md](collection-language.md) |
 | One accessible shell: rail, topbar, drawer and identity | [shell.md](shell.md) |
+| Search the archive from a dialog combobox | [palette.md](palette.md) |

@@ -4,5 +4,8 @@
   <common.Button icon="menu" icon_only shape="square" variant="secondary"
                  label="Apri la navigazione" id="drawer-toggle" aria-expanded="false" />
   <span class="topbar__title">{{ title }}</span>
-  <common.Button variant="text" size="sm" data-open-palette>Cerca</common.Button>
+  <common.Button variant="text" size="sm" data-open-palette
+                 aria-keyshortcuts="Alt+Space Control+K Meta+K">
+    <span class="mono">Cerca</span><span class="topbar__hint mono muted">Ctrl K</span>
+  </common.Button>
 </header>

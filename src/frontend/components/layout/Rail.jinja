@@ -43,8 +43,9 @@
     </nav>
     {% endif %}
     <div class="rail__foot">
-      <common.Button variant="text" size="sm" data-open-palette>
-        <span class="mono">Cerca</span><span class="mono muted">Alt+Spazio</span>
+      <common.Button variant="text" size="sm" data-open-palette
+                     aria-keyshortcuts="Alt+Space Control+K Meta+K">
+        <span class="mono">Cerca</span><span class="mono muted">Alt+Spazio · Ctrl K</span>
       </common.Button>
       {% if current_user %}
       <layout.UserMenu current_user={{ current_user }} />

@@ -68,14 +68,25 @@ class ComponentSession:
         *,
         status: int = 200,
         body: dict | list | None = None,
+        delay_ms: int = 0,
+        responses: list[dict] | None = None,
     ) -> None:
         """Register a fake API endpoint served by the ephemeral server.
 
         Routes accumulate, so a page that fetches several endpoints can be
-        served them all.
+        served them all. ``responses`` makes each matching request consume the
+        next reply in order; each item takes ``status``, ``body`` and
+        ``delay_ms``.
         """
         self._routes.append(
-            server.JsonRoute(method=method, path=path, status=status, body=body or {})
+            server.JsonRoute(
+                method=method,
+                path=path,
+                status=status,
+                body=body or {},
+                delay_ms=delay_ms,
+                responses=[server.JsonResponse(**reply) for reply in responses or []],
+            )
         )
         self._server.set_routes(self._routes)
 

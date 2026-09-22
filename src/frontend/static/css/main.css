@@ -603,57 +603,6 @@ ul, ol { margin: 0; padding: 0; }
 .pager a:hover .pager__title { text-decoration: underline; text-underline-offset: 3px; }
 .pager a.is-empty { pointer-events: none; opacity: 0.45; }
 
-/* ---------- 23. Command palette ---------- */
-.palette {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
-  display: none;
-  padding-top: 12vh;
-  justify-content: center;
-  background: rgba(23, 21, 15, 0.5);
-}
-.palette.is-open { display: flex; }
-.palette__box {
-  width: min(560px, 92vw);
-  align-self: flex-start;
-  background: var(--surface);
-  border: var(--rule-ink);
-  box-shadow: 8px 8px 0 rgba(23, 21, 15, 0.85);
-}
-.palette__input {
-  width: 100%;
-  border: 0;
-  border-bottom: var(--rule-ink);
-  background: transparent;
-  padding: 1rem 1.1rem;
-  font-family: var(--serif);
-  font-size: 1.2rem;
-}
-.palette__input:focus { outline: none; }
-.palette__list { max-height: 46vh; overflow-y: auto; }
-.palette__item {
-  display: grid;
-  grid-template-columns: 5.5rem 1fr auto;
-  gap: 0.7rem;
-  align-items: center;
-  width: 100%;
-  border: 0;
-  background: none;
-  text-align: left;
-  padding: 0.65rem 1.1rem;
-  border-bottom: var(--rule);
-  cursor: pointer;
-  text-decoration: none;
-  color: var(--ink);
-}
-.palette__item:hover,
-.palette__item.is-active { background: var(--paper-deep); }
-.palette__kind { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); text-transform: uppercase; }
-.palette__name { font-size: 0.95rem; }
-.palette__hint { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); }
-.palette__empty { padding: 1.2rem 1.1rem; color: var(--muted); font-size: 0.9rem; }
-
 /* ---------- 24. Media placeholder ---------- */
 .media-fallback {
   width: 100%;
@@ -1461,6 +1410,8 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   --content-max: 960px;
   --content-max-wide: 1200px;
   --dialog-max: 480px;
+  /* The command palette is a wider search surface than a dialog. */
+  --palette-max: 560px;
   --touch-target: 44px;
   --rule-width: 1px;
   --rule-width-strong: 2px;

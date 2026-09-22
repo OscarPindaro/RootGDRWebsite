@@ -38,6 +38,12 @@ surface with one named action.
   each action owns (restore, delete revision, remove current image) and writes a
   failed request into the dialog's live error region instead of a browser
   prompt.
+- `layout/Palette.js` — the command palette is its own `<dialog data-dialog>` and
+  drives it through `window.rootGdrDialog.open/close`, so it shares the focus
+  trap, Escape and focus return without composing the `common.Dialog` surface.
+  Its anatomy is a bare search field with its own state region, not a titled
+  header with a close button, so it reuses the mechanics rather than the
+  component.
 
 ## Used by
 
@@ -53,6 +59,8 @@ surface with one named action.
   The bar asks `GET /worlds/{world}/{kind}/{item}/confirm/{action}` for a
   `common.ConfirmDialog` and swaps it into `#docbar-confirm`
   (`src/backend/content/actions.py`). No `hx-confirm` remains in a component.
+- `layout.Palette` — the command palette: a native `<dialog>` that shares
+  `Dialog.js`'s mechanics without the `common.Dialog` header.
 
 ## Limits
 

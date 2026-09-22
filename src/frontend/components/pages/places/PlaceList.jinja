@@ -1,5 +1,5 @@
 {#def world, world_context, nav, places, current_place_id=None, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css, editorial/EntityCard.css, editorial/Row.css, layout/Rail.css, layout/Topbar.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css, editorial/EntityCard.css, editorial/Row.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css #}
 {% set eyebrow_text = (places | length) ~ (' luogo' if (places | length) == 1 else ' luoghi') %}
 <layout.Page title="Luoghi" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="luoghi">
   <editorial.Masthead

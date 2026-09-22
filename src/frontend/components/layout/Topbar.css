@@ -21,6 +21,8 @@
   white-space: nowrap;
 }
 
+.topbar__hint { font-size: 0.68rem; }
+
 @media (max-width: 900px) {
   .topbar { display: flex; }
 }

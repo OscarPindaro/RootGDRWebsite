@@ -23,6 +23,12 @@ trovato") or accepted it, with no way to see who is already in the app.
   rule, atlas radius and focus colour — instead of keeping a third
   text-control skin; the list is positioned under the field with the tooltip's
   z-index.
+- The command palette (`layout.Palette`) follows the same ARIA combobox
+  contract — `role="combobox"`, `aria-controls`, a `role="listbox"` of
+  `role="option"`, arrow keys, Enter and Escape — but keeps DOM focus in the
+  field with `aria-activedescendant` instead of focusing options, and rebuilds
+  the list from a server query. It does not reuse `common/Combobox.js`: the
+  component filters a list rendered in full, the palette does not.
 
 ## Limits
 

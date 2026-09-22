@@ -1,0 +1,90 @@
+/* ---------- Command palette: a search dialog over the atlas surface ---------- */
+/* A native <dialog> shown with showModal() by common.Dialog.js, so the focus
+   trap, Escape and focus return are the browser's, not a second hand-rolled
+   overlay. This file owns the palette's own geometry and states. */
+.palette {
+  width: min(var(--palette-max), 92vw);
+  margin: 12vh auto auto;
+  padding: 0;
+  border: var(--rule-ink);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 8px 8px 0 rgba(23, 21, 15, 0.85);
+  max-height: calc(100dvh - 12vh - var(--sp-8));
+}
+
+.palette::backdrop {
+  background: rgba(23, 21, 15, 0.5);
+}
+
+.palette__box {
+  display: flex;
+  flex-direction: column;
+  max-height: inherit;
+  overflow: hidden;
+}
+
+.palette__input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 0;
+  border-bottom: var(--rule-ink);
+  background: transparent;
+  color: inherit;
+  padding: 1rem 1.1rem;
+  font-family: var(--serif);
+  font-size: 1.2rem;
+}
+.palette__input:focus { outline: none; }
+
+.palette__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.palette__item {
+  display: grid;
+  grid-template-columns: 5.5rem 1fr auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.65rem 1.1rem;
+  border-bottom: var(--rule);
+  cursor: pointer;
+  color: var(--ink);
+}
+.palette__item:hover,
+.palette__item.is-active { background: var(--paper-deep); }
+.palette__kind { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); text-transform: uppercase; }
+.palette__name { font-size: 0.95rem; }
+.palette__hint { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); }
+
+.palette__state {
+  padding: 1.2rem 1.1rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+.palette__message { margin: 0; }
+.palette__retry {
+  margin-top: var(--sp-3);
+  padding: var(--sp-2) var(--sp-4);
+  min-height: var(--touch-target);
+  border: var(--rule-ink);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.palette__retry:hover { background: var(--paper-deep); }
+
+@media (max-width: 640px) {
+  .palette {
+    width: calc(100% - var(--sp-4));
+    margin: var(--sp-4) auto auto;
+    max-height: calc(100dvh - var(--sp-8));
+  }
+  .palette__input { font-size: 1.05rem; }
+}
