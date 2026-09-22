@@ -28,7 +28,9 @@ surface with one named action.
   the pending-controlled action, `[data-dialog-autofocus]` chooses the focus
   entry (the cancel control on a destructive confirmation). It exposes
   `window.rootGdrDialog` (`open`, `close`, `setPending`, `showError`) for
-  callers that drive the dialog from their own script. `htmx:beforeRequest` /
+  callers that drive the dialog from their own script. A confirm action may
+  carry `data-dialog-return="<id>"`: when the request swaps the opener away,
+  focus lands on that element instead of the body. `htmx:beforeRequest` /
   `htmx:afterSwap` / `htmx:afterRequest` / `htmx:responseError` connect the
   pattern to htmx.
 - `common/ConfirmDialog.jinja` — forwards caller attributes to the confirm
@@ -68,5 +70,6 @@ surface with one named action.
   confirmed mutation; a completion that rebuilds the list cannot return focus to
   the invoking control because the swap removed it, while cancel still does.
 - The admin revoke cannot return focus to the invoking control after a
-  successful completion, because the swapped table removes that control; focus
-  returns there on cancel.
+  successful completion, because the swapped table removes that control; it
+  declares `data-dialog-return="invitations-table"` instead, so focus lands on
+  the updated region. Focus returns to the control on cancel.

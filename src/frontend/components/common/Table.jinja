@@ -1,11 +1,12 @@
-{#def headers #}
+{#def headers, stack=False #}
 {#css common/Table.css #}
+{% set table_classes = "table" ~ (" table--stack" if stack else "") %}
 <div class="table-wrapper">
-  <table class="table">
+  <table {{ attrs.render(class=table_classes) }}>
     <thead>
       <tr>
         {% for header in headers %}
-        <th>{{ header }}</th>
+        <th scope="col">{{ header }}</th>
         {% endfor %}
       </tr>
     </thead>

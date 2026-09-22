@@ -4,7 +4,7 @@
   <form class="invite-form"
         hx-post="/admin/users/invite"
         hx-target="#invitations-table"
-        hx-swap="outerHTML">
+        hx-swap="innerHTML">
     {% if error %}
     <common.Alert variant="danger">{{ error }}</common.Alert>
     {% endif %}

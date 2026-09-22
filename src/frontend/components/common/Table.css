@@ -41,3 +41,50 @@
 .table tbody tr:first-child td {
   border-top: none;
 }
+
+/* ---------- Stacked table (phone) ----------
+   Opt-in via ``stack``: on a phone the columns fold into one row per record
+   and every cell reads its own header from ``data-label``, so the row stays
+   understandable without the header row instead of scrolling sideways. The
+   caller must label each cell; a table that compares many columns keeps the
+   real table and its horizontal scroll. */
+@media (max-width: 700px) {
+  .table--stack thead {
+    position: absolute;
+    width: var(--rule-width);
+    height: var(--rule-width);
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+  .table--stack,
+  .table--stack tbody,
+  .table--stack tr,
+  .table--stack td {
+    display: block;
+    width: 100%;
+  }
+  .table--stack tr {
+    padding: var(--sp-2) 0;
+    border-top: var(--rule);
+  }
+  .table--stack tr:first-child { border-top: none; }
+  .table--stack td {
+    display: grid;
+    grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr);
+    gap: var(--sp-3);
+    align-items: baseline;
+    padding: var(--sp-1) var(--sp-4);
+    border-top: none;
+  }
+  .table--stack td::before {
+    content: attr(data-label);
+    font-family: var(--mono);
+    font-size: var(--text-xs);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--clr-text-muted);
+  }
+  .table--stack td:not([data-label]) { grid-template-columns: minmax(0, 1fr); }
+  .table--stack td:not([data-label])::before { display: none; }
+}

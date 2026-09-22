@@ -1,5 +1,8 @@
 {#def symbol_style="icons" #}
 {#css common/Alert.css #}
+{# The swap payload for the settings form: the success message and the resolved
+   style, so Mark.js can flip every mark without a reload. The message is not
+   assertive — the host's `#settings-status` region is the polite announcer. #}
 <span data-symbol-style="{{ symbol_style }}">
-  <common.Alert variant="success">Preferenza salvata.</common.Alert>
+  <common.Alert variant="success" role="none">Preferenza salvata.</common.Alert>
 </span>

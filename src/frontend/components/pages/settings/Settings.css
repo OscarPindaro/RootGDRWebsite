@@ -1,0 +1,53 @@
+/* ---------- Settings (page-domain) ----------
+   A preference group is a heading and one row per preference. The row states
+   what changes, explains it, and carries the control; the control saves on
+   change, so there is no submit to press. */
+.settings-group {
+  max-width: var(--measure);
+}
+
+.settings-form {
+  display: grid;
+  gap: var(--sp-4);
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--sp-2) var(--sp-6);
+  align-items: center;
+  padding: var(--sp-4) 0;
+  border-bottom: var(--rule);
+}
+
+.settings-row__text {
+  display: grid;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.settings-row__title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+}
+
+.settings-row__description {
+  color: var(--clr-text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  max-width: 48ch;
+}
+
+.settings-row__control {
+  justify-self: end;
+}
+
+@media (max-width: 700px) {
+  .settings-row {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+  .settings-row__control {
+    justify-self: start;
+  }
+}

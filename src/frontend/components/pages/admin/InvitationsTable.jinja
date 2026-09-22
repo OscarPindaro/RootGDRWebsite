@@ -1,19 +1,24 @@
 {#def invitations #}
-{#css common/Button.css, common/Pill.css, common/Table.css #}
-<common.Table headers={{ ["Email", "Ruolo", "Invitato da", "Scade", "Stato", ""] }}>
+{#css common/Button.css, common/EmptyState.css, common/Pill.css, common/Table.css, common/Tooltip.css #}
+{# The invitation table is the pending/expired/accepted record. Role and status
+   are Pills, the revoke action is an IconButton that asks the shared
+   confirmation, and an accepted invite carries no action. On a phone it stacks
+   into labelled rows. #}
+{% if invitations %}
+<common.Table headers={{ ["Email", "Ruolo", "Invitato da", "Scade", "Stato", "Azioni"] }} stack={{ True }}>
   {% for inv in invitations %}
-  <tr>
-    <td>{{ inv.email }}</td>
-    <td>
+  <tr data-testid="admin-invite-row" data-invite-email="{{ inv.email }}">
+    <td data-label="Email">{{ inv.email }}</td>
+    <td data-label="Ruolo">
       {% if inv.role == 'admin' %}
       <common.Pill variant="role-admin">Amministratore</common.Pill>
       {% else %}
       <common.Pill variant="role-member">Membro</common.Pill>
       {% endif %}
     </td>
-    <td>{{ inv.invited_by_name }}</td>
-    <td><em>{{ inv.expires_at | time }}</em></td>
-    <td>
+    <td data-label="Invitato da">{{ inv.invited_by_name }}</td>
+    <td data-label="Scade"><em>{{ inv.expires_at | time }}</em></td>
+    <td data-label="Stato">
       {% if inv.accepted_at %}
       <common.Pill variant="success">Accettato</common.Pill>
       {% elif inv.is_expired %}
@@ -22,17 +27,18 @@
       <common.Pill variant="warning">In attesa</common.Pill>
       {% endif %}
     </td>
-    <td>
-      {% if not inv.accepted_at %}
-      <common.Button variant="danger" size="sm"
-        :hx-get="'/admin/users/invitations/' + inv.id|string + '/revoke'"
-        hx-target="#confirm-dialog"
-        hx-swap="innerHTML">
-        <common.Icon name="trash-2" size=16 />
-        Revoca
-      </common.Button>
-      {% endif %}
+    {% if not inv.accepted_at %}
+    <td data-label="Azioni">
+      <common.IconButton icon="trash-2" :label="'Revoca invito per ' ~ inv.email"
+                         :hx-get="'/admin/users/invitations/' + inv.id|string + '/revoke'"
+                         hx-target="#confirm-dialog" hx-swap="innerHTML"
+                         data-testid="admin-invite-revoke" />
     </td>
+    {% endif %}
   </tr>
   {% endfor %}
 </common.Table>
+{% else %}
+<common.EmptyState icon="mail" title="Nessun invito"
+                   description="Invita un utente e comparirà qui finché non accetta." />
+{% endif %}

@@ -66,7 +66,17 @@
   function restoreFocus(dialog) {
     var opener = openerByDialog.get(dialog);
     openerByDialog.delete(dialog);
-    if (opener && document.contains(opener)) opener.focus();
+    if (opener && document.contains(opener)) {
+      opener.focus();
+      return;
+    }
+    // The request that completed the action swapped the opener away. Keep focus
+    // in the region the action belonged to instead of dropping it on the body;
+    // the action declares that region with `data-dialog-return`.
+    var region = dialog.dataset.dialogReturn
+      ? document.getElementById(dialog.dataset.dialogReturn)
+      : null;
+    if (region) region.focus();
   }
 
   function close(dialog) {
@@ -99,7 +109,10 @@
   document.addEventListener('htmx:beforeRequest', function (event) {
     lastTrigger = event.detail && event.detail.elt;
     var dialog = lastTrigger && lastTrigger.closest('dialog[data-dialog]');
-    if (dialog) setPending(dialog, true);
+    if (!dialog) return;
+    setPending(dialog, true);
+    var returnTo = lastTrigger.dataset && lastTrigger.dataset.dialogReturn;
+    if (returnTo) dialog.dataset.dialogReturn = returnTo;
   });
 
   document.addEventListener('htmx:afterSwap', function (event) {

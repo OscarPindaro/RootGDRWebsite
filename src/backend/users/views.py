@@ -101,13 +101,19 @@ async def invite_user_submit(
             expire_days=expire_days,
         )
     except InvitationAlreadyExists:
-        return catalog.render(
-            "pages.admin.InviteDialog",
-            current_user=user,
-            roles=_available_roles(),
-            error=f"Esiste già un invito per {body.email}",
-            email=body.email,
-            role=body.role,
+        # The form's default target is the invitations table; a conflict must
+        # instead re-render the dialog in place with the error, so the request
+        # is retargeted to the dialog host.
+        return HTMLResponse(
+            catalog.render(
+                "pages.admin.InviteDialog",
+                current_user=user,
+                roles=_available_roles(),
+                error=f"Esiste già un invito per {body.email}",
+                email=body.email,
+                role=body.role,
+            ),
+            headers={"HX-Retarget": "#invite-dialog", "HX-Reswap": "innerHTML"},
         )
 
     invitations = await _build_invitations(db)
@@ -141,7 +147,10 @@ async def revoke_invitation_confirm(
         _attrs={
             "hx-delete": f"/admin/users/invitations/{invitation_id}",
             "hx-target": "#invitations-table",
-            "hx-swap": "outerHTML",
+            "hx-swap": "innerHTML",
+            # The swap removes the row that opened this confirmation; the shared
+            # script moves focus to the section instead of dropping it.
+            "data-dialog-return": "invitations-table",
         },
     )
 

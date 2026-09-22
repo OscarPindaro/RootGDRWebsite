@@ -57,3 +57,4 @@ Template:
 | One accessible shell: rail, topbar, drawer and identity | [shell.md](shell.md) |
 | Search the archive from a dialog combobox | [palette.md](palette.md) |
 | The auth cover/colophon and the landing redirect | [auth-surface.md](auth-surface.md) |
+| Admin users/invitations and account settings in the atlas system | [admin-settings.md](admin-settings.md) |

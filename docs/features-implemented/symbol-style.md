@@ -34,6 +34,10 @@ is visible on every mark at selection time.
 - The form posts to `/settings` with htmx; without JavaScript it still posts
   natively, the enum is persisted, and the next render resolves the style from
   the user record.
+- F18 gave the control a settings-page row: `pages.settings.Settings` puts the
+  `ButtonGroup` in a labelled preference row under the **Aspetto** group, and
+  the success message is a `common.Alert` with `role="none"` so the page's
+  `#settings-status` region (`aria-live="polite"`) is the only announcer.
 
 ## Used by
 

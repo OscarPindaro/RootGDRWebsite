@@ -1,5 +1,5 @@
-{#def variant="info" #}
+{#def variant="info", role="alert" #}
 {#css common/Alert.css #}
-<div class="alert alert-{{ variant }}" role="alert">
+<div class="alert alert-{{ variant }}" role="{{ role }}">
   {{ content }}
 </div>

@@ -1,25 +1,38 @@
 {#def current_user=None, symbol_style_options=None #}
-{#css common/Alert.css, common/Button.css, common/ButtonGroup.css, common/HStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/SaveIndicator.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css #}
+{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Menu.css, common/SaveIndicator.css, layout/Page.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css, pages/settings/Settings.css #}
+{# Account preferences. One group, one row per preference: the row names the
+   preference, explains it, and carries the control. The control saves on
+   change — there is no save button — and the status lives in one polite region
+   beside the row. The status fragment arrives through htmx, so Alert.css is
+   declared here as well as in the fragment. #}
 <layout.Page title="Impostazioni" current_user={{ current_user }} active="settings">
   <editorial.Masthead
     title="Impostazioni"
     eyebrow="Preferenze"
     lede="Le preferenze visive appartengono al tuo account e valgono in ogni mondo." />
 
-  <form class="form" style="max-width: 900px" method="post" action="/settings"
-        hx-post="/settings" hx-ext="ignore:json-enc" hx-trigger="change"
-        hx-target="#settings-status" hx-swap="innerHTML">
-    <common.HStack gap=3>
-      <common.ButtonGroup label="Simboli" name="symbol_style" selection="single"
-                          :options="symbol_style_options" :value="current_user.symbol_style"
-                          required variant="connected" size="sm" />
-      <p class="hint">Icone: un disegno lineare dice cosa fa una voce. Forme: una geometria piena dice dove sta nella struttura.</p>
-    </common.HStack>
-    {# Without JavaScript the change trigger does not fire, so the form needs a
-       native submit control; the browser ignores it when scripting is on. #}
-    <noscript>
-      <common.Button type="submit" variant="primary" size="sm">Salva</common.Button>
-    </noscript>
-    <div id="settings-status" aria-live="polite" aria-atomic="true"></div>
-  </form>
+  <section class="settings-group">
+    <editorial.SectionHead title="Aspetto" eyebrow="Come si disegna l'interfaccia" />
+    <form class="settings-form" method="post" action="/settings"
+          hx-post="/settings" hx-ext="ignore:json-enc" hx-trigger="change"
+          hx-target="#settings-status" hx-swap="innerHTML">
+      <div class="settings-row">
+        <div class="settings-row__text">
+          <h3 class="settings-row__title">Simboli</h3>
+          <p class="settings-row__description">Icone: un disegno lineare dice cosa fa una voce. Forme: una geometria piena dice dove sta nella struttura.</p>
+        </div>
+        <div class="settings-row__control">
+          <common.ButtonGroup label="Simboli" name="symbol_style" selection="single"
+                              :options="symbol_style_options" :value="current_user.symbol_style"
+                              required variant="connected" size="sm" />
+        </div>
+      </div>
+      {# Without JavaScript the change trigger does not fire, so the form needs a
+         native submit control; the browser ignores it when scripting is on. #}
+      <noscript>
+        <common.Button type="submit" variant="primary" size="sm">Salva</common.Button>
+      </noscript>
+      <div id="settings-status" aria-live="polite" aria-atomic="true"></div>
+    </form>
+  </section>
 </layout.Page>

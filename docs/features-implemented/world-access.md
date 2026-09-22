@@ -47,9 +47,14 @@ proprietario vede e cambia chi ha accesso al mondo.
 
 - La tabella scorre in orizzontale su schermo stretto invece di impilarsi: le
   quattro colonne restano allineate, il contenitore ha `overflow-x: auto`.
+  F18 ha aggiunto a `common.Table` una variante `stack` che su telefono impila
+  righe etichettate (`data-label` su ogni cella), ma solo Admin la usa: qui le
+  celle non portano l'etichetta, quindi la tabella continua a scorrere.
 - Dopo una rimozione o un annulla invito il focus non torna al controllo che ha
   aperto la conferma, perché lo swap ha rimosso quel controllo (stesso limite
   documentato per la revoca admin in [dialog-pattern.md](dialog-pattern.md)).
+  In Admin la conferma dichiara `data-dialog-return`, quindi il focus atterra
+  sulla regione aggiornata; qui la conferma non lo dichiara ancora.
 - Un errore di validazione del server chiude la richiesta con stato non-2xx: il
   dialog resta aperto e mostra il messaggio generico nella regione live, non un
   errore per campo.

@@ -1,0 +1,24 @@
+/* ---------- Admin users table (page-domain) ----------
+   The Persona cell mirrors the world access table: a face beside the name and
+   the email, so the same person reads the same way on both surfaces. */
+.users-table__person {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.users-table__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.users-table__name {
+  font-weight: var(--weight-medium);
+}
+
+.users-table__email {
+  color: var(--clr-text-muted);
+  font-size: var(--text-xs);
+}

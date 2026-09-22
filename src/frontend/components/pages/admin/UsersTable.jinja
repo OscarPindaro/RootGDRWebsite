@@ -1,18 +1,29 @@
 {#def users #}
-{#css common/Pill.css, common/Table.css #}
-<common.Table headers={{ ["Nome", "Email", "Ruolo", "Stato"] }}>
+{#css common/Avatar.css, common/EmptyState.css, common/Pill.css, common/Table.css, pages/admin/UsersTable.css #}
+{# The account table reads like the world access table: one Persona column
+   with the face and the identity, then role and status as Pills. On a phone
+   it stacks into labelled rows, so each account is still one readable record. #}
+{% if users %}
+<common.Table headers={{ ["Persona", "Ruolo", "Stato"] }} stack={{ True }}>
   {% for user in users %}
-  <tr>
-    <td>{{ user.name }}</td>
-    <td>{{ user.email }}</td>
-    <td>
+  <tr data-testid="admin-user-row" data-user-id="{{ user.id }}">
+    <td data-label="Persona">
+      <div class="users-table__person">
+        <common.Avatar :name="user.name" :avatar_url="user.avatar_url" size={{ 28 }} />
+        <div class="users-table__identity">
+          <span class="users-table__name">{{ user.name }}</span>
+          <span class="users-table__email">{{ user.email }}</span>
+        </div>
+      </div>
+    </td>
+    <td data-label="Ruolo">
       {% if user.role == 'admin' %}
       <common.Pill variant="role-admin">Amministratore</common.Pill>
       {% else %}
       <common.Pill variant="role-member">Membro</common.Pill>
       {% endif %}
     </td>
-    <td>
+    <td data-label="Stato">
       {% if user.is_active %}
       <common.Pill variant="success">Attivo</common.Pill>
       {% else %}
@@ -22,3 +33,7 @@
   </tr>
   {% endfor %}
 </common.Table>
+{% else %}
+<common.EmptyState icon="users" title="Nessun utente"
+                   description="Gli account registrati compariranno qui." />
+{% endif %}

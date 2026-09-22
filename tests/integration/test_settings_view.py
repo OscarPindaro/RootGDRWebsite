@@ -57,6 +57,8 @@ async def test_settings_renders_single_group_and_persists_change(
             assert "data-button-group-required" in page.text
             assert 'value="icons" aria-label="Icone" checked required' in page.text
             assert 'data-testid="save-settings"' not in page.text
+            # F18: the feedback region is a scoped polite status on the page.
+            assert 'id="settings-status" aria-live="polite"' in page.text
             # The form is submittable without JavaScript: a real method/action
             # and a submit control inside <noscript>.
             assert 'method="post"' in page.text
@@ -70,7 +72,9 @@ async def test_settings_renders_single_group_and_persists_change(
                 headers={"HX-Request": "true"},
             )
             assert response.status_code == 200
-            assert 'role="alert"' in response.text
+            # F18: the success feedback is polite, not assertive; the page's
+            # `#settings-status` region announces the swap.
+            assert 'role="alert"' not in response.text
             assert "Preferenza salvata." in response.text
             # The status fragment echoes the resolved style so Mark.js can flip
             # every mark without a reload; the value is the server's, not the

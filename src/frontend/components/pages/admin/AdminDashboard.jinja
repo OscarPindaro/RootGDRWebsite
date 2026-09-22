@@ -1,32 +1,40 @@
 {#def users, invitations, current_user=None #}
-{#css common/Dialog.css, common/Alert.css, common/Field.css, pages/admin/InviteDialog.css, common/Avatar.css, common/Button.css, common/Menu.css, common/Pill.css, common/Table.css, common/Tooltip.css, layout/Page.css, layout/Sidebar.css, layout/UserMenu.css, common/SaveIndicator.css, pages/admin/AdminDashboard.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css #}
+{#css common/Alert.css, common/Dialog.css, common/Field.css, pages/admin/InviteDialog.css, common/ConfirmDialog.css, common/HStack.css, common/Avatar.css, common/Button.css, common/EmptyState.css, common/Menu.css, common/Pill.css, common/SaveIndicator.css, common/Table.css, common/Tooltip.css, common/VStack.css, layout/Page.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css, pages/admin/UsersTable.css #}
 {#js common/Dialog.js #}
+{# The administration surface: the masthead carries the page action, the two
+   sections carry a heading each, and the invitation table is swapped in place.
+   The swap targets keep their heading and can receive focus, so a partial
+   replacement never strands the reader. The invite dialog and the revoke
+   confirmation arrive through htmx, so their stylesheets are declared here as
+   well as in the fragments. #}
 <layout.Page title="Utenti" current_user={{ current_user }} active="admin-users">
-  <div class="admin-dashboard">
-    <header class="admin-header">
-      <h1>Utenti</h1>
-      <common.Button variant="primary" size="md"
-        hx-get="/admin/users/invite"
-        hx-target="#invite-dialog"
-        hx-swap="innerHTML">
-        <common.Icon name="user-plus" size=16 />
-        Invita utente
-      </common.Button>
-    </header>
+  <editorial.Masthead
+    title="Utenti"
+    eyebrow="Amministrazione"
+    lede="Gli account registrati in questa istanza e gli inviti che attendono una risposta.">
+    <common.Button variant="primary" size="md" icon="user-plus"
+                   hx-get="/admin/users/invite"
+                   hx-target="#invite-dialog"
+                   hx-swap="innerHTML"
+                   data-testid="invite-user">Invita utente</common.Button>
+  </editorial.Masthead>
 
-    <section class="admin-section">
-      <h2 class="admin-section-title">Utenti</h2>
-      <pages.admin.UsersTable users={{ users }} />
-    </section>
-
-    <section class="admin-section">
-      <h2 class="admin-section-title">Inviti in sospeso</h2>
-      <div id="invitations-table">
-        <pages.admin.InvitationsTable invitations={{ invitations }} />
+  <common.VStack gap=8>
+    <section>
+      <editorial.SectionHead title="Utenti" eyebrow="Account registrati" />
+      <div id="users-table">
+        <pages.admin.UsersTable users={{ users }} />
       </div>
     </section>
 
-    <div id="invite-dialog"></div>
-    <div id="confirm-dialog"></div>
-  </div>
+    <section>
+      <editorial.SectionHead title="Inviti" eyebrow="In sospeso e accettati" />
+      <div id="invitations-table" role="region" aria-label="Inviti" tabindex="-1">
+        <pages.admin.InvitationsTable invitations={{ invitations }} />
+      </div>
+    </section>
+  </common.VStack>
+
+  <div id="invite-dialog"></div>
+  <div id="confirm-dialog"></div>
 </layout.Page>
