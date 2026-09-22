@@ -1,22 +1,27 @@
 {#def world, world_context, nav, cards, crumbs, can_manage=False, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, editorial/CollectionCreate.css #}
+{% set create_action = '/worlds/' ~ world.id ~ '/npcs/new' %}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
-<layout.Page title="NPC" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="npc">  <editorial.Masthead
+<layout.Page title="NPC" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="npc">
+  <editorial.Masthead
     title="NPC"
     :eyebrow="eyebrow_text"
     lede="Schede scritte e mantenute dal Master. I giocatori le leggono; qui stanno anche i segreti che non devono ancora sapere."
-    :crumbs="crumbs">
-    {% if can_manage %}
-    <common.IconButton icon="plus" label="Nuovo NPC" variant="primary" size="sm" :hx-post="'/worlds/' ~ world.id ~ '/npcs/new'" hx-swap="none" data-testid="create-npc" />
-    {% endif %}
-  </editorial.Masthead>
+    :crumbs="crumbs" />
 
-  {% if cards %}
+  {% if cards or can_manage %}
   <common.Grid min="card" gap=5>
     {% for card in cards %}<editorial.Card :item="card" />{% endfor %}
+    {% if can_manage %}
+    <editorial.CollectionCreate
+      :action="create_action"
+      label="Nuovo NPC"
+      :hint="'Nessun NPC: creane uno per cominciare.' if not cards else None"
+      data-testid="create-npc" />
+    {% endif %}
   </common.Grid>
   {% else %}
-  <common.EmptyState icon="user" title="Nessun NPC" description="Creane uno per cominciare." />
+  <common.EmptyState icon="user" title="Nessun NPC" description="Il Master non ne ha ancora creato nessuno." />
   {% endif %}
 
 {% if drafts %}

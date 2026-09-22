@@ -1,9 +1,9 @@
 /* ---------- Collection create ----------
-   The literal creation affordance for a collection grid (F12 prototype). It is
-   one grid cell shaped like an editorial.Card — a media area at the card ratio
-   where the picture would be, and a body box where the name would be — but
-   dashed and transparent, so it reads as the card that is not there yet.
-   Prototype only: F13/F14 own deleting or generalising it. */
+   The literal creation affordance for a collection grid: one grid cell shaped
+   like an editorial.Card — a media area at the card ratio where the picture
+   would be, and a body box where the name would be — but dashed and
+   transparent, so it reads as the card that is not there yet. The shared
+   creation entry: the states below and the hx-post live here, not in a page. */
 .collection-create {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -24,10 +24,26 @@
   color: var(--ink);
 }
 
+/* Pressing settles the card back onto the page. */
+.collection-create:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
 .collection-create:focus-visible {
   color: var(--ink);
   outline: var(--rule-width-strong) solid var(--clr-accent);
   outline-offset: var(--sp-1);
+}
+
+/* A denied role is never handed a create entry; this is the state of a create
+   action that is genuinely unavailable, and it keeps the card's geometry. */
+.collection-create:disabled,
+.collection-create:disabled:hover {
+  transform: none;
+  box-shadow: none;
+  color: var(--muted);
+  cursor: not-allowed;
 }
 
 /* Where the picture would be: the entity card's own media ratio. */

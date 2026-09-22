@@ -491,14 +491,14 @@ def test_compact_icon_actions_keep_accessible_names(
     actions = [
         ("/worlds", "create-world", "Nuovo mondo"),
         (f"/worlds/{world_id}", "create-session", "Nuova sessione"),
-        (f"/worlds/{world_id}/npcs", "create-npc", "Nuovo NPC"),
         (f"/worlds/{world_id}/places", "create-place", "Nuovo luogo"),
         (f"/worlds/{world_id}/sessions", "create-session", "Nuova sessione"),
         (f"/worlds/{world_id}/stories", "create-story", "Nuova storia"),
         (f"/worlds/{world_id}/pages", "create-page", "Nuova pagina"),
     ]
-    # Characters is deliberately absent: F12 removed the masthead plus there and
-    # replaced it with the grid create card (see test_collection_create_card_*).
+    # Characters and NPCs are deliberately absent: F12/F13 removed the masthead
+    # plus there and replaced it with the grid create card (see
+    # test_collection_create_card_*).
 
     for path, test_id, label in actions:
         session.goto(path)

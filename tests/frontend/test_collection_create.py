@@ -174,3 +174,38 @@ def test_it_occupies_exactly_one_entity_card_cell(component):
     assert create.bounding_box()["width"] == pytest.approx(
         entity.bounding_box()["width"], abs=1
     )
+
+
+def test_pressing_settles_the_lift_back_onto_the_page(component):
+    """The shared entry owns the pressed state, not the page."""
+    page = component.mount(
+        "editorial.CollectionCreate",
+        props={"action": NEW_URL, "label": "Nuovo personaggio"},
+        reduced_motion=True,
+    )
+    card = page.locator(".collection-create")
+    box = card.bounding_box()
+    page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+    card.hover()
+    assert card.evaluate("el => getComputedStyle(el).transform") != "none"
+
+    page.mouse.down()
+    try:
+        assert card.evaluate("el => getComputedStyle(el).transform") == (
+            "matrix(1, 0, 0, 1, 0, 0)"
+        )
+        assert card.evaluate("el => getComputedStyle(el).boxShadow") == "none"
+    finally:
+        page.mouse.up()
+
+
+def test_a_disabled_entry_keeps_its_geometry_and_drops_the_action(component):
+    page = _mount(component, disabled=True)
+    card = page.locator(".collection-create")
+
+    assert card.evaluate("el => el.tagName") == "BUTTON"
+    assert card.get_attribute("disabled") is not None
+    assert card.get_attribute("hx-post") is None
+    card.hover()
+    assert card.evaluate("el => getComputedStyle(el).transform") == "none"
+    assert card.evaluate("el => getComputedStyle(el).boxShadow") == "none"

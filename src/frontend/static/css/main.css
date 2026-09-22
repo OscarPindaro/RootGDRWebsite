@@ -434,12 +434,13 @@ ul, ol { margin: 0; padding: 0; }
 }
 .masthead__aside {
   border-left: var(--rule-ink);
-  padding: 1.5rem 0 1.6rem clamp(1.25rem, 3vw, 2.5rem);
+  padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) 1.6rem;
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
+  min-width: var(--masthead-aside-min);
 }
 .masthead__actions { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; }
 
@@ -530,30 +531,6 @@ ul, ol { margin: 0; padding: 0; }
   margin-top: 0.2rem;
 }
 .cover__counts { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
-
-.cover--new {
-  border-style: dashed;
-  background: transparent;
-  place-items: center;
-  min-height: 260px;
-  padding: 2rem;
-  text-align: center;
-  color: var(--muted);
-  gap: 0.6rem;
-}
-.cover--new:hover { color: var(--ink); box-shadow: none; transform: none; background: var(--surface); }
-.cover--new .plus {
-  font-family: var(--serif);
-  font-size: 2.4rem;
-  line-height: 1;
-  border: var(--rule-ink);
-  width: 56px;
-  height: 56px;
-  display: grid;
-  place-items: center;
-  background: var(--ochre);
-  color: var(--ink);
-}
 
 /* ---------- 13. Quick card ---------- */
 .quick {
@@ -1967,9 +1944,11 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   --grid-min-cover: 310px;
   --grid-min-story: 330px;
   --grid-min-quick: 190px;
-  /* The literal collection-creation card (editorial.CollectionCreate). */
   /* The creation card in a collection grid (editorial.CollectionCreate). */
   --collection-create-plus: 56px;
+  /* The masthead command cell keeps one width so the vertical rule sits in the
+     same place whether it holds one command or two. */
+  --masthead-aside-min: 5rem;
   /* The hard ink offset an openable surface lifts onto. The editorial cards
      repeat this literal today; F14 moves them onto these tokens. */
   --lift-shift: -3px;

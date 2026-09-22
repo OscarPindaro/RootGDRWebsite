@@ -52,4 +52,4 @@ Template:
 | Icons or shapes for every role mark, applied on selection | [symbol-style.md](symbol-style.md) |
 | See and change who can access a world | [world-access.md](world-access.md) |
 | Document bar: facts and commands in two regions | [docbar-regions.md](docbar-regions.md) |
-| A literal creation card in the collection grid (prototype) | [collection-create-card.md](collection-create-card.md) |
+| The collection creation grammar: a card in grids, a masthead command elsewhere | [collection-create-card.md](collection-create-card.md) |
