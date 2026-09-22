@@ -65,6 +65,7 @@ OWNED_ROOTS = (
     "dialog",
     "entity-card",
     "field",
+    "icon",
     "ledger",
     "pill",
     "row",

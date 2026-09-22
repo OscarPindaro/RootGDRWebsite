@@ -1,5 +1,5 @@
 {#def icon, label, size="sm", variant="secondary", href=None, selected=None, tooltip_position="top" #}
-{#css common/Button.css, common/Tooltip.css #}
+{#css common/Button.css, common/Tooltip.css, common/Icon.css #}
 <common.Tooltip :text="label" :position="tooltip_position">
   <common.Button :icon="icon" :label="label" icon_only shape="square" :size="size"
                  :variant="variant" :href="href" :selected="selected" _attrs={{ attrs }} />

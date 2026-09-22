@@ -16,7 +16,9 @@ frontend code here. The design process behind the visual language is in
 | `src/frontend/components/layout/` | Page shells: BlankPage, Page, Sidebar, Rail, Topbar, UserMenu | the shell, not the content |
 | `src/frontend/components/pages/` | Full pages composed from the three above, one folder per module | the domain |
 | `src/frontend/static/css/main.css` | Identity and alias tokens, reset, base typography, prose, and genuinely global document defaults | — |
-| `src/frontend/static/js/` | Application scripts (editor, htmx helpers, `feedback.js`, lucide) | — |
+| `src/frontend/static/js/` | Application scripts (the lazy editor bundle, htmx helpers, `feedback.js`, `format-times.js`) | — |
+| `src/frontend/static/fonts/` | Self-hosted Newsreader and IBM Plex latin subsets and their licences | — |
+| `src/backend/icons.py` | Generated Lucide registry; `common.Icon` renders from it | — |
 | `src/frontend/design-tokens/material3/` | Provenance for every value adopted from Material 3 | — |
 | `tests/frontend/` | Component tests, one file per component | — |
 
@@ -75,8 +77,8 @@ the same root. Roots that are still owned twice are listed in
 rules, and the test also fails on an entry that has outlived its collision. F14
 emptied that list: the roots the guard watches today are `btn`, `card`,
 `collection-meta`, `collection-surface`, `dialog`, `entity-card`, `field`,
-`ledger`, `pill`, `row`, `row-list`, `story-band`, `story-card` and `table` —
-`btn` is Button's root class, and there is no `.button` selector.
+`icon`, `ledger`, `pill`, `row`, `row-list`, `story-band`, `story-card` and
+`table` — `btn` is Button's root class, and there is no `.button` selector.
 
 ## 3. Anatomy of a component
 
@@ -202,6 +204,12 @@ A new grid ratio belongs in `Grid.css` as a variant, not in a page as an inline
   properties and lets the host override them (see `common/Menu.css`).
 - **Labels are not optional.** An icon-only action takes a `label` that reaches
   `aria-label` and the tooltip.
+- **Icons render on the server.** `common.Icon` takes a Lucide `name` and a
+  pixel `size`, and writes the `<svg>` itself from `src/backend/icons.py`. Its
+  size becomes a class reading the `--icon-*` scale, never an inline `style`; a
+  name or a size that is not in the registry raises. To add an icon, add the
+  name to `tools/build_icons.mjs` and run `npm run icons`. Never reintroduce a
+  DOM-scanning icon runtime: an htmx swap must need no icon pass.
 
 ## 7. Tests
 
@@ -210,6 +218,7 @@ A new grid ratio belongs in `Grid.css` as a variant, not in a page as an inline
 | Component | `uv run harness test frontend` | real JinjaX markup in Chromium, CSS applied, keyboard, focus, timers, htmx lifecycle. No backend, no database. |
 | Compile | `uv run harness test unit` | every component compiles (`tests/integration/jinja/test_templates_compile.py`), the conventions in §3 hold and the selector ownership in §2 holds (`tests/unit/jinja/test_component_conventions.py`) |
 | Tokens | `uv run harness material check` | the M3 inventory and `main.css` agree |
+| Payload | `uv run harness test unit` | the baseline budgets and the icon registry (`tests/unit/test_payload_budget.py`, `tests/unit/test_icons.py`) |
 | Pages | `uv run harness smoke`, `harness screenshot` | authenticated pages render, no console errors |
 
 A component test mounts the real component with typed props and asserts the

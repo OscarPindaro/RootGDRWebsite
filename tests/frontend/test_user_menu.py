@@ -42,7 +42,7 @@ def test_trigger_lays_avatar_name_and_chevron_on_one_row(component):
     avatar = _rect(page, "#user-menu-trigger .avatar")
     info = _rect(page, "#user-menu-trigger .user-menu-info")
     name = _rect(page, "#user-menu-trigger .user-menu-name")
-    chevron = _rect(page, '#user-menu-trigger [data-lucide="chevron-up"]')
+    chevron = _rect(page, '#user-menu-trigger [data-icon="chevron-up"]')
 
     # The avatar and the chevron are centered on the identity block, so the
     # row reads as one line even though name and email stack.
@@ -75,7 +75,7 @@ def test_a_long_identity_truncates_without_hiding_the_chevron(component):
 
     name = page.locator("#user-menu-trigger .user-menu-name")
     email = page.locator("#user-menu-trigger .user-menu-email")
-    chevron = page.locator('#user-menu-trigger [data-lucide="chevron-up"]')
+    chevron = page.locator('#user-menu-trigger [data-icon="chevron-up"]')
 
     assert name.evaluate("el => el.scrollWidth > el.clientWidth")
     assert email.evaluate("el => el.scrollWidth > el.clientWidth")

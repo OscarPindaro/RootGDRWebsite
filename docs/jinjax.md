@@ -463,15 +463,13 @@ into a container and let the component handle the swap:
 See `docs/features-implemented/dialog-pattern.md` for the focus, Escape, pending
 and error contract.
 
-### Lucide icons and htmx
+### Icons and htmx
 
-Lucide works by scanning the DOM for `<i data-lucide="icon-name">` elements and replacing them with inline SVGs when `lucide.createIcons()` is called. This only runs once on page load — icons inserted via htmx won't render until `lucide.createIcons()` is called again.
-
-Call `lucide.createIcons()` after htmx swaps that insert icons:
-
-```jinja
-hx-on::after-request="if(event.detail.successful) { document.querySelector('#invite-dialog dialog').showModal(); lucide.createIcons(); }"
-```
+Icons are rendered on the server: `common.Icon` writes a complete inline
+`<svg>` from the Lucide registry (`src/backend/icons.py`), so a page needs no
+icon JavaScript and an htmx swap needs no post-swap pass. Nothing scans the DOM
+for placeholders any more. See
+`docs/features-implemented/icon-and-font-delivery.md`.
 
 ### Jinja filters returning HTML
 
@@ -636,7 +634,7 @@ settings menu ended up white on a black rail.
 
 ### Layout shells
 
-- `layout.BlankPage` — the HTML shell only: `<!DOCTYPE>`, `<head>`, `catalog.render_assets()`, htmx/lucide scripts. No sidebar. Used by unauthenticated pages (login, error pages).
+- `layout.BlankPage` — the HTML shell only: `<!DOCTYPE>`, `<head>`, the self-hosted font preloads, `catalog.render_assets()`, htmx and helper scripts. No sidebar. Used by unauthenticated pages (login, error pages).
 - `layout.Page` — composes `BlankPage` + `Sidebar` + `<main class="page-main">`. Used by authenticated pages.
 
 ```jinja

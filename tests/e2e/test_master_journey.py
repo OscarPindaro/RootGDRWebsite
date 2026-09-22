@@ -550,7 +550,7 @@ def test_compact_icon_actions_keep_accessible_names(
         action = session.page.locator(f'[data-testid="{test_id}"]')
         assert action.get_attribute("aria-label") == label
         assert "btn-icon-only" in (action.get_attribute("class") or "")
-        assert action.locator(".lucide-plus").count() == 1
+        assert action.locator('[data-icon="plus"]').count() == 1
         assert (
             action.locator("xpath=ancestor::*[@data-tooltip]").get_attribute(
                 "data-tooltip"
@@ -561,7 +561,7 @@ def test_compact_icon_actions_keep_accessible_names(
     session.goto(f"/worlds/{world_id}")
     settings = session.page.locator('[data-testid="world-settings"]')
     assert settings.get_attribute("aria-label") == "Impostazioni del mondo"
-    assert settings.locator(".lucide-settings").count() == 1
+    assert settings.locator('[data-icon="settings"]').count() == 1
     assert (
         settings.locator("xpath=ancestor::*[@data-tooltip]").get_attribute(
             "data-tooltip"

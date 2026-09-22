@@ -31,7 +31,10 @@ def test_button_supports_sizes_shapes_icons_and_toggle_state() -> None:
         in html
     )
     assert 'aria-pressed="true"' in html
-    assert 'data-lucide="star"' in html
+    # The icon is server-rendered markup now (F20): an inline <svg> whose strokes
+    # inherit the button's colour, not a <i> placeholder the browser fills in.
+    assert 'data-icon="star"' in html
+    assert 'stroke="currentColor"' in html
     assert "Preferito" in html
 
 

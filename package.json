@@ -3,12 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Editor bundle for the campaign archive (CodeMirror 6).",
+  "description": "Editor bundle and generated assets for the campaign archive (CodeMirror 6, Lucide icon registry).",
   "scripts": {
-    "build": "esbuild src/frontend/js/editor/index.js --bundle --minify --format=iife --target=es2020 --outfile=src/frontend/static/js/editor.js"
+    "build": "esbuild src/frontend/js/editor/index.js --bundle --minify --format=iife --target=es2020 --outfile=src/frontend/static/js/editor.js",
+    "icons": "node tools/build_icons.mjs"
   },
   "devDependencies": {
-    "esbuild": "^0.28.2"
+    "esbuild": "^0.28.2",
+    "lucide": "1.31.0"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",

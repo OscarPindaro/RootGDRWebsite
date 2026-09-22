@@ -6,8 +6,6 @@
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
     sidebar.classList.toggle("sidebar-collapsed", collapsed);
-    // Re-init lucide icons in case the toggle icon changed
-    if (window.lucide) lucide.createIcons();
   }
 
   // Restore saved state on load

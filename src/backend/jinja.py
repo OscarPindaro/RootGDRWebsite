@@ -23,6 +23,7 @@ from fastapi.templating import Jinja2Templates
 
 from .content.constants import KIND_LABELS, ContentKind
 from .content.marks import kind_svg, mark_svg, shape_mark
+from .icons import icon_body, icon_class
 from .navigation import global_nav, world_nav
 
 
@@ -146,6 +147,8 @@ def get_catalog(
     catalog.jinja_env.globals["mark"] = mark_svg
     catalog.jinja_env.globals["kind_mark"] = kind_svg
     catalog.jinja_env.globals["shape_mark"] = shape_mark
+    catalog.jinja_env.globals["icon_body"] = icon_body
+    catalog.jinja_env.globals["icon_class"] = icon_class
     catalog.jinja_env.globals["kind_label"] = kind_label
     catalog.jinja_env.globals["global_nav"] = global_nav
     catalog.jinja_env.globals["world_nav"] = world_nav

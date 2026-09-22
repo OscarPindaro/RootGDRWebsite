@@ -59,3 +59,4 @@ Template:
 | The auth cover/colophon and the landing redirect | [auth-surface.md](auth-surface.md) |
 | Admin users/invitations and account settings in the atlas system | [admin-settings.md](admin-settings.md) |
 | Request feedback, one owner per surface, and designed error pages | [request-feedback.md](request-feedback.md) |
+| Server-rendered icons and self-hosted fonts | [icon-and-font-delivery.md](icon-and-font-delivery.md) |

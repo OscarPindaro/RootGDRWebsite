@@ -60,7 +60,7 @@ def test_the_section_offers_the_dialog_through_a_plus_icon_button() -> None:
     html = _render()
 
     assert 'data-testid="world-member-add"' in html
-    assert 'data-lucide="plus"' in html
+    assert 'data-icon="plus"' in html
     assert 'hx-target="#world-member-dialog"' in html
 
 

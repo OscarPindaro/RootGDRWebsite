@@ -1,0 +1,20 @@
+/* common.Icon — a Lucide glyph drawn on the server.
+   The size is a class, never a per-instance style attribute: each class reads
+   one step of the --icon-* scale in main.css. A button icon is sized by
+   Button.css (``.btn-icon svg``), which is more specific and still wins, so the
+   xs…xl icon map in Button.jinja keeps its geometry. */
+.icon {
+  display: inline-block;
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: 0 0 auto;
+  color: inherit;
+}
+
+.icon--xs { --icon-size: var(--icon-xs); }
+.icon--sm { --icon-size: var(--icon-sm); }
+.icon--md { --icon-size: var(--icon-md); }
+.icon--lg { --icon-size: var(--icon-lg); }
+.icon--xl { --icon-size: var(--icon-xl); }
+.icon--2xl { --icon-size: var(--icon-2xl); }
+.icon--3xl { --icon-size: var(--icon-3xl); }
