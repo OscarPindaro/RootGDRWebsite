@@ -1,0 +1,9 @@
+{#def action, label, hint=None #}
+{#css editorial/CollectionCreate.css #}
+<button type="button" aria-label="{{ label }}"
+        hx-post="{{ action }}" hx-swap="none"
+        {{ attrs.render(class="collection-create") }}>
+  <span class="collection-create__plus" aria-hidden="true">+</span>
+  <span class="collection-create__label">{{ label }}</span>
+  {% if hint %}<span class="collection-create__hint">{{ hint }}</span>{% endif %}
+</button>

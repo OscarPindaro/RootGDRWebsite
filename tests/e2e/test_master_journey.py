@@ -87,6 +87,33 @@ def test_master_can_draft_a_character(session: BrowserSession) -> None:
     assert session.errors == []
 
 
+def test_the_collection_create_card_starts_a_draft_in_name_editing(
+    session: BrowserSession, seed_world
+) -> None:
+    """F12: the creation affordance on Characters is the grid card, a real
+    button. Activating it persists a draft and lands in the name editor."""
+    world_id = seed_world("Mondo Carta")
+    session.goto(f"/worlds/{world_id}/characters")
+
+    card = session.page.locator('[data-testid="create-character"]')
+    assert card.evaluate("el => el.tagName") == "BUTTON"
+    assert card.get_attribute("aria-label") == "Nuovo personaggio"
+    assert session.page.locator(".masthead .btn-icon-only").count() == 0
+
+    card.click()
+    session.page.wait_for_selector(".docidentity__input")
+    # One-shot name editing: the ?edit=1 flag is consumed on open.
+    assert "edit=" not in session.page.url, session.page.url
+
+    character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/{character_id}"
+    ).json()
+    assert payload["isDraft"] is True
+
+    assert session.errors == []
+
+
 def test_every_world_link_loads(session: BrowserSession, seed_world) -> None:
     """Follow the rail and the overview entry points; none may 404.
 
@@ -464,13 +491,14 @@ def test_compact_icon_actions_keep_accessible_names(
     actions = [
         ("/worlds", "create-world", "Nuovo mondo"),
         (f"/worlds/{world_id}", "create-session", "Nuova sessione"),
-        (f"/worlds/{world_id}/characters", "create-character", "Nuovo personaggio"),
         (f"/worlds/{world_id}/npcs", "create-npc", "Nuovo NPC"),
         (f"/worlds/{world_id}/places", "create-place", "Nuovo luogo"),
         (f"/worlds/{world_id}/sessions", "create-session", "Nuova sessione"),
         (f"/worlds/{world_id}/stories", "create-story", "Nuova storia"),
         (f"/worlds/{world_id}/pages", "create-page", "Nuova pagina"),
     ]
+    # Characters is deliberately absent: F12 removed the masthead plus there and
+    # replaced it with the grid create card (see test_collection_create_card_*).
 
     for path, test_id, label in actions:
         session.goto(path)

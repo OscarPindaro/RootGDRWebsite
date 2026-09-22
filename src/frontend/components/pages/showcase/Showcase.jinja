@@ -1,4 +1,4 @@
-{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, roles=[], current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css, layout/Sidebar.css, common/Combobox.css, common/SaveIndicator.css, common/HStack.css, pages/showcase/Showcase.css #}
+{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, roles=[], current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css, layout/Sidebar.css, common/Combobox.css, common/SaveIndicator.css, common/HStack.css, pages/showcase/Showcase.css, editorial/CollectionCreate.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -402,6 +402,14 @@
           <p style="font-size: var(--text-sm); color: var(--clr-text-secondary);">Tinted bg, no border or shadow. For grouped content in a page.</p>
         </common.Card>
       </div>
+    </section>
+
+    <section class="showcase-section">
+      <h2>Collection create</h2>
+      <p class="showcase-note">The literal creation card for a collection grid (F12 prototype): one grid cell, warm paper surface, ink border, a stable square plus. Delete or generalise after review — F13/F14 own the rollout.</p>
+      <common.Grid min="card" gap=5 style="max-width: 520px">
+        <editorial.CollectionCreate action="/worlds/00000000-0000-0000-0000-000000000000/characters/new" label="Nuovo personaggio" hint="Nessun personaggio: creane uno per cominciare." />
+      </common.Grid>
     </section>
 
     <section class="showcase-section">

@@ -1967,6 +1967,9 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   --grid-min-cover: 310px;
   --grid-min-story: 330px;
   --grid-min-quick: 190px;
+  /* The literal collection-creation card (editorial.CollectionCreate). */
+  --collection-create-min-height: 260px;
+  --collection-create-plus: 56px;
   /* The backlinks column of a document layout (common.Grid `document`). */
   --grid-aside: 16rem;
   --grid-document-gap: clamp(1.5rem, 4vw, 3rem);

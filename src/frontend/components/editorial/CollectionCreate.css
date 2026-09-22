@@ -1,0 +1,65 @@
+/* ---------- Collection create ----------
+   The literal creation affordance for a collection grid (F12 prototype).
+   It is one grid cell: the same footprint as an entity card, a warm paper
+   surface, an ink border, and a stable square plus. Prototype only — F13/F14
+   own deleting or generalising it. */
+.collection-create {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--sp-3);
+  min-height: var(--collection-create-min-height);
+  padding: var(--sp-6);
+  border: var(--rule-ink);
+  background: var(--surface);
+  color: var(--muted);
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: background var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out);
+}
+
+.collection-create:hover {
+  color: var(--ink);
+  background: var(--paper);
+  box-shadow: var(--shadow-sm);
+}
+
+.collection-create:focus-visible {
+  color: var(--ink);
+  outline: var(--rule-width-strong) solid var(--clr-accent);
+  outline-offset: var(--sp-1);
+}
+
+.collection-create__plus {
+  display: grid;
+  place-items: center;
+  width: var(--collection-create-plus);
+  height: var(--collection-create-plus);
+  border: var(--rule-ink);
+  background: var(--ochre);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  line-height: 1;
+}
+
+.collection-create__label {
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: var(--text-xl);
+}
+
+.collection-create__hint {
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-create {
+    transition-duration: 0s;
+  }
+}

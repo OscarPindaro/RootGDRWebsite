@@ -1,22 +1,22 @@
 {#def world, world_context, nav, cards, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/SaveIndicator.css, editorial/CollectionCreate.css #}
+{% set create_action = '/worlds/' ~ world.id ~ '/characters/new' %}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
 <layout.Page title="Personaggi" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="personaggi">
   <editorial.Masthead
     title="Personaggi"
     :eyebrow="eyebrow_text"
     lede="I giocatori gestiscono le proprie schede; il Master vede e modifica tutto."
-    :crumbs="crumbs">
-    <common.IconButton icon="plus" label="Nuovo personaggio" variant="primary" size="sm" :hx-post="'/worlds/' ~ world.id ~ '/characters/new'" hx-swap="none" data-testid="create-character" />
-  </editorial.Masthead>
+    :crumbs="crumbs" />
 
-  {% if cards %}
   <common.Grid min="card" gap=5>
     {% for card in cards %}<editorial.Card :item="card" />{% endfor %}
+    <editorial.CollectionCreate
+      :action="create_action"
+      label="Nuovo personaggio"
+      :hint="'Nessun personaggio: creane uno per cominciare.' if not cards else None"
+      data-testid="create-character" />
   </common.Grid>
-  {% else %}
-  <common.EmptyState icon="user" title="Nessun personaggio" description="Creane uno per cominciare." />
-  {% endif %}
 
 {% if drafts %}
 <section class="section">
