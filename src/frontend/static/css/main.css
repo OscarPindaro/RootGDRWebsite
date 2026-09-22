@@ -1591,173 +1591,6 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
 
 .preview { margin-inline: auto; }
 
-/* ---------- 29c. Reference, blocco, collegamenti ---------- */
-/* La reference arriva dal renderer (server o editor) come pura semantica:
-   tipo, tinta, destinazione. Forma, icona e colori stanno qui. */
-.mention {
-  display: inline-flex;
-  align-items: center;
-  vertical-align: -0.15em;
-  gap: 0.3em;
-  color: var(--c, var(--ink));
-  background: rgba(23, 21, 15, 0.06);
-  border-radius: 5px;
-  padding: 0.05em 0.4em 0.05em 0.32em;
-  margin: 0 -0.1em;
-  text-decoration: none;
-  font-weight: 500;
-  box-shadow: inset 0 0 0 1px rgba(23, 21, 15, 0.08);
-}
-.mention:hover { background: rgba(23, 21, 15, 0.11); }
-@supports (background: color-mix(in srgb, red 10%, transparent)) {
-  .mention {
-    background: color-mix(in srgb, var(--c, var(--ink)) 13%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--c, var(--ink)) 26%, transparent);
-  }
-  .mention:hover { background: color-mix(in srgb, var(--c, var(--ink)) 24%, transparent); }
-}
-
-/* l'icona del tipo: disegnata qui, non spedita nel markup.
-   Vale anche per la menzione mentre si scrive (.cm-lp-mention), ma solo
-   quando il tipo è esplicito: senza --icon resterebbe un quadrato pieno. */
-.mention::before,
-.cm-lp-mention[data-kind]::before {
-  content: "";
-  width: 0.9em;
-  height: 0.9em;
-  flex: 0 0 auto;
-  background-color: currentColor;
-  -webkit-mask-image: var(--icon);
-  mask-image: var(--icon);
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-position: center;
-  -webkit-mask-size: contain;
-  mask-size: contain;
-}
-.mention[data-kind="personaggio"],
-.cm-lp-mention[data-kind="personaggio"] {
-  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M4.8 20.4a7.2 7.2 0 0 1 14.4 0'/%3E%3C/svg%3E");
-}
-.mention[data-kind="npc"],
-.cm-lp-mention[data-kind="npc"] {
-  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='9' cy='8.6' r='3.2'/%3E%3Cpath d='M3.2 19.8a5.8 5.8 0 0 1 11.6 0'/%3E%3Cpath d='M16.4 6.4a3 3 0 0 1 0 5.4'/%3E%3Cpath d='M18 19.8a5.6 5.6 0 0 0-2.5-4.6'/%3E%3C/svg%3E");
-}
-.mention[data-kind="luogo"],
-.cm-lp-mention[data-kind="luogo"] {
-  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z'/%3E%3Ccircle cx='12' cy='10' r='2.6'/%3E%3C/svg%3E");
-}
-.mention[data-kind="sessione"],
-.cm-lp-mention[data-kind="sessione"] {
-  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='3' y='5.5' width='18' height='15.5'/%3E%3Cline x1='3' y1='10.5' x2='21' y2='10.5'/%3E%3Cline x1='8' y1='3' x2='8' y2='7.5'/%3E%3Cline x1='16' y1='3' x2='16' y2='7.5'/%3E%3C/svg%3E");
-}
-.mention[data-kind="storia"],
-.cm-lp-mention[data-kind="storia"] {
-  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M4 5.6A2.6 2.6 0 0 1 6.6 3H19.5v15.5H6.6A2.6 2.6 0 0 0 4 21z'/%3E%3Cline x1='8.5' y1='7.8' x2='15.5' y2='7.8'/%3E%3Cline x1='8.5' y1='11.4' x2='15.5' y2='11.4'/%3E%3C/svg%3E");
-}
-.mention[data-kind="pagina"],
-.cm-lp-mention[data-kind="pagina"] {
-  --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M6 3h8l4.5 4.5V21H6z'/%3E%3Cpolyline points='14,3 14,7.5 18.5,7.5'/%3E%3Cline x1='9' y1='12.5' x2='15' y2='12.5'/%3E%3Cline x1='9' y1='16' x2='15' y2='16'/%3E%3C/svg%3E");
-}
-
-/* la tinta arriva come nome del token, non come stile inline */
-.mention[data-color="p1"] { --c: var(--p1); }
-.mention[data-color="p2"] { --c: var(--p2); }
-.mention[data-color="p3"] { --c: var(--p3); }
-.mention[data-color="p4"] { --c: var(--p4); }
-.mention[data-color="p5"] { --c: var(--p5); }
-.mention[data-color="p6"] { --c: var(--p6); }
-.mention[data-color="p7"] { --c: var(--p7); }
-.mention[data-color="p8"] { --c: var(--p8); }
-.mention[data-color="p9"] { --c: var(--p9); }
-.mention[data-color="p10"] { --c: var(--p10); }
-.mention[data-color="p11"] { --c: var(--p11); }
-.mention[data-color="p12"] { --c: var(--p12); }
-
-.mention--missing {
-  color: var(--muted);
-  background: transparent;
-  box-shadow: inset 0 0 0 1px var(--line);
-  font-weight: 400;
-  cursor: help;
-}
-.mention--missing::before { display: none; }
-
-/* la sorgente di una reference resta nel documento ma non si vede: al suo
-   posto c'è la pillola. Vale ovunque, non solo nelle pagine dei motori. */
-.mention-hidden { display: none; }
-
-/* nel corpo dell'articolo le regole dei link non devono cancellare la
-   pillola: colore e sottolineatura della reference vincono su quelle */
-.prose .mention,
-html[data-accent="gradiente"] .prose a.mention {
-  color: var(--c, var(--ink));
-  text-decoration: none;
-  border-bottom: 0;
-  background-image: none;
-  padding: 0.05em 0.4em 0.05em 0.32em;
-}
-
-/* menu dei suggerimenti mentre si scrive @: è l'autocomplete di CodeMirror,
-   a cui va data la pelle dell'app (il vecchio .mention-menu era del prototipo) */
-.cm-tooltip.cm-tooltip-autocomplete {
-  border: var(--rule-ink);
-  background: var(--surface);
-  box-shadow: 5px 5px 0 rgba(23, 21, 15, 0.8);
-  min-width: 240px;
-  max-width: 340px;
-  font-family: var(--sans);
-}
-.cm-tooltip.cm-tooltip-autocomplete > ul {
-  font-family: var(--sans);
-  max-height: 340px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-}
-.cm-tooltip.cm-tooltip-autocomplete > ul > li {
-  display: grid;
-  grid-template-columns: 12px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.45rem 0.7rem;
-  border-bottom: var(--rule);
-  color: var(--ink);
-}
-.cm-tooltip.cm-tooltip-autocomplete > ul > li:last-child { border-bottom: 0; }
-.cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
-  background: var(--paper-deep);
-  color: var(--ink);
-}
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--muted);
-  opacity: 1;
-}
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p1 { background: var(--p1); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p2 { background: var(--p2); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p3 { background: var(--p3); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p4 { background: var(--p4); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p5 { background: var(--p5); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p6 { background: var(--p6); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p7 { background: var(--p7); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p8 { background: var(--p8); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p9 { background: var(--p9); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p10 { background: var(--p10); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p11 { background: var(--p11); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionIcon-p12 { background: var(--p12); }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionLabel { font-size: 0.92rem; }
-.cm-tooltip.cm-tooltip-autocomplete .cm-completionDetail {
-  font-family: var(--mono);
-  font-size: 0.58rem;
-  font-style: normal;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
 /* il volto è il comando per cambiare l'immagine */
 .face--editable { cursor: pointer; }
 .face__hint {
@@ -2160,6 +1993,23 @@ html[data-accent="gradiente"] .prose a.mention {
   --switch-thumb-size: 16px;
   --switch-thumb-size-checked: 24px;
   --switch-radius: var(--radius-sm);
+  /* Reference (mention) weight: one source for the rendered prose and the
+     live-preview decoration, so the reading and writing states cannot drift.
+     The tinted values are computed in the component stylesheet from `--c`. */
+  --mention-pad: 0.02em 0.25em;
+  --mention-gap: 0.25em;
+  --mention-icon: 0.8em;
+  --mention-radius: var(--radius-sm);
+  --mention-weight: var(--weight-regular);
+  --mention-bg: rgba(23, 21, 15, 0.06);
+  --mention-bg-hover: rgba(23, 21, 15, 0.11);
+  --mention-ring: inset 0 0 0 1px rgba(23, 21, 15, 0.08);
+  /* The `@` suggestion menu (CodeMirror's autocomplete). */
+  --mention-menu-min: 240px;
+  --mention-menu-max: 340px;
+  --mention-menu-height: 340px;
+  --mention-menu-column: 12px;
+  --mention-menu-dot: 12px;
 }
 
 /* Editorial defaults for bare elements used by components. */

@@ -1,5 +1,5 @@
 {#def world_id, base, value, value_html, version, can_manage=False, locked=False #}
-{#css editorial/DocSummary.css #}
+{#css editorial/DocSummary.css, editorial/Reference.css #}
 <div class="docsummary" data-doc-summary data-world-id="{{ world_id }}"
      data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>

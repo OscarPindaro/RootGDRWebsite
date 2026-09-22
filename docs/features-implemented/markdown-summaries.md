@@ -21,6 +21,7 @@ Campaign documents have short CommonMark descriptions with the same semantic ref
 - Ambiguous unqualified references are not guessed.
 - The `@` menu is CodeMirror's autocomplete with the app skin: a tinted dot per
   suggestion, the name and the uppercase kind. A mention reads as the rendered
-  pill while writing too; the type icon shows when the label carries its kind
-  (`@[luogo:Name]`).
+  reference while writing too — the same tint, kind icon and geometry, from the
+  shared `--mention-*` tokens; the type icon shows when the label carries its
+  kind (`@[luogo:Name]`).
 - Autosave failures retain the local draft; stale versions return HTTP 409 and locked documents return HTTP 423.

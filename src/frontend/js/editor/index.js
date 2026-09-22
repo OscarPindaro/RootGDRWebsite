@@ -68,15 +68,19 @@ const theme = EditorView.theme({
     padding: "0 0.15em",
   },
   ".cm-lp-link": { color: "var(--cobalt)", textDecoration: "underline" },
-  /* A mention reads the same while writing and while reading: the pill the
-     renderer produces, not a bare link. */
+  /* A mention reads the same while writing and while reading: the same
+     `--mention-*` tokens the rendered pill reads, so the two cannot drift. */
   ".cm-lp-mention": {
     color: "var(--ink)",
-    background: "rgba(23, 21, 15, 0.06)",
-    borderRadius: "5px",
-    padding: "0.05em 0.4em",
-    fontWeight: "500",
-    boxShadow: "inset 0 0 0 1px rgba(23, 21, 15, 0.08)",
+    background: "var(--mention-bg)",
+    borderRadius: "var(--mention-radius)",
+    padding: "var(--mention-pad)",
+    fontWeight: "var(--mention-weight)",
+    boxShadow: "var(--mention-ring)",
+    display: "inline-flex",
+    alignItems: "center",
+    verticalAlign: "-0.15em",
+    gap: "var(--mention-gap)",
   },
 });
 

@@ -31,6 +31,7 @@ Template:
 | Material 3 token provenance | [material-token-provenance.md](material-token-provenance.md) |
 | Create campaign content as drafts | [draft-first-content.md](draft-first-content.md) |
 | Render and reference Markdown summaries | [markdown-summaries.md](markdown-summaries.md) |
+| A mention that reads as a link in a sentence | [mention-weight.md](mention-weight.md) |
 | Keep and restore uploaded images | [image-history.md](image-history.md) |
 | Edit the image, face and history in place | [live-image-editor.md](live-image-editor.md) |
 | Buttons and selection groups, stable geometry | [button-groups.md](button-groups.md) |
