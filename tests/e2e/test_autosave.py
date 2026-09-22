@@ -44,6 +44,26 @@ def _wait_saved(session: BrowserSession) -> None:
     )
 
 
+def test_save_indicator_overlays_the_padding_without_shifting_content(
+    session: BrowserSession, seed_world
+) -> None:
+    """The page-level status sits in the container's top padding band, so
+    showing it never moves the document bar below it (the user reported the
+    "Salvato" row stealing space)."""
+    _character(session, seed_world, "indicatore")
+    docbar = session.page.locator(".docbar")
+    before = docbar.evaluate("el => el.getBoundingClientRect().y + window.scrollY")
+
+    _open_body(session)
+    session.page.keyboard.type(" spostamento")
+    _wait_saved(session)
+
+    after = docbar.evaluate("el => el.getBoundingClientRect().y + window.scrollY")
+    assert abs(after - before) < 1, (before, after)
+    assert session.page.locator("[data-autosave-status]").is_visible()
+    assert session.errors == []
+
+
 def test_idle_hard_max_threshold_and_explicit_flushes(
     session: BrowserSession, seed_world
 ) -> None:

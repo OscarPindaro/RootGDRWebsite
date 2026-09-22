@@ -6,6 +6,7 @@
     {% for option in options %}
     <label class="choice-grid__option" title="{{ option.label }}">
       <input class="choice-grid__input" type="radio" name="{{ name }}" value="{{ option.value }}"
+             aria-label="{{ option.label }}"
              {% if option.value == value %}checked{% endif %}>
       <span class="choice-grid__mark"{% if kind == "tint" %} style="--c: var(--{{ option.value }});"{% endif %}>
         {%- if kind == "emoji" -%}{{ option.value }}

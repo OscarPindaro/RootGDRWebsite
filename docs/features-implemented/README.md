@@ -60,3 +60,4 @@ Template:
 | Admin users/invitations and account settings in the atlas system | [admin-settings.md](admin-settings.md) |
 | Request feedback, one owner per surface, and designed error pages | [request-feedback.md](request-feedback.md) |
 | Server-rendered icons and self-hosted fonts | [icon-and-font-delivery.md](icon-and-font-delivery.md) |
+| Final responsive and visual pass: audit table, fixes, accepted findings | [final-pass.md](final-pass.md) |

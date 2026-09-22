@@ -29,12 +29,12 @@ side-by-side.
 | `.masthead`, `.rule-accent`, `.eyebrow`, `.display`, `.lede` | `editorial.Masthead` | faithful |
 | `.crumbs` | `editorial.Crumbs` | faithful |
 | `.quick`, `.quick__mark/title/count/foot` | `editorial.Quick` | faithful |
-| `.card`, `.card__media/body/name` | `editorial.EntityCard` | faithful |
+| `.entity-card`, `.entity-card__media/body/name` | `editorial.EntityCard` | faithful |
 | `.face`, `.mark`, `.mark__svg` | `editorial.Face`, `common.Mark` | faithful |
 | `.cover` | `editorial.Cover` | faithful |
 | `.ledger`, `.ledger__row` | `editorial.Ledger`, `editorial.LedgerRow` | faithful |
-| `.story`, `.story__band/body/title/sum` | `editorial.StoryCard`, `editorial.StoryBand` | faithful |
-| `.rowlist`, `.row`, `.row__name/desc/meta` | `editorial.RowList`, `editorial.Row` | faithful |
+| `.story-card`, `.story-card__body/title/sum`, `.story-band` | `editorial.StoryCard`, `editorial.StoryBand` | faithful |
+| `.row-list`, `.row`, `.row__name/desc/meta` | `editorial.RowList`, `editorial.Row` | faithful |
 | `.timeline` | `editorial.Timeline` | faithful |
 | `.wherenow` | Inline in `pages.worlds.WorldOverview` | faithful |
 | `.plogo` | `editorial.Plogo` | faithful |

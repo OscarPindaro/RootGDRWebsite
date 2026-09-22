@@ -6,7 +6,7 @@
 {% if notice %}
 <common.Alert variant="success">{{ notice }}</common.Alert>
 {% endif %}
-<common.Table headers={{ ["Persona", "Ruolo", "Stato", "Azioni"] }}>
+<common.Table headers={{ ["Persona", "Ruolo", "Stato", "Azioni"] }} label="Giocatori">
   {% for member in members %}
   {% set is_owner = member.user.id | string == world.created_by.id | string %}
   <tr data-testid="world-member-row" data-member-id="{{ member.user.id }}">

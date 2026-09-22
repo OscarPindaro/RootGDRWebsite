@@ -187,6 +187,11 @@ uv run harness env teardown
 - `harness dev up` starts both apps with reload on (`--no-reload` turns it off).
   `harness dev seed --db work|show` migrates and seeds one database; `reset`
   drops the schema first.
+- `harness dev reset --db show` run against an already-serving stack can answer
+  the seed's first request with a 500: dropping the schema invalidates asyncpg's
+  prepared-statement plans and the pool only clears them once it has seen the
+  error. Run the reset again (or restart the app) and it seeds cleanly — this is
+  not an application failure.
 - `.env` (gitignored) holds the dev database names and `AUTH__JWT_SECRET`; copy
   `.env.example` and add a dev secret if it is missing.
 - `harness compare` pairs an application page with its prototype page (see

@@ -9,6 +9,7 @@
     "icons": "node tools/build_icons.mjs"
   },
   "devDependencies": {
+    "axe-core": "^4.13.0",
     "esbuild": "^0.28.2",
     "lucide": "1.31.0"
   },

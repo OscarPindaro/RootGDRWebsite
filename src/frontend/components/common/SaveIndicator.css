@@ -2,13 +2,23 @@
    identity, the summary and the body share one document, so they share one
    status. The editor script writes the text and `data-state` onto this
    element, so the mark is a pseudo-element — a child would be wiped by
-   `textContent`. */
+   `textContent`.
+
+   It overlays the container's top padding band instead of taking a row of its
+   own: appearing and disappearing never shifts the masthead, the crumbs or the
+   document bar, so the "Salvato" status is chrome, not a moving part of the
+   page. `--container-pad-top` is the same value `.container` pads with. */
 .save-indicator {
+  position: absolute;
+  top: 0;
+  right: var(--gutter);
+  height: var(--container-pad-top);
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: flex-end;
   gap: var(--sp-2);
-  margin: 0 0 var(--sp-3);
+  padding-bottom: var(--sp-1);
+  margin: 0;
   font-family: var(--sans);
   font-size: var(--text-sm);
   line-height: var(--leading-normal);
@@ -18,6 +28,7 @@
 .save-indicator::before {
   content: "";
   flex: 0 0 auto;
+  align-self: center;
   width: var(--sp-2);
   height: var(--sp-2);
   border-radius: var(--radius-full);

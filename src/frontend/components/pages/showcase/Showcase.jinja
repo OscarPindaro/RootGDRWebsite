@@ -494,7 +494,7 @@
 
     <section class="showcase-section">
       <h2>Composed: table using all layers</h2>
-      <common.Table headers={{ ["Name", "Email", "Role", "Status"] }}>
+      <common.Table headers={{ ["Name", "Email", "Role", "Status"] }} label="Example table">
         {% for user in users %}
         <tr>
           <td>{{ user.name }}</td>

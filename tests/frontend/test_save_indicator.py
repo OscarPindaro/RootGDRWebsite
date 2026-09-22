@@ -73,13 +73,17 @@ def test_saving_and_dirty_share_a_colour(component):
     assert colours[0] == colours[1]
 
 
-def test_it_sits_at_the_top_of_the_content(component):
+def test_it_overlays_the_content_top_without_taking_a_row(component):
     page = _mount(component)
 
-    # Right aligned, so it reads as page chrome and not as body text.
-    assert (
-        page.locator(".save-indicator").evaluate(
-            "el => getComputedStyle(el).justifyContent"
-        )
-        == "flex-end"
+    # It is taken out of flow and anchored to the container's top padding band,
+    # right aligned, so showing or hiding it never shifts the page content.
+    style = page.locator(".save-indicator").evaluate(
+        "el => { const s = getComputedStyle(el);"
+        " return {position: s.position, top: s.top, right: s.right,"
+        " justify: s.justifyContent}; }"
     )
+    assert style["position"] == "absolute"
+    assert style["top"] == "0px"
+    assert style["right"] != "auto"
+    assert style["justify"] == "flex-end"

@@ -22,7 +22,7 @@ entries:
         app: ".masthead"
         prototype: ".masthead"
       quick_strip:
-        app: ".grid--quick"
+        app: ".grid-flush"
         prototype: ".grid--quick"
   - pattern: "^/worlds/[^/]+/characters$"
     prototype: personaggi.html

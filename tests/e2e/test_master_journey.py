@@ -151,9 +151,7 @@ def test_overview_matches_the_prototype_geometry(
     )
     assert overflow <= 1, overflow
 
-    gap = session.page.eval_on_selector(
-        ".grid--quick", "el => getComputedStyle(el).gap"
-    )
+    gap = session.page.eval_on_selector(".grid-flush", "el => getComputedStyle(el).gap")
     assert gap == "0px", gap
 
     mark = session.page.eval_on_selector(
@@ -194,20 +192,40 @@ def test_settings_menu_is_dark_on_the_rail(session: BrowserSession) -> None:
 
 def test_character_form_uses_face_pickers(session: BrowserSession, seed_world) -> None:
     """The face is chosen from an emoji grid and a tint strip, not dropdowns,
-    and both reach the server through the JSON-encoded htmx form."""
+    and both reach the server through the image editor's JSON PATCH."""
     world_id = seed_world("Mondo Picker")
     session.goto(f"/worlds/{world_id}/characters")
     session.page.click('[data-testid="create-character"]')
     session.page.wait_for_selector('input[name="animal"]')
-    with session.page.expect_navigation():
-        session.page.check('input[name="animal"][value="🦊"]', force=True)
-    with session.page.expect_navigation():
-        session.page.check('input[name="tint"][value="p8"]', force=True)
 
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
-    payload = session.expect_api(
-        f"/api/worlds/{world_id}/characters/{character_id}"
-    ).json()
+    api_path = f"/api/worlds/{world_id}/characters/{character_id}"
+
+    # Each choice auto-saves in place: wait for the PATCH it triggers, not a
+    # navigation (there is none). Waiting for "Salvato" between the two also
+    # keeps the tint PATCH from racing the version the symbol PATCH writes back.
+    def _saved() -> None:
+        session.page.wait_for_function(
+            "() => document.querySelector('[data-image-status]')"
+            ".textContent === 'Salvato'"
+        )
+
+    with session.page.expect_response(
+        lambda response: (
+            response.request.method == "PATCH" and response.url.endswith(api_path)
+        )
+    ):
+        session.page.check('input[name="animal"][value="🦊"]', force=True)
+    _saved()
+    with session.page.expect_response(
+        lambda response: (
+            response.request.method == "PATCH" and response.url.endswith(api_path)
+        )
+    ):
+        session.page.check('input[name="tint"][value="p8"]', force=True)
+    _saved()
+
+    payload = session.expect_api(api_path).json()
     assert payload["animal"] == "🦊"
     assert payload["tint"] == "p8"
 

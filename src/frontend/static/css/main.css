@@ -131,6 +131,9 @@
   --navitem-mark: 18px;
   --navitem-mark-sub: 14px;
   --measure: 68ch;
+  /* The container's top padding is also the band the page-level save indicator
+     overlays, so it never pushes the content down. */
+  --container-pad-top: clamp(1.75rem, 3.4vw, 3.5rem);
 
   /* forma */
   --radius: 3px;
@@ -239,10 +242,11 @@ ul, ol { margin: 0; padding: 0; }
    component. .container stays here: it is the one genuinely global document
    default, the measure every page renders through layout.Page. */
 .container {
+  position: relative;
   width: 100%;
   max-width: 1220px;
   margin: 0 auto;
-  padding: clamp(1.75rem, 3.4vw, 3.5rem) var(--gutter) 5rem;
+  padding: var(--container-pad-top) var(--gutter) 5rem;
 }
 
 .container--wide { max-width: 1440px; }

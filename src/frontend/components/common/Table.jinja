@@ -1,7 +1,10 @@
-{#def headers, stack=False #}
+{#def headers, stack=False, label=None #}
 {#css common/Table.css #}
 {% set table_classes = "table" ~ (" table--stack" if stack else "") %}
-<div class="table-wrapper">
+{# A non-stacked table keeps its real columns and scrolls sideways on a phone,
+   so its wrapper must be reachable from the keyboard (WCAG 2.1.1). A stacked
+   table folds into one row per record and never scrolls, so it stays plain. #}
+<div class="table-wrapper"{% if not stack %} tabindex="0"{% if label %} role="region" aria-label="{{ label }}"{% endif %}{% endif %}>
   <table {{ attrs.render(class=table_classes) }}>
     <thead>
       <tr>
