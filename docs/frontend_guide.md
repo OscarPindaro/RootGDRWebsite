@@ -11,12 +11,12 @@ frontend code here. The design process behind the visual language is in
 
 | Path | Holds | Knows about |
 |---|---|---|
-| `src/frontend/components/common/` | Reusable primitives: Button, Card, Field, Menu, Dialog, Pill, Table, Avatar, Alert, Divider, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, IconButton, MediaFrame, EmptyState, Switch, Tabs, SaveIndicator, Combobox | nothing domain-specific |
+| `src/frontend/components/common/` | Reusable primitives: Button, Card, Field, Menu, Dialog, Pill, Table, Avatar, Alert, Divider, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, IconButton, MediaFrame, EmptyState, Switch, Tabs, SaveIndicator, Combobox, RequestFallback | nothing domain-specific |
 | `src/frontend/components/editorial/` | The product's vocabulary and its atlas identity: Masthead, Cover, Face, Docbar, DocIdentity, DocEdit, DocSummary, ImageEditor, Links, Quick, SectionHead, Stat, Timeline, Crumbs, Plogo | worlds, characters, sessions, the printed-atlas look |
 | `src/frontend/components/layout/` | Page shells: BlankPage, Page, Sidebar, Rail, Topbar, UserMenu | the shell, not the content |
 | `src/frontend/components/pages/` | Full pages composed from the three above, one folder per module | the domain |
 | `src/frontend/static/css/main.css` | Identity and alias tokens, reset, base typography, prose, and genuinely global document defaults | — |
-| `src/frontend/static/js/` | Application scripts (editor, htmx helpers, lucide) | — |
+| `src/frontend/static/js/` | Application scripts (editor, htmx helpers, `feedback.js`, lucide) | — |
 | `src/frontend/design-tokens/material3/` | Provenance for every value adopted from Material 3 | — |
 | `tests/frontend/` | Component tests, one file per component | — |
 
@@ -187,6 +187,12 @@ A new grid ratio belongs in `Grid.css` as a variant, not in a page as an inline
 - **Stable geometry.** Shape and width do not change between enabled, hovered,
   pressed and selected states, and pressing never moves a neighbour. Communicate
   state with colour, fill, border and focus ring.
+- **Waiting is text and ink, not a spinner.** An htmx request is marked busy by
+  `static/js/feedback.js`: the control is `disabled` and `aria-busy` and keeps
+  its box, with an ink rule (`is-busy`); a long, genuinely indeterminate job owns
+  its own text instead. A failed request a surface does not own shows one
+  page-level `common.RequestFallback`; a failed navigation gets
+  `pages.errors.ErrorPage`.
 - **Motion is functional.** Respect `prefers-reduced-motion`; never use motion
   as the only signal of a selection.
 - **Touch targets** are at least `--touch-target` (44px) where a control is used

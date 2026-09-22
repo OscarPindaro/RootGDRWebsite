@@ -1,0 +1,13 @@
+/* ---------- Request fallback (one page-level failure banner) ----------
+   The global htmx controller reveals this when a request fails outside a
+   surface that shows its own error. It sits at the top of the content, above
+   the swapped region, so it is visible whatever the request targeted. */
+
+.request-fallback {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: var(--sp-2) var(--gutter);
+  background: var(--surface);
+  border-bottom: var(--rule-ink);
+}

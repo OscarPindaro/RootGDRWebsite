@@ -1,0 +1,57 @@
+/* ---------- Error page: a standalone boundary surface ----------
+   The page a failed browser navigation lands on, composed from the same atlas
+   vocabulary as the login cover. No shell: an error can happen before the rail
+   has a world, and an anonymous visitor has to read it. */
+
+.error-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--sp-10) var(--gutter);
+  background: var(--paper);
+}
+
+.error-page__inner {
+  width: 100%;
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.error-page__code {
+  font-family: var(--serif);
+  color: var(--vermilion);
+}
+
+.error-page__title {
+  font-family: var(--serif);
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+}
+
+.error-page__message {
+  color: var(--clr-text-secondary);
+}
+
+.error-page__request {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-2);
+  color: var(--clr-text-muted);
+  font-size: var(--text-xs);
+}
+
+.error-page__id {
+  font-family: var(--mono);
+}
+
+.error-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}

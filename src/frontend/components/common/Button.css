@@ -6,6 +6,7 @@
   --btn-height: var(--button-height-md);
   --btn-padding: var(--button-padding-md);
   --btn-icon-size: var(--button-icon-md);
+  position: relative;
   display: inline-flex;
   min-width: var(--btn-height);
   height: var(--btn-height);
@@ -34,6 +35,18 @@
 .btn[aria-disabled="true"] {
   opacity: .45;
   cursor: not-allowed;
+}
+
+/* A request in flight: the control keeps its box and its label, and an ink rule
+   reads along the bottom edge. No spinner — the feedback is text and a rule,
+   and the rule is absolutely positioned so disabling never moves a neighbour.
+   The global htmx controller sets `is-busy` (see static/js/feedback.js). */
+.btn.is-busy:not(.btn-text)::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  border-bottom: 2px solid var(--clr-accent);
 }
 
 /* Sizes: generated Material values. sm/md/lg remain backward compatible.

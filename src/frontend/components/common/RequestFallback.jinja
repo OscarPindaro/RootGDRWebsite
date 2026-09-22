@@ -1,0 +1,11 @@
+{#def message="Non è stato possibile completare l’operazione. Riprova." #}
+{#css common/Alert.css, common/RequestFallback.css #}
+{# One page-level fallback for an htmx request that failed outside a surface
+   which shows its own error. `static/js/feedback.js` reveals it and writes the
+   message; it is `hidden` until then. The copy is request-safe: it never
+   carries a server payload or an exception detail. #}
+<div class="request-fallback" data-request-fallback hidden>
+  <common.Alert variant="danger" role="alert">
+    <span data-request-fallback-message>{{ message }}</span>
+  </common.Alert>
+</div>

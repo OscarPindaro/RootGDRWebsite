@@ -51,10 +51,10 @@ of the generic dashboard they were.
   with `data-label`; on a phone the header row folds away and each cell renders
   its label with `::before { content: attr(data-label) }`. A table that is
   compared column by column keeps the real table and its horizontal scroll.
-- `common/Alert` gains a `role` argument (default `alert`).
-  `pages/settings/SettingsStatus` passes `role="none"`, so the success message
-  is announced by the page's `#settings-status` region
-  (`aria-live="polite"`) and not assertively.
+- `common.Alert` takes a `role` argument whose default follows the variant —
+  `danger` is `alert`, everything else is `status` (F19). `SettingsStatus`
+  passes `role="none"`, so the success message is announced by the page's
+  `#settings-status` region (`aria-live="polite"`) and not assertively.
 - `pages/settings/Settings.jinja` / `Settings.css` — the preference group and
   row. The form keeps `hx-trigger="change"` and the `data-symbol-style` payload
   from the symbol-style feature, unchanged.

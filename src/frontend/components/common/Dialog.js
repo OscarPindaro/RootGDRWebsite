@@ -44,9 +44,14 @@
   function setPending(dialog, pending) {
     dialog.dataset.pending = pending ? 'true' : 'false';
     dialog.setAttribute('aria-busy', pending ? 'true' : 'false');
-    dialog.querySelectorAll('[data-dialog-confirm], [data-dialog-close]').forEach(
-      function (element) { element.disabled = pending; }
-    );
+    // The dialog's own actions: the confirm, the close, and the submit control
+    // of a form inside it. Disabling the submit while a request is in flight is
+    // what stops an invitation or a membership being sent twice.
+    dialog
+      .querySelectorAll(
+        '[data-dialog-confirm], [data-dialog-close], button[type="submit"], input[type="submit"]'
+      )
+      .forEach(function (element) { element.disabled = pending; });
   }
 
   function open(dialog, opener) {

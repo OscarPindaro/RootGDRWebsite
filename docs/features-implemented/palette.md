@@ -57,6 +57,9 @@ world's content, opened from the rail, the topbar or a keyboard shortcut.
 
 ## Limits
 
+- The palette is a `fetch` surface, not an htmx one, so the global
+  request-feedback controller (F19) never touches it: its six states are its own
+  single owner.
 - The endpoint caps results at 12; the announcement counts what was returned,
   not a total.
 - The hotkeys are ignored while a text field or the editor has focus, so they

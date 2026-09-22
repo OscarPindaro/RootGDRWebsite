@@ -16,6 +16,7 @@ from .sessions.routes import router as sessions_router
 from .stories.routes import router as stories_router
 from .config import AppConfig, get_app_config
 from .db.db import DatabaseManager
+from .errors import register_error_handlers
 from .log import RequestContextMiddleware, setup_logging
 from .users.routes import router as users_router
 from .worlds.routes import router as worlds_router
@@ -47,6 +48,9 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     # Outermost middleware: bind correlation ids for the whole request and
     # echo the request id back in the response headers.
     app.add_middleware(RequestContextMiddleware)
+
+    # Designed HTML error pages for browser navigation; JSON for API clients.
+    register_error_handlers(app)
 
     app.add_middleware(
         CORSMiddleware,

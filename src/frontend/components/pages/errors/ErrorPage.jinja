@@ -1,0 +1,31 @@
+{#def status, title, message, request_id=None #}
+{#css common/Button.css, pages/errors/ErrorPage.css #}
+{# A failed browser navigation lands here instead of on a raw framework payload.
+   Standalone (BlankPage), like the login cover: an error can happen before the
+   shell has a world or a navigation, and an anonymous visitor must see it too.
+   The copy is request-safe and the request id is shown only where it helps. #}
+<layout.BlankPage :title="title">
+  <main class="error-page">
+    <div class="error-page__inner">
+      <span class="eyebrow">Errore {{ status }}</span>
+      <p class="display display--xl error-page__code" aria-hidden="true">{{ status }}</p>
+      <h1 class="error-page__title">{{ title }}</h1>
+      <p class="lede error-page__message">{{ message }}</p>
+      {% if request_id %}
+      <p class="error-page__request">
+        <span class="eyebrow">ID richiesta</span>
+        <code class="error-page__id">{{ request_id }}</code>
+      </p>
+      {% endif %}
+      <div class="error-page__actions">
+        {% if status == 401 %}
+        <common.Button variant="primary" href="/login">Accedi</common.Button>
+        <common.Button variant="secondary" href="/worlds">Vai ai mondi</common.Button>
+        {% else %}
+        <common.Button variant="primary" href="/worlds">Vai ai mondi</common.Button>
+        <common.Button variant="secondary" href="/login">Accedi</common.Button>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</layout.BlankPage>

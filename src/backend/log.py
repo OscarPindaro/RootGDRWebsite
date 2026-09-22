@@ -211,6 +211,9 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             traceparent=request.headers.get("traceparent"),
         )
         with correlation.bind(resolved):
+            # The 500 handler runs outside this middleware (ServerErrorMiddleware
+            # wraps it), so stash the id on the request for the error page.
+            request.state.request_id = resolved.request_id
             response = await call_next(request)
             assert resolved.request_id is not None
             response.headers["X-Request-ID"] = resolved.request_id

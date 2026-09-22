@@ -1,5 +1,10 @@
-{#def variant="info", role="alert" #}
+{#def variant="info", role=None #}
 {#css common/Alert.css #}
-<div class="alert alert-{{ variant }}" role="{{ role }}">
+{# A blocking or destructive error interrupts and is announced assertively;
+   every other variant is ordinary feedback and is announced politely. A caller
+   with a contextual reason can override the default by passing `role` (e.g.
+   `role="none"` when a pre-existing polite region is the announcer). #}
+{% set resolved_role = role if role is not none else ("alert" if variant == "danger" else "status") %}
+<div class="alert alert-{{ variant }}" role="{{ resolved_role }}">
   {{ content }}
 </div>

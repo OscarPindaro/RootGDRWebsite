@@ -1,5 +1,5 @@
 {#def error=None, mode="login", google_enabled=False, dev_login_enabled=False, dev_login_email="" #}
-{#css common/Alert.css, common/Button.css, common/Divider.css, common/Field.css, common/MediaFrame.css, pages/login/Login.css #}
+{#css common/Alert.css, common/Button.css, common/Divider.css, common/Field.css, common/MediaFrame.css, common/RequestFallback.css, pages/login/Login.css #}
 {#js pages/login/Login.js #}
 {% set is_register = mode == "register" %}
 {% set action = "/auth/register-form" if is_register else "/auth/login-form" %}
@@ -17,6 +17,7 @@
 
     <section class="login-panel" aria-labelledby="login-heading">
       <div class="login-panel__inner">
+        <common.RequestFallback />
         <span class="eyebrow">{{ "Registrazione" if is_register else "Accesso" }}</span>
         <h1 class="login-title" id="login-heading">{{ "Crea il tuo account" if is_register else "Accedi" }}</h1>
         <p class="login-subtitle">{{ "Inserisci i tuoi dati per registrarti." if is_register else "Inserisci la tua email e la password." }}</p>

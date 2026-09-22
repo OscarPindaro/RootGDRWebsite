@@ -122,6 +122,26 @@ def test_pending_state_busies_the_dialog_and_disables_the_actions(component):
     assert page.locator("[data-dialog-close]").is_disabled()
 
 
+def test_pending_disables_a_form_submit_inside_the_dialog(component):
+    """The member and invite dialogs submit through their own form button."""
+    page = component.mount(
+        "common.Dialog",
+        props={"title": "Invita", "id": "d6"},
+        content='<form><button id="send" type="submit">Invia</button></form>',
+    )
+    _add_trigger(page, "d6")
+
+    page.evaluate(
+        "() => window.rootGdrDialog.setPending(document.querySelector('dialog[data-dialog]'), true)"
+    )
+    assert page.locator("#send").is_disabled()
+
+    page.evaluate(
+        "() => window.rootGdrDialog.setPending(document.querySelector('dialog[data-dialog]'), false)"
+    )
+    assert not page.locator("#send").is_disabled()
+
+
 def test_a_destructive_confirmation_names_the_action(component):
     page = component.mount(
         "common.ConfirmDialog",

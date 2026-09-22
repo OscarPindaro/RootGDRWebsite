@@ -1,5 +1,5 @@
 {#def world, world_context, nav, cards, crumbs, can_manage=False, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, editorial/CollectionCreate.css, editorial/EntityCard.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, editorial/CollectionCreate.css, editorial/EntityCard.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css, common/Alert.css, common/RequestFallback.css #}
 {% set create_action = '/worlds/' ~ world.id ~ '/npcs/new' %}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
 <layout.Page title="NPC" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="npc">

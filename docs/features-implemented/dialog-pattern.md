@@ -17,7 +17,9 @@ surface with one named action.
 - A dialog loaded by htmx opens once it lands in the page; a successful request
   from inside a dialog closes it; a failed request keeps it open and writes the
   error into the adjacent live region.
-- Pending state marks the dialog `aria-busy` and disables its action controls.
+- Pending state marks the dialog `aria-busy` and disables its actions: the
+  confirm, the close, and any form submit inside it (F19), so an invitation or
+  a membership cannot be sent twice.
 
 ## How it is built
 
@@ -32,7 +34,9 @@ surface with one named action.
   carry `data-dialog-return="<id>"`: when the request swaps the opener away,
   focus lands on that element instead of the body. `htmx:beforeRequest` /
   `htmx:afterSwap` / `htmx:afterRequest` / `htmx:responseError` connect the
-  pattern to htmx.
+  pattern to htmx. The global request-feedback controller
+  (`static/js/feedback.js`, F19) skips any request inside `dialog[data-dialog]`,
+  so the dialog stays the single owner of its own pending and error state.
 - `common/ConfirmDialog.jinja` — forwards caller attributes to the confirm
   button (`_attrs`), so the request lives on the action and the close and cancel
   controls cannot inherit it.

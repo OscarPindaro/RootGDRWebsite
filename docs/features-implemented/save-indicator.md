@@ -31,6 +31,9 @@ it is a component.
 
 ## Limits
 
+- The autosave status is not an htmx surface: the global request-feedback
+  controller (F19) never touches it, and `editor.js` stays the one owner of its
+  words.
 - The copy is the script's ("Salvato", "Conflitto: …").
 - The `saved` state does not fade out on its own; that belongs in the script.
 - One page, one document: a page editing two documents at once would need the
