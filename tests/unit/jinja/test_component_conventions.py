@@ -54,21 +54,31 @@ def test_the_def_starts_a_line_and_precedes_any_set(name: str) -> None:
 # --- Selector ownership -----------------------------------------------------
 
 # Reusable roots that one stylesheet owns. ``btn`` is the Button component's
-# root class; the codebase has no ``.button`` selector.
-OWNED_ROOTS = ("btn", "card", "dialog", "field", "pill", "table")
+# root class; the codebase has no ``.button`` selector. The editorial collection
+# roots joined in F14, when the entity card, the story card, the ledger and the
+# row got their own stylesheets and left main.css.
+OWNED_ROOTS = (
+    "btn",
+    "card",
+    "collection-meta",
+    "collection-surface",
+    "dialog",
+    "entity-card",
+    "field",
+    "ledger",
+    "pill",
+    "row",
+    "row-list",
+    "story-band",
+    "story-card",
+    "table",
+)
 
 # Roots that two stylesheets still own, with the pair of owners and the ticket
 # that removes the losing rules. The test fails on a stale entry, so an
-# exception cannot outlive its migration.
-MIGRATION_ALLOWLIST: dict[str, tuple[str, tuple[str, str]]] = {
-    "card": (
-        "F14",
-        (
-            "src/frontend/components/common/Card.css",
-            "src/frontend/static/css/main.css",
-        ),
-    ),
-}
+# exception cannot outlive its migration. F14 closed the last one: this is now
+# empty, and an empty allowlist is the acceptance criterion.
+MIGRATION_ALLOWLIST: dict[str, tuple[str, tuple[str, str]]] = {}
 
 COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
 CLASS_TOKEN = re.compile(r"\.(-?[_a-zA-Z][\w-]*)")
@@ -98,7 +108,8 @@ def _rule_preludes(source: str) -> Iterator[str]:
 def _root_classes(selector: str) -> set[str]:
     """The classes of a selector's first compound, stripped of BEM suffixes.
 
-    ``.card--npc .card__name`` belongs to root ``card``; ``html[data-x] .btn``
+    ``.entity-card--npc .entity-card__name`` belongs to root ``entity-card``;
+    ``html[data-x] .btn``
     belongs to no class root at all, because its first compound has none.
     """
     head = COMBINATOR.split(selector.strip(), 1)[0]
@@ -142,3 +153,14 @@ def test_a_reusable_root_selector_has_one_owner(root: str) -> None:
         f".{root} is owned by {owners}. One root selector gets one stylesheet: "
         "give the domain component a domain name, or delete the losing rules."
     )
+
+
+def test_the_migration_allowlist_is_empty() -> None:
+    """F14 closed the last exception: ``card`` no longer has two owners.
+
+    The editorial entity card moved off ``.card`` to ``.entity-card``, so
+    common.Card is the only owner and the exception that named F14 is gone. An
+    empty allowlist is the acceptance criterion: no watched root is allowed a
+    second owner any more.
+    """
+    assert MIGRATION_ALLOWLIST == {}

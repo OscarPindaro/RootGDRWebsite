@@ -1,5 +1,5 @@
 {#def world, world_context, nav, pages, rows, can_manage=False, crumbs, drafts=None, current_user=None #}
-{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css #}
+{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css, editorial/Ledger.css, editorial/Row.css #}
 {% set count = rows | length %}
 {% set eyebrow_text = count ~ (' pagina' if count == 1 else ' pagine') %}
 <layout.Page title="Pagine" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="pagine">
@@ -14,25 +14,18 @@
   </editorial.Masthead>
 
   {% if rows %}
-  <div class="ledger">
-    <div class="ledger__head">
-      <span class="eyebrow">Pos.</span>
-      <span class="eyebrow">Slug</span>
-      <span class="eyebrow">Titolo</span>
-      <span class="eyebrow">Aggiornata</span>
-    </div>
+  <editorial.Ledger :columns="['Pos.', 'Slug', 'Titolo', 'Aggiornata']">
     {% for number, page in rows %}
-    <a class="ledger__row" href="/worlds/{{ world.id }}/pages/{{ page.slug }}" style="--c: var(--{{ page.tint }})">
-      <span class="ledger__num">{{ '%02d' | format(page.menu_position) }}</span>
-      <span class="ledger__date">{{ page.slug }}</span>
-      <span class="ledger__main">
-        <span class="ledger__title">{{ page.title }}</span>
-        <span class="ledger__sum">{{ page.short_description }}</span>
-      </span>
-      <span class="ledger__tag">{{ page.updated_at | time }}</span>
-    </a>
+    <editorial.LedgerRow
+      :href="'/worlds/' ~ world.id ~ '/pages/' ~ page.slug"
+      :tint="page.tint"
+      :number="'%02d' | format(page.menu_position)"
+      :meta="page.slug"
+      :title="page.title"
+      :summary="page.short_description"
+      :tag="page.updated_at | time" />
     {% endfor %}
-  </div>
+  </editorial.Ledger>
   {% else %}
   <common.EmptyState icon="file-text" title="Nessuna pagina di riferimento" />
   {% endif %}
@@ -40,14 +33,12 @@
 {% if drafts %}
 <section class="section">
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
-  <div class="rowlist">
+  <editorial.RowList>
     {% for draft in drafts %}
-    <a class="row" href="/worlds/{{ world.id }}/pages/{{ draft.slug }}" style="--c: var(--{{ draft.tint }})">
-      <span><span class="row__name">{{ draft.title }}</span><br><span class="row__desc">{{ draft.slug }}</span></span>
-      <span class="row__meta"><common.Pill variant="draft">Bozza</common.Pill></span>
-    </a>
+    <editorial.Row :href="'/worlds/' ~ world.id ~ '/pages/' ~ draft.slug" :tint="draft.tint"
+      :name="draft.title" :description="draft.slug" draft />
     {% endfor %}
-  </div>
+  </editorial.RowList>
 </section>
 {% endif %}
 </layout.Page>

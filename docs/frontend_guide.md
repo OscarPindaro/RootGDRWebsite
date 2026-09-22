@@ -58,12 +58,12 @@ Every reusable root selector has **one** owner:
 | Layer | Owns | Examples |
 |---|---|---|
 | `main.css` | identity and alias tokens, reset, base typography, prose, global document defaults | `.prose`, `.container`, `.shell` |
-| colocated component CSS | structure and states for that component only | `.btn`, `.field`, `.card`, `.dialog` |
+| colocated component CSS | structure and states for that component only | `.btn`, `.field`, `.entity-card`, `.dialog` |
 | page CSS (`components/pages/**/<Page>.css`) | exceptional page composition, never a reusable primitive | `.login-page`, `.admin-*` |
 | `design-tokens/material3/` | provenance for adopted mechanics and dimensions, not a second visual identity | — |
 
 A **root** is the class a selector starts with, stripped of its BEM suffix:
-`.card__body` and `.card--npc` both belong to root `card`. A selector whose first
+`.entity-card__body` and `.entity-card--npc` both belong to root `entity-card`. A selector whose first
 compound carries no class (`.rail .btn`, `html[data-accent] .btn--text`) belongs
 to no class root. A domain component that needs its own look takes a domain name
 (`entity-card`, `document-layout`, `collection-create`) instead of colliding
@@ -72,9 +72,11 @@ with a common primitive.
 `tests/unit/jinja/test_component_conventions.py` fails when two stylesheets own
 the same root. Roots that are still owned twice are listed in
 `MIGRATION_ALLOWLIST` in that file with the ticket that removes the losing
-rules, and the test also fails on an entry that has outlived its collision. The
-roots the guard watches today are `card`, `pill`, `field`, `btn`, `dialog` and
-`table` — `btn` is Button's root class, and there is no `.button` selector.
+rules, and the test also fails on an entry that has outlived its collision. F14
+emptied that list: the roots the guard watches today are `btn`, `card`,
+`collection-meta`, `collection-surface`, `dialog`, `entity-card`, `field`,
+`ledger`, `pill`, `row`, `row-list`, `story-band`, `story-card` and `table` —
+`btn` is Button's root class, and there is no `.button` selector.
 
 ## 3. Anatomy of a component
 

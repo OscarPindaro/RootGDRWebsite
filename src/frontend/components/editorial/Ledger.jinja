@@ -1,0 +1,10 @@
+{#def columns #}
+{#css editorial/Ledger.css #}
+{# The ledger shell: one header row of column labels and the records below. A
+   ledger keeps its fixed columns; it is not a card grid. #}
+<div class="ledger">
+  <div class="ledger__head">
+    {% for column in columns %}<span class="eyebrow">{{ column }}</span>{% endfor %}
+  </div>
+  {{ content }}
+</div>

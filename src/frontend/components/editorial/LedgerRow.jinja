@@ -1,0 +1,14 @@
+{#def href, title, summary=None, number=None, meta=None, meta_extra=None, tag=None, tint=None, sdot=False #}
+{#css editorial/Ledger.css, editorial/Collection.css #}
+{# One ledger record: the number cell, the date/slug cell, the record itself and
+   the tag cell. `sdot` adds the session tint dot; `meta_extra` is the second
+   date line. #}
+<a class="ledger__row" href="{{ href }}"{% if tint %} style="--c: var(--{{ tint }})"{% endif %}>
+  <span class="ledger__num collection-meta">{% if sdot %}<span class="sdot"></span>{% endif %}{{ number if number is not none else '' }}</span>
+  <span class="ledger__date">{% if meta %}{{ meta }}{% if meta_extra %}<br>{{ meta_extra }}{% endif %}{% endif %}</span>
+  <span class="ledger__main">
+    <span class="ledger__title">{{ title }}</span>
+    {% if summary %}<span class="ledger__sum">{{ summary }}</span>{% endif %}
+  </span>
+  {% if tag %}<span class="ledger__tag collection-meta">{{ tag }}</span>{% endif %}
+</a>

@@ -126,7 +126,7 @@ def test_hover_lifts_the_card_exactly_like_an_entity_card(component):
         reduced_motion=True,
     )
     create = page.locator(".collection-create")
-    entity = page.locator(".grid > .card").first
+    entity = page.locator(".grid > .entity-card").first
 
     create.hover()
     lifted = create.evaluate(
@@ -150,8 +150,8 @@ def test_the_card_mirrors_an_entity_card_structure(component):
     )
     card_media = page.locator(".collection-create__media")
     card_body = page.locator(".collection-create__body")
-    entity_media = page.locator(".grid > .card .card__media")
-    entity_body = page.locator(".grid > .card .card__body")
+    entity_media = page.locator(".grid > .entity-card .entity-card__media")
+    entity_body = page.locator(".grid > .entity-card .entity-card__body")
 
     assert card_media.evaluate(
         "el => getComputedStyle(el).aspectRatio"
@@ -168,7 +168,7 @@ def test_it_occupies_exactly_one_entity_card_cell(component):
         props=_list_props([_card("Uno"), _card("Due")]),
     )
 
-    entity = page.locator(".grid > .card").first
+    entity = page.locator(".grid > .entity-card").first
     create = page.locator(".grid > .collection-create")
     assert create.count() == 1
     assert create.bounding_box()["width"] == pytest.approx(

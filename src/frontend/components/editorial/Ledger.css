@@ -1,0 +1,67 @@
+/* ---------- Ledger ----------
+   The session and page collections are ledgers: a fixed column grid, a header
+   row of labels, and rows that read as records, not as cards. Migrated from
+   main.css's `.ledger*` family. The number and the tag take the shared mono/
+   muted rule from editorial/Collection.css; the columns and the phone layout
+   stay here, because a ledger's density is its own. */
+.ledger {
+  border-top: 3px solid var(--ink);
+}
+.ledger__head,
+.ledger__row {
+  display: grid;
+  grid-template-columns: 4.2rem 9.5rem minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: baseline;
+}
+.ledger__head {
+  padding: 0.6rem 0.25rem 0.6rem 0.7rem;
+  border-bottom: var(--rule-ink);
+  border-left: 4px solid transparent;
+}
+.ledger__row {
+  padding: 1.05rem 0.25rem 1.05rem 0.7rem;
+  border-bottom: var(--rule);
+  border-left: 4px solid var(--c, transparent);
+  text-decoration: none;
+  color: var(--ink);
+  position: relative;
+}
+.ledger__row:hover { background: var(--surface); }
+.ledger__row:hover .ledger__title {
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+}
+.ledger__num { font-size: 0.78rem; }
+.ledger__date { font-family: var(--mono); font-size: 0.74rem; color: var(--ink-soft); }
+.ledger__main { display: block; min-width: 0; }
+.ledger__title { display: block; font-family: var(--serif); font-size: 1.3rem; line-height: 1.15; }
+.ledger__sum {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin-top: 0.2rem;
+  max-width: 62ch;
+}
+.ledger__tag { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; }
+
+/* The tint dot that opens the session number. */
+.sdot {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  background: var(--c, var(--ink));
+  margin-right: 0.5rem;
+  vertical-align: baseline;
+}
+
+/* On a phone the ledger folds into two columns: date and number above the
+   record. The tag column is metadata the row already carries elsewhere. */
+@media (max-width: 900px) {
+  .ledger__head { display: none; }
+  .ledger__row { grid-template-columns: 5.6rem 1fr; row-gap: 0.25rem; }
+  .ledger__date { grid-column: 1; grid-row: 1; }
+  .ledger__num { grid-column: 1; grid-row: 2; }
+  .ledger__main { grid-column: 2; grid-row: 1 / span 2; }
+  .ledger__tag { display: none; }
+}

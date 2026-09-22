@@ -1,7 +1,7 @@
-{#css common/MediaFrame.css, common/Pill.css #}
+{#css common/MediaFrame.css, common/Pill.css, editorial/Collection.css #}
 {#def world #}
 {% set cover_src = world.image_url or '/static/img/plate-' ~ ((world.volume - 1) % 8 + 1) ~ '.svg' %}
-<a class="cover" href="/worlds/{{ world.id }}">
+<a class="cover collection-surface" href="/worlds/{{ world.id }}">
   <common.MediaFrame ratio="landscape" class="cover__media" :src="cover_src" alt="">
     <span class="cover__badge">Volume {{ world.volume }}</span>
   </common.MediaFrame>

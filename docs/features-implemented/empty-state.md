@@ -6,7 +6,11 @@ There was no place to say what is missing, why, or what to do next.
 ## What it does
 
 - One block for an empty list: a decorative mark, a title, an optional
-  description, and an optional action supplied as content.
+  description, and optional trailing content supplied by the caller.
+- The approved creation grammar (F13/F14) does not put a create action here:
+  creation is the collection card in a grid, or the single masthead command on
+  the ledger, atlas, story and row collections. The empty panel carries no
+  action by default, so a page never shows two create controls.
 - `compact` for the small notices inside the overview columns, where the roomy
   padding would dominate the column.
 - Replaces the `.empty` class from `main.css`, which is gone.
@@ -22,6 +26,6 @@ There was no place to say what is missing, why, or what to do next.
 
 ## Limits
 
-- The action is free content, so nothing checks that it is a single primary
-  action.
+- The content slot is free content, so nothing checks that it is not a second
+  create affordance. The collection grammar is the rule, not the component.
 - No illustration slot: a place cover or a shape would need a new prop.

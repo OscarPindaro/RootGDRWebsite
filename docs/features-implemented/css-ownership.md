@@ -12,8 +12,10 @@ which assets happened to be collected.
 - A file with more than one `{#css … #}` directive is merged into one, whether
   the directive starts its line or shares it with `{#def #}`.
 - Two stylesheets may not own the same reusable root selector. The guard watches
-  `card`, `pill`, `field`, `btn`, `dialog` and `table`; `btn` is Button's root
-  class, and there is no `.button` selector.
+  `btn`, `card`, `collection-meta`, `collection-surface`, `dialog`,
+  `entity-card`, `field`, `ledger`, `pill`, `row`, `row-list`, `story-band`,
+  `story-card` and `table`; `btn` is Button's root class, and there is no
+  `.button` selector.
 - `main.css` is documented as having a restricted role: identity and alias
   tokens, reset, base typography, prose, and global document defaults.
 
@@ -40,12 +42,13 @@ which assets happened to be collected.
 
 ## Limits
 
-- The ownership guard only watches six roots. Roots outside that list, and the
-  kebab-case variants that shadow a root (`.card-elevated` beside `.card--npc`),
-  are not reported yet.
-- `MIGRATION_ALLOWLIST` holds one live exception — `card` (F14). The `btn` and
-  `pill` entries left with F3 and `field` left with F4; the seam is not fully
-  closed until `card` follows.
+- The ownership guard watches the roots listed above. A root nobody lists, and
+  the kebab-case variants that shadow a root (`.card-elevated` beside
+  `.entity-card--npc`), are not reported yet.
+- `MIGRATION_ALLOWLIST` is empty. F14 moved the editorial entity card off
+  `.card` to `.entity-card`, so `common.Card.css` is the single owner of `card`
+  and the last exception is gone; `btn` and `pill` left with F3 and `field` left
+  with F4. The seam is closed: no watched root is allowed a second owner.
 - A component declaring its own colocated stylesheet collects it twice, because
   JinjaX loads colocated CSS on its own. The application deduplicates when it
   writes the tags, so the emitted `<link>` set is unchanged; `collected_css`

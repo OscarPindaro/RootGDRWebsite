@@ -496,11 +496,6 @@ ul, ol { margin: 0; padding: 0; }
   text-decoration: none;
   color: var(--ink);
   position: relative;
-  transition: transform 140ms ease, box-shadow 140ms ease;
-}
-.cover:hover {
-  transform: translate(-3px, -3px);
-  box-shadow: 6px 6px 0 var(--ink);
 }
 .cover__media {
   border-bottom: var(--rule-ink);
@@ -591,47 +586,9 @@ ul, ol { margin: 0; padding: 0; }
 .quick--plum .quick__mark { border-color: var(--surface); background: transparent; }
 .quick--ochre .quick__mark { border-color: var(--ink); background: transparent; }
 
-/* ---------- 14. Card personaggio ---------- */
-.card {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  border: var(--rule-ink);
-  background: var(--surface);
-  text-decoration: none;
-  color: var(--ink);
-  transition: transform 140ms ease, box-shadow 140ms ease;
-}
-.card:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--ink); }
-.card__media {
-  aspect-ratio: 4 / 5;
-  position: relative;
-  border-bottom: var(--rule-ink);
-  overflow: hidden;
-}
-.card__media img { width: 100%; height: 100%; object-fit: cover; }
-.card__monogram {
-  position: absolute;
-  inset: auto 0 0 0;
-  padding: 0.4rem 0.6rem;
-  background: var(--paper);
-  border-top: var(--rule-ink);
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.card__body { padding: 0.9rem 0.95rem 1rem; display: grid; gap: 0.4rem; align-content: start; }
-.card__name { font-family: var(--serif); font-size: 1.24rem; line-height: 1.1; }
-.card__title { font-size: 0.86rem; color: var(--muted); }
-.card__faction { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.15rem; }
-.card__owner {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  color: var(--muted);
-  border-top: var(--rule);
-  padding-top: 0.5rem;
-  margin-top: 0.3rem;
-}
+/* ---------- 14. Card personaggio ----------
+   Migrated to editorial/EntityCard.css (`.entity-card*`). The root no longer
+   collides with common.Card. */
 
 /* ---------- 15. Featured / place ---------- */
 .feature {
@@ -643,91 +600,17 @@ ul, ol { margin: 0; padding: 0; }
   color: var(--ink);
   transition: box-shadow 140ms ease;
 }
-.feature:hover { box-shadow: 6px 6px 0 var(--ink); }
+.feature:hover { box-shadow: var(--lift-shadow); }
 .feature__media { border-right: var(--rule-ink); min-height: 280px; overflow: hidden; }
 .feature__media img { width: 100%; height: 100%; object-fit: cover; }
 .feature__body { padding: 1.6rem 1.5rem; display: grid; gap: 0.7rem; align-content: center; }
 .feature__title { font-family: var(--serif); font-size: 2rem; line-height: 1.05; }
 
-.rowlist { border-top: var(--rule-ink); }
-.row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 1rem;
-  align-items: center;
-  padding: 0.85rem 0.25rem;
-  border-bottom: var(--rule);
-  text-decoration: none;
-  color: var(--ink);
-}
-.row:hover { background: var(--surface); }
-.row__mark { width: 34px; height: 34px; border: var(--rule-ink); }
-.row__name { font-family: var(--serif); font-size: 1.12rem; }
-.row__desc { font-size: 0.86rem; color: var(--muted); }
-.row__meta { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); text-align: right; }
+/* ---------- 16. Ledger (sessioni) ----------
+   Migrated to editorial/Ledger.css (`.ledger*`, `.sdot`). */
 
-/* ---------- 16. Ledger (sessioni) ---------- */
-.ledger { border-top: 3px solid var(--ink); }
-.ledger__head,
-.ledger__row {
-  display: grid;
-  grid-template-columns: 4.2rem 9.5rem minmax(0, 1fr) auto;
-  gap: 1rem;
-  align-items: baseline;
-}
-.ledger__head {
-  padding: 0.6rem 0.25rem;
-  border-bottom: var(--rule-ink);
-}
-.ledger__row {
-  padding: 1.05rem 0.25rem;
-  border-bottom: var(--rule);
-  text-decoration: none;
-  color: var(--ink);
-  position: relative;
-}
-.ledger__row:hover { background: var(--surface); }
-.ledger__row:hover .ledger__title { text-decoration: underline; text-underline-offset: 3px; }
-.ledger__num { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
-.ledger__date { font-family: var(--mono); font-size: 0.74rem; color: var(--ink-soft); }
-.ledger__main { display: block; min-width: 0; }
-.ledger__title { display: block; font-family: var(--serif); font-size: 1.3rem; line-height: 1.15; }
-.ledger__sum { display: block; font-size: 0.9rem; color: var(--muted); margin-top: 0.2rem; max-width: 62ch; }
-.ledger__tag { font-family: var(--mono); font-size: 0.66rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; }
-
-/* ---------- 17. Storie ---------- */
-.story {
-  display: grid;
-  border: var(--rule-ink);
-  background: var(--surface);
-  text-decoration: none;
-  color: var(--ink);
-  transition: transform 140ms ease, box-shadow 140ms ease;
-}
-.story:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--ink); }
-.story__band {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0.85rem;
-  border-bottom: var(--rule-ink);
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-.story__body { padding: 1.25rem 1.15rem 1.35rem; display: grid; gap: 0.65rem; }
-.story__title { font-family: var(--serif); font-size: 1.75rem; line-height: 1.05; }
-.story__sum { color: var(--ink-soft); font-size: 0.95rem; }
-.story__foot {
-  border-top: var(--rule);
-  padding-top: 0.6rem;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  color: var(--muted);
-  display: flex;
-  justify-content: space-between;
-}
+/* ---------- 17. Storie ----------
+   Migrated to editorial/StoryCard.css (`.story-card*`, `.story-band*`). */
 
 /* ---------- 18. Timeline ---------- */
 .timeline { border-left: 1px solid var(--line-ink); margin-left: 0.4rem; }
@@ -1207,18 +1090,7 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
 .kindnote__text { font-size: 0.92rem; color: var(--ink-soft); max-width: 78ch; }
 .kindnote__text b { color: var(--ink); }
 
-/* badge e scheda NPC */
-.card--npc .card__name::after {
-  content: "NPC";
-  font-family: var(--mono);
-  font-size: 0.56rem;
-  letter-spacing: 0.1em;
-  border: 1px dashed var(--ink);
-  padding: 0.05rem 0.3rem;
-  margin-left: 0.5rem;
-  vertical-align: 0.25em;
-}
-.card--npc .card__owner { border-top-style: dashed; }
+/* badge e scheda NPC: migrated to editorial/EntityCard.css (`.entity-card--npc`). */
 
 /* ---------- 26. Volti (personaggi) ---------- */
 .face {
@@ -1249,18 +1121,8 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
   text-align: center;
 }
 
-/* ---------- 27. Colore nel registro ---------- */
-.sdot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  background: var(--c, var(--ink));
-  margin-right: 0.5rem;
-  vertical-align: baseline;
-}
-.ledger__row { border-left: 4px solid var(--c, transparent); padding-left: 0.7rem; }
-.ledger__head { padding-left: 0.7rem; border-left: 4px solid transparent; }
-.ledger__row:hover { background: var(--surface); }
+/* ---------- 27. Colore nel registro ----------
+   `.sdot` and the ledger's tint rule migrated to editorial/Ledger.css. */
 
 /* ---------- 28. Scena corrente ---------- */
 .wherenow {
@@ -1278,9 +1140,7 @@ html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
   padding: 1.35rem 1.6rem;
   text-decoration: none;
   color: var(--ink);
-  transition: transform 140ms ease, box-shadow 140ms ease;
 }
-.wherenow:hover { transform: translate(-3px, -3px); box-shadow: 6px 6px 0 var(--ink); }
 .wherenow > .plogo { grid-area: logo; }
 .wherenow__name {
   grid-area: name;
@@ -1722,13 +1582,6 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   .hero__media { border-right: 0; border-bottom: var(--rule-ink); min-height: 240px; }
   .feature { grid-template-columns: 1fr; }
   .feature__media { border-right: 0; border-bottom: var(--rule-ink); min-height: 200px; }
-  .ledger__head { display: none; }
-  .ledger__row { grid-template-columns: 5.6rem 1fr; row-gap: 0.25rem; }
-  .ledger__date { grid-column: 1; grid-row: 1; }
-  .ledger__num { grid-column: 1; grid-row: 2; }
-  .ledger__main { grid-column: 2; grid-row: 1 / span 2; }
-  .ledger__tag { display: none; }
-  .ledger__row .pill { display: none; }
   .pager { grid-template-columns: 1fr; }
   .pager a + a { border-left: 0; border-top: var(--rule); padding-left: 0.25rem; text-align: left; }
 }

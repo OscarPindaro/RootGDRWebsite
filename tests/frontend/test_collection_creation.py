@@ -194,7 +194,7 @@ def test_the_npc_card_is_the_single_create_entry_when_populated(component):
         component, "pages.npcs.NpcList", "cards", [_card("Uno")], can_manage=True
     )
 
-    assert page.locator(".grid > .card").count() == 1
+    assert page.locator(".grid > .entity-card").count() == 1
     create = page.locator(".grid > .collection-create")
     assert create.count() == 1
     assert create.evaluate("el => el.tagName") == "BUTTON"
@@ -221,7 +221,7 @@ def test_a_denied_role_gets_no_npc_create_entry(component):
         component, "pages.npcs.NpcList", "cards", [_card("Uno")], can_manage=False
     )
 
-    assert page.locator(".grid > .card").count() == 1
+    assert page.locator(".grid > .entity-card").count() == 1
     assert page.locator(".collection-create").count() == 0
     assert page.locator('[data-testid="create-npc"]').count() == 0
 
@@ -243,7 +243,7 @@ def test_the_character_card_is_the_single_create_entry(component):
         props=_props(cards=[_card("Uno")]),
     )
 
-    assert page.locator(".grid > .card").count() == 1
+    assert page.locator(".grid > .entity-card").count() == 1
     create = page.locator(".grid > .collection-create")
     assert create.count() == 1
     assert create.get_attribute("aria-label") == "Nuovo personaggio"

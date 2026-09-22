@@ -71,7 +71,9 @@ async def test_the_create_card_starts_a_draft_in_name_editing(
             assert 'aria-label="Nuovo personaggio"' in listing.text
             assert f'hx-post="/worlds/{world_id}/characters/new"' in listing.text
             assert listing.text.count('data-testid="create-character"') == 1
-            assert 'class="collection-create"' in listing.text
+            # F14: the create card also carries the shared collection-surface
+            # rule, so it lifts and focuses exactly like an entity card.
+            assert 'class="collection-create collection-surface"' in listing.text
             # Empty Characters: the card is the collection, not an empty panel
             # with a second action beside it.
             assert "empty-state" not in listing.text

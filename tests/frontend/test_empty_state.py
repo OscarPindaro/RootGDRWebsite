@@ -49,11 +49,19 @@ def test_compact_uses_less_padding(component):
     assert float(tight.rstrip("px")) < float(roomy.rstrip("px"))
 
 
-def test_content_becomes_the_action(component):
+def test_content_becomes_optional_trailing_content(component):
+    """The empty state is not a create affordance (F13/F14 grammar).
+
+    Creation is the collection card in a grid or the single masthead command
+    elsewhere, so the empty panel carries no action by default. The content slot
+    still lets a caller add non-create content when it has one.
+    """
     page = component.mount(
         "common.EmptyState",
         props={"title": "Nessun luogo"},
-        content='<button class="btn btn-secondary btn-sm" type="button">Nuovo luogo</button>',
+        content='<a class="btn btn-secondary btn-sm" href="/help">Come si crea</a>',
     )
 
-    assert page.locator(".empty-state button").inner_text() == "Nuovo luogo"
+    assert page.locator(".empty-state a").inner_text() == "Come si crea"
+    # No create control is baked in.
+    assert page.locator(".empty-state button").count() == 0

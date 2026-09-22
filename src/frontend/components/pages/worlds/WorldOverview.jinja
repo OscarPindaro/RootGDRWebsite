@@ -1,5 +1,5 @@
 {#def world, world_context, nav, quicks, overview, crumbs, pages=None, current_user=None #}
-{#css common/Button.css, common/Card.css, common/Grid.css, common/Pill.css, common/Tooltip.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css #}
+{#css common/Button.css, common/Grid.css, common/Pill.css, common/Tooltip.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, editorial/StoryCard.css, editorial/Collection.css #}
 <layout.Page title={{ world.name }} current_user={{ current_user }} active="mondo" :world="world_context" :nav="nav" :pages="pages">
   <editorial.Masthead
     :title="world.name"
@@ -40,15 +40,13 @@
           <common.Button variant="text" :href="'/worlds/' ~ world.id ~ '/stories'">Tutte le storie</common.Button>
         </editorial.SectionHead>
         {% if overview.open_story %}
-        <a class="story" href="{{ overview.open_story.href }}">
-          <div class="story__band" style="background: var(--{{ overview.open_story.tint or 'cobalt' }}); color: var(--surface)">
-            <span>{{ overview.open_story.kind }}</span>
-          </div>
-          <div class="story__body">
-            <h3 class="story__title">{{ overview.open_story.title }}</h3>
-            <p class="story__sum">{{ overview.open_story.description }}</p>
-          </div>
-        </a>
+        <editorial.StoryCard
+          :href="overview.open_story.href"
+          :tint="overview.open_story.tint or 'cobalt'"
+          :title="overview.open_story.title"
+          :summary="overview.open_story.description"
+          :status_label="overview.open_story.kind"
+          level={{ 3 }} />
         {% else %}
         <common.EmptyState compact icon="book-open" title="Nessun arco narrativo aperto" />
         {% endif %}
@@ -61,7 +59,7 @@
       <common.Button variant="text" :href="'/worlds/' ~ world.id ~ '/places'">Atlante</common.Button>
     </editorial.SectionHead>
     {% if overview.current_place %}
-    <a class="wherenow" href="{{ overview.current_place.href }}" style="--c: var(--{{ overview.current_place.tint or 'p9' }})">
+    <a class="wherenow collection-surface" href="{{ overview.current_place.href }}" style="--c: var(--{{ overview.current_place.tint or 'p9' }})">
       <span class="plogo plogo--lg" data-shape="rombo" aria-hidden="true"></span>
       <span class="wherenow__name">{{ overview.current_place.title }}</span>
       <span class="wherenow__desc">{{ overview.current_place.description }}</span>

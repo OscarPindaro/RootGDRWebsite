@@ -10,7 +10,7 @@ from types import SimpleNamespace
 
 from backend.content.view_helpers import animal_options, shape_options, tint_options
 from backend.jinja import get_catalog
-from backend.navigation import ButtonGroupOption
+from backend.navigation import ButtonGroupOption, CardItem
 
 COMPONENTS_DIR = Path(__file__).parents[3] / "src" / "frontend" / "components"
 
@@ -39,6 +39,14 @@ def _showcase(**extra):
             showcase_people=[
                 ButtonGroupOption(value="admin@example.com", label="admin@example.com")
             ],
+            showcase_card=CardItem(
+                name="Rugginosa",
+                href="#",
+                tint="p1",
+                title="La Senza Tana",
+                animal="gatto",
+                owner_label="Giocato da Giulia",
+            ),
             **extra,
         )
     )

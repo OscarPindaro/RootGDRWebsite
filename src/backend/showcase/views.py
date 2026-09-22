@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import get_optional_user
 from ..content.view_helpers import animal_options, shape_options, tint_options
 from ..dependencies import get_catalog_dep, get_db_session
-from ..navigation import ButtonGroupOption
+from ..navigation import ButtonGroupOption, CardItem
 from ..users.schemas import User
 from ..users.service import get_all_users
 
@@ -20,10 +20,19 @@ async def showcase(
 ):
     """Component showcase — living style guide."""
     users = [User.model_validate(u) for u in await get_all_users(db)]
+    showcase_card = CardItem(
+        name="Rugginosa",
+        href="#",
+        tint="p1",
+        title="La Senza Tana",
+        animal="gatto",
+        owner_label="Giocato da Giulia",
+    )
     return catalog.render(
         "pages.showcase.Showcase",
         users=users,
         current_user=user,
+        showcase_card=showcase_card,
         animals=animal_options(),
         tints=tint_options(),
         shapes=shape_options(),

@@ -75,7 +75,7 @@ def test_the_masthead_plus_is_gone(component):
 def test_populated_puts_the_create_card_in_the_grid(component):
     page = _mount(component, [_card("Uno"), _card("Due")])
 
-    assert page.locator(".grid > .card").count() == 2
+    assert page.locator(".grid > .entity-card").count() == 2
     create = page.locator(".grid > .collection-create")
     assert create.count() == 1
     assert create.evaluate("el => el.tagName") == "BUTTON"
@@ -87,7 +87,7 @@ def test_empty_renders_the_create_card_as_the_collection(component):
     page = _mount(component, [])
 
     assert page.locator(".empty-state").count() == 0
-    assert page.locator(".grid > .card").count() == 0
+    assert page.locator(".grid > .entity-card").count() == 0
 
     create = page.locator(".grid > .collection-create")
     assert create.count() == 1

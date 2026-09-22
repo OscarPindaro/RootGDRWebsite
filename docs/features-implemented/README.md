@@ -53,3 +53,4 @@ Template:
 | See and change who can access a world | [world-access.md](world-access.md) |
 | Document bar: facts and commands in two regions | [docbar-regions.md](docbar-regions.md) |
 | The collection creation grammar: a card in grids, a masthead command elsewhere | [collection-create-card.md](collection-create-card.md) |
+| One collection language: entity cards, story bands, ledgers and rows | [collection-language.md](collection-language.md) |

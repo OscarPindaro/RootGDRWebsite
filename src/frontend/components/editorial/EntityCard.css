@@ -1,0 +1,51 @@
+/* ---------- Entity card ----------
+   The portrait card for a character, NPC or draft place: media at the shared
+   portrait ratio, then name, title and owner. Migrated from main.css's `.card*`
+   family, so the root no longer collides with common.Card. The openable hover
+   and the metadata line come from editorial/Collection.css. */
+.entity-card {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: var(--rule-ink);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+}
+
+/* Where the picture goes. The ratio is the token CollectionCreate reads too, so
+   the creation card and an entity card line up in the same grid row. */
+.entity-card__media {
+  aspect-ratio: var(--media-ratio-portrait);
+  position: relative;
+  border-bottom: var(--rule-ink);
+  overflow: hidden;
+}
+.entity-card__media img { width: 100%; height: 100%; object-fit: cover; }
+
+.entity-card__body {
+  padding: 0.9rem 0.95rem 1rem;
+  display: grid;
+  gap: 0.4rem;
+  align-content: start;
+}
+.entity-card__name { font-family: var(--serif); font-size: 1.24rem; line-height: 1.1; }
+.entity-card__title { font-size: 0.86rem; color: var(--muted); }
+.entity-card__owner {
+  font-size: 0.66rem;
+  border-top: var(--rule);
+  padding-top: 0.5rem;
+  margin-top: 0.3rem;
+}
+
+/* An NPC card carries the same frame with a dashed owner rule and a badge. */
+.entity-card--npc .entity-card__name::after {
+  content: "NPC";
+  font-family: var(--mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  border: 1px dashed var(--ink);
+  padding: 0.05rem 0.3rem;
+  margin-left: 0.5rem;
+  vertical-align: 0.25em;
+}
+.entity-card--npc .entity-card__owner { border-top-style: dashed; }

@@ -1,0 +1,20 @@
+/* ---------- Row list and row ----------
+   The atlas of places and the draft lists read as rows: a mark, the name and
+   description, and a meta cell. Not a card. Migrated from main.css's
+   `.rowlist`/`.row*` family. The meta cell takes the shared mono/muted rule
+   from editorial/Collection.css. */
+.row-list { border-top: var(--rule-ink); }
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 0.85rem 0.25rem;
+  border-bottom: var(--rule);
+  text-decoration: none;
+  color: var(--ink);
+}
+.row:hover { background: var(--surface); }
+.row__name { font-family: var(--serif); font-size: 1.12rem; }
+.row__desc { font-size: 0.86rem; color: var(--muted); }
+.row__meta { font-size: 0.68rem; text-align: right; }

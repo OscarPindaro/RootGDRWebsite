@@ -1,5 +1,5 @@
 {#def world, world_context, nav, stories, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css, editorial/Row.css, editorial/StoryCard.css #}
 {% set count = stories | length %}
 {% set eyebrow_text = count ~ (' arco' if count == 1 else ' archi') %}
 <layout.Page title="Storie" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">
@@ -16,20 +16,15 @@
   {% if stories %}
   <common.Grid min="story" gap=5>
     {% for story in stories %}
-    <a class="story" href="/worlds/{{ world.id }}/stories/{{ story.id }}">
-      <div class="story__band" style="background: var(--{{ story.tint }}); color: var(--surface)">
-        <span>{{ 'In corso' if story.status == 'in_corso' else 'Chiusa' }}</span>
-        {% if story.period_label %}<span>{{ story.period_label }}</span>{% endif %}
-      </div>
-      <div class="story__body">
-        <h2 class="story__title">{{ story.title }}</h2>
-        <p class="story__sum">{{ story.short_description }}</p>
-        <div class="story__foot">
-          <span>{{ story.sessions | length }} sessioni</span>
-          <span>{% if story.is_draft %}Bozza{% endif %}</span>
-        </div>
-      </div>
-    </a>
+    <editorial.StoryCard
+      :href="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
+      :tint="story.tint"
+      :title="story.title"
+      :summary="story.short_description"
+      :status_label="'In corso' if story.status == 'in_corso' else 'Chiusa'"
+      :period_label="story.period_label"
+      :session_count="story.sessions | length"
+      :draft="story.is_draft" />
     {% endfor %}
   </common.Grid>
   {% else %}
@@ -39,14 +34,12 @@
 {% if drafts %}
 <section class="section">
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
-  <div class="rowlist">
+  <editorial.RowList>
     {% for draft in drafts %}
-    <a class="row" href="/worlds/{{ world.id }}/stories/{{ draft.id }}" style="--c: var(--{{ draft.tint }})">
-      <span><span class="row__name">{{ draft.title }}</span><br><span class="row__desc">{{ draft.short_description }}</span></span>
-      <span class="row__meta"><common.Pill variant="draft">Bozza</common.Pill></span>
-    </a>
+    <editorial.Row :href="'/worlds/' ~ world.id ~ '/stories/' ~ draft.id" :tint="draft.tint"
+      :name="draft.title" :description="draft.short_description" draft />
     {% endfor %}
-  </div>
+  </editorial.RowList>
 </section>
 {% endif %}
 </layout.Page>

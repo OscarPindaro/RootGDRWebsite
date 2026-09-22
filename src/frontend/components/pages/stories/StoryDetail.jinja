@@ -15,10 +15,11 @@
       <div class="document">
         <div class="document__head document__head--plain">
           <div class="document__id">
-            <span class="story__band" style="background: var(--{{ story.tint }}); color: var(--surface); display: inline-flex; gap: 1rem; padding: 0.3rem 0.7rem; margin-bottom: 0.8rem">
-              <span>{{ 'In corso' if story.status == 'in_corso' else 'Chiusa' }}</span>
-              {% if story.period_label %}<span>{{ story.period_label }}</span>{% endif %}
-            </span>
+            <editorial.StoryBand
+              :status="'In corso' if story.status == 'in_corso' else 'Chiusa'"
+              :period_label="story.period_label"
+              :tint="story.tint"
+              inline />
             <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
               :can_manage="can_manage" :locked="story.locked" :version="story.version" :auto_edit="auto_edit">
               <span class="eyebrow">Titolo</span>

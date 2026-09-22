@@ -1,0 +1,7 @@
+{#def status, period_label=None, tint=None, inline=False #}
+{#css editorial/StoryCard.css #}
+{% set classes = "story-band" ~ (" story-band--inline" if inline else "") %}
+<span {{ attrs.render(class=classes, style=("background: var(--" ~ tint ~ "); color: var(--surface)" if tint else "")) }}>
+  <span>{{ status }}</span>
+  {% if period_label %}<span>{{ period_label }}</span>{% endif %}
+</span>

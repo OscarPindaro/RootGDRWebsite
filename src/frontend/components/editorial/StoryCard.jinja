@@ -1,0 +1,18 @@
+{#def href, tint, title, summary, status_label, period_label=None, session_count=None, draft=False, level=2 #}
+{#css editorial/StoryCard.css, editorial/Collection.css, common/Pill.css #}
+{# A story arc as a band: the act strip, the title and summary, and a foot with
+   the session count and the draft state. `level` keeps the heading in the page
+   outline: 2 on the list page, 3 inside an overview column. #}
+<a class="story-card collection-surface" href="{{ href }}">
+  <editorial.StoryBand :status="status_label" :period_label="period_label" :tint="tint" />
+  <div class="story-card__body">
+    {% if level == 3 %}<h3 class="story-card__title">{{ title }}</h3>{% else %}<h2 class="story-card__title">{{ title }}</h2>{% endif %}
+    <p class="story-card__sum">{{ summary }}</p>
+    {% if session_count is not none or draft %}
+    <div class="story-card__foot collection-meta">
+      <span>{% if session_count is not none %}{{ session_count }} sessioni{% endif %}</span>
+      <span>{% if draft %}<common.Pill variant="draft">Bozza</common.Pill>{% endif %}</span>
+    </div>
+    {% endif %}
+  </div>
+</a>

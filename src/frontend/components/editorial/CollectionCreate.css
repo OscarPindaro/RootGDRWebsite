@@ -1,9 +1,11 @@
 /* ---------- Collection create ----------
    The literal creation affordance for a collection grid: one grid cell shaped
-   like an editorial.Card — a media area at the card ratio where the picture
-   would be, and a body box where the name would be — but dashed and
-   transparent, so it reads as the card that is not there yet. The shared
-   creation entry: the states below and the hx-post live here, not in a page. */
+   like an editorial.EntityCard — a media area at the card ratio where the
+   picture would be, and a body box where the name would be — but dashed and
+   transparent, so it reads as the card that is not there yet. The action and
+   the disabled state live here; the openable hover, the focus ring and the
+   pressed state are the shared collection-surface rule in
+   editorial/Collection.css. */
 .collection-create {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -14,32 +16,14 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
-  transition: transform 140ms ease, box-shadow 140ms ease;
-}
-
-/* The entity cards' own lift, so the two read as peers. */
-.collection-create:hover {
-  transform: translate(var(--lift-shift), var(--lift-shift));
-  box-shadow: var(--lift-shadow);
-  color: var(--ink);
-}
-
-/* Pressing settles the card back onto the page. */
-.collection-create:active {
-  transform: translate(0, 0);
-  box-shadow: none;
-}
-
-.collection-create:focus-visible {
-  color: var(--ink);
-  outline: var(--rule-width-strong) solid var(--clr-accent);
-  outline-offset: var(--sp-1);
 }
 
 /* A denied role is never handed a create entry; this is the state of a create
-   action that is genuinely unavailable, and it keeps the card's geometry. */
+   action that is genuinely unavailable, and it keeps the card's geometry. The
+   `:hover`/`:active` selectors out-specify the shared surface lift. */
 .collection-create:disabled,
-.collection-create:disabled:hover {
+.collection-create:disabled:hover,
+.collection-create:disabled:active {
   transform: none;
   box-shadow: none;
   color: var(--muted);
@@ -68,7 +52,7 @@
   line-height: 1;
 }
 
-/* The same box .card__body uses, so the two cards line up in a row. */
+/* The same box .entity-card__body uses, so the two cards line up in a row. */
 .collection-create__body {
   padding: 0.9rem 0.95rem 1rem;
   display: grid;
@@ -86,10 +70,4 @@
 .collection-create__hint {
   color: var(--muted);
   font-size: 0.86rem;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .collection-create {
-    transition-duration: 0s;
-  }
 }

@@ -1,5 +1,5 @@
 {#def world, world_context, nav, places, current_place_id=None, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css, editorial/EntityCard.css, editorial/Row.css #}
 {% set eyebrow_text = (places | length) ~ (' luogo' if (places | length) == 1 else ' luoghi') %}
 <layout.Page title="Luoghi" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="luoghi">
   <editorial.Masthead
@@ -31,18 +31,15 @@
 
   {% if (places | length) > 1 %}
   <editorial.SectionHead title="Le altre radure" eyebrow="Resto dell'atlante" />
-  <div class="rowlist">
+  <editorial.RowList>
     {% for place in places[1:] %}
-    <a class="row" href="/worlds/{{ world.id }}/places/{{ place.id }}" style="--c: var(--{{ place.tint }})">
+    <editorial.Row :href="'/worlds/' ~ world.id ~ '/places/' ~ place.id" :tint="place.tint"
+      :name="place.name" :description="place.short_description"
+      :meta="'Scena corrente' if place.id == current_place_id else None">
       <editorial.Plogo :tint="place.tint" :shape="place.shape" />
-      <span>
-        <span class="row__name">{{ place.name }}</span><br>
-        <span class="row__desc">{{ place.short_description }}</span>
-      </span>
-      <span class="row__meta">{% if place.id == current_place_id %}Scena corrente{% endif %}</span>
-    </a>
+    </editorial.Row>
     {% endfor %}
-  </div>
+  </editorial.RowList>
   {% endif %}
   {% else %}
   <common.EmptyState icon="map-pin" title="Nessun luogo" description="L'atlante è vuoto." />
@@ -52,7 +49,7 @@
 <section class="section">
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
   <common.Grid min="card" gap=5>
-    {% for card in drafts %}<editorial.Card :item="card" />{% endfor %}
+    {% for card in drafts %}<editorial.EntityCard :item="card" />{% endfor %}
   </common.Grid>
 </section>
 {% endif %}

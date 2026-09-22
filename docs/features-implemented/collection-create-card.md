@@ -1,7 +1,7 @@
 # The collection create card
 
 The literal creation affordance for a collection grid: one grid cell shaped like
-an `editorial.Card`, dashed and empty, so it reads as the card that is not there
+an `editorial.EntityCard`, dashed and empty, so it reads as the card that is not there
 yet. F13 rolled it out to the grid collections and settled where creation lives
 on every other collection.
 
@@ -56,7 +56,7 @@ work for F14, not a parallel `.cover--new`. Worlds keeps its masthead command
   `hx-post` to the caller's `action`, and a `disabled` state.
 - `editorial/CollectionCreate.css` — the `collection-create` root. The media
   area reads `--media-ratio-portrait`, the same token the entity card's media
-  uses, and the body repeats `.card__body`'s box so the two cards line up.
+  uses, and the body repeats `.entity-card__body`'s box so the two cards line up.
 - `--collection-create-plus` sizes the plus; `--lift-shift` and `--lift-shadow`
   are the shared hard-offset hover the editorial cards use.
 - `pages/characters/CharacterList.jinja` renders one card after the entity cards.
@@ -81,5 +81,6 @@ work for F14, not a parallel `.cover--new`. Worlds keeps its masthead command
   its media plus its own body, which is shorter than an entity card carrying
   name, title and owner.
 - The card is entity-card-shaped, so it only fits grids whose cells are entity
-  cards. F14 owns extracting the repeated collection structures and deciding
-  whether a cover-shaped creation cell is worth a variant.
+  cards. F14 kept the create card in the entity-card grids only and extracted
+  the ledger, row and story structures as their own components; a cover-shaped
+  creation cell is still not built (the world create flow is a full form).

@@ -1,0 +1,10 @@
+{#def href, name, description=None, meta=None, tint=None, draft=False #}
+{#css editorial/Row.css, editorial/Collection.css, common/Pill.css #}
+{# One row of an atlas or a draft list. The optional mark (a place logo) is the
+   caller's content; `draft` marks the row with the shared draft pill. #}
+<a class="row" href="{{ href }}"{% if tint %} style="--c: var(--{{ tint }})"{% endif %}>
+  {{ content }}
+  <span><span class="row__name">{{ name }}</span>{% if description %}<br><span class="row__desc">{{ description }}</span>{% endif %}</span>
+  {% if draft %}<span class="row__meta"><common.Pill variant="draft">Bozza</common.Pill></span>
+  {% elif meta %}<span class="row__meta collection-meta">{{ meta }}</span>{% endif %}
+</a>

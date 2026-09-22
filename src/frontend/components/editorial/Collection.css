@@ -1,0 +1,38 @@
+/* ---------- Collection language ----------
+   The rules every collection representation shares, so an entity card, a story
+   card, the atlas row and the ledger behave the same where they should, and
+   stay different where their density differs.
+
+   Owned here, not by one component, because several editorial components read
+   them: EntityCard, StoryCard, CollectionCreate, Cover and the overview's
+   current-scene row. Density (columns, padding, type sizes) stays in each
+   component's own stylesheet. */
+
+/* The openable surface: a hard ink offset on hover, settling back on press.
+   The offset and the shadow are the shared tokens F12 introduced, so every
+   surface lifts onto the same edge. */
+.collection-surface {
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+.collection-surface:hover {
+  transform: translate(var(--lift-shift), var(--lift-shift));
+  box-shadow: var(--lift-shadow);
+}
+.collection-surface:active {
+  transform: translate(0, 0);
+  box-shadow: none;
+}
+
+/* The metadata line: mono and muted. What a card's owner, a story's foot, a
+   ledger date and a row's meta all are. The size stays with each component:
+   the ledger's dense columns and a card's owner label are not the same line. */
+.collection-meta {
+  font-family: var(--mono);
+  color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collection-surface {
+    transition-duration: 0s;
+  }
+}

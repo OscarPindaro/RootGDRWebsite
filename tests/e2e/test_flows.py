@@ -153,7 +153,7 @@ def test_master_fills_the_world_and_the_overview_updates(
     )
     _goto_overview(session, world_id)
     assert _quick_count(session, "Storie") == "1"
-    assert "L'inverno dei corvi" in session.page.locator(".story").inner_text()
+    assert "L'inverno dei corvi" in session.page.locator(".story-card").inner_text()
 
     # Pagine: not a quick entry, reached from the rail. The form leaves the menu
     # position blank, which must not be rejected.

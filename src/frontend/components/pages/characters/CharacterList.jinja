@@ -1,5 +1,5 @@
 {#def world, world_context, nav, cards, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/SaveIndicator.css, editorial/CollectionCreate.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/SaveIndicator.css, editorial/CollectionCreate.css, editorial/EntityCard.css #}
 {% set create_action = '/worlds/' ~ world.id ~ '/characters/new' %}
 {% set eyebrow_text = (cards | length) ~ (' scheda' if (cards | length) == 1 else ' schede') %}
 <layout.Page title="Personaggi" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="personaggi">
@@ -10,7 +10,7 @@
     :crumbs="crumbs" />
 
   <common.Grid min="card" gap=5>
-    {% for card in cards %}<editorial.Card :item="card" />{% endfor %}
+    {% for card in cards %}<editorial.EntityCard :item="card" />{% endfor %}
     <editorial.CollectionCreate
       :action="create_action"
       label="Nuovo personaggio"
@@ -22,7 +22,7 @@
 <section class="section">
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
   <common.Grid min="card" gap=5>
-    {% for card in drafts %}<editorial.Card :item="card" />{% endfor %}
+    {% for card in drafts %}<editorial.EntityCard :item="card" />{% endfor %}
   </common.Grid>
 </section>
 {% endif %}

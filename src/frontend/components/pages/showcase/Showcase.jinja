@@ -1,4 +1,4 @@
-{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, roles=[], current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css, layout/Sidebar.css, common/Combobox.css, common/SaveIndicator.css, common/HStack.css, pages/showcase/Showcase.css, editorial/CollectionCreate.css #}
+{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, showcase_card, roles=[], current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css, layout/Sidebar.css, common/Combobox.css, common/SaveIndicator.css, common/HStack.css, pages/showcase/Showcase.css, editorial/CollectionCreate.css, editorial/EntityCard.css, editorial/Ledger.css, editorial/Row.css, editorial/StoryCard.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
@@ -189,11 +189,9 @@
 
     <section class="showcase-section">
       <h2>Empty states</h2>
-      <p class="showcase-note">What a list shows when it has nothing yet. The action is optional content.</p>
+      <p class="showcase-note">What a collection shows when it has nothing yet. It is not a create affordance: creation is the collection card in a grid, or the single masthead command elsewhere (F13).</p>
       <div style="display: grid; gap: var(--sp-4);">
-        <common.EmptyState icon="map-pin" title="Nessun luogo" description="L'atlante è vuoto.">
-          <common.Button variant="secondary" size="sm" icon="plus">Nuovo luogo</common.Button>
-        </common.EmptyState>
+        <common.EmptyState icon="map-pin" title="Nessun luogo" description="L'atlante è vuoto." />
         <common.EmptyState compact icon="calendar" title="Ancora nessuna sessione" description="Il diario comparirà qui." />
       </div>
     </section>
@@ -405,8 +403,35 @@
     </section>
 
     <section class="showcase-section">
+      <h2>Collection surfaces</h2>
+      <p class="showcase-note">The collection language. An entity card and the create card share one openable hover, one focus ring and one metadata line; a story keeps its band, a ledger its columns, a row its rhythm. The literal creation card is only ever a grid cell beside entity cards.</p>
+      <common.Grid min="card" gap=5 style="max-width: 760px">
+        <editorial.EntityCard :item="showcase_card" />
+        <editorial.EntityCard :item="showcase_card" npc />
+        <editorial.CollectionCreate action="/worlds/00000000-0000-0000-0000-000000000000/characters/new" label="Nuovo personaggio" hint="Nessun personaggio: creane uno per cominciare." />
+      </common.Grid>
+      <div style="margin-top: var(--sp-6); max-width: 760px;">
+        <editorial.StoryCard href="#" tint="ochre" title="L'inverno dei corvi" summary="Un arco che raccoglie le sessioni della campagna in corso." status_label="In corso" period_label="Anno 3" :session_count="4" draft />
+      </div>
+      <div style="margin-top: var(--sp-6); max-width: 760px;">
+        <editorial.Ledger :columns="['N°', 'Data', 'Sessione', '']">
+          <editorial.LedgerRow href="#" tint="cobalt" number="01" sdot meta="Primavera, 3° anno" title="Il risveglio della Marchesa" summary="La compagnia torna al Boschetto." tag="Bozza" />
+          <editorial.LedgerRow href="#" tint="forest" number="02" meta="Estate, 3° anno" title="Sotto la Grande Quercia" summary="Un patto con i folletti." />
+        </editorial.Ledger>
+      </div>
+      <div style="margin-top: var(--sp-6); max-width: 760px;">
+        <editorial.RowList>
+          <editorial.Row href="#" tint="forest" name="Radura della Grande Quercia" description="Il cuore del bosco." meta="Scena corrente">
+            <editorial.Plogo tint="forest" shape="rombo" />
+          </editorial.Row>
+          <editorial.Row href="#" tint="p8" name="Bozza di luogo" description="Non ancora pubblicato." draft />
+        </editorial.RowList>
+      </div>
+    </section>
+
+    <section class="showcase-section">
       <h2>Collection create</h2>
-      <p class="showcase-note">The literal creation card for a collection grid (F12 prototype): one grid cell, warm paper surface, ink border, a stable square plus. Delete or generalise after review — F13/F14 own the rollout.</p>
+      <p class="showcase-note">The literal creation card for a collection grid: one grid cell shaped like an entity card, warm paper surface, ink border, a stable square plus. It owns the action and the disabled state; the hover and focus are the shared collection-surface rule.</p>
       <common.Grid min="card" gap=5 style="max-width: 520px">
         <editorial.CollectionCreate action="/worlds/00000000-0000-0000-0000-000000000000/characters/new" label="Nuovo personaggio" hint="Nessun personaggio: creane uno per cominciare." />
       </common.Grid>

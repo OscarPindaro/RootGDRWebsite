@@ -1,5 +1,5 @@
 {#def world, world_context, nav, rows, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css #}
+{#css common/Button.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css, editorial/Ledger.css, editorial/Row.css #}
 {% set count = rows | length %}
 {% set eyebrow_text = count ~ (' sessione' if count == 1 else ' sessioni') %}
 <layout.Page title="Sessioni" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="sessioni">
@@ -14,25 +14,20 @@
   </editorial.Masthead>
 
   {% if rows %}
-  <div class="ledger">
-    <div class="ledger__head">
-      <span class="eyebrow">N°</span>
-      <span class="eyebrow">Data</span>
-      <span class="eyebrow">Sessione</span>
-      <span class="eyebrow"></span>
-    </div>
+  <editorial.Ledger :columns="['N°', 'Data', 'Sessione', '']">
     {% for number, session in rows %}
-    <a class="ledger__row" href="/worlds/{{ world.id }}/sessions/{{ session.id }}" style="--c: var(--{{ session.tint }})">
-      <span class="ledger__num"><span class="sdot"></span>{{ '%02d' | format(number) }}</span>
-      <span class="ledger__date">{{ session.in_world_date }}{% if session.real_date %}<br>{{ session.real_date }}{% endif %}</span>
-      <span class="ledger__main">
-        <span class="ledger__title">{{ session.title }}</span>
-        <span class="ledger__sum">{{ session.short_description }}</span>
-      </span>
-      <span class="ledger__tag">{% if session.is_draft %}Bozza{% endif %}</span>
-    </a>
+    <editorial.LedgerRow
+      :href="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
+      :tint="session.tint"
+      :number="'%02d' | format(number)"
+      sdot
+      :meta="session.in_world_date"
+      :meta_extra="session.real_date"
+      :title="session.title"
+      :summary="session.short_description"
+      :tag="'Bozza' if session.is_draft else None" />
     {% endfor %}
-  </div>
+  </editorial.Ledger>
   {% else %}
   <common.EmptyState icon="calendar" title="Nessuna sessione registrata" />
   {% endif %}
@@ -40,14 +35,12 @@
 {% if drafts %}
 <section class="section">
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
-  <div class="rowlist">
+  <editorial.RowList>
     {% for draft in drafts %}
-    <a class="row" href="/worlds/{{ world.id }}/sessions/{{ draft.id }}" style="--c: var(--{{ draft.tint }})">
-      <span><span class="row__name">{{ draft.title }}</span><br><span class="row__desc">{{ draft.in_world_date }}</span></span>
-      <span class="row__meta"><common.Pill variant="draft">Bozza</common.Pill></span>
-    </a>
+    <editorial.Row :href="'/worlds/' ~ world.id ~ '/sessions/' ~ draft.id" :tint="draft.tint"
+      :name="draft.title" :description="draft.in_world_date" draft />
     {% endfor %}
-  </div>
+  </editorial.RowList>
 </section>
 {% endif %}
 </layout.Page>

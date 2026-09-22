@@ -1,0 +1,15 @@
+{#def item, npc=False #}
+{#css editorial/EntityCard.css, editorial/Collection.css #}
+{# The portrait card for a character, NPC or draft place. It is the editorial
+   entity card, distinct from the M3 common.Card container: same word, different
+   surface, so the root is `entity-card`, not `card`. #}
+<a class="entity-card collection-surface{{ ' entity-card--npc' if npc else '' }}" href="{{ item.href }}">
+  <div class="entity-card__media">
+    <editorial.Face :tint="item.tint" :animal="item.animal" :shape="item.shape" :image_url="item.image_url" :tag="item.tag" />
+  </div>
+  <div class="entity-card__body">
+    <h3 class="entity-card__name">{{ item.name }}</h3>
+    {% if item.title %}<p class="entity-card__title">{{ item.title }}</p>{% endif %}
+    {% if item.owner_label %}<span class="entity-card__owner collection-meta">{{ item.owner_label }}</span>{% endif %}
+  </div>
+</a>

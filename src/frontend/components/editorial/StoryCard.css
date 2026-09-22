@@ -1,0 +1,42 @@
+/* ---------- Story band and story card ----------
+   A story is a band, not a card: the tinted act strip names the status, the
+   body carries the title and summary, and the foot the session count and the
+   draft state. Migrated from main.css's `.story*` family. The openable hover and
+   the metadata line come from editorial/Collection.css. */
+.story-card {
+  display: grid;
+  border: var(--rule-ink);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+}
+.story-card__body { padding: 1.25rem 1.15rem 1.35rem; display: grid; gap: 0.65rem; }
+.story-card__title { font-family: var(--serif); font-size: 1.75rem; line-height: 1.05; }
+.story-card__sum { color: var(--ink-soft); font-size: 0.95rem; }
+.story-card__foot {
+  border-top: var(--rule);
+  padding-top: 0.6rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* The act strip. Full-width at the top of a story card; `inline` is the same
+   band reused as the status badge on the story document. */
+.story-band {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.85rem;
+  border-bottom: var(--rule-ink);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.story-band--inline {
+  display: inline-flex;
+  gap: 1rem;
+  padding: 0.3rem 0.7rem;
+  margin-bottom: 0.8rem;
+}
