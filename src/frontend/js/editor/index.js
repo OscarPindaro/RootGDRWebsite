@@ -531,6 +531,7 @@ function mountDocEdit(block) {
     render.hidden = false;
     if (actions) actions.hidden = true;
     preview?.click();
+    render.focus({ preventScroll: true });
   }
   function open(event) {
     if (view || event?.target.closest("a")) return;
@@ -567,11 +568,7 @@ function mountDocEdit(block) {
     }
   }
   render.addEventListener("dblclick", open);
-  render.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    open();
-  });
+  render.docStopOpen = open;
   block.docOpen = open;
   block.addEventListener("keydown", (event) => {
     if (view && event.key === "Escape") { event.preventDefault(); close(); }
@@ -607,6 +604,7 @@ function mountDocSummary(block) {
     host.hidden = true;
     render.hidden = false;
     preview?.click();
+    render.focus({ preventScroll: true });
   }
   function open(event) {
     if (view || event?.target.closest("a")) return;
@@ -638,6 +636,7 @@ function mountDocSummary(block) {
     }
   }
   render.addEventListener("dblclick", open);
+  render.docStopOpen = open;
   block.summaryOpen = open;
 }
 
@@ -666,27 +665,26 @@ function mountDocIdentity(block) {
       editor.focus();
       editor.select();
       let done = false;
-      function finish(flush) {
+      function finish(flush, after) {
         if (done) return;
         done = true;
         const value = editor.value.trim();
         apply(value);
         autosave.change(name, value);
         if (flush) autosave.flush();
+        if (after) after();
       }
       editor.addEventListener("input", () => autosave.change(name, editor.value.trim()));
       editor.addEventListener("keydown", (event) => {
-        if (event.key === "Enter") { event.preventDefault(); finish(true); }
-        else if (event.key === "Escape") { event.preventDefault(); finish(false); }
+        if (event.key === "Enter") { event.preventDefault(); finish(true, () => field.focus()); }
+        else if (event.key === "Escape") { event.preventDefault(); finish(false, () => field.focus()); }
+        else if (event.key === "ArrowDown") { event.preventDefault(); finish(true, () => { if (!focusStop(field, 1)) field.focus(); }); }
+        else if (event.key === "ArrowUp") { event.preventDefault(); finish(true, () => { if (!focusStop(field, -1)) field.focus(); }); }
       });
-      editor.addEventListener("blur", () => finish(true));
+      editor.addEventListener("blur", () => finish(true, null));
     };
     field.addEventListener("dblclick", open);
-    field.addEventListener("keydown", (event) => {
-      if (event.target !== field || (event.key !== "Enter" && event.key !== "F2")) return;
-      event.preventDefault();
-      open();
-    });
+    field.docStopOpen = open;
   });
 }
 
@@ -715,6 +713,68 @@ function mountDocMetadata(block) {
     field.addEventListener("blur", () => autosave.flush());
   });
 }
+
+/* ---------- document navigator ---------- */
+
+/* One contract for every editable block: its focusable element carries
+ * `data-doc-block` naming the slot it edits, and the mount stores the opener on
+ * that element as `docStopOpen`. The navigator orders the stops by the product
+ * sequence below, so the walking order never depends on how the components
+ * happen to be nested or on the order the mount functions run in. A type with
+ * no field for a slot simply renders no stop for it. */
+const DOC_BLOCK_ORDER = ["name", "title", "summary", "body"];
+
+function docStops() {
+  return [...document.querySelectorAll("[data-doc-block]")]
+    .filter((el) => el.docStopOpen && !el.closest('[data-readonly="true"]'))
+    .sort(
+      (a, b) =>
+        DOC_BLOCK_ORDER.indexOf(a.dataset.docBlock) -
+        DOC_BLOCK_ORDER.indexOf(b.dataset.docBlock),
+    );
+}
+
+function setActiveStop(stop) {
+  document.querySelectorAll("[data-doc-block]").forEach((el) => {
+    el.classList.toggle("document-block--active", el === stop);
+  });
+}
+
+function focusStop(from, delta) {
+  const stops = docStops();
+  const target = stops[stops.indexOf(from) + delta];
+  if (!target) return false;
+  target.focus({ preventScroll: true });
+  target.scrollIntoView({ block: "nearest" });
+  return true;
+}
+
+/* Focus is the single source of the active treatment, so arriving by Tab or by
+ * Arrow Up/Down shows the same thing. Tab and Shift+Tab are left to the browser:
+ * they walk the stops in the logical order and still reach every other page
+ * control, so the document never traps the keyboard. */
+document.addEventListener("focusin", (event) => {
+  const stop = event.target.closest?.("[data-doc-block]");
+  setActiveStop(stop?.docStopOpen ? stop : null);
+});
+
+/* Enter/F2 open the focused block. CodeMirror keeps its own keys: its DOM lives
+ * in the editor host, a sibling of the `data-doc-block` element, so these events
+ * never match a stop and native arrows, Escape and Mod-Enter stay CodeMirror's. */
+document.addEventListener("keydown", (event) => {
+  const stop = event.target.closest?.("[data-doc-block]");
+  if (!stop || event.target !== stop || !stop.docStopOpen) return;
+  if (event.key === "ArrowDown") {
+    event.preventDefault();
+    focusStop(stop, 1);
+  } else if (event.key === "ArrowUp") {
+    event.preventDefault();
+    focusStop(stop, -1);
+  } else if (event.key === "Enter" || event.key === "F2") {
+    event.preventDefault();
+    stop.docStopOpen();
+  }
+});
 
 function flushAll() { autosaves.forEach((autosave) => autosave.flush()); }
 

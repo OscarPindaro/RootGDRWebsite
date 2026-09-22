@@ -40,7 +40,7 @@
           <div class="document__id">
             <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
               :can_manage="can_manage" :locked="place.locked" :version="place.version" :auto_edit="auto_edit">
-              <h1 class="display" data-doc-field="name">{{ place.name }}</h1>
+              <h1 class="display" data-doc-field="name" data-doc-block="name">{{ place.name }}</h1>
               <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/places/' ~ place.id"
                 :value="place.short_description" :value_html="short_html" :version="place.version"
                 :can_manage="can_manage" :locked="place.locked" />

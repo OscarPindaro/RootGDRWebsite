@@ -34,9 +34,9 @@
             <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/npcs/' ~ npc.id"
               :can_manage="can_manage" :locked="npc.locked" :version="npc.version" :auto_edit="auto_edit">
               <span class="eyebrow">Nome</span>
-              <h1 class="display" data-doc-field="name">{{ npc.name }}</h1>
+              <h1 class="display" data-doc-field="name" data-doc-block="name">{{ npc.name }}</h1>
               <span class="eyebrow">Titolo</span>
-              <p class="card__title" data-doc-field="title"
+              <p class="card__title" data-doc-field="title" data-doc-block="title"
                  {% if not npc.title %}data-empty="true"{% endif %}>{{ npc.title or '' }}</p>
               <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/npcs/' ~ npc.id"
                 :value="npc.short_description" :value_html="short_html" :version="npc.version"

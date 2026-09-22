@@ -1436,6 +1436,11 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   border-bottom: var(--rule-ink);
 }
 .document__page > .eyebrow { display: block; margin-bottom: 0.75rem; }
+/* One active treatment for the editable block the document navigator focuses. */
+[data-doc-block].document-block--active {
+  background: var(--paper-deep);
+  box-shadow: inset var(--rule-width-strong) 0 0 var(--vermilion);
+}
 .document__head--plain { grid-template-columns: minmax(0, 1fr); }
 .document__meta {
   display: flex;

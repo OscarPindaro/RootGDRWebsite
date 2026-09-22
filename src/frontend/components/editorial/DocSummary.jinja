@@ -5,7 +5,9 @@
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   <textarea name="body" data-summary-source hidden>{{ value }}</textarea>
   <div class="docsummary__editor" data-summary-editor hidden></div>
-  <div class="docsummary__render prose" data-summary-render tabindex="0">{{ value_html }}</div>
+  <span class="eyebrow">Sintesi</span>
+  <div class="docsummary__render prose" data-summary-render data-doc-block="summary"
+       {% if not (locked or not can_manage) %}tabindex="0"{% endif %}>{{ value_html }}</div>
   <button type="button" hidden data-summary-preview
           hx-post="/worlds/{{ world_id }}/preview"
           hx-include="closest [data-doc-summary]"

@@ -5,7 +5,8 @@
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   <textarea class="docedit__source" name="body" data-doc-source hidden>{{ body }}</textarea>
   <div class="docedit__editor" data-doc-editor hidden></div>
-  <div class="docedit__render prose" data-doc-render tabindex="0" aria-label="{{ label }}. Premi Invio per modificare.">{{ body_html }}</div>
+  <div class="docedit__render prose" data-doc-render data-doc-block="body"
+       {% if not (locked or not can_manage) %}tabindex="0" aria-label="{{ label }}. Premi Invio per modificare."{% endif %}>{{ body_html }}</div>
   <button type="button" hidden data-doc-preview
           hx-post="/worlds/{{ world_id }}/preview"
           hx-include="closest [data-doc-edit]"

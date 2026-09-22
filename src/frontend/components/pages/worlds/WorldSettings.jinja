@@ -10,7 +10,7 @@
       <section class="world-identity">
         <span class="eyebrow">Nome</span>
         <editorial.DocIdentity :base="'/worlds/' ~ world.id" :version="world.version" :can_manage="True">
-          <h2 class="display display--sm" data-doc-field="name" data-doc-label="Nome del mondo">{{ world.name }}</h2>
+          <h2 class="display display--sm" data-doc-field="name" data-doc-block="name" data-doc-label="Nome del mondo">{{ world.name }}</h2>
         </editorial.DocIdentity>
         <span class="eyebrow">Descrizione</span>
         <editorial.DocEdit world_id={{ world.id }} :base="'/worlds/' ~ world.id"

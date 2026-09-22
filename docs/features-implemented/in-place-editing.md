@@ -15,6 +15,14 @@ The reading page is where a document is written: no separate edit form, no
 - The name and title remain single-line fields. The short description opens a
   compact Markdown editor with the same preview and `@` menu as the body. All
   three use the same autosave and conflict controller.
+- The blocks are one ordered sequence (Nome → Titolo → Sintesi → Descrizione,
+  omitting fields a type does not have). Arrow Up/Down move between them, Enter
+  or F2 opens the focused block, and the focused block carries one visible
+  active treatment. Tab/Shift+Tab stay native sequential navigation. Inside a
+  single-line field Enter commits, Arrow Down/Up commit and move, Escape closes
+  without moving. Inside CodeMirror the arrows are native, Ctrl/⌘+Enter closes
+  and returns focus to the block, Escape closes without moving. See
+  [document-navigator.md](document-navigator.md).
 - Body and identity changes save automatically after about one idle second. A
   five-second ceiling covers continuous typing and changes of 200 characters
   flush immediately. `Ctrl/⌘ + Enter`, blur and navigation also flush.
@@ -36,6 +44,10 @@ The reading page is where a document is written: no separate edit form, no
 - `src/frontend/js/editor/index.js` owns one sequential autosave queue per API
   document. It coalesces fields and sends authenticated JSON `PATCH` requests
   with the latest `expected_version` to the existing per-feature endpoint.
+- The same file owns the document navigator: every editable block exposes its
+  focusable element as `data-doc-block`, and the navigator orders the stops by
+  the product sequence rather than by DOM nesting. It coordinates focus and
+  opening only; it does not persist anything itself.
 - The same file mounts CodeMirror for the body. `live-preview.js` hides Markdown
   markers outside the active line. The document remains Markdown.
 - The editor bundle is loaded only on editable document and world-settings

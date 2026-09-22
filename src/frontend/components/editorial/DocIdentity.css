@@ -27,10 +27,6 @@
   background: var(--paper-deep);
 }
 
-.docidentity [data-doc-field]:focus-within {
-  border-left-color: var(--vermilion);
-}
-
 .docidentity__input {
   font: inherit;
   color: inherit;

@@ -19,7 +19,7 @@
   <editorial.DocIdentity :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
     :can_manage="can_manage" :locked="page.locked" :version="page.version" :auto_edit="auto_edit">
     <span class="eyebrow">Titolo</span>
-    <h1 class="display" data-doc-field="title">{{ page.title }}</h1>
+    <h1 class="display" data-doc-field="title" data-doc-block="title">{{ page.title }}</h1>
     <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
       :value="page.short_description" :value_html="short_html" :version="page.version"
       :can_manage="can_manage" :locked="page.locked" />

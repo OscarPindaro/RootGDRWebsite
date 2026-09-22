@@ -3,11 +3,6 @@
   outline: none;
 }
 
-.docedit__render:focus-visible {
-  outline: var(--rule-ink);
-  outline-offset: 0.35rem;
-}
-
 /* The rendered text is the measure: the writing field takes its height. */
 .docedit__editor {
   border: 0;
