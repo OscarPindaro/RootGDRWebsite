@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, Form, HTTPException, status
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_admin_user, get_current_user
@@ -187,11 +187,21 @@ async def settings_page(
 
 @router.post("/settings", response_class=HTMLResponse)
 async def settings_submit(
+    request: Request,
     symbol_style: SymbolStyle = Form(SymbolStyle.ICONS),
     catalog=Depends(get_catalog_dep),
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ):
-    """Save the symbol-style preference and return an htmx status message."""
+    """Save the symbol-style preference.
+
+    An htmx request gets the status fragment that also carries the resolved
+    style; a plain form post (no JavaScript) is redirected back to the page so
+    the next render shows the choice.
+    """
     await update_symbol_style(db, user, symbol_style)
-    return catalog.render("pages.settings.SettingsStatus")
+    if request.headers.get("HX-Request") == "true":
+        return catalog.render(
+            "pages.settings.SettingsStatus", symbol_style=symbol_style.value
+        )
+    return RedirectResponse("/settings", status_code=303)

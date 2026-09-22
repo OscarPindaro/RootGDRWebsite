@@ -57,6 +57,12 @@ async def test_settings_renders_single_group_and_persists_change(
             assert "data-button-group-required" in page.text
             assert 'value="icons" aria-label="Icone" checked required' in page.text
             assert 'data-testid="save-settings"' not in page.text
+            # The form is submittable without JavaScript: a real method/action
+            # and a submit control inside <noscript>.
+            assert 'method="post"' in page.text
+            assert 'action="/settings"' in page.text
+            assert "<noscript>" in page.text
+            assert 'type="submit"' in page.text
 
             response = await client.post(
                 "/settings",
@@ -66,6 +72,20 @@ async def test_settings_renders_single_group_and_persists_change(
             assert response.status_code == 200
             assert 'role="alert"' in response.text
             assert "Preferenza salvata." in response.text
+            # The status fragment echoes the resolved style so Mark.js can flip
+            # every mark without a reload; the value is the server's, not the
+            # browser's.
+            assert 'data-symbol-style="shapes"' in response.text
+
+            # A plain post (no JavaScript) persists too and redirects back to
+            # the page, so the next render shows the choice.
+            plain = await client.post(
+                "/settings",
+                data={"symbol_style": "shapes"},
+                follow_redirects=False,
+            )
+            assert plain.status_code == 303
+            assert plain.headers["location"] == "/settings"
 
         verification = db_manager.async_session_maker()
         persisted = await verification.get(UserModel, user_id)

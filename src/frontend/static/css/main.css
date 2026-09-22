@@ -1052,6 +1052,10 @@ ul, ol { margin: 0; padding: 0; }
 }
 .mark__svg { width: 100%; height: 100%; display: block; }
 .mark--lg { --mark-size: 22px; }
+/* A role mark carries both equivalent presentations. Only the one the active
+   class names is laid out, so a mark is still a single grid item. */
+.mark--icons .mark__svg--shape,
+.mark--shapes .mark__svg:not(.mark__svg--shape) { display: none; }
 
 /* Segmented control e righe del pannello preferenze.
    Esistono solo nel prototipo: la pagina impostazioni utente avrà i

@@ -1,3 +1,6 @@
 {#def role, style="icons" #}
 {% set mark_style = style.value if style.value is defined else style %}
-<span {{ attrs.render(class="mark mark--" ~ mark_style) }} data-mark-style="{{ mark_style }}" aria-hidden="true">{{ mark(role, mark_style) }}</span>
+{# Both equivalent presentations ship in the markup; the active one is chosen by
+   the ``mark--icons``/``mark--shapes`` class, which the server sets on first
+   paint and Mark.js flips after a successful Settings response. #}
+<span {{ attrs.render(class="mark mark--" ~ mark_style) }} data-mark-style="{{ mark_style }}" aria-hidden="true">{{ mark(role, "icons") }}{{ mark(role, "shapes") }}</span>

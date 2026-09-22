@@ -363,6 +363,66 @@ def test_settings_choice_is_exclusive_and_persists(session: BrowserSession) -> N
     assert not shapes.is_checked()
 
 
+def _select_symbol_style(session: BrowserSession, value: str) -> None:
+    """Persist a symbol style through the Settings form if it is not active."""
+    radio = session.page.locator(f'input[name="symbol_style"][value="{value}"]')
+    if radio.is_checked():
+        return
+    session.page.locator(
+        f'.button-group-option:has(input[value="{value}"]) .btn'
+    ).click()
+    session.page.locator("#settings-status", has_text="Preferenza salvata.").wait_for()
+
+
+def test_symbol_style_applies_before_any_reload(session: BrowserSession) -> None:
+    session.goto("/settings")
+    _select_symbol_style(session, "icons")
+
+    marks = session.page.locator("[data-mark-style]")
+    count = marks.count()
+    assert count > 0
+    assert session.page.locator('[data-mark-style="icons"]').count() == count
+
+    session.page.locator('.button-group-option:has(input[value="shapes"]) .btn').click()
+    session.page.locator("#settings-status", has_text="Preferenza salvata.").wait_for()
+
+    # No reload: the rail and every visible mark already switched, and the
+    # shape is the presentation that is laid out.
+    assert session.page.locator('[data-mark-style="shapes"]').count() == count
+    assert session.page.locator(".navitem__mark.mark--shapes").count() > 0
+    shape = session.page.locator(".mark--shapes .mark__svg--shape").first
+    icon = session.page.locator(".mark--shapes .mark__svg:not(.mark__svg--shape)").first
+    assert shape.evaluate("el => getComputedStyle(el).display") != "none"
+    assert icon.evaluate("el => getComputedStyle(el).display") == "none"
+
+    # The reload renders the same state from the server.
+    session.page.reload(wait_until="networkidle")
+    assert session.page.locator('[data-mark-style="shapes"]').count() == count
+    assert session.page.locator(".navitem__mark.mark--shapes").count() > 0
+
+    _select_symbol_style(session, "icons")
+
+
+def test_symbol_style_keyboard_selection_matches_pointer(
+    session: BrowserSession,
+) -> None:
+    session.goto("/settings")
+    _select_symbol_style(session, "icons")
+
+    session.page.locator('input[name="symbol_style"][value="icons"]').focus()
+    session.page.keyboard.press("ArrowRight")
+    session.page.locator("#settings-status", has_text="Preferenza salvata.").wait_for()
+
+    assert session.page.locator(
+        'input[name="symbol_style"][value="shapes"]'
+    ).is_checked()
+    # The same immediate flip the pointer produces.
+    assert session.page.locator(".navitem__mark.mark--icons").count() == 0
+    assert session.page.locator('[data-mark-style="shapes"]').count() > 0
+
+    _select_symbol_style(session, "icons")
+
+
 def test_components_navigation_marks_current_page(session: BrowserSession) -> None:
     session.goto("/components")
     current = session.page.get_by_role("link", name="Componenti", exact=True)

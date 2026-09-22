@@ -6,7 +6,7 @@
     eyebrow="Preferenze"
     lede="Le preferenze visive appartengono al tuo account e valgono in ogni mondo." />
 
-  <form class="form" style="max-width: 900px"
+  <form class="form" style="max-width: 900px" method="post" action="/settings"
         hx-post="/settings" hx-ext="ignore:json-enc" hx-trigger="change"
         hx-target="#settings-status" hx-swap="innerHTML">
     <common.HStack gap=3>
@@ -15,6 +15,11 @@
                           required variant="connected" size="sm" />
       <p class="hint">Icone: un disegno lineare dice cosa fa una voce. Forme: una geometria piena dice dove sta nella struttura.</p>
     </common.HStack>
+    {# Without JavaScript the change trigger does not fire, so the form needs a
+       native submit control; the browser ignores it when scripting is on. #}
+    <noscript>
+      <common.Button type="submit" variant="primary" size="sm">Salva</common.Button>
+    </noscript>
     <div id="settings-status" aria-live="polite" aria-atomic="true"></div>
   </form>
 </layout.Page>

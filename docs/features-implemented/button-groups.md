@@ -7,7 +7,7 @@
 - Buttons retain the editorial `primary`, `secondary` and `danger` colors and add `filled`, `tonal`, `outlined`, `elevated` and `text` configurations. Sizes run from `xs` to `xl`; buttons can be icon-only, selected, linked or block-width. Every button shares the atlas low radius (`--radius`); `shape` still emits its class but no longer changes the corner (see [button-pill-skins.md](button-pill-skins.md)).
 - A group without `options` arranges button children. A group with options renders native radio or checkbox inputs for single or multiple selection, including required and disabled states.
 - Selection groups support arrow, Home and End navigation, Space, checked ARIA state and optional-radio deselection. Geometry is stable: pressing or selecting never changes an item's width or shape, and never moves its neighbours. Standard groups fix the shape of their items; connected groups share their inner corners.
-- User settings uses a required connected group for the symbol style. A change persists immediately and announces the result. Creation and world-settings links use compact icon-only buttons with accessible Italian labels.
+- User settings uses a required connected group for the symbol style. A change persists immediately, announces the result, and switches the active presentation of every visible role mark without a reload (see [symbol-style.md](symbol-style.md)). Creation and world-settings links use compact icon-only buttons with accessible Italian labels.
 
 ## How it is built
 
