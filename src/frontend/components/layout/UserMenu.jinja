@@ -1,14 +1,21 @@
 {#def current_user=None #}
-{#css common/Avatar.css, common/Button.css, common/Menu.css, layout/UserMenu.css #}
+{#css common/Avatar.css, common/Menu.css, layout/UserMenu.css #}
 <div class="user-menu" id="user-menu">
-  <common.Button variant="primary" size="md" block type="button" id="user-menu-trigger" data-testid="user-menu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="user-menu-popover" popovertarget="user-menu-popover">
+  {# A dedicated identity trigger, not a Button: it opens the account menu, it
+     is not a call to action. The markup states avatar, name/email and chevron
+     directly; Menu.js drives the popover through popovertarget and
+     aria-labelledby. #}
+  <button type="button" class="user-menu__trigger" id="user-menu-trigger"
+          data-testid="user-menu-trigger"
+          aria-haspopup="menu" aria-expanded="false"
+          aria-controls="user-menu-popover" popovertarget="user-menu-popover">
     <common.Avatar name={{ current_user.name }} size=32 :avatar_url="current_user.avatar_url" />
     <span class="user-menu-info">
       <span class="user-menu-name">{{ current_user.name }}</span>
       <span class="user-menu-email">{{ current_user.email }}</span>
     </span>
     <common.Icon name="chevron-up" size=16 />
-  </common.Button>
+  </button>
   <common.Menu id="user-menu-popover" labelledby="user-menu-trigger" placement="top-start" class="user-menu-popover">
     <common.MenuItem icon="settings" label="Impostazioni" href="/settings" data-testid="user-menu-settings" />
     <common.MenuItem icon="log-out" label="Esci" href="/auth/logout-view" variant="danger" data-testid="user-menu-logout" />

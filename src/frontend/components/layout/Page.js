@@ -1,57 +1,155 @@
-/* Page shell: the rail becomes an off-canvas drawer on small screens.
-   Event delegation keeps it working when htmx swaps content in. */
+/* Behaviour for the page shell: the phone rail is a modal drawer.
+ *
+ * On a phone the rail slides in over the page. While it is open the rest of
+ * the shell is `inert`, the body cannot scroll, Tab is contained inside the
+ * drawer, and Escape or the scrim closes it and returns focus to the control
+ * that opened it. A native <dialog> cannot host the rail (it is a landmark,
+ * not a dialog), so the containment is enforced here rather than by
+ * showModal(). Ordinary navigation keeps native Tab order; the rail is not an
+ * ARIA composite widget. common.Menu keeps its own APG arrow model.
+ */
 (function () {
   "use strict";
 
-  function setOpen(open) {
-    var rail = document.getElementById("rail");
-    var scrim = document.getElementById("scrim");
-    var toggle = document.getElementById("drawer-toggle");
-    if (!rail || !scrim || !toggle) return;
-    rail.classList.toggle("is-open", open);
-    scrim.classList.toggle("is-open", open);
-    toggle.setAttribute("aria-expanded", String(open));
+  var FOCUSABLE = [
+    "a[href]",
+    "button:not([disabled])",
+    "input:not([disabled])",
+    "select:not([disabled])",
+    "textarea:not([disabled])",
+    '[tabindex]:not([tabindex="-1"])',
+  ].join(",");
+
+  function rail() {
+    return document.getElementById("rail");
+  }
+
+  function scrim() {
+    return document.getElementById("scrim");
+  }
+
+  function toggle() {
+    return document.getElementById("drawer-toggle");
+  }
+
+  function isOpen() {
+    var element = rail();
+    return Boolean(element && element.classList.contains("is-open"));
+  }
+
+  /* Everything in the shell except the drawer and its scrim goes inert. */
+  function background() {
+    var shell = document.querySelector(".shell");
+    if (!shell) return [];
+    return Array.prototype.filter.call(shell.children, function (child) {
+      return child.id !== "rail" && child.id !== "scrim";
+    });
+  }
+
+  function focusables(root) {
+    return Array.prototype.filter.call(
+      root.querySelectorAll(FOCUSABLE),
+      function (element) {
+        return element.offsetParent !== null;
+      }
+    );
+  }
+
+  var opener = null;
+
+  function setOpen(open, restoreFocus) {
+    var drawer = rail();
+    var shade = scrim();
+    var trigger = toggle();
+    if (!drawer || !shade || open === isOpen()) return;
+
+    drawer.classList.toggle("is-open", open);
+    shade.classList.toggle("is-open", open);
+    if (trigger) trigger.setAttribute("aria-expanded", String(open));
+    background().forEach(function (element) {
+      if (open) element.setAttribute("inert", "");
+      else element.removeAttribute("inert");
+    });
+    document.body.classList.toggle("drawer-open", open);
+
     if (open) {
-      var first = rail.querySelector("a, button");
+      var first = focusables(drawer)[0];
       if (first) first.focus();
-    } else {
-      toggle.focus();
+    } else if (restoreFocus) {
+      var back = opener && document.contains(opener) ? opener : trigger;
+      if (back) back.focus();
     }
+    if (!open) opener = null;
   }
 
   document.addEventListener("click", function (event) {
-    var toggle = event.target.closest("#drawer-toggle");
-    if (toggle) {
-      var rail = document.getElementById("rail");
-      setOpen(!(rail && rail.classList.contains("is-open")));
+    if (!(event.target instanceof Element)) return;
+
+    var trigger = event.target.closest("#drawer-toggle");
+    if (trigger) {
+      opener = trigger;
+      setOpen(!isOpen(), false);
       return;
     }
-    if (event.target.id === "scrim") setOpen(false);
+
+    if (event.target.id === "scrim") {
+      setOpen(false, true);
+      return;
+    }
+
+    /* The palette is another modal surface: closing the drawer first lets it
+       take focus instead of landing inside an inert background. */
+    if (isOpen() && event.target.closest("[data-open-palette]")) {
+      setOpen(false, false);
+      return;
+    }
+
+    /* A selected navigation link closes the drawer but does not restore focus
+       to the opener: the browser is about to navigate, and moving focus back
+       first would flash the opener's focus ring before the new page paints. */
+    if (isOpen() && event.target.closest("#rail a[href]")) {
+      setOpen(false, false);
+    }
   });
 
   document.addEventListener("keydown", function (event) {
-    if (event.key !== "Escape") return;
-    var rail = document.getElementById("rail");
-    if (rail && rail.classList.contains("is-open")) setOpen(false);
-  });
+    if (!isOpen()) return;
 
-  /* Arrow Up/Down and Home/End move through the rail's navigation, so the
-     whole sidebar is keyboard-operable without a mouse. */
-  document.addEventListener("keydown", function (event) {
-    var rail = document.getElementById("rail");
-    if (!rail || !rail.contains(document.activeElement)) return;
-    var keys = ["ArrowDown", "ArrowUp", "Home", "End"];
-    if (keys.indexOf(event.key) === -1) return;
-    var items = Array.prototype.slice.call(
-      rail.querySelectorAll("a[href], button:not([disabled])"),
-    );
+    if (event.key === "Escape") {
+      /* An open Menu handles Escape itself (its own popover, its own focus
+         return); do not also close the drawer behind it. */
+      if (event.defaultPrevented) return;
+      if (document.querySelector("[data-menu]:popover-open")) return;
+      event.preventDefault();
+      setOpen(false, true);
+      return;
+    }
+
+    /* Alt+Space and Ctrl/Cmd+K open the palette; close the drawer so the
+       palette does not open inside an inert background. */
+    if (
+      (event.altKey && event.code === "Space") ||
+      ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k")
+    ) {
+      setOpen(false, false);
+      return;
+    }
+
+    if (event.key !== "Tab") return;
+    var drawer = rail();
+    var items = focusables(drawer);
     if (!items.length) return;
-    var index = items.indexOf(document.activeElement);
-    event.preventDefault();
-    if (event.key === "Home") index = 0;
-    else if (event.key === "End") index = items.length - 1;
-    else if (event.key === "ArrowDown") index = (index + 1) % items.length;
-    else index = (index - 1 + items.length) % items.length;
-    items[index].focus();
+    var first = items[0];
+    var last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    } else if (!drawer.contains(document.activeElement)) {
+      event.preventDefault();
+      (event.shiftKey ? last : first).focus();
+    }
   });
 })();

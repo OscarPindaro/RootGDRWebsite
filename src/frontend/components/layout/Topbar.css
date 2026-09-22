@@ -1,0 +1,26 @@
+/* ---------- Topbar: the phone hierarchy (drawer trigger, identity, search) ---------- */
+.topbar {
+  display: none;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: var(--paper);
+  border-bottom: var(--rule-ink);
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.6rem var(--gutter);
+}
+
+.topbar__title {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--serif);
+  font-size: 1.05rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .topbar { display: flex; }
+}

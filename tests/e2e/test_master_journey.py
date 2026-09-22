@@ -301,12 +301,56 @@ def test_command_palette_opens_and_searches(session: BrowserSession) -> None:
 
 
 def test_mobile_drawer_opens_and_closes(session: BrowserSession) -> None:
+    """The phone rail is a modal drawer: focus inside, background inert, body
+    locked, Escape closes and returns focus to the opener."""
     session.page.set_viewport_size({"width": 390, "height": 844})
     session.goto("/worlds")
     session.page.click("#drawer-toggle")
     session.page.wait_for_selector("#rail.is-open")
+
+    assert session.page.evaluate(
+        "() => Boolean(document.activeElement.closest('#rail'))"
+    )
+    assert session.page.locator(".main").evaluate("el => el.hasAttribute('inert')")
+    assert session.page.evaluate(
+        "() => document.body.classList.contains('drawer-open')"
+    )
+
+    for _ in range(20):
+        session.page.keyboard.press("Tab")
+        assert session.page.evaluate(
+            "() => Boolean(document.activeElement.closest('#rail'))"
+        )
+
     session.page.keyboard.press("Escape")
     session.page.wait_for_selector("#rail.is-open", state="detached")
+    assert not session.page.locator(".main").evaluate("el => el.hasAttribute('inert')")
+    assert session.page.evaluate("() => document.activeElement.id === 'drawer-toggle'")
+    assert session.errors == []
+
+
+def test_the_shell_is_one_layout_on_every_authenticated_route(
+    session: BrowserSession, seed_world
+) -> None:
+    """Rail, topbar, skip link and identity trigger are the same on Home,
+    Worlds, a world overview, a content list, Settings and Admin."""
+    world_id = seed_world("Mondo Shell")
+    routes = [
+        "/",
+        "/worlds",
+        f"/worlds/{world_id}",
+        f"/worlds/{world_id}/characters",
+        "/settings",
+        "/admin/users",
+    ]
+    for route in routes:
+        session.goto(route)
+        assert session.page.locator("#rail .rail__inner").count() == 1, route
+        assert session.page.locator("#drawer-toggle").count() == 1, route
+        assert session.page.locator("a.skip[href='#main']").count() == 1, route
+        assert session.page.locator("#user-menu-trigger").count() == 1, route
+        assert session.page.locator("main#main").count() == 1, route
+        assert session.page.locator(".topbar").count() == 1, route
     assert session.errors == []
 
 

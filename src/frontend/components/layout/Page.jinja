@@ -1,9 +1,10 @@
 {#def title, current_user=None, active=None, world=None, nav=None, pages=None, symbol_style=None, wide=False #}
-{#css common/Avatar.css, common/Button.css, common/Menu.css, common/SaveIndicator.css, common/Tooltip.css, layout/UserMenu.css, layout/Page.css #}
+{#css common/Avatar.css, common/Button.css, common/Menu.css, common/SaveIndicator.css, common/Tooltip.css, layout/UserMenu.css, layout/Page.css, layout/Rail.css, layout/Topbar.css #}
 {% set resolved_nav = nav if nav is not none else global_nav(active, (current_user.role == 'admin') if current_user else False, env) %}
 {% set resolved_style = symbol_style if symbol_style else ((current_user.symbol_style if current_user and current_user.symbol_style else 'icons')) %}
 <layout.BlankPage :title="title">
   <div class="shell">
+    <a class="skip" href="#main">Salta al contenuto</a>
     <layout.Rail :current_user="current_user" :active="active" :world="world" :nav="resolved_nav" :pages="pages" :symbol_style="resolved_style" />
     <div class="scrim" id="scrim"></div>
     <div class="main">

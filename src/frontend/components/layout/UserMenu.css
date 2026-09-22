@@ -1,10 +1,11 @@
-/* ---------- UserMenu (sidebar footer popover) ---------- */
+/* ---------- UserMenu: the identity row and its popover ---------- */
 .user-menu {
   position: relative;
 }
 
-/* Override common.Button styling — this is a nav element, not a CTA */
-.user-menu .btn {
+/* A dedicated identity trigger: avatar, name/email and chevron on one row.
+   It is a nav element, not a CTA, so it carries no button skin. */
+.user-menu__trigger {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
@@ -15,18 +16,15 @@
   padding: var(--sp-2) var(--sp-4);
   border-radius: var(--radius-md);
   cursor: pointer;
+  text-align: left;
   transition: background var(--dur-base) var(--ease-out);
 }
 
-/* common.Button wraps slotted content in .btn-label: let the trigger's flex
-   lay out avatar, name and chevron directly instead of a single wrapper. */
-.user-menu .btn-label { display: contents; }
-
-.user-menu .btn:hover {
+.user-menu__trigger:hover {
   background: rgba(255, 255, 255, 0.06);
 }
 
-.user-menu .btn[aria-expanded="true"] {
+.user-menu__trigger[aria-expanded="true"] {
   background: rgba(255, 255, 255, 0.1);
 }
 
@@ -54,23 +52,23 @@
   text-overflow: ellipsis;
 }
 
-.user-menu .btn svg {
+.user-menu__trigger svg {
   stroke: var(--clr-nav-link);
   flex-shrink: 0;
   transition: transform var(--dur-base) var(--ease-out);
 }
 
-.user-menu .btn[aria-expanded="true"] svg {
+.user-menu__trigger[aria-expanded="true"] svg {
   transform: rotate(180deg);
 }
 
 /* Collapsed sidebar — hide text, center avatar */
 .sidebar-collapsed .user-menu-info,
-.sidebar-collapsed .user-menu .btn svg {
+.sidebar-collapsed .user-menu__trigger svg {
   display: none;
 }
 
-.sidebar-collapsed .user-menu .btn {
+.sidebar-collapsed .user-menu__trigger {
   justify-content: center;
   padding: var(--sp-2);
 }

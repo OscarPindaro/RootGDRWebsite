@@ -1,5 +1,5 @@
 {#def world, world_context, nav, stories, can_manage=False, crumbs, pages=None, drafts=None, current_user=None #}
-{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css, editorial/Row.css, editorial/StoryCard.css #}
+{#css common/Button.css, common/Grid.css, common/Tooltip.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/EmptyState.css, common/SaveIndicator.css, common/Pill.css, editorial/Row.css, editorial/StoryCard.css, layout/Rail.css, layout/Topbar.css #}
 {% set count = stories | length %}
 {% set eyebrow_text = count ~ (' arco' if count == 1 else ' archi') %}
 <layout.Page title="Storie" current_user={{ current_user }} :world="world_context" :nav="nav" :pages="pages" active="storie">

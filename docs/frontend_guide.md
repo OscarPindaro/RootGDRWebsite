@@ -57,8 +57,8 @@ Every reusable root selector has **one** owner:
 
 | Layer | Owns | Examples |
 |---|---|---|
-| `main.css` | identity and alias tokens, reset, base typography, prose, global document defaults | `.prose`, `.container`, `.shell` |
-| colocated component CSS | structure and states for that component only | `.btn`, `.field`, `.entity-card`, `.dialog` |
+| `main.css` | identity and alias tokens, reset, base typography, prose, global document defaults | `.prose`, `.container` |
+| colocated component CSS | structure and states for that component only | `.btn`, `.field`, `.entity-card`, `.dialog`, `.rail`, `.topbar` |
 | page CSS (`components/pages/**/<Page>.css`) | exceptional page composition, never a reusable primitive | `.login-page`, `.admin-*` |
 | `design-tokens/material3/` | provenance for adopted mechanics and dimensions, not a second visual identity | — |
 

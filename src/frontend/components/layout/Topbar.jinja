@@ -1,8 +1,8 @@
 {#def title #}
-{#css common/Button.css #}
+{#css common/Button.css, layout/Topbar.css #}
 <header class="topbar">
   <common.Button icon="menu" icon_only shape="square" variant="secondary"
                  label="Apri la navigazione" id="drawer-toggle" aria-expanded="false" />
   <span class="topbar__title">{{ title }}</span>
-  <common.Button variant="text" size="sm" data-open-palette style="margin-left: auto">Cerca</common.Button>
+  <common.Button variant="text" size="sm" data-open-palette>Cerca</common.Button>
 </header>
