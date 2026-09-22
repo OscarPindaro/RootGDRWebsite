@@ -1,0 +1,65 @@
+# The dialog and confirmation pattern
+
+One accessible `<dialog>` replaces native `window.confirm` and the per-page
+overlay shells: `common.Dialog` is the surface, `common.ConfirmDialog` is that
+surface with one named action.
+
+## What it does
+
+- `common.Dialog` renders a native `<dialog>` with a titled header, a
+  `Chiudi`-labelled close control, a body slot and a hidden live error region.
+- `showModal()` traps focus and closes on Escape natively; the colocated script
+  remembers the control that opened the dialog and returns focus to it on cancel
+  and on completion.
+- `common.ConfirmDialog` composes the Dialog with a message, a named confirm
+  action and a cancel control. It carries no domain knowledge: no `/admin/…`
+  path and no HTTP method.
+- A dialog loaded by htmx opens once it lands in the page; a successful request
+  from inside a dialog closes it; a failed request keeps it open and writes the
+  error into the adjacent live region.
+- Pending state marks the dialog `aria-busy` and disables its action controls.
+
+## How it is built
+
+- `common/Dialog.jinja` — the native element, `id`/`aria-labelledby` wiring, the
+  Italian close control and the `[data-dialog-error]` live region.
+- `common/Dialog.js` — the only behaviour. `[data-dialog-open="<id>"]` opens and
+  remembers the opener, `[data-dialog-close]` closes, `[data-dialog-confirm]` is
+  the pending-controlled action, `[data-dialog-autofocus]` chooses the focus
+  entry (the cancel control on a destructive confirmation). It exposes
+  `window.rootGdrDialog` (`open`, `close`, `setPending`, `showError`) for
+  callers that drive the dialog from their own script. `htmx:beforeRequest` /
+  `htmx:afterSwap` / `htmx:afterRequest` / `htmx:responseError` connect the
+  pattern to htmx.
+- `common/ConfirmDialog.jinja` — forwards caller attributes to the confirm
+  button (`_attrs`), so the request lives on the action and the close and cancel
+  controls cannot inherit it.
+- `editorial/ImageEditor.js` — opens the shared confirm dialog with the copy
+  each action owns (restore, delete revision, remove current image) and writes a
+  failed request into the dialog's live error region instead of a browser
+  prompt.
+
+## Used by
+
+- `pages.admin.InviteDialog` and the revoke confirmation
+  (`src/backend/users/views.py`), which is now a `common.ConfirmDialog` the
+  caller configures with `hx-delete` / `hx-target` / `hx-swap`.
+- `editorial.ImageEditor` — the history dialog and the restore, delete-revision
+  and remove-current-image confirmations.
+
+## Limits
+
+- The migration is deliberately partial. Native `hx-confirm` remains on the
+  destructive document actions in the six detail pages and on the World
+  Settings member/invite controls; Docbar's toggles stay with it until F10
+  moves those actions into the document bar. Inventory at the time of writing:
+  - `pages/worlds/WorldSettings.jinja` — remove member, cancel invite.
+  - `pages/characters/CharacterDetail.jinja`, `pages/npcs/NpcDetail.jinja`,
+    `pages/places/PlaceDetail.jinja`, `pages/sessions/SessionDetail.jinja`,
+    `pages/stories/StoryDetail.jinja`, `pages/pages/PageDetail.jinja` — cancel
+    draft, delete document.
+- `ImageEditor` still reloads the page after a confirmed mutation; making the
+  history update in place is F6.
+- The admin revoke cannot return focus to the invoking control after a
+  successful completion, because the swapped table removes that control; focus
+  returns there on cancel.

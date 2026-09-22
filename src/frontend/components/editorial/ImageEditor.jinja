@@ -57,20 +57,27 @@
   {% endif %}
 
   {% if editable %}
-  <dialog class="dialog image-editor__dialog" data-image-history-dialog data-testid="image-history-dialog" aria-labelledby="image-history-title-{{ owner_kind }}-{{ owner_id }}">
-    <div class="dialog-container">
-      <header class="dialog-header">
-        <h2 class="dialog-title" id="image-history-title-{{ owner_kind }}-{{ owner_id }}">Storico immagini</h2>
-        <button class="dialog-close" type="button" data-image-history-close aria-label="Chiudi storico">×</button>
-      </header>
-      <div class="dialog-body">
-        <p class="image-editor__error" data-image-error role="alert" aria-live="assertive" hidden></p>
-        <div class="image-editor__history" data-image-history-list data-testid="image-history-list"></div>
-        {% if image_url %}
-        <common.Button variant="text" size="sm" type="button" data-image-clear data-testid="image-clear-current">Rimuovi immagine corrente</common.Button>
-        {% endif %}
-      </div>
-    </div>
-  </dialog>
+  <common.Dialog title="Storico immagini"
+                 :id="'image-history-dialog-' ~ owner_kind ~ '-' ~ owner_id"
+                 class="image-editor__dialog"
+                 data-image-history-dialog data-testid="image-history-dialog">
+    <p class="image-editor__error" data-image-error role="alert" aria-live="assertive" hidden></p>
+    <div class="image-editor__history" data-image-history-list data-testid="image-history-list"></div>
+    {% if image_url %}
+    <common.Button variant="text" size="sm" type="button" data-image-clear data-testid="image-clear-current">Rimuovi immagine corrente</common.Button>
+    {% endif %}
+  </common.Dialog>
+
+  <common.Dialog title="Conferma" data-image-confirm data-testid="image-confirm-dialog">
+    <p class="image-editor__confirm-message" data-image-confirm-message></p>
+    <common.HStack gap=3 justify="end">
+      <common.Button variant="secondary" size="md" type="button"
+                     data-dialog-close data-dialog-autofocus
+                     data-testid="image-confirm-cancel">Annulla</common.Button>
+      <common.Button variant="danger" size="md" type="button"
+                     data-dialog-confirm data-image-confirm-run
+                     data-testid="image-confirm-run">Conferma</common.Button>
+    </common.HStack>
+  </common.Dialog>
   {% endif %}
 </div>

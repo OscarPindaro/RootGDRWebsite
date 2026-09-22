@@ -476,17 +476,16 @@
     <section class="showcase-section">
       <h2>Dialog</h2>
       <p class="showcase-note">M3 Dialog — modal overlay. Uses the native <code>&lt;dialog&gt;</code> element.</p>
-      <common.Button variant="secondary" size="md"
-                     onclick="document.getElementById('showcase-dialog').showModal()">
-        Open dialog
+      <common.Button variant="secondary" size="md" data-dialog-open="showcase-dialog">
+        Apri dialog
       </common.Button>
-      <common.Dialog title="Showcase dialog" id="showcase-dialog">
+      <common.Dialog title="Dialog di esempio" id="showcase-dialog">
         <p style="color: var(--clr-text-secondary); font-size: var(--text-sm);">
-          This is a dialog. It can contain forms, alerts, or any content.
+          Un dialog può contenere form, avvisi o qualsiasi contenuto.
         </p>
         <div style="display: flex; gap: var(--sp-3); justify-content: flex-end;">
           <common.Button type="button" variant="secondary" size="md"
-                         onclick="this.closest('dialog').close()">Close</common.Button>
+                         data-dialog-close>Chiudi</common.Button>
         </div>
       </common.Dialog>
     </section>

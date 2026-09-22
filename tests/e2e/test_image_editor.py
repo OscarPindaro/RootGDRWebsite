@@ -24,10 +24,6 @@ def _history(session: BrowserSession, world_id: str, kind: str, owner_id: str) -
     ).json()
 
 
-def _accept_next_confirmation(session: BrowserSession) -> None:
-    session.page.once("dialog", lambda dialog: dialog.accept())
-
-
 def test_world_image_click_drop_history_restore_delete_and_clear(
     session: BrowserSession, seed_world
 ) -> None:
@@ -74,9 +70,9 @@ def test_world_image_click_drop_history_restore_delete_and_clear(
     )
 
     old = rows.filter(has_text="prima.png")
-    _accept_next_confirmation(session)
+    old.get_by_test_id("image-history-restore").click()
     with session.page.expect_navigation(wait_until="networkidle"):
-        old.get_by_test_id("image-history-restore").click()
+        session.page.get_by_test_id("image-confirm-run").click()
     current = next(
         item
         for item in _history(session, world_id, "world", world_id)["data"]
@@ -88,18 +84,18 @@ def test_world_image_click_drop_history_restore_delete_and_clear(
     newer = session.page.get_by_test_id("image-history-revision").filter(
         has_text="seconda.jpg"
     )
-    _accept_next_confirmation(session)
+    newer.get_by_test_id("image-history-delete").click()
     with session.page.expect_navigation(wait_until="networkidle"):
-        newer.get_by_test_id("image-history-delete").click()
+        session.page.get_by_test_id("image-confirm-run").click()
     assert [
         item["filename"]
         for item in _history(session, world_id, "world", world_id)["data"]
     ] == ["prima.png"]
 
     session.page.get_by_test_id("image-history-open").click()
-    _accept_next_confirmation(session)
+    session.page.get_by_test_id("image-clear-current").click()
     with session.page.expect_navigation(wait_until="networkidle"):
-        session.page.get_by_test_id("image-clear-current").click()
+        session.page.get_by_test_id("image-confirm-run").click()
     assert all(
         not item["is_current"]
         for item in _history(session, world_id, "world", world_id)["data"]
@@ -147,7 +143,7 @@ def test_character_image_keyboard_focus_and_symbol_tint_on_phone(
     trigger.press("Enter")
     dialog = session.page.get_by_test_id("image-history-dialog")
     assert dialog.is_visible()
-    assert session.page.locator("[data-image-history-close]").evaluate(
+    assert dialog.locator("[data-dialog-close]").evaluate(
         "element => document.activeElement === element"
     )
     session.page.keyboard.press("Tab")

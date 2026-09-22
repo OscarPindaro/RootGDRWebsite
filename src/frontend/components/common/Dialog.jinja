@@ -1,18 +1,19 @@
-{#def title #}
+{#def title, id=None #}
 {#css common/Tooltip.css, common/Dialog.css #}
-<dialog class="dialog" {{ attrs.render() }}>
+<dialog {% if id %}id="{{ id }}" aria-labelledby="{{ id }}-title"{% endif %}
+        {{ attrs.render(class="dialog", data_dialog=True) }}>
   <div class="dialog-container">
     <header class="dialog-header">
-      <h2 class="dialog-title">{{ title }}</h2>
-      <common.Tooltip text="Close">
-        <button class="dialog-close" type="button" aria-label="Close"
-                onclick="this.closest('dialog').close()">
+      <h2 class="dialog-title"{% if id %} id="{{ id }}-title"{% endif %}>{{ title }}</h2>
+      <common.Tooltip text="Chiudi">
+        <button class="dialog-close" type="button" aria-label="Chiudi" data-dialog-close>
           <common.Icon name="x" size=20 />
         </button>
       </common.Tooltip>
     </header>
     <div class="dialog-body">
       {{ content }}
+      <p class="dialog-error" data-dialog-error role="alert" aria-live="assertive" hidden></p>
     </div>
   </div>
 </dialog>

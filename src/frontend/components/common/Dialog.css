@@ -62,6 +62,12 @@
   gap: var(--sp-4);
 }
 
+.dialog-error {
+  margin: 0;
+  color: var(--status-danger);
+  font-size: var(--text-sm);
+}
+
 @media (max-width: 640px) {
   .dialog { width: calc(100% - var(--sp-4)); max-height: calc(100dvh - var(--sp-4)); }
   .dialog-header { padding: var(--sp-3) var(--sp-3) var(--sp-1); }

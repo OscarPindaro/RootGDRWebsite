@@ -1,0 +1,6 @@
+/* ---------- ConfirmDialog (Dialog + one destructive action) ---------- */
+.confirm-dialog__message {
+  margin: 0;
+  color: var(--clr-text-secondary);
+  font-size: var(--text-sm);
+}

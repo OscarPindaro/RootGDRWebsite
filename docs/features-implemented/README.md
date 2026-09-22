@@ -45,3 +45,4 @@ Template:
 | Grid, VStack, HStack: layout as components | [layout-primitives.md](layout-primitives.md) |
 | One owner per root selector, one asset declaration per component | [css-ownership.md](css-ownership.md) |
 | One grid for a document and its backlinks | [document-layout.md](document-layout.md) |
+| One dialog surface for confirmations and overlays | [dialog-pattern.md](dialog-pattern.md) |

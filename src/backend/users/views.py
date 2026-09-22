@@ -137,7 +137,12 @@ async def revoke_invitation_confirm(
         confirm_label="Revoca",
         cancel_label="Annulla",
         confirm_variant="danger",
-        hx_delete=f"/admin/users/invitations/{invitation_id}",
+        confirm_icon="trash-2",
+        _attrs={
+            "hx-delete": f"/admin/users/invitations/{invitation_id}",
+            "hx-target": "#invitations-table",
+            "hx-swap": "outerHTML",
+        },
     )
 
 

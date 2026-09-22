@@ -13,7 +13,12 @@ Worlds, characters, NPCs and places keep immutable uploaded-image revisions whil
 
 - Upload creates `FileModel` and `ImageRevisionModel` in the same database transaction, then updates the owner pointer. The shared API is `/api/worlds/{world_id}/images/{owner_kind}/{owner_id}/revisions` for `world`, `character`, `npc` and `place`.
 - `GET /` lists newest first, `GET /{revision_id}/content` serves historical bytes with `nosniff`, `POST /{revision_id}/restore` restores, and DELETE routes remove or clear.
-- `editorial.ImageEditor` supplies the picker, drag-and-drop surface and accessible native history dialog. Character, NPC and place symbol/shape and tint controls PATCH the typed document API with `expected_version`.
+- `editorial.ImageEditor` supplies the picker, drag-and-drop surface and an
+  accessible history dialog built on `common.Dialog`. Restore, delete-revision
+  and remove-current-image each open the shared confirm dialog with their own
+  copy; a failed request keeps it open and shows an adjacent live error instead
+  of a native `window.confirm`. Character, NPC and place symbol/shape and tint
+  controls PATCH the typed document API with `expected_version`.
 - The migration backfills each existing current image as its owner's first revision. Its downgrade removes history metadata while retaining current pointers and files.
 
 ## Notes and limits

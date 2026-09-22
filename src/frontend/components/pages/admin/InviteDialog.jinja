@@ -4,8 +4,7 @@
   <form class="invite-form"
         hx-post="/admin/users/invite"
         hx-target="#invitations-table"
-        hx-swap="outerHTML"
-        hx-on::after-request="if(event.detail.successful) this.closest('dialog').close()">
+        hx-swap="outerHTML">
     {% if error %}
     <common.Alert variant="danger">{{ error }}</common.Alert>
     {% endif %}
@@ -16,7 +15,7 @@
                   :value="role" />
     <div class="invite-actions">
       <common.Button type="button" variant="secondary" size="md"
-                     onclick="this.closest('dialog').close()">Annulla</common.Button>
+                     data-dialog-close>Annulla</common.Button>
       <common.Button type="submit" variant="primary" size="md">Invia invito</common.Button>
     </div>
   </form>

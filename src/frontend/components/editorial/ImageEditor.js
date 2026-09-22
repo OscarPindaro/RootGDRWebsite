@@ -2,6 +2,10 @@
   if (window.__rootGdrImageEditor) return;
   window.__rootGdrImageEditor = true;
 
+  // The confirmation dialog is one shared element; each action sets its own
+  // copy and stores the request it should run when confirmed.
+  var confirmActions = new WeakMap();
+
   function errorMessage(status) {
     if (status === 401 || status === 403) return "Non hai i permessi per modificare questa immagine.";
     if (status === 413) return "L’immagine è troppo grande.";
@@ -25,6 +29,18 @@
     output.textContent = message;
     output.hidden = !message;
     output.dataset.state = error ? "error" : "";
+  }
+
+  function openConfirm(root, config, opener) {
+    var dialog = root.querySelector("[data-image-confirm]");
+    var run = dialog.querySelector("[data-image-confirm-run]");
+    dialog.querySelector(".dialog-title").textContent = config.title;
+    dialog.querySelector("[data-image-confirm-message]").textContent = config.message;
+    run.querySelector(".btn-label").textContent = config.confirmLabel;
+    run.classList.toggle("btn-danger", config.destructive);
+    run.classList.toggle("btn-secondary", !config.destructive);
+    confirmActions.set(dialog, config.action);
+    window.rootGdrDialog.open(dialog, opener);
   }
 
   function actionButton(label, testId, action, disabled) {
@@ -71,20 +87,28 @@
 
     var actions = document.createElement("div");
     actions.className = "image-editor__revision-actions";
-    actions.appendChild(actionButton("Ripristina", "image-history-restore", async function () {
-      if (!window.confirm("Ripristinare questa immagine?")) return;
-      try {
-        await request(base + "/" + revision.id + "/restore", {method: "POST"});
-        location.reload();
-      } catch (error) { announce(root, error.message, true); }
+    actions.appendChild(actionButton("Ripristina", "image-history-restore", function (event) {
+      openConfirm(root, {
+        title: "Ripristina immagine",
+        message: "Ripristinare questa immagine? Diventerà l’immagine corrente.",
+        confirmLabel: "Ripristina",
+        destructive: false,
+        action: function () {
+          return request(base + "/" + revision.id + "/restore", {method: "POST"});
+        },
+      }, event.currentTarget);
     }, revision.is_current));
-    actions.appendChild(actionButton("Elimina", "image-history-delete", async function () {
-      if (!window.confirm("Eliminare definitivamente questa revisione?")) return;
-      try {
-        var suffix = revision.is_current ? "?clear=true" : "";
-        await request(base + "/" + revision.id + suffix, {method: "DELETE"});
-        location.reload();
-      } catch (error) { announce(root, error.message, true); }
+    actions.appendChild(actionButton("Elimina", "image-history-delete", function (event) {
+      var suffix = revision.is_current ? "?clear=true" : "";
+      openConfirm(root, {
+        title: "Elimina revisione",
+        message: "Eliminare definitivamente questa revisione? L’operazione non è reversibile.",
+        confirmLabel: "Elimina",
+        destructive: true,
+        action: function () {
+          return request(base + "/" + revision.id + suffix, {method: "DELETE"});
+        },
+      }, event.currentTarget);
     }));
     row.appendChild(actions);
     return row;
@@ -128,7 +152,7 @@
     var form = root.querySelector("[data-image-form]");
     var dialog = root.querySelector("[data-image-history-dialog]");
     var opener = root.querySelector("[data-image-history-open]");
-    var close = root.querySelector("[data-image-history-close]");
+    var confirmDialog = root.querySelector("[data-image-confirm]");
 
     form.addEventListener("submit", function (event) {
       event.preventDefault();
@@ -158,18 +182,33 @@
     });
 
     opener.addEventListener("click", function () {
-      dialog.showModal();
+      window.rootGdrDialog.open(dialog, opener);
       loadHistory(root);
-      close.focus();
     });
-    close.addEventListener("click", function () { dialog.close(); });
-    dialog.addEventListener("close", function () { opener.focus(); });
-    root.querySelector("[data-image-clear]")?.addEventListener("click", async function () {
-      if (!window.confirm("Rimuovere l’immagine corrente? Rimarrà nello storico.")) return;
+
+    confirmDialog.querySelector("[data-image-confirm-run]").addEventListener("click", async function () {
+      var action = confirmActions.get(confirmDialog);
+      if (!action) return;
+      window.rootGdrDialog.setPending(confirmDialog, true);
       try {
-        await request(root.dataset.historyUrl + "/current", {method: "DELETE"});
+        await action();
         location.reload();
-      } catch (error) { announce(root, error.message, true); }
+      } catch (error) {
+        window.rootGdrDialog.setPending(confirmDialog, false);
+        window.rootGdrDialog.showError(confirmDialog, error.message);
+      }
+    });
+
+    root.querySelector("[data-image-clear]")?.addEventListener("click", function (event) {
+      openConfirm(root, {
+        title: "Rimuovi immagine",
+        message: "Rimuovere l’immagine corrente? Rimarrà nello storico.",
+        confirmLabel: "Rimuovi",
+        destructive: true,
+        action: function () {
+          return request(root.dataset.historyUrl + "/current", {method: "DELETE"});
+        },
+      }, event.currentTarget);
     });
 
     root.querySelectorAll("[data-image-choices] input").forEach(function (choice) {

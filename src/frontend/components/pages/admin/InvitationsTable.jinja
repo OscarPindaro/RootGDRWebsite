@@ -27,8 +27,7 @@
       <common.Button variant="danger" size="sm"
         :hx-get="'/admin/users/invitations/' + inv.id|string + '/revoke'"
         hx-target="#confirm-dialog"
-        hx-swap="innerHTML"
-        :hx-on::after-request="'if(event.detail.successful){document.querySelector(\'#confirm-dialog dialog\').showModal(); lucide.createIcons();}'">
+        hx-swap="innerHTML">
         <common.Icon name="trash-2" size=16 />
         Revoca
       </common.Button>

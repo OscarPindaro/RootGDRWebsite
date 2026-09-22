@@ -417,11 +417,12 @@ document.addEventListener("click", (event) => {
 
 JinjaX only collects CSS/JS for components rendered during the initial page render (`catalog.render_assets()`). Components loaded later via htmx won't have their assets included on the page.
 
-Use `{#css ... #}` on the page that triggers the htmx load to preload the assets the dynamically loaded component will need:
+Use `{#css ... #}` and `{#js ... #}` on the page that triggers the htmx load to preload the assets the dynamically loaded component will need:
 
 ```jinja
 {#def users, invitations #}
 {#css common/Dialog.css, common/Alert.css, common/Field.css #}
+{#js common/Dialog.js #}
 <layout.Page>
   <common.Button hx-get="/admin/users/invite" hx-target="#invite-dialog">
     Invite User
@@ -429,6 +430,9 @@ Use `{#css ... #}` on the page that triggers the htmx load to preload the assets
   <div id="invite-dialog"></div>
 </layout.Page>
 ```
+
+`{#js #}` names the component's colocated script by the same path `{#css #}`
+uses; the app emits it through `catalog.render_assets()` like the stylesheets.
 
 ### Dynamic values in htmx attributes
 
@@ -444,17 +448,20 @@ Use `{#css ... #}` on the page that triggers the htmx load to preload the assets
 
 ### Opening native `<dialog>` after htmx swap
 
-The `open` attribute creates a non-modal dialog (no centering, no backdrop). Use `showModal()` in an `hx-on::after-request` handler after the htmx swap completes:
+Do not drive this with an inline `hx-on::after-request` handler. `common.Dialog`
+ships a colocated script that opens any dialog an htmx swap inserts and closes
+it again after a successful request from inside it. Render the dialog fragment
+into a container and let the component handle the swap:
 
 ```jinja
-<common.Button
-  hx-get="/admin/users/invite"
-  hx-target="#invite-dialog"
-  hx-swap="innerHTML"
-  hx-on::after-request="if(event.detail.successful) document.querySelector('#invite-dialog dialog').showModal()">
-  Invite User
+<common.Button hx-get="/admin/users/invite" hx-target="#invite-dialog" hx-swap="innerHTML">
+  Invita utente
 </common.Button>
+<div id="invite-dialog"></div>
 ```
+
+See `docs/features-implemented/dialog-pattern.md` for the focus, Escape, pending
+and error contract.
 
 ### Lucide icons and htmx
 

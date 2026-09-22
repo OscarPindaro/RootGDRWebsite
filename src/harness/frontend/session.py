@@ -25,6 +25,7 @@ class ComponentSession:
         self.page: Page | None = None
         self.console_errors: list[str] = []
         self.page_errors: list[str] = []
+        self._routes: list[server.JsonRoute] = []
 
     def mount(
         self,
@@ -68,10 +69,15 @@ class ComponentSession:
         status: int = 200,
         body: dict | list | None = None,
     ) -> None:
-        """Register a fake API endpoint served by the ephemeral server."""
-        self._server.set_routes(
-            [server.JsonRoute(method=method, path=path, status=status, body=body or {})]
+        """Register a fake API endpoint served by the ephemeral server.
+
+        Routes accumulate, so a page that fetches several endpoints can be
+        served them all.
+        """
+        self._routes.append(
+            server.JsonRoute(method=method, path=path, status=status, body=body or {})
         )
+        self._server.set_routes(self._routes)
 
     def requests(self) -> list[tuple[str, str]]:
         return self._server.requests
