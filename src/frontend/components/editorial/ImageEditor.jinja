@@ -1,9 +1,11 @@
-{#def world_id, owner_kind, owner_id, upload_url, fallback_action, image_url=None, can_manage=False, locked=False, version=None, tint=None, symbol=None, symbol_name=None, symbol_kind=None, symbol_options=None, tints=None, label="Immagine" #}
+{#def world_id, owner_kind, owner_id, upload_url, fallback_action, image_url=None, can_manage=False, locked=False, version=None, tint=None, symbol=None, symbol_name=None, symbol_kind=None, symbol_options=None, tints=None, label="Immagine", history_dialog_id=None, history_trigger=True #}
 {#css common/Button.css, common/ChoiceGrid.css, common/Dialog.css, common/Tooltip.css, common/HStack.css, editorial/ImageEditor.css #}
 {% set editable = can_manage and not locked %}
+{% set dialog_id = history_dialog_id or ("image-history-dialog-" ~ owner_kind ~ "-" ~ owner_id) %}
 <div class="image-editor image-editor--{{ owner_kind }}{% if symbol_options and tints %} image-editor--with-choices{% endif %}"
      data-image-editor
      data-owner-kind="{{ owner_kind }}"
+     data-image-label="{{ label }}"
      data-upload-url="{{ upload_url }}"
      data-history-url="/api/worlds/{{ world_id }}/images/{{ owner_kind }}/{{ owner_id }}/revisions"
      {% if version %}data-version="{{ version }}"{% endif %}
@@ -15,12 +17,15 @@
              data-image-surface data-testid="image-editor-surface">
         {% if image_url %}
         <img class="image-editor__image" src="{{ image_url }}" alt="{{ label }}" data-image-current>
-        {% elif owner_kind == "world" %}
-        <span class="image-editor__world-fallback" aria-hidden="true"><common.Icon name="map" size=48 /></span>
-        {% else %}
-        <editorial.Face :tint="tint" :animal="symbol if symbol_kind == 'emoji' else None"
-                        :shape="symbol if symbol_kind == 'shape' else None" />
         {% endif %}
+        <span class="image-editor__fallback"{% if image_url %} hidden{% endif %}>
+          {% if owner_kind == "world" %}
+          <span class="image-editor__world-fallback" aria-hidden="true"><common.Icon name="map" size=48 /></span>
+          {% else %}
+          <editorial.Face :tint="tint" :animal="symbol if symbol_kind == 'emoji' else None"
+                          :shape="symbol if symbol_kind == 'shape' else None" />
+          {% endif %}
+        </span>
         <span class="image-editor__overlay">{{ "Cambia immagine" if image_url else "Carica immagine" }}</span>
       </label>
       <input class="image-editor__input" id="image-{{ owner_kind }}-{{ owner_id }}" type="file"
@@ -28,10 +33,13 @@
              aria-label="{{ 'Cambia' if image_url else 'Carica' }} {{ label | lower }}">
       <common.Button variant="secondary" size="sm" class="image-editor__fallback-submit" type="submit" data-image-submit>Carica immagine</common.Button>
     </form>
+    {% if history_trigger %}
     <common.HStack gap=2 wrap class="image-editor__tools">
       <common.IconButton icon="history" label="Storico immagini"
+                         :data-dialog-open="dialog_id"
                          data-image-history-open data-testid="image-history-open" />
     </common.HStack>
+    {% endif %}
     {% else %}
       <div class="image-editor__surface image-editor__surface--readonly">
         {% if image_url %}
@@ -54,18 +62,19 @@
                        :options="tints" :columns="6" :value="tint" />
     <p class="image-editor__status" data-image-status role="status" aria-live="polite"></p>
   </div>
+  {% elif editable %}
+  <p class="image-editor__status" data-image-status role="status" aria-live="polite"></p>
   {% endif %}
 
   {% if editable %}
   <common.Dialog title="Storico immagini"
-                 :id="'image-history-dialog-' ~ owner_kind ~ '-' ~ owner_id"
+                 :id="dialog_id"
                  class="image-editor__dialog"
                  data-image-history-dialog data-testid="image-history-dialog">
     <p class="image-editor__error" data-image-error role="alert" aria-live="assertive" hidden></p>
     <div class="image-editor__history" data-image-history-list data-testid="image-history-list"></div>
-    {% if image_url %}
-    <common.Button variant="text" size="sm" type="button" data-image-clear data-testid="image-clear-current">Rimuovi immagine corrente</common.Button>
-    {% endif %}
+    <common.Button variant="text" size="sm" type="button" data-image-clear data-testid="image-clear-current"
+                   {% if not image_url %}hidden{% endif %}>Rimuovi immagine corrente</common.Button>
   </common.Dialog>
 
   <common.Dialog title="Conferma" data-image-confirm data-testid="image-confirm-dialog">

@@ -70,11 +70,17 @@
 
     <common.VStack element="aside">
       <section>
-        <editorial.SectionHead title="Copertina" eyebrow="Immagine del mondo" />
+        <editorial.SectionHead title="Copertina" eyebrow="Immagine del mondo">
+          <common.IconButton icon="history" label="Storico immagini"
+                             :data-dialog-open="'image-history-dialog-world-' ~ world.id"
+                             data-image-history-open data-testid="image-history-open" />
+        </editorial.SectionHead>
         <editorial.ImageEditor :world_id="world.id" owner_kind="world" :owner_id="world.id"
           :upload_url="'/api/worlds/' ~ world.id ~ '/image'"
           :fallback_action="'/worlds/' ~ world.id ~ '/image'"
           :image_url="world.image_url" :can_manage="True" :version="world.version"
+          :history_dialog_id="'image-history-dialog-world-' ~ world.id"
+          :history_trigger="False"
           label="Copertina del mondo" />
       </section>
     </common.VStack>

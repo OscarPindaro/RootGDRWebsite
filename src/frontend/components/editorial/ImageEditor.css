@@ -53,6 +53,10 @@
    the same ratio from the token common.MediaFrame owns. */
 .image-editor--world .image-editor__surface { aspect-ratio: var(--media-ratio-landscape); }
 .image-editor__surface .face { height: 100%; }
+/* The generated fallback stays in the DOM so clearing the current image can
+   reveal it without a reload; display:contents keeps it out of the layout. */
+.image-editor__fallback { display: contents; }
+.image-editor__fallback[hidden] { display: none; }
 .image-editor__image { width: 100%; height: 100%; object-fit: cover; }
 .image-editor__world-fallback { color: var(--muted); }
 

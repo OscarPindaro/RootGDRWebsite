@@ -31,6 +31,68 @@
     output.dataset.state = error ? "error" : "";
   }
 
+  function setStatus(root, message, error) {
+    var status = root.querySelector("[data-image-status]");
+    if (!status) return;
+    status.textContent = message;
+    status.dataset.state = error ? "error" : "";
+  }
+
+  function revisionContentUrl(root, revisionId) {
+    return root.dataset.historyUrl + "/" + revisionId + "/content";
+  }
+
+  // Replace the visible media without a reload: the fallback face is hidden
+  // while an uploaded image is shown, and shown again when the image is gone.
+  function setCurrentImage(root, url) {
+    var surface = root.querySelector("[data-image-surface]");
+    if (!surface) return;
+    var overlay = surface.querySelector(".image-editor__overlay");
+    var image = surface.querySelector("[data-image-current]");
+    var fallback = surface.querySelector(".image-editor__fallback");
+    if (url) {
+      if (!image) {
+        image = document.createElement("img");
+        image.className = "image-editor__image";
+        image.alt = root.dataset.imageLabel || "";
+        image.dataset.imageCurrent = "";
+        surface.insertBefore(image, overlay);
+      }
+      image.src = url;
+      if (fallback) fallback.hidden = true;
+    } else {
+      if (image) image.remove();
+      if (fallback) fallback.hidden = false;
+    }
+    if (overlay) overlay.textContent = url ? "Cambia immagine" : "Carica immagine";
+    var clear = root.querySelector("[data-image-clear]");
+    if (clear) clear.hidden = !url;
+  }
+
+  // A metadata change leaves an uploaded image untouched; when the generated
+  // fallback is visible, its tint and the selected symbol mark are updated from
+  // the response so the face reflects the persisted document.
+  function renderFace(root, updated) {
+    if (root.querySelector("[data-image-current]")) return;
+    var face = root.querySelector(".face");
+    if (!face) return;
+    if (updated.tint) face.style.setProperty("--c", "var(--" + updated.tint + ")");
+    var mark = root.querySelector(
+      "[data-image-choices] .choice-grid__input:checked + .choice-grid__mark"
+    );
+    var target = face.querySelector(".face__emoji, .face__shape");
+    if (!mark || !target) return;
+    target.innerHTML = mark.innerHTML;
+    if (target.classList.contains("face__emoji")) {
+      target.setAttribute("aria-label", mark.textContent.trim());
+    }
+  }
+
+  function syncMedia(root, payload) {
+    var current = payload.data.find(function (revision) { return revision.is_current; });
+    setCurrentImage(root, current ? revisionContentUrl(root, current.id) : null);
+  }
+
   function openConfirm(root, config, opener) {
     var dialog = root.querySelector("[data-image-confirm]");
     var run = dialog.querySelector("[data-image-confirm-run]");
@@ -116,6 +178,7 @@
 
   async function loadHistory(root) {
     var list = root.querySelector("[data-image-history-list]");
+    if (!list) return null;
     list.replaceChildren();
     announce(root, "", false);
     try {
@@ -125,21 +188,36 @@
         empty.className = "image-editor__empty";
         empty.textContent = "Non ci sono ancora immagini nello storico.";
         list.appendChild(empty);
-        return;
+      } else {
+        payload.data.forEach(function (revision) { list.appendChild(revisionRow(root, revision)); });
       }
-      payload.data.forEach(function (revision) { list.appendChild(revisionRow(root, revision)); });
-    } catch (error) { announce(root, error.message, true); }
+      return payload;
+    } catch (error) {
+      announce(root, error.message, true);
+      return null;
+    }
+  }
+
+  // After a confirmed mutation the revision list and the visible media are
+  // rebuilt from the API, so nothing reloads the page.
+  async function refresh(root) {
+    var payload = await loadHistory(root);
+    if (payload) syncMedia(root, payload);
+    return payload;
   }
 
   async function upload(root, file) {
     if (!file) return;
     var body = new FormData();
     body.append("image", file, file.name);
-    announce(root, "Caricamento…", false);
+    setStatus(root, "Caricamento…", false);
     try {
-      await request(root.dataset.uploadUrl, {method: "PUT", body: body});
-      location.reload();
-    } catch (error) { announce(root, error.message, true); }
+      var updated = await request(root.dataset.uploadUrl, {method: "PUT", body: body});
+      root.dataset.version = updated.version;
+      var url = updated.imageUrl ? updated.imageUrl + "?v=" + updated.version : null;
+      setCurrentImage(root, url);
+      setStatus(root, "Salvato", false);
+    } catch (error) { setStatus(root, error.message, true); }
   }
 
   function mount(root) {
@@ -150,8 +228,6 @@
     var input = root.querySelector("[data-image-input]");
     var surface = root.querySelector("[data-image-surface]");
     var form = root.querySelector("[data-image-form]");
-    var dialog = root.querySelector("[data-image-history-dialog]");
-    var opener = root.querySelector("[data-image-history-open]");
     var confirmDialog = root.querySelector("[data-image-confirm]");
 
     form.addEventListener("submit", function (event) {
@@ -181,18 +257,14 @@
       upload(root, event.dataTransfer && event.dataTransfer.files[0]);
     });
 
-    opener.addEventListener("click", function () {
-      window.rootGdrDialog.open(dialog, opener);
-      loadHistory(root);
-    });
-
     confirmDialog.querySelector("[data-image-confirm-run]").addEventListener("click", async function () {
       var action = confirmActions.get(confirmDialog);
       if (!action) return;
       window.rootGdrDialog.setPending(confirmDialog, true);
       try {
         await action();
-        location.reload();
+        window.rootGdrDialog.close(confirmDialog);
+        await refresh(root);
       } catch (error) {
         window.rootGdrDialog.setPending(confirmDialog, false);
         window.rootGdrDialog.showError(confirmDialog, error.message);
@@ -214,8 +286,7 @@
     root.querySelectorAll("[data-image-choices] input").forEach(function (choice) {
       choice.addEventListener("change", async function () {
         var choices = choice.closest("[data-image-choices]");
-        var status = root.querySelector("[data-image-status]");
-        status.textContent = "Salvataggio…";
+        setStatus(root, "Salvataggio…", false);
         try {
           var payload = {};
           payload[choice.name] = choice.value;
@@ -226,9 +297,9 @@
             body: JSON.stringify(payload),
           });
           root.dataset.version = updated.version;
-          status.textContent = "Salvato";
-          location.reload();
-        } catch (error) { announce(root, error.message, true); }
+          renderFace(root, updated);
+          setStatus(root, "Salvato", false);
+        } catch (error) { setStatus(root, error.message, true); }
       });
     });
   }
@@ -236,6 +307,20 @@
   function mountAll(scope) {
     (scope || document).querySelectorAll("[data-image-editor]").forEach(mount);
   }
+
+  // The history trigger can live outside the editor (the world cover places it
+  // in the section heading), so opening it is delegated to the document and the
+  // dialog id links the trigger back to its editor.
+  document.addEventListener("click", function (event) {
+    if (!(event.target instanceof Element)) return;
+    var trigger = event.target.closest("[data-image-history-open]");
+    if (!trigger) return;
+    var dialogId = trigger.getAttribute("data-dialog-open");
+    var dialog = dialogId ? document.getElementById(dialogId) : null;
+    var root = (dialog && dialog.closest("[data-image-editor]")) ||
+      trigger.closest("[data-image-editor]");
+    if (root) loadHistory(root);
+  });
 
   mountAll();
   document.body.addEventListener("htmx:afterSwap", function (event) { mountAll(event.target); });

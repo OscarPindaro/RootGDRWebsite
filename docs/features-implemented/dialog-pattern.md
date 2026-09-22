@@ -58,8 +58,9 @@ surface with one named action.
     `pages/places/PlaceDetail.jinja`, `pages/sessions/SessionDetail.jinja`,
     `pages/stories/StoryDetail.jinja`, `pages/pages/PageDetail.jinja` — cancel
     draft, delete document.
-- `ImageEditor` still reloads the page after a confirmed mutation; making the
-  history update in place is F6.
+- `ImageEditor` updates the media and the revision list in place after a
+  confirmed mutation; a completion that rebuilds the list cannot return focus to
+  the invoking control because the swap removed it, while cancel still does.
 - The admin revoke cannot return focus to the invoking control after a
   successful completion, because the swapped table removes that control; focus
   returns there on cancel.

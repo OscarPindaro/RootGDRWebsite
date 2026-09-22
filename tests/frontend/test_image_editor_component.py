@@ -1,7 +1,9 @@
 """Component tests for ``editorial.ImageEditor``.
 
-Covers the world cover proportion (it must match the world list) and the
-history button position (under the image, not over it).
+Covers the world cover proportion (it must match the world list), the history
+button position (under the image, not over it), the live selection/restore/
+delete/clear updates that replaced page reloads, and the external history
+trigger.
 """
 
 import pytest
@@ -203,3 +205,214 @@ def test_cancel_returns_focus_to_the_invoking_control(component):
     page.get_by_test_id("image-confirm-cancel").click()
 
     assert restore.evaluate("element => document.activeElement === element")
+
+
+# --- Live updates: selection, restore, delete, clear ------------------------
+
+WORLD_ID = "00000000-0000-0000-0000-000000000000"
+OWNER_ID = "00000000-0000-0000-0000-000000000001"
+AUTOSAVE = f"/api/worlds/{WORLD_ID}/characters/{OWNER_ID}"
+
+
+def _character(**overrides) -> dict:
+    return _props(
+        owner_kind="character",
+        symbol_name="animal",
+        symbol="🐈",
+        symbol_kind="emoji",
+        tint="p8",
+        **overrides,
+    )
+
+
+def _stay(page) -> None:
+    """A reload would wipe this marker; keeping it proves no navigation."""
+    page.evaluate("() => { window.__stay = 'kept'; }")
+
+
+def _stayed(page) -> bool:
+    return page.evaluate("() => window.__stay === 'kept'")
+
+
+def _serve_revisions(page, payload: dict) -> None:
+    """Answer the revision-list GET with a chosen body, real fetch otherwise."""
+    page.evaluate(
+        """payload => {
+            const real = window.fetch;
+            window.fetch = (url, options) => String(url).endsWith('/revisions/')
+                ? Promise.resolve(new Response(JSON.stringify(payload), {
+                    status: 200, headers: {'Content-Type': 'application/json'},
+                }))
+                : real(url, options);
+        }""",
+        payload,
+    )
+
+
+def test_selecting_a_tint_updates_the_face_and_persists(component):
+    component.route_json(
+        "PATCH",
+        AUTOSAVE,
+        body={"animal": "🐈", "tint": "p5", "version": 4},
+    )
+    page = component.mount("editorial.ImageEditor", props=_character())
+    _stay(page)
+
+    page.locator('input[name="tint"][value="p5"]').check()
+
+    page.wait_for_function(
+        "() => document.querySelector('[data-image-status]').textContent === 'Salvato'"
+    )
+    assert (
+        page.locator(".face").evaluate(
+            "element => element.style.getPropertyValue('--c')"
+        )
+        == "var(--p5)"
+    )
+    assert ("PATCH", AUTOSAVE) in component.requests()
+    assert _stayed(page)
+
+
+def test_selecting_a_symbol_updates_the_face_and_persists(component):
+    component.route_json(
+        "PATCH",
+        AUTOSAVE,
+        body={"animal": "🦊", "tint": "p8", "version": 4},
+    )
+    page = component.mount("editorial.ImageEditor", props=_character())
+    _stay(page)
+
+    page.locator('input[name="animal"][value="🦊"]').check()
+
+    page.wait_for_function(
+        "() => document.querySelector('.face__emoji').textContent === '🦊'"
+    )
+    assert page.locator(".face__emoji").get_attribute("aria-label") == "🦊"
+    assert ("PATCH", AUTOSAVE) in component.requests()
+    assert _stayed(page)
+
+
+def test_a_metadata_change_keeps_an_uploaded_image(component):
+    component.route_json("GET", "/api/image", body={})
+    component.route_json(
+        "PATCH",
+        AUTOSAVE,
+        body={"animal": "🐈", "tint": "p5", "version": 4},
+    )
+    page = component.mount(
+        "editorial.ImageEditor", props=_character(image_url="/api/image")
+    )
+    _stay(page)
+
+    page.locator('input[name="tint"][value="p5"]').check()
+    page.wait_for_function(
+        "() => document.querySelector('[data-image-status]').textContent === 'Salvato'"
+    )
+
+    assert page.locator(".image-editor__image").is_visible()
+    assert page.locator(".image-editor__fallback").is_hidden()
+    assert _stayed(page)
+
+
+def test_restore_updates_the_media_and_the_revision_list(component):
+    component.route_json("GET", "/api/image", body={})
+    page = component.mount(
+        "editorial.ImageEditor", props=_character(image_url="/api/image")
+    )
+    _open_history(component, page)
+    base = page.locator("[data-image-editor]").get_attribute("data-history-url")
+    component.route_json("POST", base + "/1/restore", body=HISTORY[0])
+    _serve_revisions(
+        page,
+        {"data": [{**HISTORY[0], "is_current": True}, HISTORY[1]]},
+    )
+    _stay(page)
+
+    page.get_by_test_id("image-history-restore").first.click()
+    _confirm_run(page).click()
+
+    page.wait_for_function(
+        "url => document.querySelector('[data-image-current]').src.endsWith(url)",
+        arg="/1/content",
+    )
+    rows = page.get_by_test_id("image-history-revision")
+    assert "Immagine corrente" in rows.first.inner_text()
+    assert _stayed(page)
+
+
+def test_delete_revision_updates_the_list_in_place(component):
+    page = component.mount("editorial.ImageEditor", props=_character())
+    _open_history(component, page)
+    base = page.locator("[data-image-editor]").get_attribute("data-history-url")
+    component.route_json("DELETE", base + "/1", body={})
+    _serve_revisions(page, {"data": [HISTORY[1]]})
+    _stay(page)
+
+    page.get_by_test_id("image-history-delete").first.click()
+    _confirm_run(page).click()
+
+    page.wait_for_function(
+        "() => document.querySelectorAll('[data-testid=\"image-history-revision\"]').length === 1"
+    )
+    assert ("DELETE", base + "/1") in component.requests()
+    assert _stayed(page)
+
+
+def test_clear_updates_the_media_and_the_revision_list(component):
+    component.route_json("GET", "/api/image", body={})
+    page = component.mount(
+        "editorial.ImageEditor", props=_character(image_url="/api/image")
+    )
+    _open_history(component, page)
+    base = page.locator("[data-image-editor]").get_attribute("data-history-url")
+    component.route_json("DELETE", base + "/current", body={})
+    _serve_revisions(
+        page,
+        {
+            "data": [
+                {**HISTORY[0], "is_current": False},
+                {**HISTORY[1], "is_current": False},
+            ]
+        },
+    )
+    _stay(page)
+
+    page.get_by_test_id("image-clear-current").click()
+    _confirm_run(page).click()
+
+    page.wait_for_selector("[data-image-current]", state="detached")
+    assert page.locator(".image-editor__fallback").is_visible()
+    assert _stayed(page)
+
+
+def test_an_external_trigger_opens_the_history_dialog(component):
+    base = f"/api/worlds/{WORLD_ID}/images/character/{OWNER_ID}/revisions"
+    component.route_json("GET", base + "/", body={"data": HISTORY})
+    for revision in HISTORY:
+        component.route_json(
+            "GET", base + "/" + str(revision["id"]) + "/content", body={}
+        )
+    page = component.mount(
+        "editorial.ImageEditor",
+        props=_character(
+            history_trigger=False, history_dialog_id="image-history-external"
+        ),
+    )
+    page.evaluate(
+        """() => {
+            const trigger = document.createElement('button');
+            trigger.id = 'external-history';
+            trigger.dataset.dialogOpen = 'image-history-external';
+            trigger.dataset.imageHistoryOpen = '';
+            trigger.textContent = 'Storico';
+            document.body.prepend(trigger);
+        }"""
+    )
+
+    page.click("#external-history")
+
+    assert page.get_by_test_id("image-history-dialog").is_visible()
+    page.wait_for_selector('[data-testid="image-history-revision"]')
+    assert page.get_by_test_id("image-history-dialog").get_attribute("id") == (
+        "image-history-external"
+    )

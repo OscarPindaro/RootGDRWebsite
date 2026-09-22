@@ -32,6 +32,7 @@ Template:
 | Create campaign content as drafts | [draft-first-content.md](draft-first-content.md) |
 | Render and reference Markdown summaries | [markdown-summaries.md](markdown-summaries.md) |
 | Keep and restore uploaded images | [image-history.md](image-history.md) |
+| Edit the image, face and history in place | [live-image-editor.md](live-image-editor.md) |
 | Buttons and selection groups, stable geometry | [button-groups.md](button-groups.md) |
 | One action-button skin and one status-pill skin | [button-pill-skins.md](button-pill-skins.md) |
 | One M3 text field: filled and outlined | [field-anatomy.md](field-anatomy.md) |

@@ -18,7 +18,9 @@ Worlds, characters, NPCs and places keep immutable uploaded-image revisions whil
   and remove-current-image each open the shared confirm dialog with their own
   copy; a failed request keeps it open and shows an adjacent live error instead
   of a native `window.confirm`. Character, NPC and place symbol/shape and tint
-  controls PATCH the typed document API with `expected_version`.
+  controls PATCH the typed document API with `expected_version`. Mutations update
+  the media and the revision list in place — no page reload (see
+  [live-image-editor.md](live-image-editor.md)).
 - The migration backfills each existing current image as its owner's first revision. Its downgrade removes history metadata while retaining current pointers and files.
 
 ## Notes and limits
@@ -26,7 +28,8 @@ Worlds, characters, NPCs and places keep immutable uploaded-image revisions whil
 - Uploads accept PNG, JPEG, GIF and WebP magic and at most 10 MiB of streamed bytes; filenames are sanitized.
 - Reads follow normal content visibility. Mutations follow each feature's normal image-management permissions and reject revisions from another owner or world.
 - Read-only and locked documents show only the image or generated fallback.
-- The history command sits under the image, in a command row, so it never covers
-  the picture. The world cover preview uses the world list proportion (16 / 7);
-  document faces keep the vertical 4 / 5.
+- The history command sits in a command row under the picture on character, NPC
+  and place pages, and in the `Copertina` heading on World Settings, so it never
+  covers the picture. The world cover preview uses the world list proportion
+  (16 / 7); document faces keep the vertical 4 / 5.
 - Filesystem and database transactions cannot be fully atomic on local storage. Failed uploads discard the new object when possible, and cleanup tolerates an already-missing object.
