@@ -1,9 +1,12 @@
 /* ============================================================
    Boscochiaro — sistema visivo
-   Prototipo statico multipagina. Nessun build step.
-   Concept: l'applicazione come atlante stampato. Il rail è la
-   costola del volume, il contenuto è la tavola. La griglia è
-   fatta di righe sottili e campiture piatte, non di ombre.
+   This stylesheet has one job: the genuinely global layer.
+   Identity and alias tokens, the reset, base typography, the
+   prose reading styles, and the few document defaults every page
+   renders through (`.container`, `.section` is owned by
+   editorial.SectionHead). Every rule a component owns lives in
+   that component's colocated stylesheet; page composition lives
+   beside the page. See docs/frontend_guide.md.
    ============================================================ */
 
 /* ---------- 0. Font (self-hosted, latin subset) ----------
@@ -83,6 +86,12 @@
   --ochre: #e0a327;
   --forest: #3c7a52;
   --plum: #7b3f8f;
+  /* la tinta piena in ombra, per lo stato hover delle campiture piene */
+  --vermilion-deep: #b93622;
+  --cobalt-deep: #243a8c;
+  --ochre-deep: #cf9418;
+  --forest-deep: #336946;
+  --plum-deep: #66347a;
 
   /* palette estesa: 12 tinte per 12 radure */
   --p1: #d1402a;  /* vermiglio */
@@ -218,9 +227,6 @@ ul, ol { margin: 0; padding: 0; }
   color: var(--muted);
 }
 
-.eyebrow--ink { color: var(--ink); }
-.eyebrow--paper { color: var(--rail-muted); }
-
 .lede {
   font-family: var(--serif);
   font-size: clamp(1.1rem, 1.6vw, 1.32rem);
@@ -251,256 +257,35 @@ ul, ol { margin: 0; padding: 0; }
 
 .container--wide { max-width: 1440px; }
 
-/* ---------- 5. Rail and Topbar (see layout/Rail.css, layout/Topbar.css) ---------- */
-
-/* ---------- 9. Masthead ---------- */
-.masthead {
-  border-top: 3px solid var(--ink);
-  border-bottom: var(--rule-ink);
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: stretch;
-  margin-bottom: 2.25rem;
-}
-.masthead__body {
-  padding: 1.5rem 0 1.6rem;
-  display: grid;
-  gap: 0.7rem;
-  min-width: 0;
-}
-.masthead__aside {
-  border-left: var(--rule-ink);
-  padding: 1.5rem clamp(1.25rem, 3vw, 2.5rem) 1.6rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.9rem;
-  justify-content: center;
-  align-items: center;
-  min-width: var(--masthead-aside-min);
-}
-.masthead__actions { display: flex; flex-direction: column; align-items: flex-start; gap: 0.6rem; }
-
-.crumbs {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-  flex-wrap: wrap;
-}
-.crumbs a { text-decoration: none; }
-.crumbs a:hover { color: var(--ink); text-decoration: underline; }
-.crumbs__sep { color: var(--line-ink); }
-
-/* barra di accento sotto il titolo */
+/* ---------- 5. Accent rule (identity atom) ----------
+   The short rule under a page title. It is a preference-driven atom shared by
+   editorial.Masthead and the Login cover, so it is owned here. The accent
+   attribute arrives from the user's preference, written on <html> at first
+   server render (docs/features-request/frontend.md). */
 .rule-accent {
   height: 6px;
   width: 76px;
   background: var(--vermilion);
   margin: 0.2rem 0 0.1rem;
 }
+html[data-accent="gradiente"] .rule-accent { background: var(--accent-grad); }
 
-/* ---------- 10. Sezioni ---------- */
-.section { margin-top: 3.25rem; }
-.section:first-child { margin-top: 0; }
-
-.section__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  border-bottom: var(--rule-ink);
-  padding-bottom: 0.6rem;
-  margin-bottom: 1.4rem;
-  flex-wrap: wrap;
-}
-.section__head h2 { font-family: var(--serif); font-size: 1.5rem; font-weight: 500; }
-.section__head .eyebrow { display: block; margin-bottom: 0.25rem; }
-
-/* ---------- 11. Griglie ----------
-   Le griglie sono common.Grid (src/frontend/components/common/Grid.css). */
-
-/* ---------- 12. Cover (mondi) ---------- */
-.cover {
-  display: grid;
-  grid-template-rows: auto 1fr;
-  border: var(--rule-ink);
-  background: var(--surface);
+/* i link in prosa: barra sotto il testo che si inverte al passaggio */
+html[data-accent="gradiente"] .prose a {
   text-decoration: none;
-  color: var(--ink);
-  position: relative;
+  border-bottom: 0;
+  background-image: var(--accent-grad);
+  background-position: 0 100%;
+  background-size: 100% 3px;
+  background-repeat: no-repeat;
+  padding-bottom: 2px;
 }
-.cover__media {
-  border-bottom: var(--rule-ink);
-}
-.cover__badge {
-  position: absolute;
-  top: 0;
-  left: 0;
-  background: var(--paper);
-  border-right: var(--rule-ink);
-  border-bottom: var(--rule-ink);
-  padding: 0.25rem 0.55rem;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.cover__body { padding: 1.1rem 1.15rem 1.2rem; display: grid; gap: 0.6rem; }
-.cover__title { font-family: var(--serif); font-size: 1.6rem; line-height: 1.08; }
-.cover__desc { color: var(--ink-soft); font-size: 0.93rem; }
-.cover__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  border-top: var(--rule);
-  padding-top: 0.7rem;
-  margin-top: 0.2rem;
-}
-.cover__counts { font-family: var(--mono); font-size: 0.7rem; color: var(--muted); }
-
-/* ---------- 13. Quick card ---------- */
-.quick {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 0.5rem;
-  padding: 1.25rem 1.25rem 1.1rem;
-  background: var(--surface);
-  border: var(--rule-ink);
-  border-left-width: 0;
-  text-decoration: none;
-  color: var(--ink);
-  min-height: 168px;
-  transition: background 140ms ease;
-}
-.quick:first-child { border-left-width: 1px; }
-.quick:hover { background: var(--paper-deep); }
-.quick__mark {
-  --mark-size: 30px;
-  border: var(--rule-ink);
-}
-.quick__title { font-family: var(--serif); font-size: 1.24rem; }
-.quick__count {
-  font-family: var(--mono);
-  font-size: 2.1rem;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.quick__foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--muted);
-}
-.quick:hover .quick__foot { color: var(--ink); }
-
-.quick--vermilion { background: var(--vermilion); color: var(--surface); }
-.quick--vermilion:hover { background: #b93622; }
-.quick--cobalt { background: var(--cobalt); color: var(--surface); }
-.quick--cobalt:hover { background: #243a8c; }
-.quick--ochre { background: var(--ochre); }
-.quick--ochre:hover { background: #cf9418; }
-.quick--forest { background: var(--forest); color: var(--surface); }
-.quick--forest:hover { background: #336946; }
-.quick--plum { background: var(--plum); color: var(--surface); }
-.quick--plum:hover { background: #66347a; }
-.quick--vermilion .quick__foot,
-.quick--cobalt .quick__foot,
-.quick--forest .quick__foot,
-.quick--plum .quick__foot { color: rgba(255, 253, 246, 0.78); }
-.quick--vermilion .quick__mark,
-.quick--cobalt .quick__mark,
-.quick--forest .quick__mark,
-.quick--plum .quick__mark { border-color: var(--surface); background: transparent; }
-.quick--ochre .quick__mark { border-color: var(--ink); background: transparent; }
-
-/* ---------- 14. Card personaggio ----------
-   Migrated to editorial/EntityCard.css (`.entity-card*`). The root no longer
-   collides with common.Card. */
-
-/* ---------- 15. Featured / place ---------- */
-.feature {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-  border: var(--rule-ink);
-  background: var(--surface);
-  text-decoration: none;
-  color: var(--ink);
-  transition: box-shadow 140ms ease;
-}
-.feature:hover { box-shadow: var(--lift-shadow); }
-.feature__media { border-right: var(--rule-ink); min-height: 280px; overflow: hidden; }
-.feature__media img { width: 100%; height: 100%; object-fit: cover; }
-.feature__body { padding: 1.6rem 1.5rem; display: grid; gap: 0.7rem; align-content: center; }
-.feature__title { font-family: var(--serif); font-size: 2rem; line-height: 1.05; }
-
-/* ---------- 16. Ledger (sessioni) ----------
-   Migrated to editorial/Ledger.css (`.ledger*`, `.sdot`). */
-
-/* ---------- 17. Storie ----------
-   Migrated to editorial/StoryCard.css (`.story-card*`, `.story-band*`). */
-
-/* ---------- 18. Timeline ---------- */
-.timeline { border-left: 1px solid var(--line-ink); margin-left: 0.4rem; }
-.tl {
-  position: relative;
-  padding: 0 0 1.5rem 1.4rem;
-}
-.tl::before {
-  content: "";
-  position: absolute;
-  left: -5px;
-  top: 0.42rem;
-  width: 9px;
-  height: 9px;
-  background: var(--c, var(--paper));
-  border: 1px solid var(--ink);
-}
-.tl--accent::before { background: var(--c, var(--vermilion)); }
-.tl__when {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.tl__what { font-size: 0.98rem; margin-top: 0.15rem; }
-.tl__what strong { font-weight: 600; }
-.tl__link { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line); }
-.tl__link:hover { border-color: var(--vermilion); color: var(--vermilion); }
-
-/* ---------- 19. Stat ---------- */
-.stat {
-  padding: 1rem 1.1rem 1.1rem;
-  border: var(--rule-ink);
-  border-left-width: 0;
-  background: var(--surface);
-}
-.stat:first-child { border-left-width: 1px; }
-.stat__num {
-  font-family: var(--mono);
-  font-size: 1.9rem;
-  line-height: 1;
-  letter-spacing: -0.02em;
-}
-.stat__label {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 0.35rem;
+html[data-accent="gradiente"] .prose a:hover {
+  color: inherit;
+  background-image: var(--accent-grad-swap);
 }
 
-/* ---------- 20. Prosa (pagine statiche) ---------- */
+/* ---------- 6. Prosa (pagine statiche) ---------- */
 .prose {
   font-family: var(--serif);
   font-size: 1.16rem;
@@ -509,14 +294,8 @@ ul, ol { margin: 0; padding: 0; }
   max-width: var(--measure);
 }
 /* Il ritmo verticale dei blocchi. Vale per l'HTML che arriva dal server
-   (blocchi figli diretti di .prose) e per quello dell'editor, che sta un
-   livello più giù perché i motori ProseMirror incapsulano il contenuto:
-   senza il secondo selettore le due rese hanno spaziature diverse.
-   La specificità del secondo (0,1,0) sta in mezzo: batte il reset
-   `p { margin: 0 }` (0,0,1) ma non le regole dei singoli elementi, per
-   esempio il margine maggiore di un h2 (0,1,1). */
-.prose > * + *,
-:where(.prose) .ProseMirror > * + * { margin-top: 1.15rem; }
+   (blocchi figli diretti di .prose). */
+.prose > * + * { margin-top: 1.15rem; }
 .prose h2 {
   font-family: var(--serif);
   font-size: 1.7rem;
@@ -549,9 +328,6 @@ ul, ol { margin: 0; padding: 0; }
 .prose a:hover { color: var(--vermilion); }
 .prose ul, .prose ol { padding-left: 1.3rem; max-width: var(--measure); }
 .prose li + li { margin-top: 0.4rem; }
-/* ProseMirror incapsula il contenuto di una voce di lista in un paragrafo,
-   markdown-it no: senza questa regola le due rese hanno spaziature diverse */
-.prose li > p:only-child { margin: 0; }
 .prose strong { color: var(--ink); font-weight: 600; }
 .prose code {
   font-family: var(--mono);
@@ -569,682 +345,12 @@ ul, ol { margin: 0; padding: 0; }
 }
 .prose hr { border: 0; border-top: var(--rule-ink); margin: 2.4rem 0; }
 
-.callout {
-  border: var(--rule-ink);
-  border-left: 6px solid var(--ochre);
-  background: var(--surface);
-  padding: 1rem 1.15rem;
-  max-width: var(--measure);
-  font-family: var(--sans);
-  font-size: 0.95rem;
-  line-height: 1.6;
-}
-.callout__label {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  display: block;
-  margin-bottom: 0.35rem;
-}
-.callout--cobalt { border-left-color: var(--cobalt); }
-.callout--forest { border-left-color: var(--forest); }
-
-.toc {
-  border: var(--rule-ink);
-  background: var(--surface);
-  padding: 1rem 1.1rem 1.1rem;
-  position: sticky;
-  top: 1.5rem;
-}
-.toc__label {
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-  border-bottom: var(--rule);
-  padding-bottom: 0.5rem;
-  margin-bottom: 0.6rem;
-}
-.toc a {
-  display: block;
-  font-size: 0.88rem;
-  text-decoration: none;
-  padding: 0.3rem 0;
-  color: var(--ink-soft);
-  border-bottom: 1px solid transparent;
-}
-.toc a:hover { color: var(--vermilion); }
-.toc a.is-current { color: var(--ink); border-bottom-color: var(--ink); }
-
-/* ---------- 21. Dettaglio: hero ---------- */
-.hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
-  gap: 0;
-  border: var(--rule-ink);
-  background: var(--surface);
-}
-.hero__media { border-right: var(--rule-ink); min-height: 340px; }
-.hero__media img { width: 100%; height: 100%; object-fit: cover; }
-.hero__body { padding: 1.75rem 1.75rem 1.9rem; display: grid; gap: 0.85rem; align-content: center; }
-.hero__title { font-family: var(--serif); font-size: clamp(2rem, 3.6vw, 2.9rem); line-height: 1.02; }
-.hero__title--serif { font-family: var(--serif); }
-.hero__meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem; }
-.hero__metaitem { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
-.hero__metaitem b { color: var(--ink); font-weight: 500; }
-
-.dateline {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1.5rem;
-  border-top: var(--rule-ink);
-  border-bottom: var(--rule);
-  padding: 0.7rem 0;
-  margin: 1.75rem 0 2.25rem;
-}
-.dateline__item { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
-.dateline__item b { color: var(--ink); font-weight: 500; }
-
-/* ---------- 22. Pager prev/next ---------- */
-.pager {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-top: var(--rule-ink);
-  margin-top: 3rem;
-}
-.pager a {
-  padding: 1.1rem 0.25rem 1.3rem;
-  text-decoration: none;
-  display: grid;
-  gap: 0.25rem;
-}
-.pager a + a { border-left: var(--rule-ink); padding-left: 1.5rem; text-align: right; }
-.pager__dir {
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.pager__title { font-family: var(--serif); font-size: 1.2rem; }
-.pager a:hover .pager__title { text-decoration: underline; text-underline-offset: 3px; }
-.pager a.is-empty { pointer-events: none; opacity: 0.45; }
-
-/* ---------- 24. Media placeholder ---------- */
-.media-fallback {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  place-items: center;
-  background: var(--surface-sunk);
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-/* ---------- 25. Simboli (icone e forme) ---------- */
-.mark {
-  display: grid;
-  place-items: center;
-  width: var(--mark-size, 18px);
-  height: var(--mark-size, 18px);
-  color: inherit;
-}
-.mark__svg { width: 100%; height: 100%; display: block; }
-.mark--lg { --mark-size: 22px; }
-/* A role mark carries both equivalent presentations. Only the one the active
-   class names is laid out, so a mark is still a single grid item. */
-.mark--icons .mark__svg--shape,
-.mark--shapes .mark__svg:not(.mark__svg--shape) { display: none; }
-
-
-/* logo di una radura: forma piena colorata */
-.plogo {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  color: var(--c, var(--ink));
-}
-.plogo--lg { width: 44px; height: 44px; }
-.plogo--sm { width: 16px; height: 16px; }
-
-.toc a.with-mark { display: flex; align-items: center; gap: 0.6rem; }
-.toc a.with-mark .plogo { flex: 0 0 auto; }
-
-.palette-strip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
-  border: var(--rule-ink);
-  border-right: 0;
-}
-.palette-strip > * {
-  border-right: var(--rule-ink);
-  padding: 0.6rem 0.5rem 0.7rem;
-  background: var(--c);
-  color: var(--surface);
-}
-.palette-strip .palette-strip__name {
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  display: block;
-  margin-top: 1.6rem;
-}
-
-/* Le forme geometriche non hanno bisogno del riquadro delle icone. */
-.quick__mark.mark--shapes { border-color: transparent; }
-.quick__mark.mark--shapes .mark__svg { width: 30px; height: 30px; }
-
-/* ---------- 25b. Accento: pieno o a tre pezzi ---------- */
-/* L'attributo data-accent arriva dalla preferenza dell'utente. Nel
-   prototipo lo scrive marks.js da localStorage; in produzione deve
-   essere già presente al primo render server, letto dal record utente
-   (docs/features/frontend.md). Il CSS qui sotto non deve cambiare:
-   riceve solo l'attributo. */
-/* la riga sotto i titoli */
-html[data-accent="gradiente"] .rule-accent { background: var(--accent-grad); }
-
-/* i link: barra sotto il testo che si inverte al passaggio */
-html[data-accent="gradiente"] .prose a,
-html[data-accent="gradiente"] .tl__link,
-html[data-accent="gradiente"] .toc a.is-current {
-  text-decoration: none;
-  border-bottom: 0;
-  background-image: var(--accent-grad);
-  background-position: 0 100%;
-  background-size: 100% 3px;
-  background-repeat: no-repeat;
-  padding-bottom: 2px;
-}
-html[data-accent="gradiente"] .prose a:hover,
-html[data-accent="gradiente"] .tl__link:hover {
-  color: inherit;
-  background-image: var(--accent-grad-swap);
-}
-
-/* ---------- 25c. Viste: unite o separate ---------- */
-/* Un solo markup, due architetture. La preferenza decide cosa mostrare.
-   A differenza di simboli e accenti questa non è solo estetica: cambia
-   la navigazione. In produzione va decisa a livello di mondo oppure
-   esposta come preferenza utente, non lasciata al singolo browser
-   (docs/features/frontend.md). */
-html[data-views="unite"] .only-separate { display: none !important; }
-html[data-views="separate"] .only-unite { display: none !important; }
-html[data-views="unite"] .navitem[data-nav="npc"] { display: none; }
-
-/* filtro dell'elenco unico */
-.filterbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  border-top: var(--rule-ink);
-  border-bottom: var(--rule);
-  padding: 0.75rem 0;
-  margin-bottom: 1.75rem;
-}
-.filterbar__btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  border: 1px solid var(--line);
-  background: transparent;
-  padding: 0.25rem 0.6rem;
-  border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  color: var(--muted);
-}
-.filterbar__btn:hover { border-color: var(--ink); color: var(--ink); }
-.filterbar__btn[aria-pressed="true"] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--paper);
-}
-
-/* nota che spiega quale dei due modelli si sta guardando */
-.kindnote {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  border: var(--rule-ink);
-  border-left: 6px solid var(--cobalt);
-  background: var(--surface);
-  padding: 0.85rem 1.1rem;
-  margin-bottom: 2rem;
-}
-.kindnote__text { font-size: 0.92rem; color: var(--ink-soft); max-width: 78ch; }
-.kindnote__text b { color: var(--ink); }
-
-/* badge e scheda NPC: migrated to editorial/EntityCard.css (`.entity-card--npc`). */
-
-/* ---------- 26. Volti (personaggi) ---------- */
-.face {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  background: var(--c, var(--cobalt));
-  position: relative;
-}
-.face__emoji {
-  font-size: clamp(3.4rem, 9vw, 5.2rem);
-  line-height: 1;
-  filter: saturate(0.92);
-}
-.face--lg .face__emoji { font-size: clamp(5rem, 12vw, 8.5rem); }
-.face__tag {
-  position: absolute;
-  inset: auto 0 0 0;
-  background: var(--paper);
-  border-top: var(--rule-ink);
-  padding: 0.35rem 0.6rem;
-  font-family: var(--mono);
-  font-size: 0.66rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink);
-  text-align: center;
-}
-
-/* ---------- 27. Colore nel registro ----------
-   `.sdot` and the ledger's tint rule migrated to editorial/Ledger.css. */
-
-/* ---------- 28. Scena corrente ---------- */
-.wherenow {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas:
-    "logo name meta"
-    "logo desc meta";
-  align-items: center;
-  column-gap: clamp(1rem, 3vw, 2rem);
-  row-gap: 0.3rem;
-  border: var(--rule-ink);
-  border-left: 8px solid var(--c, var(--ink));
-  background: var(--surface);
-  padding: 1.35rem 1.6rem;
-  text-decoration: none;
-  color: var(--ink);
-}
-.wherenow > .plogo { grid-area: logo; }
-.wherenow__name {
-  grid-area: name;
-  font-family: var(--serif);
-  font-size: clamp(1.5rem, 3vw, 2.1rem);
-  line-height: 1.03;
-}
-.wherenow__desc {
-  grid-area: desc;
-  font-size: 0.95rem;
-  color: var(--ink-soft);
-  max-width: 62ch;
-}
-.wherenow__meta {
-  grid-area: meta;
-  font-family: var(--mono);
-  font-size: 0.7rem;
-  color: var(--muted);
-  text-align: right;
-  white-space: nowrap;
-}
-.wherenow__meta > span { display: block; }
-
-/* ---------- 29. Moduli ---------- */
-.form { display: grid; gap: 1.5rem; max-width: 720px; }
 /* Secondary helper text under a control or a control group. The Field's own
    supporting text is `.field__supporting` in common/Field.css; this is the
    global default for the hints a page writes by hand. */
 .hint { font-size: 0.82rem; color: var(--muted); }
 
-.swatches { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.swatch {
-  width: 34px;
-  height: 34px;
-  border: var(--rule-ink);
-  background: var(--c);
-  cursor: pointer;
-  padding: 0;
-}
-.swatch[aria-pressed="true"] {
-  outline: 3px solid var(--ink);
-  outline-offset: 2px;
-}
-
-/* selettore di forma, per le radure */
-.swatches--shape { gap: 0.4rem; }
-.shapebtn {
-  width: 34px;
-  height: 34px;
-  border: var(--rule-ink);
-  background: var(--surface);
-  display: grid;
-  place-items: center;
-  padding: 0;
-  cursor: pointer;
-}
-.shapebtn span { display: block; width: 20px; height: 20px; color: var(--ink); }
-.shapebtn:hover { background: var(--paper-deep); }
-.shapebtn[aria-pressed="true"] { background: var(--ink); }
-.shapebtn[aria-pressed="true"] span { color: var(--paper); }
-
-.emojigrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
-  gap: 0.5rem;
-}
-.emojibtn {
-  aspect-ratio: 1;
-  border: var(--rule-ink);
-  background: var(--surface);
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  display: grid;
-  place-items: center;
-}
-.emojibtn:hover { background: var(--paper-deep); }
-.emojibtn[aria-pressed="true"] { background: var(--ochre); }
-
-.preview {
-  border: var(--rule-ink);
-  background: var(--surface);
-  width: 100%;
-  max-width: 240px;
-}
-.preview__face { aspect-ratio: 4 / 5; }
-
-/* ---------- 29b. Editor: due impaginazioni ---------- */
-/* Stesso stato, due forme: campi etichettati oppure documento. */
-html[data-editor="modulo"] .only-documento { display: none !important; }
-html[data-editor="documento"] .only-modulo { display: none !important; }
-
-/* --- modulo: schede Scrivi / Anteprima sulla descrizione lunga --- */
-.tabs { display: inline-flex; border: var(--rule-ink); }
-.tab {
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  padding: 0.28rem 0.65rem;
-  cursor: pointer;
-}
-.tab + .tab { border-left: var(--rule-ink); }
-.tab:hover { color: var(--ink); }
-.tab[aria-selected="true"] { background: var(--ink); color: var(--paper); }
-.md-panel {
-  border: var(--rule-ink);
-  background: var(--surface);
-  padding: 1rem 1.15rem;
-}
-.md-panel .prose { font-size: 1.06rem; }
-.md-empty { color: var(--muted); font-size: 0.92rem; }
-
-/* --- documento --- */
-.document__head {
-  display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
-  gap: clamp(1.25rem, 3vw, 2.5rem);
-  align-items: start;
-  margin-bottom: 2.75rem;
-}
-.document__face { aspect-ratio: 4 / 5; border: var(--rule-ink); overflow: hidden; }
-.document__id { padding-top: 0.4rem; display: grid; gap: 1.5rem; align-content: start; }
-.document__rule { border: 0; border-top: var(--rule-ink); margin: 1.4rem 0 1.15rem; }
-.document__controls {
-  display: grid;
-  gap: 1.5rem;
-  max-width: 780px;
-  padding-bottom: 2.5rem;
-  margin-bottom: 2.5rem;
-  border-bottom: var(--rule-ink);
-}
-.document__page > .eyebrow { display: block; margin-bottom: 0.75rem; }
-/* One active treatment for the editable block the document navigator focuses. */
-[data-doc-block].document-block--active {
-  background: var(--paper-deep);
-  box-shadow: inset var(--rule-width-strong) 0 0 var(--vermilion);
-}
-.document__head--plain { grid-template-columns: minmax(0, 1fr); }
-.document__meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem 2.5rem;
-  border-top: var(--rule-ink);
-  border-bottom: var(--rule);
-  padding: 0.7rem 0;
-  margin-top: 1.4rem;
-}
-.document__meta-label {
-  display: block;
-  font-family: var(--mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 0.15rem;
-}
-.docfield--meta { font-family: var(--mono); font-size: 0.78rem; color: var(--ink); }
-
-/* campi senza riquadro: sotto restano input e textarea separati */
-.docfield {
-  display: block;
-  width: 100%;
-  border: 0;
-  border-left: 3px solid transparent;
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink);
-  padding: 0.15rem 0 0.15rem 0.7rem;
-  margin-left: -0.7rem;
-  outline-offset: 4px;
-}
-.docfield:hover { border-left-color: var(--line); }
-.docfield:focus { border-left-color: var(--vermilion); }
-.docfield--name {
-  font-family: var(--serif);
-  font-size: clamp(2rem, 4.4vw, 3.1rem);
-  line-height: 1.04;
-  letter-spacing: -0.015em;
-}
-.docfield--title {
-  font-family: var(--serif);
-  font-style: italic;
-  font-size: 1.15rem;
-  color: var(--muted);
-  margin-top: 0.25rem;
-}
-.docfield--short { font-family: var(--sans); font-size: 1rem; color: var(--ink-soft); }
-.docfield--long {
-  font-family: var(--serif);
-  font-size: 1.12rem;
-  line-height: 1.68;
-  color: var(--ink-soft);
-  min-height: 10rem;
-  resize: none;
-  overflow-y: auto;
-}
-
-/* la descrizione si mostra già resa e si apre in scrittura al clic */
-.docedit { position: relative; }
-.docedit__view {
-  font-family: var(--serif);
-  font-size: 1.12rem;
-  line-height: 1.68;
-  color: var(--ink-soft);
-  min-height: 10rem;
-  border-left: 3px solid transparent;
-  padding: 0.15rem 0 0.15rem 0.7rem;
-  margin-left: -0.7rem;
-  cursor: text;
-}
-.docedit__view:hover { border-left-color: var(--line); }
-
-/* in scrittura: riga attiva evidenziata, cursore colorato.
-   Una textarea non sa colorare una riga, quindi la riga la disegna un
-   riquadro dietro al testo, posizionato misurando il punto del cursore
-   su un clone invisibile con la stessa metrica. */
-.docedit__input {
-  position: relative;
-  z-index: 1;
-  /* il cursore lo disegniamo noi: quello nativo è spesso 1px e si perde */
-  caret-color: transparent;
-}
-/* qui l'indicatore di fuoco è il cursore stesso più la riga evidenziata:
-   il contorno del campo sarebbe rumore */
-.docedit__input:focus,
-.docedit__input:focus-visible { outline: none; }
-.docedit__caret {
-  position: absolute;
-  width: 2px;
-  background: var(--vermilion);
-  pointer-events: none;
-  z-index: 2;
-  animation: caret-blink 1.1s steps(1) infinite;
-}
-@keyframes caret-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
-}
-.docedit__caretline {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 0;
-  height: 0;
-  /* velo neutro: la selezione usa l'ocra, quindi la riga attiva non
-     deve confondersi con il testo selezionato */
-  background: rgba(23, 21, 15, 0.055);
-  pointer-events: none;
-  z-index: 0;
-}
-.docedit__mirror {
-  position: absolute;
-  top: 0;
-  left: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  visibility: hidden;
-  pointer-events: none;
-  white-space: pre-wrap;
-  overflow-wrap: break-word;
-  font-family: var(--serif);
-  font-size: 1.12rem;
-  line-height: 1.68;
-}
-
-/* caricamento immagine */
-.filefield { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-.filefield__input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-.filefield__label { position: relative; cursor: pointer; }
-
-/* una foto caricata prende il posto dell'animale */
-.face--photo { background-size: cover; background-position: center; }
-.face--photo .face__emoji { visibility: hidden; }
-
-.preview { margin-inline: auto; }
-
-/* il volto è il comando per cambiare l'immagine */
-.face--editable { cursor: pointer; }
-.face__hint {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  padding: 0.6rem;
-  text-align: center;
-  background: rgba(23, 21, 15, 0.58);
-  color: var(--paper);
-  font-family: var(--mono);
-  font-size: 0.64rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  opacity: 0;
-  transition: opacity 140ms ease;
-}
-.face--editable:hover .face__hint,
-.face--editable:focus-within .face__hint { opacity: 1; }
-.face__remove {
-  position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  z-index: 2;
-  width: 26px;
-  height: 26px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--ink);
-  background: var(--paper);
-  color: var(--ink);
-  font-size: 0.85rem;
-  line-height: 1;
-  cursor: pointer;
-}
-.face__remove:hover { background: var(--vermilion); border-color: var(--vermilion); color: var(--surface); }
-
-/* collegamenti: chi cita questo contenuto */
-.links { border: var(--rule-ink); background: var(--surface); }
-.links__head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.7rem 0.9rem;
-  border-bottom: var(--rule-ink);
-}
-.links__group { padding: 0.6rem 0.9rem 0.8rem; }
-.links__group + .links__group { border-top: var(--rule); }
-.links__label {
-  display: block;
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-bottom: 0.35rem;
-}
-.links__item {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  padding: 0.3rem 0;
-  text-decoration: none;
-  color: var(--ink);
-  font-size: 0.9rem;
-}
-.links__item:hover { color: var(--c, var(--vermilion)); }
-.links__dot { width: 10px; height: 10px; flex: 0 0 10px; background: var(--c, var(--ink)); }
-
-/* ---------- 29d. Pagina di un contenuto ---------- */
-/* una radura ha una forma al posto dell'animale: campita chiara e
-   contornata, così si legge su qualunque tinta */
-.face__shape { width: 42%; max-width: 96px; aspect-ratio: 1; color: var(--ink); }
-.face__shape .mark__svg { fill: var(--surface); stroke: var(--ink); stroke-width: 1.4; }
-.face--photo .face__shape { visibility: hidden; }
-
-/* ---------- 30. Utility ---------- */
+/* ---------- 7. Utility ---------- */
 .spread { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .hr { border: 0; border-top: var(--rule-ink); margin: 2.5rem 0; }
 .sr-only {
@@ -1259,78 +365,14 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   border: 0;
 }
 
-/* ---------- 31. Responsive ---------- */
-@media (max-width: 1100px) {
-  .grid--two { grid-template-columns: 1fr; gap: 2rem; }
-  .toc { position: static; }
-}
-
-@media (max-width: 900px) {
-  .masthead { grid-template-columns: 1fr; }
-  .masthead__aside {
-    border-left: 0;
-    border-top: var(--rule-ink);
-    padding: 1.25rem 0;
-  }
-  .hero { grid-template-columns: 1fr; }
-  .hero__media { border-right: 0; border-bottom: var(--rule-ink); min-height: 240px; }
-  .feature { grid-template-columns: 1fr; }
-  .feature__media { border-right: 0; border-bottom: var(--rule-ink); min-height: 200px; }
-  .pager { grid-template-columns: 1fr; }
-  .pager a + a { border-left: 0; border-top: var(--rule); padding-left: 0.25rem; text-align: left; }
-}
-
+/* ---------- 8. Responsive ---------- */
 @media (max-width: 700px) {
   .container { min-width: 0; padding-bottom: 3.5rem; }
-  .autosave-recovery .btn { margin: 0.25rem 0.25rem 0 0; }
-
-  /* le categorie diventano righe compatte invece di blocchi alti */
-  .quick {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
-    align-items: center;
-    column-gap: 0.85rem;
-    row-gap: 0.1rem;
-    min-height: 0;
-    padding: 0.7rem 0.9rem;
-  }
-  .quick__mark { grid-area: 1 / 1 / 3 / 2; --mark-size: 22px; }
-  .quick__title { grid-area: 1 / 2 / 2 / 3; font-size: 1.06rem; }
-  .quick__foot { grid-area: 2 / 2 / 3 / 3; }
-  .quick__count { grid-area: 1 / 3 / 3 / 4; font-size: 1.55rem; }
-
-  /* la scena corrente si legge come la card della storia: luogo sopra, dati sotto */
-  .wherenow {
-    grid-template-columns: auto minmax(0, 1fr);
-    grid-template-areas:
-      "logo name"
-      "desc desc"
-      "meta meta";
-    align-items: start;
-    column-gap: 0.9rem;
-    row-gap: 0.75rem;
-    padding: 1.05rem 1.15rem 1.15rem;
-  }
-  .wherenow__meta {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    text-align: left;
-    border-top: var(--rule);
-    padding-top: 0.6rem;
-  }
-
-  .section__head h2 { font-size: 1.3rem; }
   .display { font-size: clamp(1.9rem, 8vw, 2.6rem); }
-
-  /* nel documento il volto va sopra l'identità e non a tutta larghezza */
-  .document__head { grid-template-columns: 1fr; gap: 1.5rem; }
-  .document__face { max-width: 220px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
-  .docedit__caret { animation: none; opacity: 1; }
 }
 
 /* ============================================================
@@ -1476,7 +518,6 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   --cat-7: var(--p6);
 
   /* layout */
-  --sidebar-width: var(--rail-w);
   --content-max: 960px;
   --content-max-wide: 1200px;
   --dialog-max: 480px;
@@ -1498,8 +539,7 @@ html[data-editor="documento"] .only-modulo { display: none !important; }
   /* The masthead command cell keeps one width so the vertical rule sits in the
      same place whether it holds one command or two. */
   --masthead-aside-min: 5rem;
-  /* The hard ink offset an openable surface lifts onto. The editorial cards
-     repeat this literal today; F14 moves them onto these tokens. */
+  /* The hard ink offset an openable surface lifts onto. */
   --lift-shift: -3px;
   --lift-shadow: 6px 6px 0 var(--ink);
   /* The backlinks column of a document layout (common.Grid `document`). */

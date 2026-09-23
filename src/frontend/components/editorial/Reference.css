@@ -99,9 +99,13 @@
 .mention-hidden { display: none; }
 
 /* nel corpo dell'articolo le regole dei link non devono cancellare la
-   pillola: colore e sottolineatura della reference vincono su quelle */
-.prose .mention,
-html[data-accent="gradiente"] .prose a.mention {
+   pillola: colore e sottolineatura della reference vincono su quelle.
+   Selettori su `a`/`span` invece che su `.prose`: pareggiano la specificità di
+   `.prose a` e vincono per ordine, senza che questo file rivendichi il root
+   `.prose`, che resta di main.css. */
+a.mention,
+span.mention,
+html[data-accent="gradiente"] a.mention {
   color: var(--c, var(--ink));
   text-decoration: none;
   border-bottom: 0;

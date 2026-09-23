@@ -112,33 +112,6 @@
   border-color: var(--clr-border);
 }
 .btn-secondary:hover:not(:disabled) { border-color: var(--clr-border-strong); }
-.btn-filled {
-  background: var(--clr-accent);
-  color: var(--clr-text-on-accent);
-  border-color: var(--clr-accent);
-}
-.btn-filled:hover:not(:disabled) {
-  background: var(--clr-accent-hover);
-  border-color: var(--clr-accent-hover);
-}
-.btn-tonal {
-  background: var(--paper-deep);
-  color: var(--clr-text);
-  border-color: var(--paper-deep);
-}
-.btn-tonal:hover:not(:disabled) { border-color: var(--clr-border-strong); }
-.btn-outlined {
-  background: transparent;
-  color: var(--clr-text);
-  border-color: var(--clr-border);
-}
-.btn-outlined:hover:not(:disabled) { border-color: var(--clr-border-strong); }
-.btn-elevated {
-  background: var(--clr-surface);
-  color: var(--clr-text);
-  border-color: transparent;
-  box-shadow: var(--shadow-sm);
-}
 /* The editorial text action: a mono, uppercase link with an ink underline.
    Migrated from main.css so Button owns the only text-action skin. */
 .btn-text {

@@ -140,10 +140,19 @@ switchable at runtime without a reload and remembered across sessions.
   is either a single tint (`solid`) or three tints in sequence (`gradient`),
   where the first and third swap on hover.
 
-Both are currently switched from a temporary control panel in the prototype's
-sidebar. **Their real home is a user settings page**, where the user picks the
-values and the choice is stored server-side on the user record. The prototype
-stores them in `localStorage` only because it has no backend.
+Both are switched from a temporary control panel in the prototype's sidebar.
+**Their real home is a user settings page**, where the user picks the values and
+the choice is stored server-side on the user record. The prototype stores them
+in `localStorage` only because it has no backend.
+
+**What the application implements (2026-09).** *Symbol style* is a real user
+setting: `Settings` stores it on the user record, the server renders the active
+mark on first paint, and `common/Mark.js` flips `mark--icons`/`mark--shapes`
+after a successful response — no reload. *Accent treatment* is **not wired**:
+nothing writes `data-accent` on `<html>`, so the accent rule is always the solid
+`--vermilion` and the gradient rules in `main.css` are kept for the day the
+setting lands, not reachable today. This is recorded rather than removed because
+the preference is a settled product decision; the CSS waits for its writer.
 
 Implementation consequences for the real app:
 
@@ -167,6 +176,11 @@ fields exist, not how they are written.
   is Markdown.
 
 ### Two layouts
+
+The prototype explores two ways of filling a record; the application implements
+**Document** only. **Form** — labelled fields, with the card preview beside them,
+and the long description carrying two `Write`/`Preview` tabs — is kept here as
+the rejected alternative, not as a mode a user can pick.
 
 - **Form** — labelled fields, with the card preview beside them. Explicit: you
   always see what you are filling in. The long description carries two tabs,

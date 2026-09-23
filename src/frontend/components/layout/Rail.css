@@ -130,7 +130,7 @@
 .navitem[aria-current="page"] .navitem__count { color: var(--muted); }
 
 /* A shape mark needs no icon frame (the F8 symbol-style preference). */
-.navitem__mark.mark--shapes { border-color: transparent; }
+.navitem__mark[data-mark-style="shapes"] { border-color: transparent; }
 
 /* The label wraps the button's content, so a two-part label needs its own gap. */
 .rail__foot .btn-label {

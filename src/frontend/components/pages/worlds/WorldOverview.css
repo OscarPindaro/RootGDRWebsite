@@ -1,0 +1,63 @@
+/* The current scene: the place the party is in, its mark, name and counts.
+   The place's tint arrives as `--c`. */
+.wherenow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas:
+    "logo name meta"
+    "logo desc meta";
+  align-items: center;
+  column-gap: clamp(1rem, 3vw, 2rem);
+  row-gap: 0.3rem;
+  border: var(--rule-ink);
+  border-left: 8px solid var(--c, var(--ink));
+  background: var(--surface);
+  padding: 1.35rem 1.6rem;
+  text-decoration: none;
+  color: var(--ink);
+}
+.wherenow > .plogo { grid-area: logo; }
+.wherenow__name {
+  grid-area: name;
+  font-family: var(--serif);
+  font-size: clamp(1.5rem, 3vw, 2.1rem);
+  line-height: 1.03;
+}
+.wherenow__desc {
+  grid-area: desc;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  max-width: 62ch;
+}
+.wherenow__meta {
+  grid-area: meta;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: right;
+  white-space: nowrap;
+}
+.wherenow__meta > span { display: block; }
+
+@media (max-width: 700px) {
+  /* la scena corrente si legge come la card della storia: luogo sopra, dati sotto */
+  .wherenow {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "logo name"
+      "desc desc"
+      "meta meta";
+    align-items: start;
+    column-gap: 0.9rem;
+    row-gap: 0.75rem;
+    padding: 1.05rem 1.15rem 1.15rem;
+  }
+  .wherenow__meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    text-align: left;
+    border-top: var(--rule);
+    padding-top: 0.6rem;
+  }
+}

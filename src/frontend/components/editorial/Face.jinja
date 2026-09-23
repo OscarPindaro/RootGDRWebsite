@@ -1,4 +1,5 @@
 {#def tint, animal=None, shape=None, image_url=None, tag=None #}
+{#css editorial/Face.css #}
 <span class="face{{ ' face--photo' if image_url else '' }}"
       style="--c: var(--{{ tint }});{% if image_url %} background-image: url('{{ image_url }}');{% endif %}">
   {% if not image_url %}

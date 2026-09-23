@@ -112,7 +112,10 @@ must stay off reading pages.
 
 For reference, the removed `lucide.min.js` was 417,272 raw / 97,605 gzip on every
 page. The font files were already being downloaded from the font host before, so
-the baseline loses the icon runtime and keeps the typography it had.
+the baseline loses the icon runtime and keeps the typography it had. The base CSS
+figure is F20's measurement; F22 cut `main.css` to 18,154 raw / 5,955 gzip by
+moving every component rule out (see [final-consolidation.md](final-consolidation.md)).
+The thresholds are unchanged.
 
 ### Caching and fingerprinting
 
@@ -133,8 +136,8 @@ This is a recorded exception: immutable caching is not available today.
 ## Used by
 
 Every page: `common.Icon` is composed by `Button`, `ButtonGroup`, `IconButton`,
-`MenuItem`, `MenuTrigger`, `EmptyState`, `Dialog`, `ConfirmDialog`, `Sidebar`,
-`SidebarItem`, `Topbar`, `UserMenu`, the docbar and the image editor.
+`MenuItem`, `MenuTrigger`, `EmptyState`, `Dialog`, `ConfirmDialog`, `Topbar`,
+`UserMenu`, the docbar and the image editor.
 
 ## Limits
 

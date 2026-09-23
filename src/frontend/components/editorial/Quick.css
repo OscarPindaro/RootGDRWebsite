@@ -1,0 +1,91 @@
+/* The entry-point tile of the world overview: a mark, a label and a count,
+   one tint per content type. Flush in a common.Grid strip. */
+.quick {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 0.5rem;
+  padding: 1.25rem 1.25rem 1.1rem;
+  background: var(--surface);
+  border: var(--rule-ink);
+  border-left-width: 0;
+  text-decoration: none;
+  color: var(--ink);
+  min-height: 10.5rem;
+  transition: background 140ms ease;
+}
+.quick:first-child {
+  border-left-width: 1px;
+}
+.quick:hover { background: var(--paper-deep); }
+.quick__mark {
+  --mark-size: 1.875rem;
+  border: var(--rule-ink);
+}
+.quick__title { font-family: var(--serif); font-size: 1.24rem; }
+.quick__count {
+  font-family: var(--mono);
+  font-size: 2.1rem;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.quick__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.quick:hover .quick__foot { color: var(--ink); }
+
+.quick--vermilion { background: var(--vermilion); color: var(--surface); }
+.quick--vermilion:hover { background: var(--vermilion-deep); }
+.quick--cobalt { background: var(--cobalt); color: var(--surface); }
+.quick--cobalt:hover { background: var(--cobalt-deep); }
+.quick--ochre { background: var(--ochre); }
+.quick--ochre:hover { background: var(--ochre-deep); }
+.quick--forest { background: var(--forest); color: var(--surface); }
+.quick--forest:hover { background: var(--forest-deep); }
+.quick--plum { background: var(--plum); color: var(--surface); }
+.quick--plum:hover { background: var(--plum-deep); }
+.quick--vermilion .quick__foot,
+.quick--cobalt .quick__foot,
+.quick--forest .quick__foot,
+.quick--plum .quick__foot { color: rgba(255, 253, 246, 0.78); }
+.quick--vermilion .quick__mark,
+.quick--cobalt .quick__mark,
+.quick--forest .quick__mark,
+.quick--plum .quick__mark {
+  border-color: var(--surface);
+  background: transparent;
+}
+.quick--ochre .quick__mark {
+  border-color: var(--ink);
+  background: transparent;
+}
+
+/* Le forme geometriche non hanno bisogno del riquadro delle icone. */
+.quick__mark[data-mark-style="shapes"] { border-color: transparent; }
+.quick__mark[data-mark-style="shapes"] .mark__svg {
+  width: 1.875rem;
+  height: 1.875rem;
+}
+
+@media (max-width: 700px) {
+  /* le categorie diventano righe compatte invece di blocchi alti */
+  .quick {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 0.85rem;
+    row-gap: 0.1rem;
+    min-height: 0;
+    padding: 0.7rem 0.9rem;
+  }
+  .quick__mark { grid-area: 1 / 1 / 3 / 2; --mark-size: 1.375rem; }
+  .quick__title { grid-area: 1 / 2 / 2 / 3; font-size: 1.06rem; }
+  .quick__foot { grid-area: 2 / 2 / 3 / 3; }
+  .quick__count { grid-area: 1 / 3 / 3 / 4; font-size: 1.55rem; }
+}

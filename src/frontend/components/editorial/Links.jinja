@@ -1,4 +1,5 @@
 {#def groups #}
+{#css editorial/Links.css #}
 {% set ns = namespace(total=0) %}
 {% for items in groups.values() %}{% set ns.total = ns.total + (items | length) %}{% endfor %}
 {% if ns.total %}

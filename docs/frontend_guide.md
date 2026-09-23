@@ -11,9 +11,9 @@ frontend code here. The design process behind the visual language is in
 
 | Path | Holds | Knows about |
 |---|---|---|
-| `src/frontend/components/common/` | Reusable primitives: Button, Card, Field, Menu, Dialog, Pill, Table, Avatar, Alert, Divider, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, IconButton, MediaFrame, EmptyState, Switch, Tabs, SaveIndicator, Combobox, RequestFallback | nothing domain-specific |
-| `src/frontend/components/editorial/` | The product's vocabulary and its atlas identity: Masthead, Cover, Face, Docbar, DocIdentity, DocEdit, DocSummary, ImageEditor, Links, Quick, SectionHead, Stat, Timeline, Crumbs, Plogo | worlds, characters, sessions, the printed-atlas look |
-| `src/frontend/components/layout/` | Page shells: BlankPage, Page, Sidebar, Rail, Topbar, UserMenu | the shell, not the content |
+| `src/frontend/components/common/` | Reusable primitives: Button, Card, Field, Menu, Dialog, ConfirmDialog, Pill, Table, Avatar, Alert, Divider, Tooltip, ChoiceGrid, ButtonGroup, Grid, VStack, HStack, Icon, IconButton, Mark, Shape, MediaFrame, EmptyState, Switch, Tabs, SaveIndicator, Combobox, RequestFallback | nothing domain-specific |
+| `src/frontend/components/editorial/` | The product's vocabulary and its atlas identity: Masthead, Crumbs, Cover, Quick, Timeline, Plogo, Face, EntityCard, StoryCard, StoryBand, Ledger, Row, RowList, CollectionCreate, Docbar, DocIdentity, DocEdit, DocSummary, Links, Metadata, ImageEditor, SectionHead | worlds, characters, sessions, the printed-atlas look |
+| `src/frontend/components/layout/` | Page shells: BlankPage, Page, Rail, Topbar, UserMenu | the shell, not the content |
 | `src/frontend/components/pages/` | Full pages composed from the three above, one folder per module | the domain |
 | `src/frontend/static/css/main.css` | Identity and alias tokens, reset, base typography, prose, and genuinely global document defaults | — |
 | `src/frontend/static/js/` | Application scripts (the lazy editor bundle, htmx helpers, `feedback.js`, `format-times.js`) | — |
@@ -48,10 +48,12 @@ Rules:
 3. **Prefer an existing token over a new one.** The spacing scale is
    `--sp-1 … --sp-20`; there is no `--sp-7`.
 4. **`main.css` has a restricted role**: identity and alias tokens, the reset,
-   base typography, prose, and genuinely global document defaults. The editorial
-   classes it still carries are migration debt, not a place to add to.
-   **New layout CSS does not go there**: use `common.Grid`, `common.VStack`,
-   `common.HStack` (see §5).
+   base typography, prose, and genuinely global document defaults (`.container`,
+   `.display`, `.eyebrow`, `.lede`, `.mono`, `.muted`, `.hint`, `.spread`, `.hr`,
+   `.sr-only`, `.rule-accent`, and the `html[data-*]` preference rules). Every
+   rule a component owns lives in that component's colocated stylesheet; page
+   composition lives beside the page. **New layout CSS does not go there**: use
+   `common.Grid`, `common.VStack`, `common.HStack` (see §5).
 
 ### Selector ownership
 
@@ -59,26 +61,35 @@ Every reusable root selector has **one** owner:
 
 | Layer | Owns | Examples |
 |---|---|---|
-| `main.css` | identity and alias tokens, reset, base typography, prose, global document defaults | `.prose`, `.container` |
-| colocated component CSS | structure and states for that component only | `.btn`, `.field`, `.entity-card`, `.dialog`, `.rail`, `.topbar` |
-| page CSS (`components/pages/**/<Page>.css`) | exceptional page composition, never a reusable primitive | `.login-page`, `.admin-*` |
+| `main.css` | identity and alias tokens, reset, base typography, prose, global document defaults | `.prose`, `.container`, `.display`, `.rule-accent` |
+| colocated component CSS | structure and states for that component only | `.btn`, `.field`, `.entity-card`, `.dialog`, `.rail`, `.topbar`, `.masthead`, `.face`, `.quick` |
+| a shared editorial stylesheet with no component | a structure several components and pages share | `editorial/Collection.css`, `editorial/Document.css`, `editorial/Reference.css` |
+| page CSS (`components/pages/**/<Page>.css`) | exceptional page composition, never a reusable primitive | `.login-page`, `.feature`, `.wherenow`, `.pager`, `.toc` |
 | `design-tokens/material3/` | provenance for adopted mechanics and dimensions, not a second visual identity | — |
 
 A **root** is the class a selector starts with, stripped of its BEM suffix:
 `.entity-card__body` and `.entity-card--npc` both belong to root `entity-card`. A selector whose first
 compound carries no class (`.rail .btn`, `html[data-accent] .btn--text`) belongs
 to no class root. A domain component that needs its own look takes a domain name
-(`entity-card`, `document-layout`, `collection-create`) instead of colliding
+(`entity-card`, `document`, `collection-create`) instead of colliding
 with a common primitive.
 
 `tests/unit/jinja/test_component_conventions.py` fails when two stylesheets own
-the same root. Roots that are still owned twice are listed in
-`MIGRATION_ALLOWLIST` in that file with the ticket that removes the losing
-rules, and the test also fails on an entry that has outlived its collision. F14
-emptied that list: the roots the guard watches today are `btn`, `card`,
-`collection-meta`, `collection-surface`, `dialog`, `entity-card`, `field`,
-`icon`, `ledger`, `pill`, `row`, `row-list`, `story-band`, `story-card` and
-`table` — `btn` is Button's root class, and there is no `.button` selector.
+the same root. F14 emptied `MIGRATION_ALLOWLIST`; F22 moved the last editorial
+families out of `main.css` into their components and added no exception, so the
+list stays empty and `main.css` owns no component root. The guard watches `btn`,
+`card`, `collection-meta`, `collection-surface`, `cover`, `crumbs`, `dialog`,
+`docedit`, `document`, `entity-card`, `face`, `field`, `icon`, `ledger`, `links`,
+`mark`, `masthead`, `pill`, `plogo`, `quick`, `row`, `row-list`, `section`,
+`story-band`, `story-card`, `table` and `timeline` — `btn` is Button's root
+class, and there is no `.button` selector.
+
+`tests/unit/jinja/test_legacy_selectors.py` is the other half: it fails if a
+name an earlier ticket retired (`.btn--*`, `.pill--*`, `.card--npc`, `.docpage`,
+`.article`, `.field__bar`, `.grid--quick`, `lucide`, `data-lucide`,
+`createIcons`, `location.reload` in a component script, …) comes back in a
+component template or script. It strips comments first, so a file may still
+name what it replaced.
 
 ## 3. Anatomy of a component
 
@@ -217,6 +228,7 @@ A new grid ratio belongs in `Grid.css` as a variant, not in a page as an inline
 |---|---|---|
 | Component | `uv run harness test frontend` | real JinjaX markup in Chromium, CSS applied, keyboard, focus, timers, htmx lifecycle. No backend, no database. |
 | Compile | `uv run harness test unit` | every component compiles (`tests/integration/jinja/test_templates_compile.py`), the conventions in §3 hold and the selector ownership in §2 holds (`tests/unit/jinja/test_component_conventions.py`) |
+| Retired names | `uv run harness test unit` | a name an earlier ticket deleted has not come back (`tests/unit/jinja/test_legacy_selectors.py`) |
 | Tokens | `uv run harness material check` | the M3 inventory and `main.css` agree |
 | Payload | `uv run harness test unit` | the baseline budgets and the icon registry (`tests/unit/test_payload_budget.py`, `tests/unit/test_icons.py`) |
 | Pages | `uv run harness smoke`, `harness screenshot` | authenticated pages render, no console errors |

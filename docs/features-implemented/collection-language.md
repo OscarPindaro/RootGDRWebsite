@@ -54,7 +54,9 @@ media ratio (`--media-ratio-portrait`) and body box so the two line up in a grid
   `RowList.jinja`, `Row.jinja`, `Row.css`, `Collection.css`.
 - `main.css` gave up the `.card*`, `.story*`, `.ledger*`, `.sdot`,
   `.rowlist`/`.row*` families and their phone rules; the `.feature` and
-  `.wherenow` one-offs stayed, with their hover moved onto the lift tokens.
+  `.wherenow` one-offs stayed there until F22, which moved `.cover` and `.quick`
+  into their components and `.feature`/`.wherenow` into the page CSS beside
+  `pages.places.PlaceList` and `pages.worlds.WorldOverview`.
 - `common.Card` stays the generic M3 container, used by Login, the world list's
   empty panel and the showcase. `pages.worlds.WorldCard` was unused and is gone.
 - The ownership guard watches the new roots and `MIGRATION_ALLOWLIST` is empty.

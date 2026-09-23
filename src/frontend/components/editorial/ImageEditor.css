@@ -1,15 +1,3 @@
-.document__face--editor {
-  aspect-ratio: auto;
-  min-width: 0;
-  overflow: visible;
-  border: 0;
-}
-
-.document__face--editor .image-editor--with-choices { grid-template-columns: minmax(0, 1fr); }
-.document__face--editor .image-editor__choices { grid-template-rows: repeat(2, minmax(0, 1fr)) auto; }
-.document__face--editor .choice-grid__options { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
-.document__face--editor .choice-grid__option { min-height: 2.75rem; }
-
 .image-editor {
   display: grid;
   gap: var(--sp-4);

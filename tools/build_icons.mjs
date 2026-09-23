@@ -47,7 +47,6 @@ const NAMES = [
   "map-pin",
   "map-pin-off",
   "menu",
-  "palette",
   "panel-left-close",
   "pencil",
   "plus",

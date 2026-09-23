@@ -38,9 +38,9 @@ Walking the editable blocks of a document like one vertical text editor.
   blocks (`[data-readonly="true"]`) are filtered out, and on a locked page the
   editor bundle is not loaded at all, so no navigation exists.
 - `focusin` is the single source of the active treatment, so arriving by Tab or
-  by Arrow shows the same thing. The active class is styled once in `main.css`;
-  the per-component `:focus-within` / `:focus-visible` rules it replaces are
-  gone.
+  by Arrow shows the same thing. The active class is styled once, in
+  `editorial/Document.css` (it was in `main.css` until F22); the per-component
+  `:focus-within` / `:focus-visible` rules it replaces are gone.
 - The navigator owns Enter/F2 and the arrows for a focused stop and calls the
   block's own opener, so the inline input and the CodeMirror editor are still
   created by the code that always created them. CodeMirror keeps its own keys

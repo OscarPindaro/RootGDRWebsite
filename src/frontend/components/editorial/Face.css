@@ -1,0 +1,50 @@
+/* The identity surface of a character, NPC or place: a tint plus an animal, a
+   shape, or an uploaded image. The tint arrives as `--c` from the caller. */
+.face {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  background: var(--c, var(--cobalt));
+  position: relative;
+}
+.face__emoji {
+  font-size: clamp(3.4rem, 9vw, 5.2rem);
+  line-height: 1;
+  filter: saturate(0.92);
+}
+.face__tag {
+  position: absolute;
+  inset: auto 0 0 0;
+  background: var(--paper);
+  border-top: var(--rule-ink);
+  padding: 0.35rem 0.6rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink);
+  text-align: center;
+}
+
+/* una radura ha una forma al posto dell'animale: campita chiara e
+   contornata, così si legge su qualunque tinta */
+.face__shape {
+  width: 42%;
+  max-width: 6rem;
+  aspect-ratio: 1;
+  color: var(--ink);
+}
+.face__shape .mark__svg {
+  fill: var(--surface);
+  stroke: var(--ink);
+  stroke-width: 1.4;
+}
+
+/* una foto caricata prende il posto dell'animale */
+.face--photo {
+  background-size: cover;
+  background-position: center;
+}
+.face--photo .face__emoji { visibility: hidden; }
+.face--photo .face__shape { visibility: hidden; }

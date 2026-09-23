@@ -1,0 +1,56 @@
+/* The campaign diary: dated entries on a vertical rule, the newest accented.
+   The entry's tint arrives as `--c` from the caller. */
+.timeline {
+  border-left: 1px solid var(--line-ink);
+  margin-left: 0.4rem;
+}
+.tl {
+  position: relative;
+  padding: 0 0 1.5rem 1.4rem;
+}
+.tl::before {
+  content: "";
+  position: absolute;
+  left: -0.3125rem;
+  top: 0.42rem;
+  width: 0.5625rem;
+  height: 0.5625rem;
+  background: var(--c, var(--paper));
+  border: 1px solid var(--ink);
+}
+.tl--accent::before { background: var(--c, var(--vermilion)); }
+.tl__when {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.tl__what {
+  font-size: 0.98rem;
+  margin-top: 0.15rem;
+}
+.tl__what strong { font-weight: 600; }
+.tl__link {
+  color: var(--ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+.tl__link:hover {
+  border-color: var(--vermilion);
+  color: var(--vermilion);
+}
+
+html[data-accent="gradiente"] .tl__link {
+  text-decoration: none;
+  border-bottom: 0;
+  background-image: var(--accent-grad);
+  background-position: 0 100%;
+  background-size: 100% 0.1875rem;
+  background-repeat: no-repeat;
+  padding-bottom: 0.125rem;
+}
+html[data-accent="gradiente"] .tl__link:hover {
+  color: inherit;
+  background-image: var(--accent-grad-swap);
+}

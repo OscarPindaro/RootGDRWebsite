@@ -1,0 +1,53 @@
+/* The document page: a face column and an identity column, then the body.
+   Character, NPC, Place, Story, Session and Page details all share it. */
+.document__head {
+  display: grid;
+  grid-template-columns: minmax(11.25rem, 15rem) minmax(0, 1fr);
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  align-items: start;
+  margin-bottom: 2.75rem;
+}
+.document__head--plain { grid-template-columns: minmax(0, 1fr); }
+.document__face {
+  aspect-ratio: 4 / 5;
+  border: var(--rule-ink);
+  overflow: hidden;
+}
+.document__id {
+  padding-top: 0.4rem;
+  display: grid;
+  gap: 1.5rem;
+  align-content: start;
+}
+.document__page > .eyebrow {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+/* One active treatment for the editable block the document navigator focuses. */
+[data-doc-block].document-block--active {
+  background: var(--paper-deep);
+  box-shadow: inset var(--rule-width-strong) 0 0 var(--vermilion);
+}
+
+/* The face column becomes the image editor: no fixed ratio, no border, and the
+   editor's choices stack in the narrower column. */
+.document__face--editor {
+  aspect-ratio: auto;
+  min-width: 0;
+  overflow: visible;
+  border: 0;
+}
+.document__face--editor .image-editor--with-choices { grid-template-columns: minmax(0, 1fr); }
+.document__face--editor .image-editor__choices { grid-template-rows: repeat(2, minmax(0, 1fr)) auto; }
+.document__face--editor .choice-grid__options { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+.document__face--editor .choice-grid__option { min-height: 2.75rem; }
+
+@media (max-width: 700px) {
+  /* nel documento il volto va sopra l'identità e non a tutta larghezza */
+  .document__head {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .document__face { max-width: 13.75rem; }
+}

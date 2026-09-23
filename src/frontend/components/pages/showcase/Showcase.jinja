@@ -1,12 +1,12 @@
-{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, showcase_card, roles=[], current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css, layout/Sidebar.css, common/Combobox.css, common/SaveIndicator.css, common/HStack.css, pages/showcase/Showcase.css, editorial/CollectionCreate.css, editorial/EntityCard.css, editorial/Ledger.css, editorial/Row.css, editorial/StoryCard.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css, common/RequestFallback.css, common/Icon.css #}
+{#def users, animals, tints, shapes, button_group_views, button_group_filters, button_group_icons, showcase_tabs, showcase_people, showcase_card, roles=[], current_user=None #}{#css common/Alert.css, common/Avatar.css, common/Button.css, common/ButtonGroup.css, common/Card.css, common/ChoiceGrid.css, common/Dialog.css, common/Divider.css, common/EmptyState.css, common/Field.css, common/Grid.css, common/MediaFrame.css, common/Menu.css, common/Pill.css, common/Switch.css, common/Table.css, common/Tabs.css, common/Tooltip.css, editorial/ImageEditor.css, layout/Page.css, layout/UserMenu.css, common/Combobox.css, common/SaveIndicator.css, common/HStack.css, pages/showcase/Showcase.css, editorial/CollectionCreate.css, editorial/EntityCard.css, editorial/Ledger.css, editorial/Row.css, editorial/StoryCard.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css, common/RequestFallback.css, common/Icon.css, common/Mark.css, editorial/Face.css, editorial/Plogo.css #}
 <layout.Page title="Design Kit" current_user={{ current_user }} active="showcase">
   <div class="showcase">
     <h1>Design Kit</h1>
-    <p class="showcase-subtitle">Every value reads from tokens. No raw hex or px in components.</p>
+    <p class="showcase-subtitle">The living contract for the atlas system. Every value reads from a token — no raw hex or px in a component. Material 3 contributes component anatomy and state coverage; the geometry, typography and colour come from the Root GDR prototype. The adopted M3 mechanics are inventoried in <code>src/frontend/design-tokens/material3/</code>.</p>
 
     <section class="showcase-section">
       <h2>Typography</h2>
-      <p class="showcase-note">7 sizes, 3 weights, 2 line-heights.</p>
+      <p class="showcase-note">The M3 alias scale (7 sizes, 3 weights, 2 line-heights). Page typography uses the atlas classes instead: <code>.display</code> for a title, <code>.lede</code> for a standfirst, <code>.eyebrow</code> for a label and <code>.mono</code> for a machine value — all in <code>main.css</code>.</p>
       <div class="showcase-type-row"><span class="showcase-label">text-3xl</span><span style="font-size: var(--text-3xl); font-weight: var(--weight-bold);">Aa</span></div>
       <div class="showcase-type-row"><span class="showcase-label">text-2xl</span><span style="font-size: var(--text-2xl); font-weight: var(--weight-bold);">Aa</span></div>
       <div class="showcase-type-row"><span class="showcase-label">text-xl</span><span style="font-size: var(--text-xl); font-weight: var(--weight-bold);">Aa</span></div>
@@ -137,21 +137,15 @@
 
     <section class="showcase-section">
       <h2>Buttons</h2>
-      <p class="showcase-note">M3 Expressive sizes, shapes, icon layouts, toggle state, and existing editorial colors.</p>
+      <p class="showcase-note">The one action-button skin: a low-radius control with an ink rule and a flat fill. <b>Primary</b> is the page's main action, <b>secondary</b> a peer, <b>danger</b> a destructive one, and <b>text</b> the editorial in-line action. Production uses <code>sm</code> and <code>md</code>; the box keeps its shape and width across hover, press and selected, and on a phone every button is at least the 44px touch target.</p>
       <div class="showcase-row">
-        <common.Button variant="primary" size="xs">Extra small</common.Button>
-        <common.Button variant="primary" size="sm">Small</common.Button>
-        <common.Button variant="primary" size="md">Medium</common.Button>
-        <common.Button variant="primary" size="lg">Large</common.Button>
-        <common.Button variant="primary" size="xl">Extra large</common.Button>
+        <common.Button variant="primary" size="sm">Azione</common.Button>
+        <common.Button variant="secondary" size="sm">Secondaria</common.Button>
+        <common.Button variant="danger" size="sm">Elimina</common.Button>
+        <common.Button variant="text" size="sm">Annulla</common.Button>
+        <common.Button variant="primary" size="md">Azione</common.Button>
       </div>
-      <div class="showcase-row">
-        <common.Button variant="filled" size="sm">Filled</common.Button>
-        <common.Button variant="tonal" size="sm">Tonal</common.Button>
-        <common.Button variant="outlined" size="sm">Outlined</common.Button>
-        <common.Button variant="elevated" size="sm">Elevated</common.Button>
-        <common.Button variant="text" size="sm">Text</common.Button>
-      </div>
+      <p class="showcase-note">States, icon layouts and the toggle. An icon-only action takes a <code>label</code>, which becomes both its accessible name and its tooltip. A busy button keeps its box: an ink rule reads along the bottom edge instead of a spinner, set by the global htmx controller while a request is in flight.</p>
       <div class="showcase-row">
         <common.Button variant="secondary" size="sm" shape="square">Square</common.Button>
         <common.Button variant="secondary" size="sm" icon="plus" label="Aggiungi" icon_only />
@@ -159,11 +153,9 @@
         <common.Button variant="secondary" size="sm" icon="arrow-right" icon_position="end">Continua</common.Button>
         <common.Button variant="secondary" size="sm" :selected="False">Toggle off</common.Button>
         <common.Button variant="secondary" size="sm" :selected="True">Toggle on</common.Button>
-        <common.Button variant="danger" size="sm">Danger</common.Button>
-        <common.Button variant="primary" size="sm" disabled>Disabled</common.Button>
+        <common.Button variant="primary" size="sm" disabled>Disabilitato</common.Button>
         <common.Button variant="primary" size="sm" class="is-busy" aria-busy="true" disabled>Salvataggio…</common.Button>
       </div>
-      <p class="showcase-note">Pending: the global htmx controller sets <code>is-busy</code> and <code>disabled</code> while a request is in flight. The box does not move — an ink rule reads along the bottom edge instead of a spinner.</p>
     </section>
 
     <section class="showcase-section">
@@ -280,6 +272,7 @@
 
     <section class="showcase-section">
       <h2>Icons</h2>
+      <p class="showcase-note">The generated Lucide subset. <code>common.Icon</code> takes a registry <code>name</code> and a pixel <code>size</code> and writes the <code>&lt;svg&gt;</code> on the server — no client-side icon pass, so an htmx swap needs none. An unknown name or size raises. Add a name to <code>tools/build_icons.mjs</code> and run <code>npm run icons</code>.</p>
       <div class="showcase-row">
         <common.Icon name="home" size=24 />
         <common.Icon name="shield" size=24 />

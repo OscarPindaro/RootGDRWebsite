@@ -1,4 +1,5 @@
 {#def entries #}
+{#css editorial/Timeline.css #}
 <div class="timeline">
   {% for entry in entries %}
   <div class="tl{{ ' tl--accent' if loop.first else '' }}" {% if entry.tint %}style="--c: var(--{{ entry.tint }})"{% endif %}>

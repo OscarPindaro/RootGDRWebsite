@@ -1,0 +1,39 @@
+/* The world cover: a landscape plate, a volume badge and the world's identity.
+   The openable hover comes from editorial/Collection.css. */
+.cover {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: var(--rule-ink);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+  position: relative;
+}
+.cover__media {
+  border-bottom: var(--rule-ink);
+}
+.cover__badge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--paper);
+  border-right: var(--rule-ink);
+  border-bottom: var(--rule-ink);
+  padding: 0.25rem 0.55rem;
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.cover__body { padding: 1.1rem 1.15rem 1.2rem; display: grid; gap: 0.6rem; }
+.cover__title { font-family: var(--serif); font-size: 1.6rem; line-height: 1.08; }
+.cover__desc { color: var(--ink-soft); font-size: 0.93rem; }
+.cover__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: var(--rule);
+  padding-top: 0.7rem;
+  margin-top: 0.2rem;
+}

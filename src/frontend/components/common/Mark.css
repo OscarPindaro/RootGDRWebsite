@@ -1,0 +1,17 @@
+/* A role or shape mark. The server emits both presentations — a linear icon and
+   a solid shape — and the active class decides which one is laid out, so the
+   mark stays a single grid item. `common.Shape` shares this root. */
+.mark {
+  display: grid;
+  place-items: center;
+  width: var(--mark-size, 1.125rem);
+  height: var(--mark-size, 1.125rem);
+  color: inherit;
+}
+.mark__svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.mark--icons .mark__svg--shape,
+.mark--shapes .mark__svg:not(.mark__svg--shape) { display: none; }

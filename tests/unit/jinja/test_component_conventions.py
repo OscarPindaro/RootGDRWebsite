@@ -56,29 +56,43 @@ def test_the_def_starts_a_line_and_precedes_any_set(name: str) -> None:
 # Reusable roots that one stylesheet owns. ``btn`` is the Button component's
 # root class; the codebase has no ``.button`` selector. The editorial collection
 # roots joined in F14, when the entity card, the story card, the ledger and the
-# row got their own stylesheets and left main.css.
+# row got their own stylesheets and left main.css. F22 finished the move: the
+# remaining editorial families left main.css for their components, so the roots
+# they took are watched here too.
 OWNED_ROOTS = (
     "btn",
     "card",
     "collection-meta",
     "collection-surface",
+    "cover",
+    "crumbs",
     "dialog",
+    "docedit",
+    "document",
     "entity-card",
+    "face",
     "field",
     "icon",
     "ledger",
+    "links",
+    "mark",
+    "masthead",
     "pill",
+    "plogo",
+    "quick",
     "row",
     "row-list",
+    "section",
     "story-band",
     "story-card",
     "table",
+    "timeline",
 )
 
 # Roots that two stylesheets still own, with the pair of owners and the ticket
 # that removes the losing rules. The test fails on a stale entry, so an
-# exception cannot outlive its migration. F14 closed the last one: this is now
-# empty, and an empty allowlist is the acceptance criterion.
+# exception cannot outlive its migration. F14 closed the last one and F22 added
+# none: this is empty, and an empty allowlist is the acceptance criterion.
 MIGRATION_ALLOWLIST: dict[str, tuple[str, tuple[str, str]]] = {}
 
 COMMENT = re.compile(r"/\*.*?\*/", re.DOTALL)
@@ -157,11 +171,12 @@ def test_a_reusable_root_selector_has_one_owner(root: str) -> None:
 
 
 def test_the_migration_allowlist_is_empty() -> None:
-    """F14 closed the last exception: ``card`` no longer has two owners.
+    """F22 is the acceptance: no watched root is allowed a second owner.
 
-    The editorial entity card moved off ``.card`` to ``.entity-card``, so
-    common.Card is the only owner and the exception that named F14 is gone. An
-    empty allowlist is the acceptance criterion: no watched root is allowed a
-    second owner any more.
+    F14 closed the last exception — the editorial entity card moved off ``.card``
+    to ``.entity-card``, so ``common.Card`` is the only owner. F22 moved the
+    remaining editorial families out of ``main.css`` into their components and
+    added no exception, so the allowlist stays empty and ``main.css`` owns no
+    component root any more.
     """
     assert MIGRATION_ALLOWLIST == {}

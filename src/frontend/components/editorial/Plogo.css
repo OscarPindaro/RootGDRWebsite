@@ -1,0 +1,13 @@
+/* A place's shape mark: the geometric form that identifies it, drawn in the
+   place's tint (`--c`). */
+.plogo {
+  display: grid;
+  place-items: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  color: var(--c, var(--ink));
+}
+.plogo--lg {
+  width: 2.75rem;
+  height: 2.75rem;
+}

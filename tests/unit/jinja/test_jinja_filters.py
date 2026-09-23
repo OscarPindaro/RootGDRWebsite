@@ -20,18 +20,27 @@ def test_catalog_exposes_configured_application_name() -> None:
     assert catalog.jinja_env.globals["app_name"] == "Example App"
 
 
-def test_showcase_sidebar_link_is_development_only() -> None:
+def test_the_showcase_link_is_development_only() -> None:
+    """The Components link is a development aid, not a production route.
+
+    It lives in ``global_nav`` and reaches the page through ``layout.Page``,
+    which resolves the navigation with the catalog's ``env``.
+    """
     user = SimpleNamespace(
-        name="Admin", email="admin@example.com", role="admin", avatar_url=None
+        name="Admin",
+        email="admin@example.com",
+        role="admin",
+        avatar_url=None,
+        symbol_style="icons",
     )
     development = get_catalog(str(COMPONENTS_DIR), env="dev")
     production = get_catalog(str(COMPONENTS_DIR), env="prod")
 
     assert 'href="/components"' in development.render(
-        "layout.Sidebar", current_user=user
+        "layout.Page", title="Mondi", current_user=user
     )
     assert 'href="/components"' not in production.render(
-        "layout.Sidebar", current_user=user
+        "layout.Page", title="Mondi", current_user=user
     )
 
 

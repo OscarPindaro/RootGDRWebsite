@@ -1,0 +1,22 @@
+/* The head of a page section: a rule, the title, an optional eyebrow and the
+   section's own commands. The `.section` wrapper and its spacing live here too,
+   because the two are always rendered together. */
+.section { margin-top: 3.25rem; }
+.section:first-child { margin-top: 0; }
+
+.section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: var(--rule-ink);
+  padding-bottom: 0.6rem;
+  margin-bottom: 1.4rem;
+  flex-wrap: wrap;
+}
+.section__head h2 { font-family: var(--serif); font-size: 1.5rem; font-weight: 500; }
+.section__head .eyebrow { display: block; margin-bottom: 0.25rem; }
+
+@media (max-width: 700px) {
+  .section__head h2 { font-size: 1.3rem; }
+}

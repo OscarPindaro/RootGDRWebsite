@@ -119,8 +119,13 @@ def test_hover_and_focus_remain() -> None:
 
 
 def test_prose_link_rules_still_yield_to_the_reference() -> None:
-    assert ".prose .mention," in REFERENCE_CSS
-    assert 'html[data-accent="gradiente"] .prose a.mention' in REFERENCE_CSS
+    # Scoped on a/span rather than on .prose: the specificity ties `.prose a`
+    # and wins on order, so Reference.css does not claim the `.prose` root that
+    # main.css owns.
+    assert "a.mention," in REFERENCE_CSS
+    assert "span.mention," in REFERENCE_CSS
+    assert 'html[data-accent="gradiente"] a.mention' in REFERENCE_CSS
+    assert ".prose .mention" not in REFERENCE_CSS
 
 
 def test_mention_menu_is_skinned() -> None:

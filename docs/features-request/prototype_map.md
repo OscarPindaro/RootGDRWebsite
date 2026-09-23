@@ -36,9 +36,10 @@ side-by-side.
 | `.story-card`, `.story-card__body/title/sum`, `.story-band` | `editorial.StoryCard`, `editorial.StoryBand` | faithful |
 | `.row-list`, `.row`, `.row__name/desc/meta` | `editorial.RowList`, `editorial.Row` | faithful |
 | `.timeline` | `editorial.Timeline` | faithful |
-| `.wherenow` | Inline in `pages.worlds.WorldOverview` | faithful |
+| `.wherenow` | `pages.worlds.WorldOverview` (colocated `WorldOverview.css`) | faithful |
 | `.plogo` | `editorial.Plogo` | faithful |
-| `.section`, `.section__head` | `editorial.SectionHead` | faithful |
+| `.section`, `.section__head` | `editorial.SectionHead` (owns `.section` too) | faithful |
+| `.document`, `.document__head/id/page/face` | `editorial/Document.css` (shared by the six detail pages) | faithful |
 | `.docbar`, `.pill--draft/plain` | `editorial.Docbar` | faithful |
 | `.mention` | `content/markdown.py` output | faithful |
 | `.btn`, `.btn--primary/ghost/sm` | `common.Button` | faithful |

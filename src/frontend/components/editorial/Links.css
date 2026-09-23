@@ -1,0 +1,40 @@
+/* The backlinks panel: what references the document, grouped by kind. */
+.links {
+  border: var(--rule-ink);
+  background: var(--surface);
+}
+.links__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: var(--rule-ink);
+}
+.links__group { padding: 0.6rem 0.9rem 0.8rem; }
+.links__group + .links__group { border-top: var(--rule); }
+.links__label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.35rem;
+}
+.links__item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+.links__item:hover { color: var(--c, var(--vermilion)); }
+.links__dot {
+  width: 0.625rem;
+  height: 0.625rem;
+  flex: 0 0 0.625rem;
+  background: var(--c, var(--ink));
+}

@@ -28,6 +28,12 @@ one breakpoint and one spacing contract.
   `.docpage` and `.article` grids and `.document { max-width: 900px }` are gone
   from `main.css`: the document is always a grid child now, so its own maximum
   width was dead.
+- The document's own classes (`.document__head`, `.document__id`,
+  `.document__page`, `.document__face`, the active-block rule and the phone
+  fold) live in `editorial/Document.css`, a shared stylesheet the six detail
+  pages declare. F22 moved them out of `main.css`; the image-editor override
+  (`.document__face--editor`) moved there too, from `ImageEditor.css`, so
+  `document` has one owner.
 - `editorial.Links` renders the `.links` panel only. It used to render its own
   `<aside>`, which would have nested inside the aside stack that Story and Page
   need; the caller owns the stack, as the prototype does.

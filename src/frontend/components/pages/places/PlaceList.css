@@ -1,0 +1,37 @@
+/* The featured place: a landscape media column beside the place's identity. */
+.feature {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  border: var(--rule-ink);
+  background: var(--surface);
+  text-decoration: none;
+  color: var(--ink);
+  transition: box-shadow 140ms ease;
+}
+.feature:hover { box-shadow: var(--lift-shadow); }
+.feature__media {
+  border-right: var(--rule-ink);
+  min-height: 17.5rem;
+  overflow: hidden;
+}
+.feature__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.feature__body {
+  padding: 1.6rem 1.5rem;
+  display: grid;
+  gap: 0.7rem;
+  align-content: center;
+}
+.feature__title { font-family: var(--serif); font-size: 2rem; line-height: 1.05; }
+
+@media (max-width: 900px) {
+  .feature { grid-template-columns: 1fr; }
+  .feature__media {
+    border-right: 0;
+    border-bottom: var(--rule-ink);
+    min-height: 12.5rem;
+  }
+}

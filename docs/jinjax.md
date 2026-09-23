@@ -575,7 +575,7 @@ A bare unquoted value like `size=32` is **not** a valid expression — it is tre
 src/frontend/components/
 ├── common/        # Reusable primitives, no domain knowledge
 ├── editorial/     # The product's vocabulary and its atlas identity
-├── layout/        # Page shells (BlankPage, Page, Sidebar, Rail, Topbar, UserMenu)
+├── layout/        # Page shells (BlankPage, Page, Rail, Topbar, UserMenu)
 └── pages/         # Full pages, one folder per module
 ```
 
@@ -634,16 +634,22 @@ settings menu ended up white on a black rail.
 
 ### Layout shells
 
-- `layout.BlankPage` — the HTML shell only: `<!DOCTYPE>`, `<head>`, the self-hosted font preloads, `catalog.render_assets()`, htmx and helper scripts. No sidebar. Used by unauthenticated pages (login, error pages).
-- `layout.Page` — composes `BlankPage` + `Sidebar` + `<main class="page-main">`. Used by authenticated pages.
+- `layout.BlankPage` — the HTML shell only: `<!DOCTYPE>`, `<head>`, the self-hosted font preloads, `catalog.render_assets()`, htmx and helper scripts. No shell controls. Used by unauthenticated pages (login, error pages).
+- `layout.Page` — composes `BlankPage` + the shell (`Rail`, `Topbar`, `scrim`, `Palette`) + `<main class="container">`, and resolves the navigation. Used by authenticated pages.
 
 ```jinja
 {# layout/Page.jinja #}
 <layout.BlankPage title="{{ title }}">
-  <layout.Sidebar current_user={{ current_user }} active="{{ active }}" />
-  <main class="page-main">
-    {{ content }}
-  </main>
+  <div class="shell">
+    <a class="skip" href="#main">Salta al contenuto</a>
+    <layout.Rail current_user={{ current_user }} :nav="resolved_nav" />
+    <div class="scrim" id="scrim"></div>
+    <div class="main">
+      <layout.Topbar :title="title" />
+      <main id="main"><div class="container">{{ content }}</div></main>
+    </div>
+    <layout.Palette :world_id="world.id if world else None" />
+  </div>
 </layout.BlankPage>
 ```
 

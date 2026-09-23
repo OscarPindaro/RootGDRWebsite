@@ -79,6 +79,8 @@ popover before closing.
   the rail is a static desktop column.
 - The desktop rail background spans the document, but the document is the
   `.shell`; a page that escapes the shell would not extend it.
-- `layout/Sidebar` and `layout/Sidebar.css` are retired (the rail replaced the
-  M3 drawer); the user menu still carries the `.sidebar-collapsed` rules they
-  used.
+- The M3 drawer the rail replaced is gone for good: F22 deleted
+  `layout/Sidebar`, `SidebarItem`, `SidebarSection`, `Sidebar.css` and
+  `Sidebar.js`, and the `.sidebar-collapsed` rules the user menu still carried
+  (there is no sidebar to collapse). `tests/unit/jinja/test_legacy_selectors.py`
+  fails if `sidebar-collapsed` comes back.

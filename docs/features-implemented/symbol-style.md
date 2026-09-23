@@ -21,8 +21,8 @@ is visible on every mark at selection time.
 ## How it is built
 
 - `common/Mark` renders **both** SVGs for its role and carries
-  `data-mark-style` plus `mark--icons`/`mark--shapes`. `main.css` lays out only
-  the class the server names, so a mark is still one grid item.
+  `data-mark-style` plus `mark--icons`/`mark--shapes`. `common/Mark.css` lays out
+  only the class the server names, so a mark is still one grid item.
 - `common/Mark.js` listens for `htmx:afterSwap`. `pages.settings.SettingsStatus`
   echoes the resolved style in a `data-symbol-style` attribute; Mark.js reads it
   and flips the class on every `[data-mark-style]` in the document. The value is
@@ -53,6 +53,7 @@ is visible on every mark at selection time.
 - The flip covers marks already in the document. A mark that arrives in a later
   htmx fragment is rendered by the server with the persisted style, which is
   already correct.
-- `.mark` and `.mark__svg` still live in `main.css` (the block they have always
-  been in); the visibility rules were added there rather than in a new
-  `common/Mark.css`, which would have made two stylesheets own the root.
+- `.mark` and `.mark__svg` moved out of `main.css` into `common/Mark.css` in
+  F22; `common.Shape` renders the same root and declares that stylesheet. The
+  two `… .mark--shapes` rules in `Quick.css`/`Rail.css` became
+  `…[data-mark-style="shapes"]` so `mark` keeps one owner.

@@ -1,4 +1,6 @@
 /* ---------- DocEdit (writing in place on a document page) ---------- */
+.docedit { position: relative; }
+
 .docedit__render {
   outline: none;
 }
@@ -34,3 +36,7 @@
 
 .autosave-recovery p { margin: 0 0 var(--sp-2); }
 .autosave-recovery .btn + .btn { margin-left: var(--sp-2); }
+
+@media (max-width: 700px) {
+  .autosave-recovery .btn { margin: 0.25rem 0.25rem 0 0; }
+}

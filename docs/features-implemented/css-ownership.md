@@ -12,12 +12,15 @@ which assets happened to be collected.
 - A file with more than one `{#css … #}` directive is merged into one, whether
   the directive starts its line or shares it with `{#def #}`.
 - Two stylesheets may not own the same reusable root selector. The guard watches
-  `btn`, `card`, `collection-meta`, `collection-surface`, `dialog`,
-  `entity-card`, `field`, `ledger`, `pill`, `row`, `row-list`, `story-band`,
-  `story-card` and `table`; `btn` is Button's root class, and there is no
-  `.button` selector.
+  `btn`, `card`, `collection-meta`, `collection-surface`, `cover`, `crumbs`,
+  `dialog`, `docedit`, `document`, `entity-card`, `face`, `field`, `icon`,
+  `ledger`, `links`, `mark`, `masthead`, `pill`, `plogo`, `quick`, `row`,
+  `row-list`, `section`, `story-band`, `story-card`, `table` and `timeline`;
+  `btn` is Button's root class, and there is no `.button` selector. F22 added the
+  editorial roots that left `main.css` in that ticket.
 - `main.css` is documented as having a restricted role: identity and alias
-  tokens, reset, base typography, prose, and global document defaults.
+  tokens, reset, base typography, prose, and global document defaults. F22 moved
+  the last editorial families out, so it no longer styles a component root.
 
 ## How it is built
 
@@ -48,7 +51,12 @@ which assets happened to be collected.
 - `MIGRATION_ALLOWLIST` is empty. F14 moved the editorial entity card off
   `.card` to `.entity-card`, so `common.Card.css` is the single owner of `card`
   and the last exception is gone; `btn` and `pill` left with F3 and `field` left
-  with F4. The seam is closed: no watched root is allowed a second owner.
+  with F4. F22 added no exception, so the seam stays closed: no watched root is
+  allowed a second owner.
+- `main.css` and the colocated stylesheets are the whole story now. The retired
+  names an earlier ticket deleted are held by
+  `tests/unit/jinja/test_legacy_selectors.py`, which strips comments before it
+  scans.
 - A component declaring its own colocated stylesheet collects it twice, because
   JinjaX loads colocated CSS on its own. The application deduplicates when it
   writes the tags, so the emitted `<link>` set is unchanged; `collected_css`

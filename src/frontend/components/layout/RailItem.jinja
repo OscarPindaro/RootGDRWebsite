@@ -1,4 +1,5 @@
 {#def item, active=None, style="icons" #}
+{#css common/Mark.css #}
 <a class="navitem" href="{{ item.href }}" {% if item.id == active %}aria-current="page"{% endif %}>
   <common.Mark :role="item.mark" :style="style" class="navitem__mark" />
   <span class="navitem__text">{{ item.label }}</span>

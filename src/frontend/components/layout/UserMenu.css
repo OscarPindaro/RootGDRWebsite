@@ -62,22 +62,11 @@
   transform: rotate(180deg);
 }
 
-/* Collapsed sidebar — hide text, center avatar */
-.sidebar-collapsed .user-menu-info,
-.sidebar-collapsed .user-menu__trigger svg {
-  display: none;
-}
-
-.sidebar-collapsed .user-menu__trigger {
-  justify-content: center;
-  padding: var(--sp-2);
-}
-
 /* ---------- Popover menu ---------- */
 /* Surface, border and item styling come from common/Menu.css; the rail context
    turns them dark (see docs/jinjax.md). Only the anchor width is local. */
 .user-menu-popover {
-  width: var(--sidebar-width);
+  width: var(--rail-w);
   margin-bottom: var(--sp-2);
 }
 
