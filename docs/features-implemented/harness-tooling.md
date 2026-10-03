@@ -23,6 +23,13 @@ change" answerable without guessing.
   same PostgreSQL container, so the two suites — and a fresh E2E — can run in
   parallel without interfering. Neither touches the scratch or showcase
   databases; all earlier data in the E2E environment is lost.
+- `harness test unit|frontend|integration|e2e -- ...` accepts bounded pytest
+  selection/reporting arguments. Suite-local file/node selectors replace the
+  default suite directory; quoted `-k` values stay intact. Configuration, plugin,
+  marker and environment overrides are rejected, including `PYTEST_ADDOPTS`.
+  `--fresh` belongs before the separator; pytest failure/no-tests exit codes are
+  preserved. For example: `harness test unit -- tests/unit/test_config.py -k
+  'database or runtime' -x --tb=short`.
 - Browser journeys use `BrowserSession.expect_api(...)` after writes to assert
   persisted server state instead of trusting optimistic text in the page.
 - `harness doctor` checks state, ports, Postgres readiness and connection usage,

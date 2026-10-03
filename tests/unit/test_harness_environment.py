@@ -285,7 +285,7 @@ def test_e2e_fresh_resets_before_running(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(
         test_commands,
         "_run_suite",
-        lambda suite: calls.append(("run", suite)),
+        lambda suite, selection: calls.append(("run", suite)),
     )
 
     test_commands.e2e(fresh=True)
