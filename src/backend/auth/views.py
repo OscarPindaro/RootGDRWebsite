@@ -22,6 +22,7 @@ from .sso import build_google_sso
 from .tokens import create_access_token, create_refresh_token, set_auth_cookies
 
 router = APIRouter(tags=["auth-views"])
+dev_router = APIRouter(tags=["auth-development-views"])
 
 
 def _htmx_redirect(url: str) -> Response:
@@ -122,7 +123,7 @@ async def register_form(
     return response
 
 
-@router.post("/auth/dev-login-form")
+@dev_router.post("/auth/dev-login-form")
 async def dev_login_form(
     request: Request,
     email: Annotated[str, Form()] = "",

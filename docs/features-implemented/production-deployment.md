@@ -18,6 +18,14 @@ runtime data, without source mounts or development reload.
 - The application and maintenance container use a read-only root filesystem,
   bounded writable temporary storage and no elevated capabilities. Uploads stay
   writable outside the image. The database is not published on the host.
+- `/health/ready` checks the real database, its Alembic revision and a temporary
+  storage write/read, returning 503 when a dependency is not ready. `/ping`
+  remains liveness; `/version` reports application version, build and schema
+  heads without requiring deployment credentials.
+- Production does not register development login, showcase or content-import
+  shortcuts. The deployment verifier uses real password login and authenticated
+  API/HTML reads, including an available world image, and can require the selected
+  commit. It never substitutes development authentication.
 
 ## How it is built
 
@@ -37,8 +45,8 @@ container recreation. SQL statement parameter echo is disabled by default.
 
 ## Limits
 
-This capability supplies packaging and storage boundaries, not a completed
-server deployment. Readiness, real-login smoke checks, coordinated backup,
-Ansible orchestration and application rollback are separate parts of
+This capability supplies packaging, readiness and verification boundaries, not
+a completed server deployment. Coordinated backup, Ansible orchestration and
+application rollback are separate parts of
 [REQ-0001](../features-request/REQ-0001-github-ci-and-manual-deployment.md).
 Version selection remains manual; the revision label is not a release number.

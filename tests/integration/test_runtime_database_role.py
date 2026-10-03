@@ -139,6 +139,9 @@ def test_packaged_runtime_starts_without_migration_secrets_or_private_files(
         "'.playwright-browsers', 'harness-artifacts', 'docs', 'tests'))\n"
         "with TestClient(create_app(config)) as client:\n"
         "    assert client.get('/ping').status_code == 200\n"
+        "    assert client.get('/version').json()['commit'] == 'verification'\n"
+        "    assert client.post('/auth/dev-login').status_code == 404\n"
+        "    assert client.get('/health/ready').status_code == 503\n"
     )
 
 

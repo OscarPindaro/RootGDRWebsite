@@ -4,6 +4,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .auth.routes.auth import router as auth_router
+from .auth.routes.auth import dev_router as dev_auth_router
+from .auth.views import dev_router as dev_auth_views_router
+from .health.routes import router as health_router
+from .health.service import build_info
 from .auth.routes.invitations import router as invitation_router
 from .characters.routes import router as characters_router
 from .content.actions import router as content_actions_router
@@ -41,6 +45,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     setup_logging(config.logging)
     app = FastAPI(
         title="Fantasy Backend",
+        version=build_info().version,
         lifespan=lifespan,
     )
     app.state.config = config
@@ -76,6 +81,9 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     # normal router import
     app.include_router(users_router)
     app.include_router(auth_router)
+    app.include_router(health_router)
+    if config.env == "dev":
+        app.include_router(dev_auth_router)
     app.include_router(invitation_router)
     app.include_router(worlds_router)
     app.include_router(characters_router)
@@ -124,6 +132,8 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         from .worlds.views import router as worlds_views_router  # noqa: PLC0415
 
         app.include_router(auth_views_router)
+        if config.env == "dev":
+            app.include_router(dev_auth_views_router)
         app.include_router(characters_views_router)
         app.include_router(npcs_views_router)
         app.include_router(places_views_router)

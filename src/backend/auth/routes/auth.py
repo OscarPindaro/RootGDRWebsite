@@ -1,4 +1,5 @@
 import json
+import uuid
 from datetime import UTC, datetime
 
 import jwt
@@ -29,6 +30,7 @@ from ..tokens import (
 )
 
 router = APIRouter(tags=["auth"])
+dev_router = APIRouter(tags=["auth-development"])
 
 
 @router.get(
@@ -79,7 +81,10 @@ async def auth_refresh(
     if payload.get("type") != "refresh":
         raise InvalidToken("Not a refresh token")
 
-    user_id = int(payload["sub"])
+    try:
+        user_id = uuid.UUID(payload["sub"])
+    except ValueError, KeyError, TypeError:
+        raise InvalidToken("Malformed token subject") from None
     result = await db.execute(select(UserModel).where(UserModel.id == user_id))
     user = result.scalar_one_or_none()
     if user is None:
@@ -229,7 +234,7 @@ async def auth_logout():
     return response
 
 
-@router.post(
+@dev_router.post(
     "/auth/dev-login",
     response_model=TokenResponse,
     responses={
