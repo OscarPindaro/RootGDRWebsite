@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Studio dei documenti · Root GDR</title>
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="../styles.css">
+  <link rel="stylesheet" href="study.css">
+  <script src="study.js" defer></script>
+</head>
+<body class="study">
+  <svg class="symbol-library" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="1"/><path d="M8 10V6a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-unlock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="1"/><path d="M8 10V6a4 4 0 0 1 8-1"/></symbol>
+    <symbol id="i-publish" viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="m9 4-5 5 5 5M4 9h10a6 6 0 0 1 0 12"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><path d="M4 12h1m6 0h1m6 0h1" stroke-width="3"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m7 10 5 5 5-5"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="1"/><path d="M3 10h18M7 3v4m10-4v4"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 3h13a3 3 0 0 1 3 3v15H7a3 3 0 0 1-3-3zm0 14h16M8 3v14"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M5 3h9l5 5v13H5zm9 0v6h5M8 13h8m-8 4h6"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="m3 5 6-2 6 3 6-2v16l-6 2-6-3-6 2zm6-2v16m6-13v16"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-cat" viewBox="0 0 64 64"><path d="m14 23-2-15 14 10h12L52 8l-2 15c5 6 6 14 2 21-4 8-12 12-20 12s-16-4-20-12c-4-7-3-15 2-21Z"/><path d="M24 32h1m14 0h1m-12 8 4 3 4-3m-4 3v5m0 0c-3 3-7 2-9 0m9 0c3 3 7 2 9 0M8 37l13 3M6 45l15-1m35-7-13 3m15 5-15-1"/></symbol>
+    <symbol id="i-place" viewBox="0 0 24 24"><path d="m12 3 9 9-9 9-9-9z"/></symbol>
+    <symbol id="i-fields" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6"/><rect x="3" y="14" width="18" height="6"/></symbol>
+    <symbol id="i-mention" viewBox="0 0 24 24"><circle cx="11" cy="12" r="4"/><path d="M15 8v7c0 2 6 2 6-3a9 9 0 1 0-5 8"/></symbol>
+  </svg>
+  <a class="skip" href="#main">Salta al documento</a>
+  <div class="shell">
+    <aside class="rail" id="rail" aria-label="Navigazione dello studio">
+      <div class="rail__inner">
+        <div class="rail__top"><a class="rail__back" href="../index.html">Root GDR / Prototipi</a></div>
+        <div class="rail__identity">
+          <span class="rail__mark" aria-hidden="true"></span>
+          <div><span class="rail__world">Boscochiaro</span><div class="rail__role">Atlante della campagna</div></div>
+        </div>
+        <div class="rail__label">Documenti</div>
+        <nav class="rail__nav">
+          <a class="navitem" href="?view=character" data-view="character"><svg class="study-icon"><use href="#i-cat"/></svg><span>Personaggio</span><span class="navitem__count">01</span></a>
+          <a class="navitem" href="?view=place" data-view="place"><svg class="study-icon"><use href="#i-map"/></svg><span>Luogo</span><span class="navitem__count">02</span></a>
+          <a class="navitem" href="?view=session" data-view="session"><svg class="study-icon"><use href="#i-calendar"/></svg><span>Sessione</span><span class="navitem__count">03</span></a>
+          <a class="navitem" href="?view=story" data-view="story"><svg class="study-icon"><use href="#i-book"/></svg><span>Storia</span><span class="navitem__count">04</span></a>
+          <a class="navitem" href="?view=page" data-view="page"><svg class="study-icon"><use href="#i-file"/></svg><span>Pagina</span><span class="navitem__count">05</span></a>
+        </nav>
+        <div class="rail__label">Dettagli di interazione</div>
+        <nav class="rail__nav">
+          <a class="navitem" href="?view=fields" data-view="fields"><svg class="study-icon"><use href="#i-fields"/></svg><span>Campi e label</span></a>
+          <a class="navitem" href="?view=mentions" data-view="mentions"><svg class="study-icon"><use href="#i-mention"/></svg><span>Menzioni</span></a>
+        </nav>
+        <div class="rail__foot">
+          <span class="eyebrow eyebrow--paper">Studio / 03 ottobre 2026</span>
+          <p class="rail-note">Contenuti dimostrativi.<br>Nessun dato dell’app viene modificato.</p>
+        </div>
+      </div>
+    </aside>
+    <button class="study-scrim" data-close-rail hidden aria-label="Chiudi navigazione"></button>
+    <div class="main">
+      <header class="study-mobile-bar">
+        <button class="command icon-command" data-open-rail aria-label="Apri navigazione" aria-expanded="false"><svg class="study-icon"><use href="#i-menu"/></svg></button>
+        <span>Boscochiaro / Studio documenti</span>
+      </header>
+      <div class="study-banner"><span class="eyebrow">Proposta visiva · 03.10.26</span><span>Interazioni locali · ricaricare azzera le modifiche</span></div>
+      <section class="study-controls" aria-label="Confronta le proposte">
+        <div><span class="control-label">Barra azioni</span><div class="study-segment" role="group" aria-label="Stile della barra">
+          <button data-toolbar="compact" aria-pressed="false">Compatta</button>
+          <button data-toolbar="rows" aria-pressed="false">Due righe</button>
+          <button data-toolbar="icons" aria-pressed="true">Icone</button>
+        </div></div>
+        <div data-layout-controls hidden><span class="control-label">Composizione del documento</span><div class="study-segment" role="group" aria-label="Composizione">
+          <button data-layout="a" aria-pressed="false">A · Compatta</button>
+          <button data-layout="b" aria-pressed="false">B · A margine</button>
+          <button data-layout="c" aria-pressed="true">C · Dettagli</button>
+        </div></div>
+        <button class="study-help" data-shortcuts>Scorciatoie <kbd>F2</kbd></button>
+      </section>
+      <main class="study-content" id="main" tabindex="-1"></main>
+      <footer class="study-footer">Studio indipendente dall’app · dati e salvataggi sono simulati</footer>
+    </div>
+  </div>
+  <dialog class="study-dialog" id="shortcuts-dialog" aria-labelledby="shortcuts-title">
+    <form method="dialog"><div class="dialog-heading"><h2 id="shortcuts-title">Scrivere con la tastiera</h2><button class="command icon-command" aria-label="Chiudi scorciatoie"><svg class="study-icon"><use href="#i-close"/></svg></button></div>
+      <p class="dialog-lede">Scorciatoie proposte, da verificare nell’app.</p>
+      <dl class="shortcut-list"><dt>Apri la scrittura</dt><dd><kbd>F2</kbd></dd><dt>Mostra il risultato</dt><dd><kbd>Ctrl / ⌘</kbd> <kbd>Invio</kbd></dd><dt>Esci dalla scrittura</dt><dd><kbd>Esc</kbd></dd><dt>Pubblica / riporta a bozza</dt><dd><kbd>Ctrl / ⌘</kbd> <kbd>⇧</kbd> <kbd>Invio</kbd></dd></dl>
+      <p class="dialog-note">I comandi rimangono disponibili senza tastiera. Il prototipo non salva né pubblica dati reali.</p>
+    </form>
+  </dialog>
+  <dialog class="study-dialog details-panel" id="details-dialog" aria-labelledby="details-title">
+    <header class="details-panel-heading"><div><span class="control-label">Il tuo documento</span><h2 id="details-title">Dettagli del documento</h2></div><form method="dialog"><button class="command icon-command" aria-label="Chiudi dettagli"><svg class="study-icon"><use href="#i-close"/></svg></button></form></header>
+    <p class="details-context" data-details-context></p>
+    <div class="details-panel-body" data-details-body></div>
+    <footer class="details-panel-footer"><span>Modifiche locali · solo demo</span><form method="dialog"><button class="command" aria-label="Torna al documento"><svg class="study-icon"><use href="#i-arrow"/></svg>Torna al documento</button></form></footer>
+  </dialog>
+  <dialog class="study-dialog" id="sessions-dialog" aria-labelledby="sessions-title">
+    <div class="dialog-heading"><h2 id="sessions-title">Sessioni collegate</h2><button class="command icon-command" data-close-sessions aria-label="Chiudi selezione sessioni"><svg class="study-icon"><use href="#i-close"/></svg></button></div>
+    <label class="session-search"><span class="control-label">Cerca una sessione</span><input type="search" data-session-search placeholder="Titolo o data"></label>
+    <div data-session-options class="session-options"></div>
+    <div class="dialog-footer"><button class="command primary" data-apply-sessions>Applica selezione</button></div>
+  </dialog>
+  <div class="study-toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
