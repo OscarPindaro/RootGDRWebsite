@@ -64,3 +64,4 @@ Template:
 | Remove the transitional frontend system: one owner, no dead names | [final-consolidation.md](final-consolidation.md) |
 | Compare Kanboard and Vikunja locally, with isolated persistent data | [local-task-boards.md](local-task-boards.md) |
 | Production image, isolated credentials and persistent runtime storage | [production-deployment.md](production-deployment.md) |
+| Local AFK coordinator watchdog and safe CLI wake-up | [afk-watchdog.md](afk-watchdog.md) |

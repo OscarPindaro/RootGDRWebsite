@@ -229,3 +229,5 @@ data/
 
 # Playwright browser build (installed by `harness browsers`)
 .playwright-browsers/
+.devin/afk-runtime/
+.devin/afk-watchdog.local.json

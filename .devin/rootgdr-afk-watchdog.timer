@@ -1,0 +1,11 @@
+[Unit]
+Description=Check Root GDR AFK coordinator every thirty minutes
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00
+Persistent=true
+AccuracySec=1s
+Unit=rootgdr-afk-watchdog.service
+
+[Install]
+WantedBy=timers.target

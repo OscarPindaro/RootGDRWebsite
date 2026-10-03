@@ -1,0 +1,9 @@
+[Unit]
+Description=Root GDR AFK plan coordinator watchdog
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/oscar/Progetti/RootGDRWebsite
+ExecStart=/home/oscar/Progetti/RootGDRWebsite/.venv/bin/python /home/oscar/Progetti/RootGDRWebsite/.devin/afk_watchdog.py check
+TimeoutStartSec=90
+UMask=0077

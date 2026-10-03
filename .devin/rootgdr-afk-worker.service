@@ -1,0 +1,10 @@
+[Unit]
+Description=Root GDR AFK plan coordinator worker
+
+[Service]
+Type=exec
+WorkingDirectory=/home/oscar/Progetti/RootGDRWebsite
+ExecStart=/home/oscar/Progetti/RootGDRWebsite/.venv/bin/python /home/oscar/Progetti/RootGDRWebsite/.devin/afk_watchdog.py worker
+StandardOutput=append:/home/oscar/Progetti/RootGDRWebsite/.devin/afk-runtime/worker.log
+StandardError=append:/home/oscar/Progetti/RootGDRWebsite/.devin/afk-runtime/worker.log
+UMask=0077
