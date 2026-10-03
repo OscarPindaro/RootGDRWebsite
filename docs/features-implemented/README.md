@@ -62,3 +62,4 @@ Template:
 | Server-rendered icons and self-hosted fonts | [icon-and-font-delivery.md](icon-and-font-delivery.md) |
 | Final responsive and visual pass: audit table, fixes, accepted findings | [final-pass.md](final-pass.md) |
 | Remove the transitional frontend system: one owner, no dead names | [final-consolidation.md](final-consolidation.md) |
+| Compare Kanboard and Vikunja locally, with isolated persistent data | [local-task-boards.md](local-task-boards.md) |

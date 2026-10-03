@@ -1,0 +1,55 @@
+name: rootgdr-task-boards
+
+services:
+  vikunja-init:
+    image: docker.io/library/busybox:1.37.0
+    restart: "no"
+    profiles: [setup]
+    network_mode: none
+    command:
+      - sh
+      - -ec
+      - |
+        mkdir -p /db /files
+        if [ ! -s /db/.service-secret ]; then
+          umask 077
+          od -An -N32 -tx1 /dev/urandom | tr -d ' \n' > /db/.service-secret
+        fi
+        chmod 600 /db/.service-secret
+        chown 1000:1000 /db /files /db/.service-secret
+    volumes:
+      - vikunja-db:/db
+      - vikunja-files:/files
+
+  vikunja:
+    image: docker.io/vikunja/vikunja:2.6.0
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3456:3456"
+    environment:
+      VIKUNJA_SERVICE_PUBLICURL: http://localhost:3456/
+      VIKUNJA_DATABASE_TYPE: sqlite
+      VIKUNJA_DATABASE_PATH: /db/vikunja.db
+      VIKUNJA_FILES_BASEPATH: /app/vikunja/files
+      VIKUNJA_SERVICE_SECRET_FILE: /db/.service-secret
+      VIKUNJA_SERVICE_ENABLEREGISTRATION: "true"
+      VIKUNJA_SERVICE_ENABLELINKSHARING: "false"
+      VIKUNJA_MAILER_ENABLED: "false"
+    volumes:
+      - vikunja-db:/db
+      - vikunja-files:/app/vikunja/files
+
+  kanboard:
+    image: docker.io/kanboard/kanboard:v1.2.54
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3457:80"
+    environment:
+      PLUGIN_INSTALLER: "false"
+    volumes:
+      - kanboard-data:/var/www/app/data
+
+volumes:
+  vikunja-db:
+  vikunja-files:
+  kanboard-data:

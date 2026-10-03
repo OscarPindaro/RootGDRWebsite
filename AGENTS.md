@@ -17,8 +17,33 @@ Never ask questions through multiple-choice polls: ask in plain prose.
 ## Working process
 
 **Large changes are tickets.** Split a big change into tickets and finish each
-one on its own — implement it, test it, commit it — before starting the next.
-A large change is never delivered as a single commit.
+one on its own — implement it, test it, commit it — before starting a dependent
+ticket. A large change is never delivered as a single commit. Independent tickets
+may run concurrently only through the approved workflow below.
+
+### Delegation and parallel tickets
+
+- For a long ticket list, evaluate whether subagents would keep research and
+  implementation details out of the coordinating agent's context.
+- Check dependencies, shared files, shared configuration, and test-environment
+  isolation before proposing parallel implementation. When tickets are
+  independent and conflicts are unlikely, consider N agents in separate git
+  worktrees, one ticket per worktree.
+- **Ask the user before launching subagents or creating parallel worktrees.**
+  Propose which tickets to delegate, which can run concurrently, the number of
+  agents, and how results will be integrated. Do not assume delegation or
+  parallel execution is the default. Until approved, work sequentially yourself.
+- Give each approved subagent the ticket, relevant paths and conventions,
+  previous decisions, verification requirements, and explicit edit boundaries.
+- Separate worktrees do not automatically isolate ports, databases, uploads, or
+  harness state. Verify that isolation before running concurrent test suites;
+  do not reset or tear down another agent's environment or the user's showcase.
+- The coordinating agent reviews each diff and verifies the result independently.
+  Integrate tickets in dependency order, with one commit per ticket and the
+  required tests and visual checks. A subagent's completion report is not proof
+  that the ticket is done.
+
+### Shared workflow
 
 - After a context compaction, re-read `docs/features-request/*.md` before continuing.
 - All source is English, including URL paths and endpoints. Only the UI copy is
@@ -29,6 +54,25 @@ A large change is never delivered as a single commit.
   `docs/features-implemented/` — what it does, how it is built, its limits.
   Human-sized, not a changelog. Specs and problem lists live in
   `docs/features-request/`.
+
+### Planning and releases
+
+- Requests use stable numeric IDs and Markdown frontmatter; feature manuals keep
+  thematic names. Many tickets require individual outcomes, not a new feature
+  manual per ticket. Update an existing manual when the same capability evolves.
+- Vikunja is the chosen authority for backlog and current ticket status. The
+  repository owns specifications, decisions, feature manuals and release notes.
+  Do not manually mirror live status in both places.
+- Kanboard is a retained comparison deployment, not a second backlog. Target
+  Vikunja's API for future ticket tooling. The existing demo cards have simulated
+  states; do not treat them as real requests or import them into the real backlog.
+- Choosing Vikunja does not authorize deleting Kanboard's data, migrating the
+  historical backlog, or assigning release versions.
+- Towncrier with Markdown fragments is the selected release-note approach;
+  its tooling is not configured yet. Ask the user to choose the version at
+  release time. Never infer or apply a major/minor/patch bump without approval.
+- A release may group an entire multi-ticket cycle. Git commits, board ticket IDs,
+  application versions and Alembic revisions are distinct identifiers.
 
 ## Tools
 If available in your environemnt, use
