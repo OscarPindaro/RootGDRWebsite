@@ -70,7 +70,7 @@ class DatabaseManager:
         if self._async_engine is None:
             self._async_engine = create_async_engine(
                 self.postgres_settings.async_url,
-                echo=True,
+                echo=False,
             )
         return self._async_engine
 
@@ -80,7 +80,7 @@ class DatabaseManager:
         if self._sync_engine is None:
             self._sync_engine = create_engine(
                 self.postgres_settings.sync_url,
-                echo=True,
+                echo=False,
             )
         return self._sync_engine
 

@@ -37,8 +37,11 @@ def main() -> int:
     print(f"  database.host:port = {config.database.host}:{config.database.port}")
     print(f"  database.db/user   = {config.database.db} / {config.database.user}")
     print()
-    print(f"  migrator.host:port = {config.migrator.host}:{config.migrator.port}")
-    print(f"  migrator.db/user   = {config.migrator.db} / {config.migrator.user}")
+    if config.migrator is None:
+        print("  migrator           = not configured (runtime only)")
+    else:
+        print(f"  migrator.host:port = {config.migrator.host}:{config.migrator.port}")
+        print(f"  migrator.db/user   = {config.migrator.db} / {config.migrator.user}")
     print()
     print(f"  storage.storage_root = {config.storage.storage_root}")
     print()

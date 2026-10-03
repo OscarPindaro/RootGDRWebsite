@@ -1,0 +1,63 @@
+name: ${ROOTGDR_PROJECT:?ROOTGDR_PROJECT required}
+
+services:
+  db:
+    image: docker.io/library/postgres:18.3
+    restart: unless-stopped
+    env_file:
+      - ${ROOTGDR_DATABASE_ENV:?ROOTGDR_DATABASE_ENV required}
+    volumes:
+      - database:/var/lib/postgresql
+      - ${ROOTGDR_DB_INIT_SCRIPT:?ROOTGDR_DB_INIT_SCRIPT required}:/docker-entrypoint-initdb.d/init_db.sh:ro,z
+      - ${ROOTGDR_DB_INIT_SQL:?ROOTGDR_DB_INIT_SQL required}:/opt/init_db.sql:ro,z
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    image: ${ROOTGDR_IMAGE:?ROOTGDR_IMAGE required}
+    pull_policy: never
+    profiles: [maintenance]
+    restart: "no"
+    env_file:
+      - ${ROOTGDR_MIGRATION_ENV:?ROOTGDR_MIGRATION_ENV required}
+    environment:
+      ENV_FILE: /dev/null
+      YAML_CONFIG_FILE: /app/config.yaml
+    volumes:
+      - ${ROOTGDR_MIGRATION_CONFIG:?ROOTGDR_MIGRATION_CONFIG required}:/app/config.yaml:ro,z
+    command: [uv, run, --no-sync, alembic, upgrade, head]
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+  app:
+    image: ${ROOTGDR_IMAGE:?ROOTGDR_IMAGE required}
+    pull_policy: never
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - ${ROOTGDR_RUNTIME_ENV:?ROOTGDR_RUNTIME_ENV required}
+    environment:
+      ENV_FILE: /dev/null
+      YAML_CONFIG_FILE: /app/config.yaml
+    ports:
+      - ${ROOTGDR_BIND_ADDRESS:?ROOTGDR_BIND_ADDRESS required}:${ROOTGDR_PORT:-8001}:8000
+    volumes:
+      - uploads:/app/data/uploads
+      - ${ROOTGDR_RUNTIME_CONFIG:?ROOTGDR_RUNTIME_CONFIG required}:/app/config.yaml:ro,z
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+
+volumes:
+  database:
+  uploads:

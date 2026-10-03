@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from backend import server
 from backend.config import AppConfig
+from backend.db.db import DatabaseManager
 from backend.dependencies import (
     DatabaseSession,
     get_db_manager,
@@ -96,3 +97,14 @@ def test_function_scoped_session_finalizes_before_response_start() -> None:
         assert client.get("/").json() == {"ok": True}
 
     assert events.index("session-finalized") < events.index("response-start")
+
+
+async def test_database_engines_do_not_echo_statement_parameters(
+    app_config: AppConfig,
+) -> None:
+    manager = DatabaseManager(app_config.database)
+    try:
+        assert manager.async_engine.echo is False
+        assert manager.sync_engine.echo is False
+    finally:
+        await manager.close()

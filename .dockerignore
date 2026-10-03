@@ -46,7 +46,7 @@ deploy/
 # Environment files
 .env
 .env.*
-!.env.example
+.env.example
 
 # Docker-specific config (mounted at runtime)
 config.docker.yaml
@@ -63,3 +63,17 @@ docker-compose.yml
 # Misc
 *.log
 .DS_Store
+
+**
+!pyproject.toml
+!uv.lock
+!src/
+!src/**
+!alembic/
+!alembic/**
+!alembic.ini
+!LICENSE
+src/**/__pycache__/
+src/**/*.py[cod]
+alembic/**/__pycache__/
+alembic/**/*.py[cod]

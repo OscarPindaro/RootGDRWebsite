@@ -4,9 +4,11 @@ from pathlib import Path
 import pytest
 import yaml
 from pydantic import SecretStr
+from pydantic_settings import SettingsConfigDict
 
 from backend import config as config_module
 from backend.config import (
+    AppConfig,
     AuthConfig,
     ConfigError,
     EnvSecret,
@@ -114,3 +116,30 @@ def test_project_contact_and_license_use_personal_identity() -> None:
     assert (root / "LICENSE").read_text().splitlines()[2] == (
         "Copyright (c) 2026 Oscar Pindaro"
     )
+
+
+def test_runtime_configuration_does_not_require_migration_credentials(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    for name in tuple(config_module.os.environ):
+        if name.startswith("MIGRATOR__"):
+            monkeypatch.delenv(name)
+
+    class RuntimeConfig(AppConfig):
+        model_config = SettingsConfigDict(
+            env_file=None,
+            yaml_file=None,
+            extra="ignore",
+            env_nested_delimiter="__",
+        )
+
+    runtime = RuntimeConfig(
+        env="production",
+        database=PostgresConfig(
+            user="runtime", password="runtime-test-password", db="runtime_test"
+        ),
+        auth=AuthConfig(jwt_secret="runtime-test-secret"),
+    )
+
+    assert runtime.migrator is None
+    assert runtime.database.user == "runtime"

@@ -1,51 +1,40 @@
 FROM python:3.14-slim
 
 ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
     UV_VERSION=0.7.8
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     gcc \
-    libglib2.0-0 \
-    libnss3 \
-    libnspr4 \
-    libatk1.0-0 \
-    libatk-bridge2.0-0 \
-    libcups2 \
-    libdrm2 \
-    libdbus-1-3 \
-    libxkbcommon0 \
-    libatspi2.0-0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxfixes3 \
-    libxrandr2 \
-    libgbm1 \
-    libpango-1.0-0 \
-    libcairo2 \
-    libasound2 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir "uv==$UV_VERSION"
 
-RUN groupadd -r appuser && useradd -r -g appuser -d /app appuser
-RUN mkdir -p /app/data && chown -R appuser:appuser /app
+RUN groupadd --gid 10001 appuser && useradd --uid 10001 --gid appuser --home-dir /app appuser
+RUN mkdir -p /app/data/uploads /opt/venv && chown -R appuser:appuser /app /opt/venv
 
 WORKDIR /app
 
 ENV UV_CACHE_DIR=/tmp/uv-cache \
-    UV_PROJECT_ENVIRONMENT=/tmp/venv
+    UV_PROJECT_ENVIRONMENT=/opt/venv
 
 COPY --chown=appuser:appuser pyproject.toml uv.lock ./
 
 USER appuser
 
-RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-dev --no-install-project && uv cache clean
 
-COPY --chown=appuser:appuser . .
+COPY --chown=appuser:appuser src/ ./src/
+COPY --chown=appuser:appuser alembic/ ./alembic/
+COPY --chown=appuser:appuser alembic.ini LICENSE ./
 
-RUN uv sync --frozen --no-dev
+RUN uv sync --frozen --no-dev && uv cache clean
+
+ARG BUILD_COMMIT=unknown
+LABEL org.opencontainers.image.revision=$BUILD_COMMIT
+ENV ROOTGDR_BUILD_COMMIT=$BUILD_COMMIT
 
 EXPOSE 8000
 

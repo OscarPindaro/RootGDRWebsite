@@ -221,7 +221,7 @@ class AppConfig(BaseConfig):
     app_name: str = Field(default="fastapi-template", min_length=1)
     env: str = Field(default="dev")
     database: PostgresConfig = Field(default_factory=PostgresConfig)
-    migrator: MigratorConfig = Field(default_factory=MigratorConfig)
+    migrator: MigratorConfig | None = None
     frontend: Optional[FrontendConfig] = Field(default=None)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     replay: ReplayConfig = Field(default_factory=ReplayConfig)

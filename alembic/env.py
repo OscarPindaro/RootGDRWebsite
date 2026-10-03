@@ -16,6 +16,8 @@ if config.config_file_name is not None:
 
 app_config = get_app_config()
 # CHANGED: use migrator credentials, not the app's runtime credentials
+if app_config.migrator is None:
+    raise RuntimeError("Migration credentials are not configured")
 config.set_main_option("sqlalchemy.url", app_config.migrator.sync_url)
 
 target_metadata = Base.metadata
