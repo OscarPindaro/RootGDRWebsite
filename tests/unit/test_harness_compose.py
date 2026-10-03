@@ -113,6 +113,6 @@ def test_up_force_recreates_database_and_backend(
 
     assert calls == [
         ("up", "--detach", "--wait", "--force-recreate", "db"),
-        ("up", "--detach", "--force-recreate"),
+        ("up", "--detach", "--no-deps", "--force-recreate", "app"),
     ]
     assert len(migrations) == 2

@@ -40,3 +40,12 @@ T09 should restrict the final startup/recreation to `app` with `--no-deps` after
 the database is ready. Add command-assembly regression coverage and a real
 recreation check proving both test databases/schema remain available. Do not
 hide the issue with skip, xfail or a memorized failure count.
+
+## Resolution evidence — 2026-10-03
+
+The final startup now targets only `app` with `--no-deps`. The command-assembly
+regression failed before this change and passed afterward. A newly owned Docker
+environment was actually recreated; both test databases retained Alembic head
+`c35a50fec1ae`. Complete suites passed after recovery/fix: 464 unit, 131 integration
+and 64 E2E. Both schema heads were read back again after E2E fresh. No test result
+was skipped or reclassified; work, showcase and board data were untouched.

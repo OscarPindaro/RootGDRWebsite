@@ -32,7 +32,10 @@ change" answerable without guessing.
   HTTP or browser errors. `harness logs` filters Compose output by structured
   request/trace id in Python.
 - `harness env up --recreate` repairs changed containers without discarding
-  failed-start state; `harness dev up --no-build` skips an unnecessary rebuild.
+  failed-start state. After database initialization/migrations, the backend
+  starts with `--no-deps`: recreation does not erase the prepared test schemas
+  by force-recreating the database twice. `harness dev up --no-build` skips an
+  unnecessary rebuild.
 - `harness artifacts list|show|clean` inspects and prunes artifact runs. Every
   artifact-producing command (screenshot, compare, component tests) writes into
   `harness-artifacts/<run-id>/` with a manifest recording command, revision,

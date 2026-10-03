@@ -163,11 +163,12 @@ def up(
     _run_migrations(
         environment_state.config.e2e_env, environment_state.config.e2e_local_config
     )
-    args = ["up", "--detach"]
+    args = ["up", "--detach", "--no-deps"]
     if build:
         args.append("--build")
     if recreate:
         args.append("--force-recreate")
+    args.append("app")
     _run(environment_state, *args)
     assert environment_state.ports.backend is not None
     _wait_for_http(

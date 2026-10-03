@@ -164,5 +164,17 @@ Acceptance: setup works from a clean checkout and another working directory;
 axe is available and Chromium uses the supported harness location. CI performs
 explicit dependency setup without installing global agent configuration.
 
+## T09 — Keep database preparation intact during recreation
+
+Follow-up found while verifying the approved cycle; evidence and reproduction
+are in [the recreation regression](problems/harness-recreate-database.md).
+The final backend startup must target `app` with `--no-deps`, so a database
+already recreated, initialized and migrated is not recreated a second time.
+
+Acceptance: command-assembly regression fails before the fix; an actual owned
+Docker environment retains both integration/E2E databases and Alembic schemas
+after `env up --recreate`. Test recovery never resets work, showcase or board
+storage, and no exception converts an unavailable database into a passing test.
+
 Keep the retrospective as historical context; these tickets and the approved
 cycle decisions define the implementation scope.
