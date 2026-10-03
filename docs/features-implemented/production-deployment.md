@@ -34,7 +34,10 @@ The root Dockerfile copies only allowlisted sources and installs with
 build-time uv caches are cleaned so Podman's temporary-directory copy-up fits
 the 64 MB runtime tmpfs. Browser tests run on the host, not inside this image.
 
-`BUILD_COMMIT` is baked into the OCI revision label and runtime environment.
+`BUILD_COMMIT` is consumed by a build step before the OCI revision label and
+runtime environment are set: Podman's cached metadata-only instructions must
+not inherit another build's argument value. Cached-build integration checks
+verify both the label and runtime revision for distinct selected values.
 The caller must select and record a clean commit and the resulting image ID;
 `verification` builds are only disposable test images. The migration service is
 in the maintenance profile and is invoked explicitly before application rollout.

@@ -33,6 +33,7 @@ COPY --chown=appuser:appuser alembic.ini LICENSE ./
 RUN uv sync --frozen --no-dev && uv cache clean
 
 ARG BUILD_COMMIT=unknown
+RUN test -n "$BUILD_COMMIT"
 LABEL org.opencontainers.image.revision=$BUILD_COMMIT
 ENV ROOTGDR_BUILD_COMMIT=$BUILD_COMMIT
 

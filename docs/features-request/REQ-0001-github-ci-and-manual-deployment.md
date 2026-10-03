@@ -50,7 +50,10 @@ evidence. Current ticket status belongs in Vikunja, not this document.
   not permission to prune unrelated images or volumes.
 - Additional cycle tickets cover current identity references (T00), first live
   bootstrap (T07), weekly backup operation (T08), and final audit/push/rollout
-  (T09). T03/T04/T05/T06 retain their packaging, recovery, readiness and Ansible
+  (T09). A local cached-build regression found during verification adds T10:
+  consume the selected build argument before metadata-only instructions and
+  verify distinct cached revisions in both OCI labels and runtime information.
+  T03/T04/T05/T06 retain their packaging, recovery, readiness and Ansible
   boundaries. Version selection, tags and release publication remain separate.
 
 The implementation plan also covers REQ-0002–REQ-0010, the harness follow-up,

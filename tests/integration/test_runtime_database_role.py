@@ -139,7 +139,8 @@ def test_packaged_runtime_starts_without_migration_secrets_or_private_files(
         "'.playwright-browsers', 'harness-artifacts', 'docs', 'tests'))\n"
         "with TestClient(create_app(config)) as client:\n"
         "    assert client.get('/ping').status_code == 200\n"
-        "    assert client.get('/version').json()['commit'] == 'verification'\n"
+        "    actual_commit = client.get('/version').json()['commit']\n"
+        "    assert actual_commit == 'verification', actual_commit\n"
         "    assert client.post('/auth/dev-login').status_code == 404\n"
         "    assert client.get('/health/ready').status_code == 503\n"
     )
@@ -177,3 +178,54 @@ def test_packaged_uploads_survive_container_recreation(
             text=True,
             timeout=30,
         )
+
+
+def test_cached_images_carry_their_own_selected_revision(
+    packaged_image: PackagedImage,
+) -> None:
+    for revision in ("unknown", "a" * 40):
+        reference = f"localhost/rootgdr-package-test:{uuid.uuid4().hex}"
+        command = [
+            packaged_image.engine,
+            "build",
+            "--tag",
+            reference,
+            "--file",
+            "Dockerfile",
+            ".",
+        ]
+        if revision != "unknown":
+            command[2:2] = ["--build-arg", f"BUILD_COMMIT={revision}"]
+        built = subprocess.run(
+            command, cwd=ROOT, capture_output=True, text=True, timeout=180
+        )
+        assert built.returncode == 0, built.stderr
+        try:
+            inspected = subprocess.run(
+                [
+                    packaged_image.engine,
+                    "image",
+                    "inspect",
+                    reference,
+                    "--format",
+                    '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+                ],
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=30,
+            )
+            assert inspected.stdout.strip() == revision
+            image = packaged_image.model_copy(update={"reference": reference})
+            image.run_python(
+                "from backend.health.service import build_info\n"
+                f"assert build_info().commit == {revision!r}, build_info().commit\n"
+            )
+        finally:
+            subprocess.run(
+                [packaged_image.engine, "image", "rm", reference],
+                check=True,
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
