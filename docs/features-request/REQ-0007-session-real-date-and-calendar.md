@@ -6,6 +6,16 @@ title: Default new sessions to today and review the date picker design
 
 # Session real date and calendar
 
+## Approved cycle defaults — 2026-10-03
+
+T01 persists the creating browser's local calendar date, submitted as an ISO
+date to interactive draft creation without UTC conversion. Use an explicit
+Europe/Rome fallback when an interactive request omits the value; leave normal
+API/import dates, existing sessions and nullable clearing unchanged.
+T02 uses an accessible atlas calendar on desktop and the native picker on
+phone, with native fallback when JavaScript is unavailable. No stored user
+timezone preference or new date-picker dependency is assumed.
+
 ## Visual references
 
 ![New session with an empty real date](assets/feedback-2026-10-03/07-session-document.png)

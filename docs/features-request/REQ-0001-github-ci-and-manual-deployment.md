@@ -1,7 +1,7 @@
 ---
 id: REQ-0001
 requested_on: 2026-10-03
-title: GitHub CI, separate agent identity, and manual home-server deployment
+title: GitHub CI and manual home-server deployment
 ---
 
 # GitHub CI and manual home-server deployment
@@ -12,7 +12,53 @@ restoration of production data. Vikunja is the selected authority for backlog
 and ticket status; this document owns the specification. Its demo cards are not
 real implementation tickets.
 
-## Confirmed decisions
+## Approved cycle decisions — 2026-10-03
+
+The approved infrastructure and document cycle supersedes the initial identity
+proposal below. Implementation proceeds ticket by ticket, with tests and visual
+evidence. Current ticket status belongs in Vikunja, not this document.
+
+- Defer REQ-0001/T01: no GitHub App, mandatory PR workflow or branch-policy
+  changes in this cycle. Use the existing Git authentication without modifying
+  global configuration; normally push verified commits to `main` at cycle end.
+  Do not use authenticated `gh` reads of settings or billing.
+- The repository is public. CI runs on PRs targeting `main`, pushes to `main`
+  and manual dispatch; it never deploys. Keep failed checks failed.
+- Build and invoke Ansible locally, then transfer images over the existing SSH
+  connection to `pinball@pinball-server.local`. The server is Fedora 43 Server,
+  x86-64, with rootless Podman and user lingering already enabled. Install a
+  pinned Compose provider in a dedicated user environment, without sudo.
+- Deploy new, isolated Root GDR and Vikunja stacks. Preserve the server's old
+  checkout, bot services, local board trials, scratch and showcase data.
+- Root GDR uses HTTP on the trusted IPv4 LAN at `192.168.1.201:8001`, a production
+  configuration and real password login. `cookie_secure: false` is limited to
+  that explicitly chosen LAN profile. Oscar opens the firewall for the LAN.
+  Vikunja is loopback-only on the server and reached from the PC by SSH tunnel.
+- Bootstrap Oscar with `oscar.pindaro@gmail.com`, dedicated privately generated
+  credentials, and only the committed reference world. Do not reset existing
+  accounts or reseed over user edits on later deployments.
+- The first bootstrap may precede publication of CI after local checks and
+  disposable deployment/recovery tests pass. This does not permit ignoring a
+  failing test or a subsequently observed failed CI run.
+- Take a coordinated, encrypted pre-deploy backup. Also back up weekly to this
+  PC at `~/.local/share/rootgdr/backups`, Sunday 10:00 Europe/Rome. Keep four
+  complete weekly copies per application; retain pre-deploy copies separately.
+  Delete only managed older weekly copies after a verified replacement.
+- Stop writers for capture and verify restoration in an isolated target. Never
+  automatically restore production data or downgrade Alembic. App rollback
+  requires proven schema compatibility; insufficient disk space is a blocker,
+  not permission to prune unrelated images or volumes.
+- Additional cycle tickets cover current identity references (T00), first live
+  bootstrap (T07), weekly backup operation (T08), and final audit/push/rollout
+  (T09). T03/T04/T05/T06 retain their packaging, recovery, readiness and Ansible
+  boundaries. Version selection, tags and release publication remain separate.
+
+The implementation plan also covers REQ-0002–REQ-0010, the harness follow-up,
+and planning/release tooling. Independent tickets may use at most three
+isolated worktrees after the server bootstrap, with coordinator review and
+verification. Agents never operate directly on the production server.
+
+## Initial decisions — superseded where noted above
 
 - Use a dedicated GitHub App identity for the agent, installed only on this repo.
   Do not use Oscar's GitHub login, personal token, or SSH identity for agent
@@ -58,7 +104,10 @@ settings:
 - The local Git remote uses SSH. A token supplied to `gh` does not change the
   authentication used by `git push`.
 
-## GitHub identity and branch policy
+## Deferred GitHub identity and branch-policy design
+
+This section records the deferred App proposal, not the authentication policy
+for the approved local/main cycle.
 
 Use App installation tokens, which expire after one hour, rather than App user
 access tokens acting on Oscar's behalf. Install the App only on this repo.

@@ -6,6 +6,13 @@ title: Make empty document descriptions and session recaps editable
 
 # Empty document body editing
 
+## Approved cycle direction — 2026-10-03
+
+Implement the empty-state editing fix across all six document types without
+waiting for the story/page redesign. Keep placeholder copy separate from stored
+Markdown, the current caret behavior and read-only permissions. Ticket:
+REQ-0003/T01.
+
 ## Visual references
 
 ![Character with an empty description](assets/feedback-2026-10-03/04-character-document.png)

@@ -73,6 +73,14 @@ may run concurrently only through the approved workflow below.
   release time. Never infer or apply a major/minor/patch bump without approval.
 - A release may group an entire multi-ticket cycle. Git commits, board ticket IDs,
   application versions and Alembic revisions are distinct identifiers.
+- The approved 2026-10-03 cycle defers GitHub App/mandatory PR setup: local
+  ticket commits and normally one final ordinary push to `main`, with the
+  existing Git authentication and no global configuration changes. CI on
+  PRs/pushes never deploys; Ansible is invoked locally. See REQ-0001 for the
+  current server, LAN, backup and first-bootstrap decisions.
+- The MCP harness process may point at a different checkout. If a selector
+  exists locally but MCP reports it missing, use the repository's harness CLI
+  and verify its worktree root; do not reset or reconfigure another environment.
 
 ## Tools
 If available in your environemnt, use

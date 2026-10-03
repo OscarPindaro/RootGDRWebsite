@@ -1,25 +1,34 @@
+---
+id: REQ-0011
+requested_on: 2026-10-03
+title: Harness follow-up and reproducible development setup
+---
+
 # Harness improvements — 2026-10-03
 
-Follow-up tickets from the frontend mega-plan retrospective. This request is to
-record work for the next agent, not to implement it now. No harness, dependency,
-setup, or test changes are authorized by creating this document.
+Follow-up tickets from the frontend mega-plan retrospective. H1–H7 and the
+Node/axe setup extension were approved in the 2026-10-03 infrastructure and
+document cycle. The filename is retained for existing links. Ticket keys are
+REQ-0011/T01–T07, with H1–H7 as stable aliases; T08 covers Node/axe setup.
+Current implementation status belongs in Vikunja.
 
 ## Decisions and priority
 
-| Ticket | Topic | Status |
+| Ticket | Topic | Scope decision |
 |---|---|---|
-| H1 | Pass pytest arguments through `harness test` | Selected for future implementation; first priority |
-| H2 | Validate prototype-map landmarks | Proposed; explanation requested, approval pending |
-| H3 | Document known test failures | Proposed; explanation requested, format to confirm |
-| H4 | Capture screenshots after UI transitions settle | Selected for future implementation |
-| H5 | Check frontend payload budgets before commit | Proposed; explanation requested, approval pending |
-| H6 | Consistent Playwright browser location | Selected for future implementation |
-| H7 | Ruff in development dependencies | Selected for future implementation |
+| H1 / T01 | Pass pytest arguments through `harness test` | Approved; first harness priority |
+| H2 / T02 | Validate prototype-map landmarks | Approved; structural gate, not pixel gate |
+| H3 / T03 | Document known test failures | Approved; Markdown evidence, no skip/xfail |
+| H4 / T04 | Capture screenshots after UI transitions settle | Approved; bounded settling |
+| H5 / T05 | Check frontend payload budgets before commit | Approved; reuse existing thresholds |
+| H6 / T06 | Consistent Playwright browser location | Approved; preserve explicit overrides |
+| H7 / T07 | Ruff in development dependencies | Approved; match the hook pin |
+| T08 | Install locked Node/axe dependencies for E2E setup | Approved; no missing-dependency skips |
 
-The delegation strategy is recorded in `AGENTS.md`. For many tickets, evaluate
-subagents and independent worktrees, then ask the user before using them. Do not
-start H2/H3/H5 merely because they appear here. Recheck the current code before
-implementing any ticket: the retrospective describes a previous session.
+The delegation strategy is recorded in `AGENTS.md`. The approved cycle permits
+flexible waves of up to three isolated worktrees after Root GDR/Vikunja bootstrap,
+with coordinator review and independent verification. Recheck the current code
+before each ticket: the retrospective describes a previous session.
 
 ## H1 — Forward pytest arguments through the test CLI
 
@@ -45,7 +54,7 @@ uv run harness test frontend -- tests/frontend/test_field.py -q
   pytest exit status remain intact. `--fresh` resets only the E2E environment.
 - Tests cover parsing, command assembly, invalid selectors and exit propagation.
 
-## H2 — Fail clearly when a mapped landmark is missing (pending approval)
+## H2 — Fail clearly when a mapped landmark is missing (approved minimal scope)
 
 **Problem:** `seed/prototype_map.yaml` pairs app routes with prototype pages and
 optionally names page regions with CSS selectors. `app:` is the selector in the
@@ -64,7 +73,7 @@ using reference content and suitable permissions, without demanding that a
 phone's closed drawer be visible. A fixture with a stale selector fails;
 correct selectors pass. Ordinary pixel differences are not the failure gate.
 
-## H3 — Record known failures without hiding regressions (pending approval)
+## H3 — Record known failures without hiding regressions (approved minimal scope)
 
 **Start small:** use a Markdown note under `docs/features-request/problems/`,
 as `pre-existing-e2e-failures.md` already does. Each entry names the exact test,
@@ -95,7 +104,7 @@ no-action captures remain fast; perpetual animation or a stalled request cannot
 hang the command. Tests reproduce a delayed transition and verify the final
 geometry is captured. Preserve console-error reporting and artifact manifests.
 
-## H5 — Run the existing payload-budget check before commit (pending approval)
+## H5 — Run the existing payload-budget check before commit (approved minimal scope)
 
 **Problem:** `tests/unit/test_payload_budget.py` limits the byte size of selected
 CSS, JavaScript, fonts and icon markup, including gzip measurements. Today this
@@ -142,14 +151,18 @@ this note), or explicitly justify a coordinated update. Leave hooks enabled.
 `uv run ruff format --check`; their behavior agrees with pre-commit on fixtures.
 No production dependency or unrelated formatting changes are introduced.
 
-## Axe dependency setup — clarification, not an approved extra ticket
+## T08 — Locked Node/axe dependency setup
 
 `tests/e2e/test_accessibility.py` loads the local
 `node_modules/axe-core/axe.min.js`. The dependency is already declared in
 `package.json`; `setup.sh` currently does not install the Node dependencies.
-A future setup change could install the lockfile's Node dependencies (normally
-`npm ci`) when E2E tooling is requested. Ask before adding that scope; do not
-silently skip accessibility checks when the dependency is missing.
+Install the lockfile's Node dependencies with `npm ci` when harness/E2E tooling
+is requested. Do not skip accessibility checks when the dependency is missing,
+add unrelated dependencies, or reinstall agent/MCP configuration to fix assets.
 
-No harness implementation is started by this document. Keep the retrospective
-as historical context; these tickets and later user decisions define the scope.
+Acceptance: setup works from a clean checkout and another working directory;
+axe is available and Chromium uses the supported harness location. CI performs
+explicit dependency setup without installing global agent configuration.
+
+Keep the retrospective as historical context; these tickets and the approved
+cycle decisions define the implementation scope.

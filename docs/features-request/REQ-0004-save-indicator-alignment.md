@@ -6,6 +6,12 @@ title: Align the autosave dot and status text
 
 # Autosave indicator alignment
 
+## Approved cycle direction — 2026-10-03
+
+Implement the shared dot/text alignment independently of toolbar styling.
+Preserve the overlay, live status and stable surrounding geometry. Ticket:
+REQ-0004/T01.
+
 ## Visual references
 
 ![Green dot above the saved-status text](assets/feedback-2026-10-03/05-save-indicator.png)

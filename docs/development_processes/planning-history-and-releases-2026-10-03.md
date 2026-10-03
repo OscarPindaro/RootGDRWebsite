@@ -29,6 +29,19 @@ nelle sezioni di brainstorming sono ipotetici; non sono il workflow già migrato
   sincronizzazione bidirezionale. La scelta è confermata; harness, importazione
   dello storico e configurazione Towncrier restano da implementare.
 
+### Ciclo approvato dopo il brainstorming — 2026-10-03
+
+Il ciclo comprende tooling Vikunja, Towncrier, harness, CI/deployment e
+REQ-0002–REQ-0010. Importiamo solo i nuovi ticket reali del ciclo; lo storico
+viene censito senza migrazione e le demo restano intatte. Vikunja avrà un
+nuovo deployment sul server, separato da Root GDR e dalle prove locali.
+
+Per ora l'utente ha rinviato GitHub App e PR obbligatorie: commit locali per
+ticket, push su `main` normalmente a fine ciclo, CI su PR/push e deployment
+invocato localmente. Il bootstrap server viene prima delle onde parallele,
+con fino a tre agenti isolati e review del coordinatore. Nessuna versione,
+release o stato simulato delle demo viene attribuito al lavoro reale.
+
 Il deployment di prova è descritto in
 [Local task-board trials](../features-implemented/local-task-boards.md).
 Il confronto non importa né duplica automaticamente il backlog reale.

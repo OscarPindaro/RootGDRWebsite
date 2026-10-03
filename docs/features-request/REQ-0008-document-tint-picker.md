@@ -6,6 +6,14 @@ title: Replace text-only document color dropdowns with a coherent tint picker
 
 # Document tint picker
 
+## Approved cycle defaults — 2026-10-03
+
+T01 builds the compact swatch/name trigger and rectangular radio palette using
+the existing twelve tint tokens and shared primitives. T02 integrates it with
+session/story/page metadata and the existing versioned autosave controller.
+Preserve pending/recoverable edits; do not mount ImageEditor or invent a second
+save path for image-less documents.
+
 ## Visual references
 
 ![Session's text-only color dropdown](assets/feedback-2026-10-03/07-session-document.png)

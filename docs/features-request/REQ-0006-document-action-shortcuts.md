@@ -6,6 +6,16 @@ title: Add discoverable keyboard shortcuts for document actions
 
 # Document action shortcuts
 
+## Approved cycle defaults — 2026-10-03
+
+T01 adds a persistence barrier shared by mouse and keyboard commands: drain
+in-flight/queued saves and abort publication on a failed or conflicting save.
+T02 adds F2 for the focused block (otherwise body) and Ctrl/Command+Shift+Enter
+for the current publication action, with Italian help and command labels.
+Page-level shortcuts ignore inputs, textareas, contenteditable, CodeMirror,
+autocomplete, dialogs, repeated keydown and composition. No delete or lock
+shortcut is introduced. Existing editor/navigation keys stay unchanged.
+
 ## Visual references
 
 ![Existing document commands](assets/feedback-2026-10-03/05-save-indicator.png)

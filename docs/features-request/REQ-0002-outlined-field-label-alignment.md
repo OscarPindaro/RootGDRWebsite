@@ -6,6 +6,12 @@ title: Align floating labels with the outlined field border
 
 # Outlined field label alignment
 
+## Approved cycle direction — 2026-10-03
+
+Implement the shared Field correction in the approved infrastructure/document
+cycle. Preserve the outlined/filled variants and diagnose the actual browser
+rule/legend geometry before choosing an offset. Ticket: REQ-0002/T01.
+
 ## Visual references
 
 Original screenshots from the user's 2026-10-03 report, stored in the repository:

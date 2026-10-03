@@ -6,6 +6,17 @@ title: Clearer story and page authoring with separate details
 
 # Story and page authoring design
 
+## Approved cycle implementation — 2026-10-03
+
+T01 establishes DocDetails on common.Dialog: side panel desktop, full-screen
+phone, focus return and preserved body/editor state. T02 verifies the typed,
+permission-safe persisted session relationship contract. T03 implements story
+composition and searchable native checkbox selection using existing autosave;
+T04 applies the composition to pages and updates canonical URLs after server
+acknowledgement without destroying pending body edits or the CodeMirror caret.
+No full-document Form mode or explicit Save step is introduced. Tint, date,
+publication and shortcut controls use the approved defaults in related requests.
+
 ## Visual references and implementation-agent handoff
 
 ![Current story creation/document surface](assets/feedback-2026-10-03/10-story-document.png)

@@ -6,6 +6,15 @@ title: Refine document toolbar hierarchy and publication states
 
 # Document toolbar and publication states
 
+## Approved cycle defaults — 2026-10-03
+
+Implement icon-only commands and a labelled secondary action menu as T01.
+For T02, adopt compact rectangular editorial publication badges: paper/forest
+for published and paper/ochre with readable ink for draft. These are the approved
+AFK-cycle defaults, not a redesign of every common.Pill. Ownership stays in its
+current place; document tint, publication and story progress remain distinct.
+The earlier review questions below are resolved by these cycle defaults.
+
 ## Visual references
 
 ![Current character toolbar](assets/feedback-2026-10-03/05-save-indicator.png)

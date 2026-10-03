@@ -6,6 +6,14 @@ title: Give mention suggestions stable rectangular identity marks
 
 # Mention suggestion identity
 
+## Approved cycle defaults — 2026-10-03
+
+T01 extends the typed suggestion payload with existing animal/shape identity
+and applies the document services' world/draft/reader visibility before output.
+T02 uses rich rectangular marks in the existing CodeMirror completion menu,
+with content-kind fallback, safe text/SVG handling and unchanged insertion
+syntax. No uploaded thumbnails, race taxonomy or inline-mention redesign.
+
 ## Visual references
 
 ![Current mention menu with oval color markers](assets/feedback-2026-10-03/09-mention-suggestions.png)
