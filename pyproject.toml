@@ -3,7 +3,7 @@ name = "backend"
 version = "0.1.0"
 description = "A repo where I try fronted + backend integration"
 authors = [
-    { name = "Oscar Pindaro", email = "oscar@shopcircle.co" }
+    { name = "Oscar Pindaro", email = "oscar.pindaro@gmail.com" }
 ]
 requires-python = ">=3.14"
 dependencies = [

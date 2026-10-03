@@ -1,5 +1,8 @@
-import pytest
+import tomllib
+from pathlib import Path
 
+import pytest
+import yaml
 from pydantic import SecretStr
 
 from backend import config as config_module
@@ -95,3 +98,19 @@ def test_get_app_config_hides_invalid_input(monkeypatch: pytest.MonkeyPatch) -> 
         config_module.get_app_config()
 
     assert "input_value" not in str(startup_error.value)
+
+
+def test_project_contact_and_license_use_personal_identity() -> None:
+    root = Path(__file__).resolve().parents[2]
+    project = tomllib.loads((root / "pyproject.toml").read_text())["project"]
+    assert project["authors"] == [
+        {"name": "Oscar Pindaro", "email": "oscar.pindaro@gmail.com"}
+    ]
+    auth = AuthConfig(
+        jwt_secret="identity-test-secret",
+        **yaml.safe_load((root / "config.yaml").read_text())["auth"],
+    )
+    assert auth.bootstrap_admin_email == "oscar.pindaro@gmail.com"
+    assert (root / "LICENSE").read_text().splitlines()[2] == (
+        "Copyright (c) 2026 Oscar Pindaro"
+    )

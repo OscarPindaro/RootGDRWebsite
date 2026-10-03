@@ -12,7 +12,7 @@ migrator:
   db: backend
 
 auth:
-  bootstrap_admin_email: oscar@shopcircle.co
+  bootstrap_admin_email: oscar.pindaro@gmail.com
   redirect_uri: http://localhost:8000/auth/callback
 
 frontend:
