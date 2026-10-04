@@ -319,3 +319,15 @@ uv run harness content rebuild --email <email> [--world <world-id>]
   `/api/dev/worlds/{id}/export` and `/api/dev/worlds/import`.
 - Pass `ENV_FILE`/`YAML_CONFIG_FILE` to point the CLI at the test database;
   without them it uses `config.yaml` (the dev database).
+
+## Deployment verification (learned)
+
+- Podman can chown a named volume's root to the helper UID/GID even on a
+  read-only mount. Backup/capacity helpers resolve an existing volume's canonical
+  mountpoint and bind it read-only instead; verify ownership and readiness after
+  preflight. Do not compensate with broad chmod/chown of live uploads.
+- A native user service being active means its containers have started. Wait for
+  `/health/ready` before treating restart as healthy or checking unchanged no-op.
+- Disposable deployment tests own `rootgdr-disposable-<uuid>` namespaces, loopback
+  ports, private temporary config and any temporary user unit. Clean only those
+  new resources; preserve work/showcase, board demos and unrelated user services.

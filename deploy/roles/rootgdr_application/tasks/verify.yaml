@@ -1,0 +1,82 @@
+---
+- name: Verify bounded database, schema and storage readiness
+  ansible.builtin.uri:
+    url: "http://{{ rootgdr_plan.target.bind_address }}:{{ rootgdr_plan.target.port }}/health/ready"
+    return_content: true
+  register: rootgdr_readiness
+  until: rootgdr_readiness.status == 200 and rootgdr_readiness.json.status == 'ready'
+  retries: 20
+  delay: 2
+  no_log: true
+
+- name: Read the actual production build and schema information
+  ansible.builtin.uri:
+    url: "http://{{ rootgdr_plan.target.bind_address }}:{{ rootgdr_plan.target.port }}/version"
+    return_content: true
+  register: rootgdr_version
+  no_log: true
+
+- name: Require the selected commit and application version
+  ansible.builtin.assert:
+    that:
+      - rootgdr_version.json.commit == rootgdr_plan.artifact.commit
+      - rootgdr_version.json.version == rootgdr_plan.artifact.version
+  no_log: true
+
+- name: Explicitly create only the initial dedicated account when requested
+  ansible.builtin.uri:
+    url: "http://{{ rootgdr_plan.target.bind_address }}:{{ rootgdr_plan.target.port }}/auth/register"
+    method: POST
+    body_format: json
+    body:
+      name: "{{ rootgdr.login.name }}"
+      email: "{{ rootgdr.login.email }}"
+      password: "{{ rootgdr.login.password }}"
+    status_code: [200, 409]
+  when:
+    - rootgdr_previous is none
+    - rootgdr.login.create_initial_account | default(false) | bool
+  no_log: true
+  diff: false
+
+- name: Authenticate through the real production password login
+  ansible.builtin.uri:
+    url: "http://{{ rootgdr_plan.target.bind_address }}:{{ rootgdr_plan.target.port }}/auth/login"
+    method: POST
+    body_format: json
+    body:
+      email: "{{ rootgdr.login.email }}"
+      password: "{{ rootgdr.login.password }}"
+  register: rootgdr_password_login
+  no_log: true
+  diff: false
+
+- name: Verify authenticated API and rendered world listings
+  ansible.builtin.uri:
+    url: "http://{{ rootgdr_plan.target.bind_address }}:{{ rootgdr_plan.target.port }}{{ item }}"
+    headers:
+      Cookie: "{{ rootgdr_password_login.cookies_string }}"
+    return_content: true
+  loop: ['/api/worlds/', /worlds]
+  register: rootgdr_authenticated_reads
+  no_log: true
+
+- name: Retain only the authenticated world metadata for additional reads
+  ansible.builtin.set_fact:
+    rootgdr_verified_worlds: "{{ rootgdr_authenticated_reads.results[0].json.data }}"
+  no_log: true
+
+- name: Require any authenticated image reference to stay on the application API
+  ansible.builtin.assert:
+    that:
+      - rootgdr_verified_worlds | length == 0 or rootgdr_verified_worlds[0].imageUrl is none or rootgdr_verified_worlds[0].imageUrl.startswith('/api/')
+  no_log: true
+
+- name: Verify the existing reference world and an available uploaded image
+  ansible.builtin.uri:
+    url: "http://{{ rootgdr_plan.target.bind_address }}:{{ rootgdr_plan.target.port }}{{ item }}"
+    headers:
+      Cookie: "{{ rootgdr_password_login.cookies_string }}"
+  loop: "{{ (['/api/worlds/' + rootgdr_verified_worlds[0].id, '/worlds/' + rootgdr_verified_worlds[0].id] + ([rootgdr_verified_worlds[0].imageUrl] if rootgdr_verified_worlds[0].imageUrl is not none else [])) if rootgdr_verified_worlds | length > 0 else [] }}"
+  when: rootgdr_verified_worlds | length > 0
+  no_log: true

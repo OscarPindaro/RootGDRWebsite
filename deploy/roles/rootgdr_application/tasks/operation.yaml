@@ -1,0 +1,139 @@
+---
+- name: Clear invocation-owned staging references
+  ansible.builtin.set_fact:
+    rootgdr_controller_stage: {}
+    rootgdr_server_stage: {}
+
+- name: Refuse noncanonical deployment directories before creating anything
+  ansible.builtin.command:
+    argv: [realpath, '--canonicalize-missing', "{{ rootgdr_plan.target.base }}"]
+  register: rootgdr_canonical_base
+  changed_when: false
+
+- name: Require the exact explicitly namespaced target
+  ansible.builtin.assert:
+    that:
+      - rootgdr_canonical_base.stdout == rootgdr_plan.target.base
+      - not (rootgdr_disposable_tools | default(false) | bool) or rootgdr_plan.target.project.startswith('rootgdr-disposable-')
+
+- name: Create the separate application operation directory
+  ansible.builtin.file:
+    path: "{{ rootgdr_plan.target.base }}"
+    state: directory
+    mode: '0700'
+
+- name: Acquire the atomic application operation lock without stealing stale locks
+  ansible.builtin.command:
+    argv: [mkdir, '--mode=0700', "{{ rootgdr_plan.target.base }}/.operation-lock"]
+
+- name: Deploy only while this invocation owns the application lock
+  block:
+    - name: Record operation-lock ownership
+      ansible.builtin.copy:
+        content: "{{ rootgdr_plan.run_id }}"
+        dest: "{{ rootgdr_plan.target.base }}/.operation-lock/owner"
+        mode: '0600'
+
+    - name: Create only this invocation's private controller staging
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: rootgdr-deploy-
+      delegate_to: localhost
+      register: rootgdr_controller_stage
+
+    - name: Store the validated public plan for controller utilities
+      ansible.builtin.copy:
+        content: "{{ rootgdr_plan | to_json }}"
+        dest: "{{ rootgdr_controller_stage.path }}/plan.json"
+        mode: '0600'
+      delegate_to: localhost
+      diff: false
+
+    - name: Prepare immutable application and pinned dependency transfer metadata
+      ansible.builtin.command:
+        argv: "{{ rootgdr_controller_command + ['images', '--plan', rootgdr_controller_stage.path + '/plan.json', '--directory', rootgdr_controller_stage.path] }}"
+      delegate_to: localhost
+      register: rootgdr_exported_images
+      changed_when: false
+      no_log: true
+
+    - name: Retain the typed immutable transfer records
+      ansible.builtin.set_fact:
+        rootgdr_transfers: "{{ rootgdr_exported_images.stdout | from_json }}"
+      no_log: true
+
+    - name: Measure initial target capacity before installing private tooling
+      ansible.builtin.command:
+        argv: [df, '--output=avail', '-B1', "{{ rootgdr_plan.target.base }}"]
+      register: rootgdr_initial_space
+      changed_when: false
+
+    - name: Require room for transfer, unpacking, tooling and the operating reserve
+      ansible.builtin.assert:
+        that:
+          - rootgdr_initial_space.stdout_lines[-1] | int >= (rootgdr_transfers | map(attribute='archive_size') | sum) + 2 * (rootgdr_transfers | map(attribute='unpacked_size') | sum) + rootgdr_plan.target.reserve_bytes
+        fail_msg: Insufficient initial space; unrelated images and data must not be pruned
+
+    - name: Provision the user-scoped pinned helpers and Compose provider
+      ansible.builtin.include_tasks: tools.yaml
+
+    - name: Create only this invocation's private server staging
+      ansible.builtin.tempfile:
+        state: directory
+        path: "{{ rootgdr_plan.target.base }}"
+        prefix: '.deploy-'
+      register: rootgdr_server_stage
+
+    - name: Store only nonsecret metadata on the target
+      ansible.builtin.copy:
+        content: "{{ item.content | to_json }}"
+        dest: "{{ rootgdr_server_stage.path }}/{{ item.name }}"
+        mode: '0600'
+      loop:
+        - {name: plan.json, content: "{{ rootgdr_plan }}"}
+        - {name: images.json, content: "{{ rootgdr_transfers }}"}
+      no_log: true
+      diff: false
+
+    - name: Check live backup footprint and both target and engine storage capacity
+      ansible.builtin.command:
+        argv: "{{ rootgdr_remote_command + ['space', '--plan', rootgdr_server_stage.path + '/plan.json', '--images', rootgdr_server_stage.path + '/images.json'] }}"
+      environment:
+        PYTHONPATH: "{{ rootgdr_plan.target.base }}/tools/python"
+      changed_when: false
+      no_log: true
+
+    - name: Transfer and verify immutable images without a registry
+      ansible.builtin.include_role:
+        name: image_transfer
+
+    - name: Apply or verify the selected application release
+      ansible.builtin.include_tasks: rollout.yaml
+
+  always:
+    - name: Remove only this invocation's temporary server image archives and metadata
+      ansible.builtin.file:
+        path: "{{ rootgdr_server_stage.path }}"
+        state: absent
+      when: rootgdr_server_stage.path is defined
+      no_log: true
+
+    - name: Remove only this invocation's controller transfer staging
+      ansible.builtin.file:
+        path: "{{ rootgdr_controller_stage.path }}"
+        state: absent
+      delegate_to: localhost
+      when: rootgdr_controller_stage.path is defined
+      no_log: true
+
+    - name: Re-read application-lock ownership before cleanup
+      ansible.builtin.slurp:
+        src: "{{ rootgdr_plan.target.base }}/.operation-lock/owner"
+      register: rootgdr_cleanup_owner
+      no_log: true
+
+    - name: Release only this invocation's application lock
+      ansible.builtin.file:
+        path: "{{ rootgdr_plan.target.base }}/.operation-lock"
+        state: absent
+      when: rootgdr_cleanup_owner.content | default('') | b64decode == rootgdr_plan.run_id

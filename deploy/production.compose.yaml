@@ -2,7 +2,8 @@ name: ${ROOTGDR_PROJECT:?ROOTGDR_PROJECT required}
 
 services:
   db:
-    image: docker.io/library/postgres:18.3
+    image: ${ROOTGDR_DATABASE_IMAGE:?ROOTGDR_DATABASE_IMAGE required}
+    pull_policy: never
     restart: unless-stopped
     env_file:
       - ${ROOTGDR_DATABASE_ENV:?ROOTGDR_DATABASE_ENV required}

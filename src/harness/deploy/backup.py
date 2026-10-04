@@ -47,6 +47,10 @@ class ContainerInfo(BaseModel):
     state: ContainerState = Field(alias="State")
 
 
+class VolumeInfo(BaseModel):
+    mountpoint: Path = Field(alias="Mountpoint")
+
+
 def stopped_writers(engine: str, writers: list[str]) -> list[ContainerInfo]:
     states = []
     for writer in writers:
@@ -123,8 +127,13 @@ def source_mount(engine: str, source: FileSource) -> str:
             raise BackupError("Source directory is missing or noncanonical")
         return f"{path}:/source:ro,z"
     # Avoid Docker/Podman implicitly creating a misspelled empty source volume.
-    command([engine, "volume", "inspect", str(source.volume)])
-    return f"{source.volume}:/source:ro"
+    records = json.loads(command([engine, "volume", "inspect", str(source.volume)]))
+    if len(records) != 1:
+        raise BackupError("Source volume identity is ambiguous")
+    path = VolumeInfo.model_validate(records[0]).mountpoint
+    if not path.is_absolute() or path.resolve() != path or not path.is_dir():
+        raise BackupError("Source volume mountpoint is missing or noncanonical")
+    return f"{path}:/source:ro,z"
 
 
 def capture_files(engine: str, source: FileSource, target: Path) -> None:

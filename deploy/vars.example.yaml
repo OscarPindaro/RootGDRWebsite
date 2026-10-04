@@ -1,0 +1,30 @@
+rootgdr_proof_file: /home/oscar/.config/devin/rootgdr/verification.json
+rootgdr_backup_storage_file: /home/oscar/.config/devin/rootgdr/storage.json
+rootgdr_backup_receipt_file: /home/oscar/.local/share/rootgdr/backups/predeploy/example-run.receipt.json
+
+rootgdr:
+  run_id: 11111111-1111-4111-8111-111111111111
+  target:
+    project: rootgdr-production
+    base: /home/pinball/rootgdr-production
+    bind_address: 192.168.1.201
+    port: 8001
+    secret_generation: 22222222-2222-4222-8222-222222222222
+    manage_systemd: true
+    database:
+      container: rootgdr-production_db_1
+      database: rootgdr
+      migrator: migrator_user
+      runtime_role: app_user
+  configuration:
+    - {name: runtime_env, path: /home/oscar/.config/devin/rootgdr/runtime.env}
+    - {name: runtime_config, path: /home/oscar/.config/devin/rootgdr/runtime.yaml}
+    - {name: migration_env, path: /home/oscar/.config/devin/rootgdr/migration.env}
+    - {name: migration_config, path: /home/oscar/.config/devin/rootgdr/migration.yaml}
+    - {name: database_env, path: /home/oscar/.config/devin/rootgdr/database.env}
+  proof: "{{ lookup('ansible.builtin.file', rootgdr_proof_file) | from_json }}"
+  login:
+    email: oscar.pindaro@gmail.com
+    name: Oscar
+    password: "{{ vault_rootgdr_login_password }}"
+    create_initial_account: true

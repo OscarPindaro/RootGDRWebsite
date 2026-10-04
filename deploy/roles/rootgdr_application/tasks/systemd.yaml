@@ -1,0 +1,37 @@
+---
+- name: Read only the remote user's home for native service installation
+  ansible.builtin.command:
+    argv: [printenv, HOME]
+  register: rootgdr_remote_home
+  changed_when: false
+
+- name: Create the native user service directory without changing global configuration
+  ansible.builtin.file:
+    path: "{{ rootgdr_remote_home.stdout }}/.config/systemd/user"
+    state: directory
+
+- name: Publish only the verified Compose references for the native user service
+  ansible.builtin.copy:
+    src: "{{ rootgdr_plan.release_directory }}/{{ item.source }}"
+    dest: "{{ rootgdr_plan.target.base }}/{{ item.destination }}"
+    remote_src: true
+    mode: '0600'
+  loop:
+    - {source: compose_env, destination: active.compose.env}
+    - {source: compose, destination: active.compose.yaml}
+  no_log: true
+  diff: false
+
+- name: Install the explicitly namespaced user service
+  ansible.builtin.template:
+    src: application.service.j2
+    dest: "{{ rootgdr_remote_home.stdout }}/.config/systemd/user/{{ rootgdr_plan.target.project }}.service"
+    mode: '0644'
+
+- name: Enable and start the verified stack without restarting existing containers
+  ansible.builtin.systemd_service:
+    name: "{{ rootgdr_plan.target.project }}.service"
+    scope: user
+    daemon_reload: true
+    enabled: true
+    state: started

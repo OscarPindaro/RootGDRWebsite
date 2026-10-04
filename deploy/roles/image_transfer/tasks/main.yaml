@@ -1,0 +1,33 @@
+---
+- name: Inspect only explicitly selected immutable image identities
+  ansible.builtin.command:
+    argv: [podman, image, inspect, '--format', '{{ "{{.Id}}" }}', "{{ item.image_id }}"]
+  loop: "{{ rootgdr_transfers }}"
+  register: rootgdr_image_cache
+  failed_when: false
+  changed_when: false
+  no_log: true
+
+- name: Transfer only images which are not already loaded
+  ansible.builtin.include_tasks: transfer.yaml
+  loop: "{{ rootgdr_image_cache.results }}"
+  loop_control:
+    loop_var: rootgdr_transfer
+    label: "{{ rootgdr_transfer.item.archive_name }}"
+  when: rootgdr_transfer.rc != 0
+  no_log: true
+
+- name: Verify every loaded immutable image identity
+  ansible.builtin.command:
+    argv: [podman, image, inspect, '--format', '{{ "{{.Id}}" }}', "{{ item.image_id }}"]
+  loop: "{{ rootgdr_transfers }}"
+  register: rootgdr_loaded_images
+  changed_when: false
+  no_log: true
+
+- name: Refuse an image identity mismatch before downtime
+  ansible.builtin.assert:
+    that:
+      - item.stdout | replace('sha256:', '') == item.item.image_id | replace('sha256:', '')
+  loop: "{{ rootgdr_loaded_images.results }}"
+  no_log: true

@@ -1,0 +1,109 @@
+---
+- name: Create an immutable release configuration namespace
+  ansible.builtin.file:
+    path: "{{ rootgdr_plan.release_directory }}"
+    state: directory
+    mode: '0700'
+
+- name: Copy private candidate configuration without replacing the active release
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ rootgdr_plan.release_directory }}/{{ item.name }}"
+    mode: '0600'
+  loop: "{{ rootgdr_plan.configuration }}"
+  no_log: true
+  diff: false
+
+- name: Read back candidate configuration checksums before stopping writers
+  ansible.builtin.stat:
+    path: "{{ rootgdr_plan.release_directory }}/{{ item.name }}"
+    checksum_algorithm: sha256
+    follow: false
+  loop: "{{ rootgdr_plan.configuration }}"
+  register: rootgdr_configuration_checksums
+  no_log: true
+
+- name: Require the exact planned candidate configuration
+  ansible.builtin.assert:
+    that:
+      - item.stat.isreg
+      - item.stat.checksum == item.item.sha256
+  loop: "{{ rootgdr_configuration_checksums.results }}"
+  no_log: true
+
+- name: Make only mounted configuration and public initialization files container-readable
+  ansible.builtin.file:
+    path: "{{ rootgdr_plan.release_directory }}/{{ item }}"
+    mode: '0644'
+  loop: [runtime_config, migration_config, init_db_script, init_db_sql]
+  no_log: true
+
+- name: Render the candidate immutable image and configuration references
+  ansible.builtin.template:
+    src: compose.env.j2
+    dest: "{{ rootgdr_plan.release_directory }}/compose_env"
+    mode: '0600'
+  no_log: true
+  diff: false
+
+- name: Define the candidate Compose argv without secrets
+  ansible.builtin.set_fact:
+    rootgdr_compose: ["{{ rootgdr_provider }}", '--env-file', "{{ rootgdr_plan.release_directory }}/compose_env", '-f', "{{ rootgdr_plan.release_directory }}/compose", '-p', "{{ rootgdr_plan.target.project }}"]
+
+- name: Validate separated LAN runtime and migration configuration before downtime
+  ansible.builtin.command:
+    argv:
+      - podman
+      - run
+      - '--rm'
+      - '--pull=never'
+      - '--network=none'
+      - '--read-only'
+      - '--env-file'
+      - "{{ rootgdr_plan.release_directory }}/{{ item }}_env"
+      - '-e'
+      - ENV_FILE=/dev/null
+      - '-e'
+      - YAML_CONFIG_FILE=/app/config.yaml
+      - '-v'
+      - "{{ rootgdr_plan.release_directory }}/{{ item }}_config:/app/config.yaml:ro,z"
+      - '--entrypoint=/opt/venv/bin/python'
+      - "{{ rootgdr_plan.artifact.image_id }}"
+      - '-c'
+      - |
+        import os
+        from backend.config import get_app_config
+        c = get_app_config()
+        assert c.env == 'production' and c.frontend is not None and c.frontend.enabled
+        assert not c.replay.enabled and c.auth is not None and c.auth.cookie_secure is False
+        assert c.database.user == '{{ rootgdr_plan.target.database.runtime_role }}'
+        assert c.database.db == '{{ rootgdr_plan.target.database.database }}' and c.database.host == 'db' and c.database.port == 5432
+        if '{{ item }}' == 'runtime':
+            assert c.migrator is None
+            assert not any(k.startswith(('MIGRATOR__', 'MIGRATOR_DB_', 'POSTGRES_')) for k in os.environ)
+        else:
+            assert c.migrator is not None and c.migrator.user == '{{ rootgdr_plan.target.database.migrator }}'
+            assert c.migrator.db == '{{ rootgdr_plan.target.database.database }}' and c.migrator.host == 'db' and c.migrator.port == 5432
+  loop: [runtime, migration]
+  changed_when: false
+  no_log: true
+
+- name: Start or retain the isolated database without recreation
+  ansible.builtin.command:
+    argv: "{{ rootgdr_compose + ['up', '-d', '--no-recreate', 'db'] }}"
+  no_log: true
+
+- name: Wait boundedly for the dedicated database
+  ansible.builtin.command:
+    argv: [podman, inspect, '--format', '{{ "{{.State.Health.Status}}" }}', "{{ rootgdr_plan.target.database.container }}"]
+  register: rootgdr_database_health
+  changed_when: false
+  until: rootgdr_database_health.stdout == 'healthy'
+  retries: 60
+  delay: 2
+
+- name: Create a stopped initial writer identity before the first backup
+  ansible.builtin.command:
+    argv: "{{ rootgdr_compose + ['up', '--no-start', '--no-deps', '--no-build', '--pull=never', 'app'] }}"
+  when: rootgdr_previous is none
+  no_log: true

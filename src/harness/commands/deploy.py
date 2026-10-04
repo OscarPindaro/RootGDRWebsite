@@ -1,3 +1,7 @@
+import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Annotated, Callable, Literal
 
@@ -55,6 +59,103 @@ def register_commands(app: typer.Typer, *, is_dry_run: Callable[[], bool]) -> No
             raise typer.Exit(1) from None
         console.print(
             f"Verified {artifact.commit} ({artifact.architecture}, version {artifact.version})"
+        )
+
+    @deploy_app.command()
+    def apply(
+        inventory: Annotated[
+            Path, typer.Option(help="Absolute explicit target inventory.")
+        ],
+        vars_file: Annotated[
+            Path, typer.Option(help="Private absolute Ansible variables file.")
+        ],
+        manifest: Annotated[
+            Path, typer.Option(help="Absolute selected image artifact manifest.")
+        ],
+        check: Annotated[
+            bool, typer.Option(help="Validate without deploying or building.")
+        ] = False,
+        vault_password_file: Annotated[
+            Path | None, typer.Option(help="Optional private Vault password file.")
+        ] = None,
+    ) -> None:
+        try:
+            verify_artifact(manifest)
+            for path in (inventory, vars_file, vault_password_file):
+                if path is not None and (
+                    not path.is_absolute()
+                    or path.resolve() != path
+                    or not path.is_file()
+                ):
+                    raise BackupError(
+                        "Deployment input paths must be canonical absolute files"
+                    )
+            if vars_file.stat().st_mode & 0o077 or (
+                vault_password_file is not None
+                and vault_password_file.stat().st_mode & 0o077
+            ):
+                raise BackupError("Deployment credentials must be private")
+            root = state.worktree_root()
+            argv = [
+                "ansible-playbook",
+                "-i",
+                str(inventory),
+                str(root / "deploy" / "deploy.yaml"),
+                "-e",
+                "@" + str(vars_file),
+                "-e",
+                json.dumps(
+                    {
+                        "rootgdr_artifact_file": str(manifest),
+                        "rootgdr_controller_command": [
+                            sys.executable,
+                            "-m",
+                            "harness.deploy.rollout_cli",
+                        ],
+                        "rootgdr_controller_backup_command": [
+                            sys.executable,
+                            "-m",
+                            "harness.deploy.backup_cli",
+                        ],
+                    }
+                ),
+                "--ssh-common-args=-o BatchMode=yes",
+            ]
+            if check or is_dry_run():
+                argv.append("--check")
+            if vault_password_file is not None:
+                argv.extend(["--vault-password-file", str(vault_password_file)])
+            result = subprocess.run(
+                argv,
+                cwd=root,
+                capture_output=True,
+                stdin=subprocess.DEVNULL,
+                timeout=900,
+                env={
+                    **os.environ,
+                    "ANSIBLE_CONFIG": str(root / "deploy" / "ansible.cfg"),
+                },
+            )
+        except (
+            BackupError,
+            ValidationError,
+            OSError,
+            ValueError,
+            subprocess.TimeoutExpired,
+        ):
+            err_console.print(
+                "[bold red]Ansible inputs or execution failed; no verification claimed.[/bold red]"
+            )
+            raise typer.Exit(1) from None
+        if result.returncode:
+            err_console.print(
+                "[bold red]Ansible failed; review the explicit inventory, private inputs and target recovery state.[/bold red]"
+            )
+            raise typer.Exit(result.returncode)
+        console.print(
+            "Ansible check passed."
+            if check or is_dry_run()
+            else "Ansible deployment verified."
         )
 
     app.add_typer(deploy_app, name="deploy")

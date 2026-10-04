@@ -1,0 +1,29 @@
+---
+- name: Copy the selected image archive through the trusted Ansible connection
+  ansible.builtin.copy:
+    src: "{{ rootgdr_transfer.item.archive_path }}"
+    dest: "{{ rootgdr_server_stage.path }}/{{ rootgdr_transfer.item.archive_name }}"
+    mode: '0600'
+  no_log: true
+  diff: false
+
+- name: Read back the transferred archive's size and SHA-256
+  ansible.builtin.stat:
+    path: "{{ rootgdr_server_stage.path }}/{{ rootgdr_transfer.item.archive_name }}"
+    checksum_algorithm: sha256
+    follow: false
+  register: rootgdr_transferred_archive
+  no_log: true
+
+- name: Require an exact complete transfer before loading it
+  ansible.builtin.assert:
+    that:
+      - rootgdr_transferred_archive.stat.isreg
+      - rootgdr_transferred_archive.stat.size == rootgdr_transfer.item.archive_size
+      - rootgdr_transferred_archive.stat.checksum == rootgdr_transfer.item.archive_sha256
+  no_log: true
+
+- name: Load the verified local archive without a registry or pull
+  ansible.builtin.command:
+    argv: [podman, load, '--input', "{{ rootgdr_server_stage.path }}/{{ rootgdr_transfer.item.archive_name }}"]
+  no_log: true

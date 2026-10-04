@@ -1,0 +1,16 @@
+[Unit]
+Description=Root GDR {{ rootgdr_plan.target.project }}
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory={{ rootgdr_plan.target.base }}
+ExecStart="{{ rootgdr_provider }}" --env-file "{{ rootgdr_plan.target.base }}/active.compose.env" -f "{{ rootgdr_plan.target.base }}/active.compose.yaml" -p {{ rootgdr_plan.target.project }} up -d --no-recreate --no-build --pull=never app
+ExecStop="{{ rootgdr_provider }}" --env-file "{{ rootgdr_plan.target.base }}/active.compose.env" -f "{{ rootgdr_plan.target.base }}/active.compose.yaml" -p {{ rootgdr_plan.target.project }} stop app db
+TimeoutStartSec=180
+TimeoutStopSec=90
+
+[Install]
+WantedBy=default.target

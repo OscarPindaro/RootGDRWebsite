@@ -186,12 +186,62 @@ recovery leaves its disposable container/storage for inspection. Failure stops
 only a container positively created by that run and retains the isolated target
 for diagnosis. The operator removes only that namespace after review.
 
+## Manual Ansible rollout
+
+`deploy/deploy.yaml` requires exactly one explicitly inventoried target and keeps
+orchestration in `rootgdr_application` and `image_transfer`. The controller CLI
+invokes that playbook with argv, existing SSH authentication and private inputs:
+
+```console
+uv run harness deploy apply --inventory /private/inventory.yaml \
+  --vars-file /private/deployment.vault.yaml \
+  --vault-password-file /private/vault-password \
+  --manifest /private/build/image.json --check
+```
+
+Remove `--check` only for the manually approved rollout. Global `--dry-run` also
+uses check mode: validate the typed configuration/proof/archive without builds,
+helper installation, writer stops or target filesystem mutation. Templates in
+`deploy/inventory.example.yaml` and `deploy/vars.example.yaml` contain no usable
+credentials; keep real vars, the five separated configuration files, repository
+password and Vault password outside Git, mode 0600. Mounted YAML/init files live
+inside a private 0700 release directory and are readable by their container users;
+env files remain 0600. Secret tasks suppress output and diffs. The facade never
+prints captured Ansible output, including malformed private variable diagnostics.
+
+A proof records the selected full commit, four passing suites, aware timestamp
+and `local-bootstrap` or `ci` mode. It is an operator attestation, not an automatic
+query of hosted CI. Only the first production bootstrap accepts local mode;
+later mutating production rollout requires recorded passing CI. Healthy unchanged
+image/configuration/secret generation is verified with real login and read-only
+checks without restart, backup or migration. The private current manifest is
+published atomically only after successful readiness, build and authenticated reads.
+
+Preflight validates namespace/listener/configuration, pinned tools/images and
+space for transfer, unpacking, coordinated capture and a 512 MiB operating reserve.
+Existing containers/volumes without a current manifest require operator review;
+ordinary rollout refuses database credential rotation. Images move as checksummed
+archives over Ansible's connection and are checked by immutable ID after load.
+Server helper/provider environments are user-scoped, pinned and separate from the
+runtime; only declared temporary staging is removed. No global image/volume prune.
+PostgreSQL initialization reads passwords with psql `\getenv`, never password argv.
+
+The shared operation lock covers pre-deploy encrypted backup and one-shot DDL
+migration. Runtime then uses DML credentials. On failure, one previous-image/config
+rollback is allowed only when the before/after Alembic heads match its verified
+manifest. Different/unknown schema or failed rollback stops writers and leaves
+`.pending-recovery` for operator review. No deploy rescue calls restore or downgrade.
+A namespaced native user service retains the selected configuration across restart;
+startup still needs `/health/ready`, not merely an active systemd unit.
+
+Read-only helpers bind an existing volume's canonical mountpoint instead of
+mounting it by name: Podman otherwise chowns the volume root to the helper user,
+even on a read-only mount. Capture/capacity checks preserve runtime UID/GID/modes.
+
 ## Limits
 
-Packaging, readiness, coordinated backup and isolated recovery are implemented;
-this is not evidence of a completed server deployment. Application rollout and
-schema-compatible rollback remain
-[REQ-0001](../features-request/REQ-0001-github-ci-and-manual-deployment.md)/T06.
+Packaging, readiness, coordinated backup, isolated recovery and manual rollout
+are implemented locally; this is not evidence of a completed server deployment.
 No automatic destructive production restore, Alembic downgrade, WAL/PITR, timer,
 retention cleanup or production activation is supplied here. A same-disk copy
 cannot cover server loss; the verified repository must remain on the PC.

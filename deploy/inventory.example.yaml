@@ -1,0 +1,6 @@
+all:
+  children:
+    rootgdr_targets:
+      hosts:
+        pinball-server.local:
+          ansible_user: pinball

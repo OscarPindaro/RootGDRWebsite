@@ -1,0 +1,18 @@
+---
+- name: Require exactly one explicitly inventoried deployment target
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Refuse an empty or ambiguous target inventory
+      ansible.builtin.assert:
+        that:
+          - groups.get('rootgdr_targets', []) | length == 1
+        fail_msg: Explicitly inventory exactly one Root GDR target; no default deployment is allowed
+
+- name: Manually deploy one verified Root GDR build
+  hosts: rootgdr_targets
+  serial: 1
+  gather_facts: false
+  roles:
+    - rootgdr_application

@@ -1,0 +1,40 @@
+---
+- name: Attempt one compatible application rollback, never database recovery
+  block:
+    - name: Start the previous immutable runtime and unchanged configuration
+      ansible.builtin.command:
+        argv: ["{{ rootgdr_provider }}", '--env-file', "{{ rootgdr_previous.release_directory }}/compose_env", '-f', "{{ rootgdr_previous.release_directory }}/compose", '-p', "{{ rootgdr_plan.target.project }}", up, '-d', '--no-deps', '--force-recreate', app]
+      no_log: true
+
+    - name: Restore only the previous verified application verification boundary
+      ansible.builtin.set_fact:
+        rootgdr_rollback_plan: "{{ rootgdr_plan | combine({'target': rootgdr_previous.target, 'release_directory': rootgdr_previous.release_directory, 'configuration_digest': rootgdr_previous.configuration_digest, 'artifact': rootgdr_plan.artifact | combine({'commit': rootgdr_previous.commit, 'image': 'localhost/rootgdr:' + rootgdr_previous.commit, 'image_id': rootgdr_previous.image_id, 'version': rootgdr_previous.version})}) }}"
+      no_log: true
+
+    - name: Verify the previous application once with real login and reads
+      ansible.builtin.include_tasks: verify.yaml
+      vars:
+        rootgdr_plan: "{{ rootgdr_rollback_plan }}"
+
+    - name: Restore the previous verified native service references
+      ansible.builtin.include_tasks: systemd.yaml
+      vars:
+        rootgdr_plan: "{{ rootgdr_rollback_plan }}"
+      when: rootgdr_previous.target.manage_systemd | bool
+
+  rescue:
+    - name: Stop the application after a failed rollback instead of alternating builds
+      ansible.builtin.command:
+        argv: [podman, stop, '--time=30', "{{ rootgdr_plan.target.project }}_app_1"]
+      failed_when: false
+      no_log: true
+
+    - name: Retain an explicit operator recovery marker
+      ansible.builtin.copy:
+        content: "{{ rootgdr_plan.run_id }}"
+        dest: "{{ rootgdr_plan.target.base }}/.pending-recovery"
+        mode: '0600'
+
+    - name: Stop after the single failed rollback
+      ansible.builtin.fail:
+        msg: Application rollback failed; writers remain stopped and operator recovery is required

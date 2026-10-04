@@ -1,0 +1,106 @@
+---
+- name: Require the supported host Python runtime
+  ansible.builtin.command:
+    argv: [python3, '--version']
+  register: rootgdr_host_python
+  changed_when: false
+
+- name: Refuse unsupported private helper runtimes
+  ansible.builtin.assert:
+    that:
+      - rootgdr_host_python.stdout.startswith('Python 3.14.')
+
+- name: Create separate private helper package directories
+  ansible.builtin.file:
+    path: "{{ rootgdr_plan.target.base }}/tools/{{ item }}"
+    state: directory
+    mode: '0700'
+  loop: ['', python, python/harness, python/harness/deploy]
+
+- name: Create the private minimal Pydantic helper environment
+  ansible.builtin.command:
+    argv: [python3, '-m', venv, "{{ rootgdr_plan.target.base }}/tools/helper"]
+    creates: "{{ rootgdr_plan.target.base }}/tools/helper/bin/python"
+  when: not (rootgdr_disposable_tools | default(false) | bool)
+
+- name: Install only the pinned recovery helper dependencies
+  ansible.builtin.command:
+    argv:
+      - "{{ rootgdr_plan.target.base }}/tools/helper/bin/pip"
+      - install
+      - '--disable-pip-version-check'
+      - pydantic==2.12.5
+      - pydantic-core==2.41.5
+      - annotated-types==0.7.0
+      - typing-extensions==4.15.0
+      - typing-inspection==0.4.2
+    creates: "{{ rootgdr_plan.target.base }}/tools/helper/.pydantic-2.12.5"
+  when: not (rootgdr_disposable_tools | default(false) | bool)
+  no_log: true
+
+- name: Mark the pinned helper dependency installation
+  ansible.builtin.copy:
+    content: '2.12.5'
+    dest: "{{ rootgdr_plan.target.base }}/tools/helper/.pydantic-2.12.5"
+    mode: '0600'
+  when: not (rootgdr_disposable_tools | default(false) | bool)
+
+- name: Create the private Compose provider environment
+  ansible.builtin.command:
+    argv: [python3, '-m', venv, "{{ rootgdr_plan.target.base }}/tools/compose"]
+    creates: "{{ rootgdr_plan.target.base }}/tools/compose/bin/python"
+  when: not (rootgdr_disposable_tools | default(false) | bool)
+
+- name: Install the reviewed pinned user-scoped Compose provider
+  ansible.builtin.command:
+    argv:
+      - "{{ rootgdr_plan.target.base }}/tools/compose/bin/pip"
+      - install
+      - '--disable-pip-version-check'
+      - podman-compose==1.6.0
+      - PyYAML==6.0.3
+      - python-dotenv==1.1.1
+    creates: "{{ rootgdr_plan.target.base }}/tools/compose/bin/podman-compose"
+  when: not (rootgdr_disposable_tools | default(false) | bool)
+  no_log: true
+
+- name: Copy the standalone helper package without development dependencies or caches
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../src/harness/deploy/{{ item }}"
+    dest: "{{ rootgdr_plan.target.base }}/tools/python/harness/deploy/{{ item }}"
+    mode: '0600'
+  loop:
+    - __init__.py
+    - artifact.py
+    - backup.py
+    - backup_cli.py
+    - backup_restore.py
+    - backup_schemas.py
+    - backup_storage.py
+    - rollout.py
+    - rollout_cli.py
+    - rollout_schemas.py
+
+- name: Install the standalone package root
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/../src/harness/deploy/__init__.py"
+    dest: "{{ rootgdr_plan.target.base }}/tools/python/harness/__init__.py"
+    mode: '0600'
+
+- name: Select explicit private tool executables
+  ansible.builtin.set_fact:
+    rootgdr_python: "{{ rootgdr_helper_python if rootgdr_disposable_tools | default(false) | bool else rootgdr_plan.target.base + '/tools/helper/bin/python' }}"
+    rootgdr_provider: "{{ rootgdr_compose_binary if rootgdr_disposable_tools | default(false) | bool else rootgdr_plan.target.base + '/tools/compose/bin/podman-compose' }}"
+
+- name: Define the argv-only remote utility boundary
+  ansible.builtin.set_fact:
+    rootgdr_remote_command: ["{{ rootgdr_python }}", '-m', harness.deploy.rollout_cli]
+    rootgdr_remote_backup_command: ["{{ rootgdr_python }}", '-m', harness.deploy.backup_cli]
+
+- name: Verify the pinned helper dependencies instead of trusting an installation marker
+  ansible.builtin.command:
+    argv:
+      - "{{ rootgdr_python }}"
+      - '-c'
+      - "from importlib.metadata import version; assert version('pydantic') == '2.12.5'; assert version('pydantic-core') == '2.41.5'"
+  changed_when: false

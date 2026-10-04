@@ -1,0 +1,204 @@
+---
+- name: Read the typed current deployment without repairing missing state
+  ansible.builtin.command:
+    argv: "{{ rootgdr_remote_command + ['current', '--plan', rootgdr_server_stage.path + '/plan.json'] }}"
+  environment:
+    PYTHONPATH: "{{ rootgdr_plan.target.base }}/tools/python"
+  register: rootgdr_current
+  changed_when: false
+  no_log: true
+
+- name: Record the previous verified build and clear recovery state for this invocation
+  ansible.builtin.set_fact:
+    rootgdr_previous: "{{ rootgdr_current.stdout | from_json }}"
+    rootgdr_writers_stopped: false
+    rootgdr_backup_verified: false
+    rootgdr_rollback_safe: false
+  no_log: true
+
+- name: Check unchanged release readiness without mutating anything
+  ansible.builtin.uri:
+    url: "http://{{ rootgdr_plan.target.bind_address }}:{{ rootgdr_plan.target.port }}/health/ready"
+    return_content: true
+  register: rootgdr_current_health
+  failed_when: false
+  no_log: true
+
+- name: Inspect the actual writer image instead of trusting only deployment metadata
+  ansible.builtin.command:
+    argv: [podman, inspect, '--format', '{{ "{{.Image}}" }}', "{{ rootgdr_plan.target.project }}_app_1"]
+  register: rootgdr_writer_image
+  changed_when: false
+  failed_when: false
+  no_log: true
+
+- name: Recognize a healthy unchanged build and configuration
+  ansible.builtin.set_fact:
+    rootgdr_noop: "{{ rootgdr_previous is not none and rootgdr_previous.image_id == rootgdr_plan.artifact.image_id and rootgdr_previous.configuration_digest == rootgdr_plan.configuration_digest and rootgdr_current_health.status == 200 and rootgdr_writer_image.rc == 0 and rootgdr_writer_image.stdout | replace('sha256:', '') == rootgdr_plan.artifact.image_id | replace('sha256:', '') }}"
+  no_log: true
+
+- name: Verify unchanged production with real login and reads, without backup or migration
+  ansible.builtin.include_tasks: verify.yaml
+  when: rootgdr_noop | bool
+
+- name: Perform one coordinated application rollout
+  when: not (rootgdr_noop | bool)
+  block:
+    - name: Require hosted verification after the production bootstrap, including unhealthy reapply
+      ansible.builtin.assert:
+        that:
+          - rootgdr_plan.target.project != 'rootgdr-production' or rootgdr_previous is none or rootgdr_plan.proof.mode == 'ci'
+        fail_msg: Production rollout after the first bootstrap requires a recorded passing CI gate
+
+    - name: Preserve the previous manifest as this invocation's rollback boundary
+      ansible.builtin.copy:
+        content: "{{ rootgdr_previous | to_json }}"
+        dest: "{{ rootgdr_server_stage.path }}/previous.json"
+        mode: '0600'
+      when: rootgdr_previous is not none
+      no_log: true
+
+    - name: Read the existing database credential generation before staging any changes
+      ansible.builtin.stat:
+        path: "{{ rootgdr_previous.release_directory }}/database_env"
+        checksum_algorithm: sha256
+      register: rootgdr_database_credentials
+      when: rootgdr_previous is not none
+      no_log: true
+
+    - name: Refuse unreviewed database credential rotation
+      ansible.builtin.assert:
+        that:
+          - rootgdr_database_credentials.stat.checksum == (rootgdr_plan.configuration | selectattr('name', 'equalto', 'database_env') | first).sha256
+        fail_msg: Database credentials cannot be rotated by ordinary application rollout
+      when: rootgdr_previous is not none
+      no_log: true
+
+    - name: Prepare candidate configuration without overwriting the active release
+      ansible.builtin.include_tasks: configuration.yaml
+
+    - name: Record the live schema before backup and migration
+      ansible.builtin.command:
+        argv: "{{ rootgdr_remote_command + ['schema', '--plan', rootgdr_server_stage.path + '/plan.json'] }}"
+      environment:
+        PYTHONPATH: "{{ rootgdr_plan.target.base }}/tools/python"
+      register: rootgdr_before_schema
+      changed_when: false
+      no_log: true
+
+    - name: Keep the pre-migration schema identity in this invocation's staging
+      ansible.builtin.copy:
+        content: "{{ rootgdr_before_schema.stdout }}"
+        dest: "{{ rootgdr_server_stage.path }}/before.json"
+        mode: '0600'
+      no_log: true
+
+    - name: Prepare recovery for the active build and configuration
+      ansible.builtin.command:
+        argv: "{{ rootgdr_remote_command + ['capture-spec', '--plan', rootgdr_server_stage.path + '/plan.json'] }}"
+      environment:
+        PYTHONPATH: "{{ rootgdr_plan.target.base }}/tools/python"
+      register: rootgdr_capture
+      changed_when: false
+      no_log: true
+
+    - name: Take the verified encrypted off-server pre-deploy backup under the shared lock
+      ansible.builtin.include_role:
+        name: coordinated_backup
+        apply:
+          environment:
+            PYTHONPATH: "{{ rootgdr_plan.target.base }}/tools/python"
+      vars:
+        backup_spec: "{{ rootgdr_capture.stdout | from_json }}"
+        backup_application_base: "{{ rootgdr_plan.target.base }}"
+        backup_capture_command: "{{ rootgdr_remote_backup_command }}"
+        backup_controller_command: "{{ rootgdr_controller_backup_command }}"
+        backup_storage_file: "{{ rootgdr_backup_storage_file }}"
+        backup_receipt_file: "{{ rootgdr_backup_receipt_file }}"
+        backup_manage_lock: false
+
+    - name: Require this exact invocation's verified recovery gate
+      ansible.builtin.assert:
+        that:
+          - backup_verified
+          - backup_verified_run_id == rootgdr_plan.run_id
+
+    - name: Record that migration is permitted and writers are stopped
+      ansible.builtin.set_fact:
+        rootgdr_writers_stopped: true
+        rootgdr_backup_verified: true
+
+    - name: Run the one-shot migration with separate DDL credentials
+      ansible.builtin.command:
+        argv: "{{ rootgdr_compose + ['--profile', 'maintenance', 'run', '--rm', '--no-deps', 'migrate'] }}"
+      no_log: true
+
+    - name: Start the immutable selected runtime with only its DML credentials
+      ansible.builtin.command:
+        argv: "{{ rootgdr_compose + ['up', '-d', '--no-deps', '--force-recreate', 'app'] }}"
+      no_log: true
+
+    - name: Verify readiness, actual build and real authenticated reads
+      ansible.builtin.include_tasks: verify.yaml
+
+    - name: Activate the native user-service lifecycle after successful verification
+      ansible.builtin.include_tasks: systemd.yaml
+      when: rootgdr_plan.target.manage_systemd | bool
+
+    - name: Generate the verified current manifest from the real live schema
+      ansible.builtin.command:
+        argv: "{{ rootgdr_remote_command + ['manifest', '--plan', rootgdr_server_stage.path + '/plan.json'] }}"
+      environment:
+        PYTHONPATH: "{{ rootgdr_plan.target.base }}/tools/python"
+      register: rootgdr_new_manifest
+      changed_when: false
+      no_log: true
+
+    - name: Publish the current deployment atomically only after success
+      ansible.builtin.copy:
+        content: "{{ rootgdr_new_manifest.stdout }}"
+        dest: "{{ rootgdr_plan.target.base }}/current.json"
+        mode: '0600'
+      no_log: true
+      diff: false
+
+  rescue:
+    - name: Stop the failed candidate before considering recovery
+      ansible.builtin.command:
+        argv: [podman, stop, '--time=30', "{{ rootgdr_plan.target.project }}_app_1"]
+      when: rootgdr_writers_stopped | bool
+      failed_when: false
+      no_log: true
+
+    - name: Determine whether the verified previous image has the exact same schema
+      ansible.builtin.command:
+        argv: "{{ rootgdr_remote_command + ['rollback', '--plan', rootgdr_server_stage.path + '/plan.json', '--previous', rootgdr_server_stage.path + '/previous.json', '--before', rootgdr_server_stage.path + '/before.json'] }}"
+      environment:
+        PYTHONPATH: "{{ rootgdr_plan.target.base }}/tools/python"
+      register: rootgdr_rollback_check
+      failed_when: false
+      changed_when: false
+      when:
+        - rootgdr_previous is not none
+        - rootgdr_backup_verified | bool
+      no_log: true
+
+    - name: Permit at most one schema-compatible application rollback
+      ansible.builtin.set_fact:
+        rootgdr_rollback_safe: "{{ rootgdr_rollback_check.rc | default(1) == 0 and rootgdr_rollback_check.stdout | default('false') | from_json }}"
+      no_log: true
+
+    - name: Attempt only the verified previous image and configuration once
+      ansible.builtin.include_tasks: rollback.yaml
+      when: rootgdr_rollback_safe | bool
+
+    - name: Record operator recovery when the database schema cannot be rolled back safely
+      ansible.builtin.copy:
+        content: "{{ rootgdr_plan.run_id }}"
+        dest: "{{ rootgdr_plan.target.base }}/.pending-recovery"
+        mode: '0600'
+      when: rootgdr_writers_stopped | bool and not (rootgdr_rollback_safe | bool)
+
+    - name: Leave the rollout failed even if a compatible application rollback succeeded
+      ansible.builtin.fail:
+        msg: Rollout failed; no database restore or downgrade was attempted. Review the recovery state and verified backup.

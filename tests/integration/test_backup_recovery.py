@@ -29,6 +29,7 @@ from harness.deploy.backup import (
     BackupError,
     capture,
     command,
+    source_mount,
     sql,
     verify_bundle,
     write_private,
@@ -744,7 +745,7 @@ def test_named_volume_capture_and_restore_preserves_numeric_upload_ownership(
                 HELPER_IMAGE,
                 "-c",
                 "import pathlib,os; p=pathlib.Path('/files/owned.png'); p.write_bytes(b'owned-image'); "
-                "os.chmod(p,0o640); os.chown(p,10001,10001)",
+                "os.chmod(p,0o640); os.chown(p,10001,10001); os.chown('/files',10001,10001)",
             ]
         )
         sqlite_capture.files = FileSource(volume=volume)
@@ -756,6 +757,23 @@ def test_named_volume_capture_and_restore_preserves_numeric_upload_ownership(
             manifest.files[0].gid,
             manifest.files[0].mode,
         ) == (10001, 10001, 0o640)
+        root_owner = command(
+            [
+                "podman",
+                "run",
+                "--rm",
+                "--pull=never",
+                "--network=none",
+                "--user=0",
+                "-v",
+                source_mount("podman", sqlite_capture.files),
+                "--entrypoint=python",
+                HELPER_IMAGE,
+                "-c",
+                "import os,json; s=os.stat('/source'); print(json.dumps([s.st_uid,s.st_gid]))",
+            ]
+        )
+        assert json.loads(root_owner) == [10001, 10001]
         assert restore_bundle(
             directory, RestoreSpec(namespace=namespace, target=target)
         ).verified
