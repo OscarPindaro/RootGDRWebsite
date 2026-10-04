@@ -1,0 +1,50 @@
+---
+# Weekly capture only. Never deploys, migrates or restores application data.
+- name: Require exactly one explicitly inventoried backup target
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Refuse an empty or ambiguous weekly backup inventory
+      ansible.builtin.assert:
+        that:
+          - groups.get('backup_targets', []) | length == 1
+
+- name: Capture one verified encrypted weekly copy per application
+  hosts: backup_targets
+  gather_facts: false
+  serial: 1
+  tasks:
+    - name: Require explicit private weekly inputs
+      ansible.builtin.assert:
+        that:
+          - weekly_backup_applications is defined
+          - weekly_backup_storage_file is defined
+          - weekly_backup_receipt_directory is defined
+          - weekly_backup_controller_command is defined
+
+    - name: Generate the typed weekly capture specification per application
+      ansible.builtin.command:
+        argv:
+          - "{{ item.base }}/tools/helper/bin/python"
+          - '-m'
+          - "harness.deploy.{{ item.cli }}"
+          - capture-spec
+          - '--plan'
+          - "{{ item.base }}/{{ item.plan }}"
+          - '--purpose'
+          - weekly
+        chdir: "{{ item.base }}"
+      environment:
+        PYTHONPATH: "{{ item.base }}/tools/python"
+      loop: "{{ weekly_backup_applications }}"
+      register: weekly_specs
+      changed_when: false
+      no_log: true
+
+    - name: Take each verified encrypted weekly copy under its shared lock
+      ansible.builtin.include_tasks: weekly-capture.yaml
+      loop: "{{ weekly_specs.results }}"
+      loop_control:
+        loop_var: weekly_spec
+        label: "{{ weekly_spec.item.name }}"

@@ -261,7 +261,9 @@ def capacity(
 
 
 def recovery_spec(
-    plan: DeploymentPlan, current: CurrentDeployment | None
+    plan: DeploymentPlan,
+    current: CurrentDeployment | None,
+    purpose: Literal["predeploy", "weekly"] = "predeploy",
 ) -> CaptureSpec:
     release = current.release_directory if current else plan.release_directory
     source_state = postgres_state("podman", plan.target.database)
@@ -271,7 +273,7 @@ def recovery_spec(
         raise BackupError("Current manifest and live database schema do not agree")
     return CaptureSpec(
         application="rootgdr",
-        purpose="predeploy",
+        purpose=purpose,
         run_id=plan.run_id,
         build_commit=current.commit if current else plan.artifact.commit,
         image_id=current.image_id if current else plan.artifact.image_id,

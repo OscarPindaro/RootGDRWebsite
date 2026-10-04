@@ -1,0 +1,9 @@
+[Unit]
+Description=Root GDR weekly encrypted off-server backup
+Documentation=file://%REPO%/docs/features-implemented/production-deployment.md
+
+[Service]
+Type=oneshot
+WorkingDirectory=%REPO%
+ExecStart=%REPO%/.venv/bin/python -m harness.cli deploy backup --config %CONFIG%
+TimeoutStartSec=3600

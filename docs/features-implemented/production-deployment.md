@@ -345,6 +345,55 @@ carry the immutable helper identity. Cleanup removed only that attempt's
 containers, volumes and release directory, after confirming zero user tables
 and no Alembic version.
 
+## Weekly backup operation
+
+`deploy/weekly-backup.yaml` runs only capture, encryption and verification; it
+never deploys, migrates or restores. For every configured application it asks the
+target's own pinned helper for a typed `--purpose weekly` capture specification,
+then runs the coordinated role under that application's shared lock. A periodic
+specification always gets a fresh run UUID, so its receipt cannot collide with the
+deployment's pre-deploy receipt.
+
+```console
+uv run harness deploy install-backup-timer --config /private/weekly.json --enable
+uv run harness deploy backup --config /private/weekly.json
+uv run harness deploy backup-status --config /private/weekly.json
+```
+
+`WeeklyBackupConfig` is a private controller file with paths only: inventory,
+Vault file and password file, the restic `StorageSpec`, receipt and status
+directories, and per-application `base`, CLI module and relative plan path.
+Secrets stay in Vault, and the timer reaches them non-interactively through the
+private Vault password file — no prompt, no interactive unlock.
+
+`deploy/systemd/rootgdr-weekly-backup.{service,timer}` are the committed
+templates. The timer is `OnCalendar=Sun *-*-* 10:00:00 Europe/Rome` with
+`Persistent=true`, so a missed Sunday runs after the next boot. The installed
+service invokes only `harness deploy backup`.
+
+Retention keeps the newest four complete weekly snapshots **per application**.
+It reads restic's snapshot list, accepts only records tagged
+`rootgdr-managed-v1` **and** `purpose=weekly` with exactly one application and run
+tag, and forgets only the superseded ones. Pre-deploy snapshots, other
+applications and unmanaged restic data are never selected. Pruning runs only
+after a new verified snapshot exists, so a failed or partial capture can never
+remove the last valid copy; there is no path-based deletion and no symlink
+handling to get wrong.
+
+`harness deploy backup-status` prints last success, last failure, the bounded last
+error and whether the copy is overdue (no verified weekly success within eight
+days, i.e. one interval plus a declared one-day margin). The service's journal
+holds the rest. A PC that stays off, an unreachable server or an unavailable
+Vault password delay the copy and surface as overdue; a seven-day recovery point
+is therefore not promised while the PC is offline.
+
+Verified on the real stacks: two consecutive weekly runs produced distinct
+encrypted snapshots for both applications, a deliberate second run before the
+run-ID fix failed at the encryption gate, resumed the unchanged writer, preserved
+every earlier snapshot and recorded the failure, and a disposable
+`rootgdr-restore-…` target restored the newest Root GDR weekly snapshot with its
+schema, grants and configuration.
+
 ## Limits
 
 Packaging, readiness, coordinated backup, isolated recovery and manual rollout

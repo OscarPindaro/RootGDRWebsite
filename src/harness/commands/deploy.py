@@ -11,10 +11,35 @@ from rich.console import Console
 
 from ..deploy.artifact import build_artifact, verify_artifact
 from ..deploy.backup import BackupError
+from ..deploy.backup_retention import (
+    KEEP_WEEKLY,
+    WeeklyBackupConfig,
+    apply_retention,
+    overdue,
+    read_status,
+    record_failure,
+    record_success,
+    retention_victims,
+    weekly_snapshots,
+)
+from ..deploy.backup_schemas import StorageSpec
 from ..test import state
 
 console = Console()
 err_console = Console(stderr=True)
+
+
+def private_config(path: Path) -> bytes:
+    if (
+        not path.is_absolute()
+        or path.resolve() != path
+        or not path.is_file()
+        or path.stat().st_mode & 0o077
+    ):
+        raise BackupError("Private configuration must be a canonical private file")
+    return path.read_bytes()
+
+
 deploy_app = typer.Typer(
     no_args_is_help=True, help="Build and verify manual deployment inputs."
 )
@@ -230,6 +255,192 @@ def register_commands(app: typer.Typer, *, is_dry_run: Callable[[], bool]) -> No
             "Board check passed."
             if check or is_dry_run()
             else "Board deployment verified."
+        )
+
+    @deploy_app.command("backup")
+    def backup(
+        config: Annotated[
+            Path, typer.Option(help="Private weekly-backup configuration JSON.")
+        ],
+        keep: Annotated[
+            int, typer.Option(help="Complete weekly copies kept per application.")
+        ] = KEEP_WEEKLY,
+        skip_capture: Annotated[
+            bool, typer.Option(help="Only apply retention and report status.")
+        ] = False,
+    ) -> None:
+        """Run the weekly off-server capture for every configured application."""
+        try:
+            weekly = WeeklyBackupConfig.model_validate_json(private_config(config))
+            storage = StorageSpec.model_validate_json(
+                private_config(weekly.storage_file)
+            )
+            if skip_capture or is_dry_run():
+                console.print(
+                    "Weekly capture skipped; retention and status are unchanged."
+                )
+                return
+            root = state.worktree_root()
+            result = subprocess.run(
+                [
+                    "ansible-playbook",
+                    "-i",
+                    str(weekly.inventory),
+                    str(root / "deploy" / "weekly-backup.yaml"),
+                    "-e",
+                    "@" + str(weekly.variables_file),
+                    "-e",
+                    json.dumps(
+                        {
+                            "weekly_backup_applications": [
+                                application.model_dump(mode="json")
+                                for application in weekly.applications
+                            ],
+                            "weekly_backup_storage_file": str(weekly.storage_file),
+                            "weekly_backup_receipt_directory": str(
+                                weekly.receipt_directory
+                            ),
+                            "weekly_backup_controller_command": [
+                                sys.executable,
+                                "-m",
+                                "harness.deploy.backup_cli",
+                            ],
+                        }
+                    ),
+                    "--ssh-common-args=-o BatchMode=yes",
+                    "--vault-password-file",
+                    str(weekly.vault_password_file),
+                ],
+                cwd=root,
+                capture_output=True,
+                stdin=subprocess.DEVNULL,
+                timeout=3600,
+                env={**os.environ, "ANSIBLE_CONFIG": str(root / "deploy/ansible.cfg")},
+            )
+        except (
+            BackupError,
+            ValidationError,
+            OSError,
+            ValueError,
+            subprocess.TimeoutExpired,
+        ):
+            err_console.print(
+                "[bold red]Weekly backup inputs are invalid; nothing was captured.[/bold red]"
+            )
+            raise typer.Exit(1) from None
+        if result.returncode:
+            for application in weekly.applications:
+                record_failure(
+                    weekly.status_directory,
+                    application.name,
+                    "Weekly capture failed; review the ansible journal",
+                )
+            err_console.print(
+                "[bold red]Weekly capture failed; existing snapshots were preserved.[/bold red]"
+            )
+            raise typer.Exit(result.returncode)
+        try:
+            snapshots = weekly_snapshots(storage)
+            for application in weekly.applications:
+                mine = [
+                    item for item in snapshots if item.application == application.name
+                ]
+                if not mine:
+                    raise BackupError("Weekly capture produced no managed snapshot")
+                latest = max(mine, key=lambda item: item.time)
+                # Retention runs only after a new complete copy exists, so a failed
+                # or partial capture can never remove the last valid snapshot.
+                apply_retention(
+                    storage, retention_victims(snapshots, application.name, keep)
+                )
+                record_success(
+                    weekly.status_directory, application.name, latest.snapshot_id
+                )
+        except BackupError, ValidationError, OSError, ValueError:
+            err_console.print(
+                "[bold red]Weekly capture verified but retention/status failed; review manually.[/bold red]"
+            )
+            raise typer.Exit(1) from None
+        console.print("Weekly encrypted copies verified.")
+
+    @deploy_app.command("backup-status")
+    def backup_status(
+        config: Annotated[
+            Path, typer.Option(help="Private weekly-backup configuration JSON.")
+        ],
+    ) -> None:
+        """Report last success/failure and overdue state without secrets."""
+        try:
+            weekly = WeeklyBackupConfig.model_validate_json(private_config(config))
+            lines = []
+            for application in weekly.applications:
+                status = read_status(weekly.status_directory, application.name)
+                lines.append(
+                    f"{application.name}: last_success={status.last_success} "
+                    f"last_failure={status.last_failure} "
+                    f"overdue={overdue(status)} error={status.last_error or '-'}"
+                )
+        except BackupError, ValidationError, OSError, ValueError:
+            err_console.print("[bold red]Backup status is unavailable.[/bold red]")
+            raise typer.Exit(1) from None
+        for line in lines:
+            console.print(line)
+
+    @deploy_app.command("install-backup-timer")
+    def install_backup_timer(
+        config: Annotated[
+            Path, typer.Option(help="Private weekly-backup configuration JSON.")
+        ],
+        directory: Annotated[
+            Path, typer.Option(help="Native user unit directory.")
+        ] = Path.home() / ".config/systemd/user",
+        enable: Annotated[
+            bool, typer.Option(help="Also enable and start the weekly timer.")
+        ] = False,
+    ) -> None:
+        """Install the Sunday 10:00 Europe/Rome user timer for weekly backups."""
+        try:
+            private_config(config)
+            if not directory.is_absolute() or directory.resolve() != directory:
+                raise BackupError("User unit directory must be canonical")
+            root = state.worktree_root()
+            templates = root / "deploy/systemd"
+            directory.mkdir(parents=True, exist_ok=True)
+            for name in (
+                "rootgdr-weekly-backup.service",
+                "rootgdr-weekly-backup.timer",
+            ):
+                rendered = (templates / name).read_text()
+                rendered = rendered.replace("%REPO%", str(root)).replace(
+                    "%CONFIG%", str(config)
+                )
+                target = directory / name
+                target.write_text(rendered)
+                target.chmod(0o644)
+            if enable and not is_dry_run():
+                subprocess.run(
+                    ["systemctl", "--user", "daemon-reload"],
+                    check=True,
+                    capture_output=True,
+                )
+                subprocess.run(
+                    [
+                        "systemctl",
+                        "--user",
+                        "enable",
+                        "--now",
+                        "rootgdr-weekly-backup.timer",
+                    ],
+                    check=True,
+                    capture_output=True,
+                )
+        except BackupError, OSError, ValueError, subprocess.SubprocessError:
+            err_console.print("[bold red]Weekly timer installation failed.[/bold red]")
+            raise typer.Exit(1) from None
+        console.print(
+            "Weekly timer installed and started."
+            if enable and not is_dry_run()
+            else "Weekly timer files installed; enable it explicitly when ready."
         )
 
     app.add_typer(deploy_app, name="deploy")

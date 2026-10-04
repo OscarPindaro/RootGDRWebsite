@@ -1,0 +1,18 @@
+---
+- name: Capture and encrypt this application's weekly recovery copy
+  ansible.builtin.include_role:
+    name: coordinated_backup
+    apply:
+      environment:
+        PYTHONPATH: "{{ weekly_spec.item.base }}/tools/python"
+  vars:
+    backup_spec: "{{ weekly_spec.stdout | from_json }}"
+    backup_application_base: "{{ weekly_spec.item.base }}"
+    backup_capture_command:
+      - "{{ weekly_spec.item.base }}/tools/helper/bin/python"
+      - '-m'
+      - harness.deploy.backup_cli
+    backup_controller_command: "{{ weekly_backup_controller_command }}"
+    backup_storage_file: "{{ weekly_backup_storage_file }}"
+    backup_receipt_file: "{{ weekly_backup_receipt_directory }}/{{ weekly_spec.item.name }}-{{ (weekly_spec.stdout | from_json).run_id }}.receipt.json"
+    backup_manage_lock: true

@@ -2,6 +2,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from uuid import uuid4
 
 from pydantic import ValidationError
 
@@ -49,6 +50,10 @@ def main() -> int:
         elif name == "rollback":
             operation.add_argument("--previous", required=True, type=Path)
             operation.add_argument("--before", required=True, type=Path)
+        elif name == "capture-spec":
+            operation.add_argument(
+                "--purpose", choices=("predeploy", "weekly"), default="predeploy"
+            )
         elif name == "seed-request":
             operation.add_argument("--bundle", required=True, type=Path)
             operation.add_argument("--email", required=True)
@@ -76,8 +81,14 @@ def main() -> int:
         elif args.operation == "schema":
             print(json.dumps(schema_heads(plan.target.database)))
         elif args.operation == "capture-spec":
+            if args.purpose == "weekly":
+                # A periodic copy is its own operation: it must not reuse the
+                # deployment run ID, or its receipt would collide with the last one.
+                plan.run_id = uuid4()
             print(
-                recovery_spec(plan, current_deployment(plan.target)).model_dump_json()
+                recovery_spec(
+                    plan, current_deployment(plan.target), args.purpose
+                ).model_dump_json()
             )
         elif args.operation == "manifest":
             print(verified_manifest(plan).model_dump_json())

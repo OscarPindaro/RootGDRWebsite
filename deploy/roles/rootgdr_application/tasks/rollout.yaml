@@ -41,6 +41,16 @@
   ansible.builtin.include_tasks: verify.yaml
   when: rootgdr_noop | bool
 
+- name: Keep the validated nonsecret plan beside an unchanged durable manifest
+  ansible.builtin.copy:
+    src: "{{ rootgdr_server_stage.path }}/plan.json"
+    dest: "{{ rootgdr_plan.target.base }}/plan.json"
+    remote_src: true
+    mode: '0600'
+  when: rootgdr_noop | bool
+  no_log: true
+  diff: false
+
 - name: Perform one coordinated application rollout
   when: not (rootgdr_noop | bool)
   block:
@@ -166,6 +176,15 @@
       ansible.builtin.copy:
         content: "{{ rootgdr_new_manifest.stdout }}"
         dest: "{{ rootgdr_plan.target.base }}/current.json"
+        mode: '0600'
+      no_log: true
+      diff: false
+
+    - name: Keep the validated nonsecret plan beside the durable manifest
+      ansible.builtin.copy:
+        src: "{{ rootgdr_server_stage.path }}/plan.json"
+        dest: "{{ rootgdr_plan.target.base }}/plan.json"
+        remote_src: true
         mode: '0600'
       no_log: true
       diff: false

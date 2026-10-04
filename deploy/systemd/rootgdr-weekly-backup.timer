@@ -1,0 +1,11 @@
+[Unit]
+Description=Root GDR weekly encrypted off-server backup
+
+[Timer]
+OnCalendar=Sun *-*-* 10:00:00 Europe/Rome
+Persistent=true
+RandomizedDelaySec=0
+Unit=rootgdr-weekly-backup.service
+
+[Install]
+WantedBy=timers.target
