@@ -13,6 +13,7 @@ from uuid import uuid4
 
 import httpx
 import pytest
+from pydantic import SecretStr
 
 from harness.deploy.backup import HELPER_IMAGE, VolumeInfo, command, write_private
 from harness.deploy.vikunja import board_recovery_spec, configuration, plan_board
@@ -20,6 +21,7 @@ from harness.deploy.backup_restore import restore_encrypted
 from harness.deploy.backup_schemas import BackupReceipt, RestoreSpec, StorageSpec
 from harness.deploy.backup_storage import initialize_storage
 from harness.deploy.vikunja_bootstrap import bootstrap_accounts, login
+from harness.backlog.client import BoardClient, BoardError
 from harness.deploy.vikunja_schemas import VIKUNJA_IMAGE, VikunjaSpec
 from harness.test import state
 from harness.test.compose import _wait_for_http
@@ -611,6 +613,35 @@ def test_coordinated_encrypted_backup_restores_real_board_login_task_and_attachm
                 "import os; paths=['/cleanup']; paths.extend(os.path.join(root,name) for root,dirs,files in os.walk('/cleanup') for name in dirs+files); [os.chown(path,0,0) for path in paths]",
             ]
         )
+
+
+def test_backlog_client_paginates_creates_and_bounds_errors_on_the_real_board(
+    board_deployment,
+):
+    spec, directory = board_deployment
+    assert apply_board(spec, directory).returncode == 0
+    runtime = spec.target.base / "runtime"
+    identity = json.loads((runtime / "identity.json").read_bytes())
+    token = SecretStr((runtime / "tooling-token").read_text().strip())
+    base = f"http://127.0.0.1:{spec.target.port}"
+    with BoardClient(base, token) as board:
+        project = board.projects()
+        assert [item.id for item in project] == [identity["project_id"]]
+        for index in range(55):
+            board.create_task(identity["project_id"], title=f"Pagination {index:02d}")
+        tasks = board.tasks(identity["project_id"])
+        assert len(tasks) == 55
+        created = board.create_task(
+            identity["project_id"], title="Client boundary", description="typed"
+        )
+        assert board.task(created.id).title == "Client boundary"
+        with pytest.raises(BoardError, match="not found"):
+            board.task(999_999)
+        with pytest.raises(BoardError, match="rejected the request payload"):
+            board.create_task(identity["project_id"], title="")
+    with BoardClient(base, SecretStr("not-the-real-token-value-000000")) as wrong:
+        with pytest.raises(BoardError, match="missing, expired or insufficiently"):
+            wrong.projects()
 
 
 def test_board_password_login_desktop_and_phone_evidence(board_deployment):

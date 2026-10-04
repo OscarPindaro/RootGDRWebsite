@@ -394,6 +394,36 @@ every earlier snapshot and recorded the failure, and a disposable
 `rootgdr-restore-…` target restored the newest Root GDR weekly snapshot with its
 schema, grants and configuration.
 
+## Backlog CLI
+
+`harness backlog` reads and creates tickets on the isolated board over API v2.
+It never deletes anything and never administers projects, tokens or users.
+
+```console
+export ROOTGDR_BOARD_TOKEN_FILE=/private/board-tooling-token
+uv run harness backlog projects [--json]
+uv run harness backlog list --project 2 [--query REQ-] [--json]
+uv run harness backlog show 17 [--json]
+uv run harness backlog create --project 2 --title "REQ-0012/T04 …" --description "…"
+```
+
+`BoardClient` is a typed httpx boundary: project, view, bucket, task and comment
+models; `BoardPage` for the v2 envelope; and full pagination up to a reviewed
+bound. Status codes map to bounded messages — 401/403 "missing, expired or
+insufficiently scoped", 404 "not found", 422 "rejected the request payload" —
+and never echo an upstream body. Transport failure and timeout are distinguished
+from a server rejection, so an ambiguous write is never retried blindly.
+
+Credentials come from `--token-file` or `ROOTGDR_BOARD_TOKEN_FILE`, must be a
+canonical `0600` file, and never appear in argv, output or logs. The base URL
+must be an explicit loopback tunnel, matching the deployed board. Human output
+prints ids and titles only; `--json` prints the full records.
+
+Verified against the real isolated 2.6.0 board and against the live server board
+through its tunnel: pagination across more than one page (55 tasks), create with
+read-back, 404, 422, a wrong token and the tooling scope that resolves only the
+real project.
+
 ## Limits
 
 Packaging, readiness, coordinated backup, isolated recovery and manual rollout
