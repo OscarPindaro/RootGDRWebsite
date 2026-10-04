@@ -312,6 +312,39 @@ renamed or duplicated; later rollouts skip the seed entirely. The typed outcome
 run again, so the verification proves the seeded reference world through the real
 password login.
 
+## First live bootstrap
+
+Both new isolated stacks were bootstrapped manually on `pinball-server.local`
+(Fedora 43 Server, x86-64, rootless Podman 5.8.4) from the verified commit
+`c7d61d9dff6b578e50bfcfebb30f30a409a3c9aa`, application version `0.1.0`.
+
+- Root GDR: `/home/pinball/rootgdr-production`, published on
+  `192.168.1.201:8001`, Alembic head `c35a50fec1ae`, image
+  `sha256:af0a9741b586…`, native user service `rootgdr-production.service`
+  enabled and active, `current.json` published after verification.
+- Board: `/home/pinball/rootgdr-vikunja`, loopback-only `127.0.0.1:3458`, image
+  `0838aba019fa…`, owner `oscar` (id 1), owned tooling bot
+  `bot-rootgdr-tooling` (id 2), project `Root GDR` (id 2), scoped token (id 1),
+  `rootgdr-vikunja.service` enabled and active.
+
+The pre-deploy coordinated backup was encrypted into the PC repository under
+`~/.local/share/rootgdr/backups/repository` with its receipt in
+`predeploy/`. Verification used real password logins, `/health/ready`,
+`/version`, the seeded reference world and an authenticated Vikunja read; the
+desktop, Pixel-7-class and 390×844 captures were reviewed. Both stacks were
+reached through explicit SSH tunnels for verification because the server
+firewall does not yet admit port 8001 from the LAN — that opening is Oscar's
+action, and LAN access from a phone remains the open gate.
+
+The failed first attempt is worth remembering: the reviewed helper image had
+been transferred as an archive, so it existed only by immutable ID on the
+target and the pinned digest reference did not resolve there. The first
+coordinated capture failed after downtime and the rollout stopped without
+touching data; the plan, durable manifest and capture/capacity/board paths now
+carry the immutable helper identity. Cleanup removed only that attempt's
+containers, volumes and release directory, after confirming zero user tables
+and no Alembic version.
+
 ## Limits
 
 Packaging, readiness, coordinated backup, isolated recovery and manual rollout
