@@ -1,0 +1,19 @@
+---
+# Reusable by application roles. A deploy owns the outer operation lock and
+# calls with backup_manage_lock=false, using the same run ID/lock marker.
+- name: Require explicit application and controller boundaries
+  ansible.builtin.assert:
+    that:
+      - backup_spec is defined
+      - backup_application_base is defined
+      - backup_capture_command is defined
+      - backup_controller_command is defined
+      - backup_storage_file is defined
+      - backup_receipt_file is defined
+      - backup_spec.purpose in ['weekly', 'predeploy']
+      - backup_spec.writers | length > 0
+    fail_msg: Coordinated backup needs explicit typed capture and private storage inputs
+
+- name: Run coordinated recovery gate
+  ansible.builtin.include_tasks: capture.yaml
+  when: not ansible_check_mode

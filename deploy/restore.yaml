@@ -1,0 +1,21 @@
+---
+# Intentionally controller-only. This playbook is never a deployment rescue task.
+- name: Restore a verified snapshot into a new disposable namespace
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Require explicit private recovery inputs
+      ansible.builtin.assert:
+        that:
+          - restore_command is defined
+          - restore_storage_file is defined
+          - restore_receipt_file is defined
+          - restore_spec_file is defined
+        fail_msg: Supply private storage, receipt and disposable restore specifications
+
+    - name: Recover and verify database, files and grants in isolation
+      ansible.builtin.command:
+        argv: "{{ restore_command + ['restore', '--storage', restore_storage_file, '--receipt', restore_receipt_file, '--spec', restore_spec_file] }}"
+      no_log: true
+      when: not ansible_check_mode

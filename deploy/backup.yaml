@@ -1,0 +1,8 @@
+---
+# Invoked manually, or by the later approved controller timer; never deploys.
+- name: Capture and verify an encrypted off-server recovery copy
+  hosts: backup_targets
+  gather_facts: false
+  serial: 1
+  roles:
+    - role: coordinated_backup

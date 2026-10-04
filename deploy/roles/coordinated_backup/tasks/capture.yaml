@@ -1,0 +1,53 @@
+---
+- name: Clear the migration gate and writer resume state
+  ansible.builtin.set_fact:
+    backup_verified: false
+    backup_running_writers: []
+    backup_remote_stage: {}
+    backup_local_stage: {}
+    backup_lock_path: "{{ backup_application_base }}/.operation-lock"
+
+- name: Acquire the atomic application operation lock
+  ansible.builtin.command:
+    argv: [mkdir, '--mode=0700', "{{ backup_lock_path }}"]
+  when: backup_manage_lock | default(true) | bool
+
+- name: Perform capture while owning the operation lock
+  block:
+    - name: Mark ownership of the newly acquired lock
+      ansible.builtin.copy:
+        content: "{{ backup_spec.run_id }}"
+        dest: "{{ backup_lock_path }}/owner"
+        mode: '0600'
+      when: backup_manage_lock | default(true) | bool
+
+    - name: Read the existing operation-lock owner
+      ansible.builtin.slurp:
+        src: "{{ backup_lock_path }}/owner"
+      register: backup_lock_owner
+      no_log: true
+
+    - name: Require this run to own the shared deploy/backup lock
+      ansible.builtin.assert:
+        that:
+          - backup_lock_owner.content | b64decode == backup_spec.run_id
+        fail_msg: Operation lock belongs to another run; stale locks require operator review
+
+    - name: Capture, transfer and encrypt the recovery copy
+      ansible.builtin.include_tasks: data.yaml
+
+  always:
+    - name: Re-read lock ownership before cleanup
+      ansible.builtin.slurp:
+        src: "{{ backup_lock_path }}/owner"
+      register: backup_cleanup_owner
+      no_log: true
+      when: backup_manage_lock | default(true) | bool
+
+    - name: Release only this run's lock
+      ansible.builtin.file:
+        path: "{{ backup_lock_path }}"
+        state: absent
+      when:
+        - backup_manage_lock | default(true) | bool
+        - backup_cleanup_owner.content | default('') | b64decode == backup_spec.run_id

@@ -1,0 +1,136 @@
+---
+- name: Coordinate the immutable capture and controller verification
+  block:
+    - name: Create private run-owned server staging
+      ansible.builtin.tempfile:
+        state: directory
+        path: "{{ backup_application_base }}"
+        prefix: '.backup-'
+      register: backup_remote_stage
+
+    - name: Create private run-owned controller staging
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: 'rootgdr-backup-'
+      register: backup_local_stage
+      delegate_to: localhost
+
+    - name: Install this run's private capture specification
+      ansible.builtin.copy:
+        content: "{{ backup_spec | to_json }}"
+        dest: "{{ backup_remote_stage.path }}/capture.json"
+        mode: '0600'
+      no_log: true
+      diff: false
+
+    - name: Record original writer states without exposing container environment
+      ansible.builtin.command:
+        argv: ["{{ backup_spec.engine | default('podman') }}", inspect, "{{ item }}"]
+      loop: "{{ backup_spec.writers }}"
+      register: backup_writer_states
+      changed_when: false
+      no_log: true
+
+    - name: Refuse operator-paused writers without changing their lifecycle
+      ansible.builtin.assert:
+        that:
+          - not ((item.stdout | from_json)[0].State.Paused | bool)
+        fail_msg: Unpause writers explicitly before requesting a coordinated backup
+      loop: "{{ backup_writer_states.results }}"
+      no_log: true
+
+    - name: Record writers which must resume after failure or periodic capture
+      ansible.builtin.set_fact:
+        backup_running_writers: "{{ backup_running_writers + [item.item] }}"
+      loop: "{{ backup_writer_states.results }}"
+      when: (item.stdout | from_json)[0].State.Running | bool
+      no_log: true
+
+    - name: Stop every application writer and wait for complete shutdown
+      ansible.builtin.command:
+        argv: ["{{ backup_spec.engine | default('podman') }}", stop, '--time=30', "{{ item }}"]
+      loop: "{{ backup_spec.writers }}"
+
+    - name: Capture and checksum database, files and recovery configuration
+      ansible.builtin.command:
+        argv: "{{ backup_capture_command + ['capture', '--spec', backup_remote_stage.path + '/capture.json', '--directory', backup_remote_stage.path + '/bundle'] }}"
+      no_log: true
+
+    - name: Read the typed recovery manifest for transfer
+      ansible.builtin.slurp:
+        src: "{{ backup_remote_stage.path }}/bundle/manifest.json"
+      register: backup_captured_manifest
+      no_log: true
+
+    - name: Prepare private configuration transfer directory
+      ansible.builtin.file:
+        path: "{{ backup_local_stage.path }}/config"
+        state: directory
+        mode: '0700'
+      delegate_to: localhost
+
+    - name: Transfer every checksummed artifact and manifest over Ansible's connection
+      ansible.builtin.fetch:
+        src: "{{ backup_remote_stage.path }}/bundle/{{ item }}"
+        dest: "{{ backup_local_stage.path }}/{{ item }}"
+        flat: true
+        fail_on_missing: true
+        validate_checksum: true
+      loop: "{{ ((backup_captured_manifest.content | b64decode | from_json).artifacts | map(attribute='path') | list) + ['manifest.json'] }}"
+      no_log: true
+
+    - name: Make transferred plaintext artifacts private
+      ansible.builtin.file:
+        path: "{{ backup_local_stage.path }}/{{ item }}"
+        mode: '0600'
+      loop: "{{ ((backup_captured_manifest.content | b64decode | from_json).artifacts | map(attribute='path') | list) + ['manifest.json'] }}"
+      delegate_to: localhost
+      no_log: true
+
+    - name: Encrypt and read back the off-server copy before allowing migrations
+      ansible.builtin.command:
+        argv: "{{ backup_controller_command + ['seal', '--directory', backup_local_stage.path, '--storage', backup_storage_file, '--receipt', backup_receipt_file] }}"
+      delegate_to: localhost
+      no_log: true
+
+    - name: Open the migration gate only after verified encrypted transfer
+      ansible.builtin.set_fact:
+        backup_verified: true
+        backup_verified_run_id: "{{ backup_spec.run_id }}"
+
+    - name: Resume original writers after a successful periodic backup
+      ansible.builtin.command:
+        argv: ["{{ backup_spec.engine | default('podman') }}", start, "{{ item }}"]
+      loop: "{{ backup_running_writers }}"
+      when: backup_spec.purpose == 'weekly'
+
+  rescue:
+    - name: Close the migration gate after any recovery failure
+      ansible.builtin.set_fact:
+        backup_verified: false
+
+    # This resumes the same containers/build, never runs a migration or restores DB.
+    - name: Resume the unchanged writers after a failed recovery gate
+      ansible.builtin.command:
+        argv: ["{{ backup_spec.engine | default('podman') }}", start, "{{ item }}"]
+      loop: "{{ backup_running_writers }}"
+
+    - name: Abort rollout after capture, transfer or encryption failure
+      ansible.builtin.fail:
+        msg: Backup failed; the unchanged build was resumed and migrations remain blocked
+
+  always:
+    - name: Remove only this run's plaintext controller staging
+      ansible.builtin.file:
+        path: "{{ backup_local_stage.path }}"
+        state: absent
+      delegate_to: localhost
+      when: backup_local_stage.path is defined
+      no_log: true
+
+    - name: Remove only this run's plaintext server staging
+      ansible.builtin.file:
+        path: "{{ backup_remote_stage.path }}"
+        state: absent
+      when: backup_remote_stage.path is defined
+      no_log: true
