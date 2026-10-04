@@ -46,6 +46,24 @@ Database and image integration checks verify runtime DML-only grants, startup
 without migration secrets, private-file exclusion and upload persistence across
 container recreation. SQL statement parameter echo is disabled by default.
 
+## Selected-commit image artifacts
+
+`uv run harness deploy build --revision <commit> --output-dir <new-directory>`
+archives the selected Git commit into private temporary staging, builds that
+source, checks Linux/amd64, the OCI revision, runtime build environment and installed
+package version, then saves the image next to a typed `image.json` manifest.
+Local uncommitted edits and untracked files are not build inputs. Existing output
+directories are refused; a failed build removes only its own new artifact directory.
+
+The manifest records the full commit, immutable image ID, version, architecture,
+archive size and SHA-256. `harness deploy check-artifact <absolute-image.json>`
+validates it and reads the archive back. With Podman the archive is OCI; Docker's
+native save format is used for Docker. Files are private and never published to a
+registry. `harness --dry-run deploy build ...` creates nothing and builds nothing.
+These checks establish artifact identity, not a passing CI/test receipt or a
+completed deployment. The transfer/rollout playbook must still check its target,
+loaded image ID, verified tests, available space, configuration and recovery gate.
+
 ## Coordinated encrypted backups
 
 `deploy/backup.yaml` invokes `coordinated_backup` for explicit `backup_targets`.

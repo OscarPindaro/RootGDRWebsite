@@ -53,6 +53,9 @@ evidence. Current ticket status belongs in Vikunja, not this document.
   (T09). A local cached-build regression found during verification adds T10:
   consume the selected build argument before metadata-only instructions and
   verify distinct cached revisions in both OCI labels and runtime information.
+  T11 splits selected-commit artifact creation/validation from the larger T06
+  orchestration ticket: private archives, typed manifest, immutable image ID,
+  revision/version/architecture and transfer checksum checks. T06 depends on T11.
   T03/T04/T05/T06 retain their packaging, recovery, readiness and Ansible
   boundaries. Version selection, tags and release publication remain separate.
 
@@ -284,6 +287,7 @@ GitHub/server capabilities before starting.
 | REQ-0001/T03 | Local production packaging | Image built from a selected commit; persistent uploads survive recreation; no reload/source mounts or private build-context data; separate runtime/migration credentials. |
 | REQ-0001/T04 | Coordinated backup and restore | Writes paused during capture; failed backup blocks deploy; isolated restore recovers DB, files, and permissions; approved schedule/destination/retention documented before periodic activation. |
 | REQ-0001/T05 | Readiness and smoke checks | Check DB/schema and storage, plus a real authenticated read; demonstrate failure with an unavailable dependency and no production dev-login shortcut. |
+| REQ-0001/T11 | Selected-commit deployment artifacts | Build the selected Git snapshot rather than a dirty checkout; validate Linux/amd64, OCI/runtime revision and package version; save a private archive with immutable image ID and typed size/checksum manifest; reject corruption and existing output without mutation. |
 | REQ-0001/T06 | Role-based Ansible deployment and safe application rollback | Thin manually invoked playbook follows the Telegram-bot conventions; reusable image transfer and application-specific Compose role; Vault secrets never appear in output; syntax/check-mode checks and repeated deployment pass in a disposable target without data loss or unnecessary restarts; records the chosen build, backup, and schema; simulated failed rollout restores a compatible previous image; incompatible schema stops recovery without automatic data restore. |
 
 T01 precedes bot publication. T03, T04, and T05 precede T06; CI is the default
