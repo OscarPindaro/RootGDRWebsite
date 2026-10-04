@@ -1,0 +1,24 @@
+name: ${VIKUNJA_PROJECT:?VIKUNJA_PROJECT required}
+
+services:
+  board:
+    image: ${VIKUNJA_IMAGE:?VIKUNJA_IMAGE required}
+    pull_policy: never
+    user: '1000:1000'
+    restart: unless-stopped
+    command: [web, '--config', /etc/vikunja/config.json]
+    environment:
+      VIKUNJA_DATABASE_PATH: /db/vikunja.db
+      VIKUNJA_SERVICE_SECRET_FILE: /run/vikunja/signing-secret
+    ports:
+      - '127.0.0.1:${VIKUNJA_PORT:?VIKUNJA_PORT required}:3456'
+    volumes:
+      - ${VIKUNJA_DATABASE_DIRECTORY:?VIKUNJA_DATABASE_DIRECTORY required}:/db:z
+      - ${VIKUNJA_FILES_DIRECTORY:?VIKUNJA_FILES_DIRECTORY required}:/app/vikunja/files:z
+      - ${VIKUNJA_CONFIG:?VIKUNJA_CONFIG required}:/etc/vikunja/config.json:ro,z
+      - ${VIKUNJA_SIGNING_SECRET:?VIKUNJA_SIGNING_SECRET required}:/run/vikunja/signing-secret:ro,z
+    read_only: true
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,size=64m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]

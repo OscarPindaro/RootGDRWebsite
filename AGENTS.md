@@ -331,3 +331,10 @@ uv run harness content rebuild --email <email> [--world <world-id>]
 - Disposable deployment tests own `rootgdr-disposable-<uuid>` namespaces, loopback
   ports, private temporary config and any temporary user unit. Clean only those
   new resources; preserve work/showcase, board demos and unrelated user services.
+- Vikunja 2.6.0 API v2 exposes registration under `info.auth.local`, requires
+  `it-IT` for Italian registration, and returns negative IDs for virtual projects.
+  Ordinary accounts receive an Inbox; use an owned `bot-` tooling account shared
+  only with the real backlog. Scoped-token denials can return 401 as well as 403.
+- The isolated Vikunja restart test also reproduces Podman named-volume root
+  ownership changes. Runtime bind mounts use canonical existing volume mountpoints;
+  initialize ownership only for new disposable/bootstrap volumes.
