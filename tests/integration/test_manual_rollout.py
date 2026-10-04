@@ -287,6 +287,53 @@ def test_real_bootstrap_and_unchanged_reapply_preserve_world_image_and_writer(
     assert not (spec.target.base / ".pending-recovery").exists()
 
 
+def test_first_bootstrap_seeds_reference_world_once_and_preserves_owner_edits(
+    deployment,
+):
+    spec, manifest, storage, directory = deployment
+    result, receipt = apply(spec, manifest, storage, directory)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert receipt.exists()
+    base = f"http://127.0.0.1:{spec.target.port}"
+
+    def login(client):
+        assert (
+            client.post(
+                "/auth/login",
+                json={
+                    "email": spec.login.email,
+                    "password": spec.login.password.get_secret_value(),
+                },
+            ).status_code
+            == 200
+        )
+
+    with httpx.Client(base_url=base, timeout=20) as client:
+        login(client)
+        worlds = client.get("/api/worlds/").json()["data"]
+        seeded = [w for w in worlds if w["name"] == "Il Boschetto di Smeraldo"]
+        assert len(seeded) == 1
+        world_id = seeded[0]["id"]
+        assert (
+            client.patch(
+                f"/api/worlds/{world_id}",
+                json={"description": "Owner edited the reference world"},
+            ).status_code
+            == 200
+        )
+    result, second_receipt = apply(spec, manifest, storage, directory)
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert not second_receipt.exists()
+    with httpx.Client(base_url=base, timeout=20) as client:
+        login(client)
+        worlds = client.get("/api/worlds/").json()["data"]
+        assert len([w for w in worlds if w["name"] == "Il Boschetto di Smeraldo"]) == 1
+        assert (
+            client.get(f"/api/worlds/{world_id}").json()["description"]
+            == "Owner edited the reference world"
+        )
+
+
 @pytest.fixture(
     scope="module", params=["same-schema", "new-schema", "migration-failure"]
 )

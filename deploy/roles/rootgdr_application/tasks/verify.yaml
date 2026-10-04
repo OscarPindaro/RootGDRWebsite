@@ -36,8 +36,16 @@
   when:
     - rootgdr_previous is none
     - rootgdr.login.create_initial_account | default(false) | bool
+    - not (rootgdr_initial_account_requested | default(false) | bool)
   no_log: true
   diff: false
+
+- name: Attempt the initial account only once per invocation
+  ansible.builtin.set_fact:
+    rootgdr_initial_account_requested: true
+  when:
+    - rootgdr_previous is none
+    - rootgdr.login.create_initial_account | default(false) | bool
 
 - name: Authenticate through the real production password login
   ansible.builtin.uri:

@@ -141,6 +141,14 @@
     - name: Verify readiness, actual build and real authenticated reads
       ansible.builtin.include_tasks: verify.yaml
 
+    - name: Seed the reference world once on the first bootstrap
+      ansible.builtin.include_tasks: seed.yaml
+      when: rootgdr_previous is none
+
+    - name: Re-verify the seeded reference world through the real login
+      ansible.builtin.include_tasks: verify.yaml
+      when: rootgdr_previous is none
+
     - name: Activate the native user-service lifecycle after successful verification
       ansible.builtin.include_tasks: systemd.yaml
       when: rootgdr_plan.target.manage_systemd | bool

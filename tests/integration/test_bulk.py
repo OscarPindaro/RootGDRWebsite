@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.backend.characters.models import CharacterModel
 from src.backend.characters.schemas import CharacterCreate
 from src.backend.characters.service import create_character
-from src.backend.content.bulk import export_world, import_world
+from src.backend.content.bulk import WorldBundle, export_world, import_world
+from src.backend.content.bootstrap import InitialSeedRequest, initialize_reference_once
 from src.backend.db.enums import UserRole
 from src.backend.pages.models import PageModel
 from src.backend.pages.schemas import PageCreate
@@ -73,3 +74,55 @@ async def test_export_import_round_trip_is_idempotent(
 
     reloaded = await get_world(db_session, world.id, actor)
     assert reloaded.name == "Le Cronache di Boscochiaro"
+
+
+async def test_initial_seed_creates_once_and_preserves_renamed_user_world(
+    db_session: AsyncSession,
+):
+    owner = await _user(db_session, "initial-owner")
+    bundle = WorldBundle.model_validate(
+        {
+            "world": {"name": "Initial reference", "description": "Reference seed"},
+            "pages": [
+                {
+                    "title": "Reference page",
+                    "slug": "reference-page",
+                    "body": "Initial content",
+                }
+            ],
+        }
+    )
+    request = InitialSeedRequest(
+        owner_email=owner.email, expected_commit="a" * 40, bundle=bundle
+    )
+    first = await initialize_reference_once(db_session, request)
+    assert first.action == "created"
+    world = await get_world(db_session, first.world_id, User.model_validate(owner))
+    world.name = "Renamed by owner"
+    world.description = "Owner edits must survive bootstrap reapply"
+    page = (
+        await db_session.scalars(
+            select(PageModel).where(PageModel.world_id == world.id)
+        )
+    ).one()
+    page.body = "Owner's changed document"
+    await db_session.flush()
+    second = await initialize_reference_once(db_session, request)
+    assert second.action == "preserved"
+    assert second.world_id == first.world_id
+    assert world.name == "Renamed by owner"
+    assert world.description == "Owner edits must survive bootstrap reapply"
+    assert page.body == "Owner's changed document"
+    assert await _count(db_session, PageModel, world.id) == 1
+
+
+async def test_initial_seed_refuses_missing_owner_without_creating_data(
+    db_session: AsyncSession,
+):
+    request = InitialSeedRequest(
+        owner_email=f"missing-{uuid.uuid4()}@example.com",
+        expected_commit="a" * 40,
+        bundle=WorldBundle.model_validate({"world": {"name": "Missing owner's seed"}}),
+    )
+    with pytest.raises(ValueError, match="existing owner"):
+        await initialize_reference_once(db_session, request)

@@ -1,0 +1,57 @@
+---
+# First bootstrap only. Converts the committed bundle on the controller and
+# lets the tested backend entrypoint decide once, inside one transaction.
+- name: Convert the committed reference bundle on the controller
+  ansible.builtin.command:
+    argv: "{{ rootgdr_controller_command + ['seed-request', '--plan', rootgdr_controller_stage.path + '/plan.json', '--bundle', rootgdr_bundle_file, '--email', rootgdr.login.email] }}"
+  delegate_to: localhost
+  register: rootgdr_seed_request
+  changed_when: false
+  no_log: true
+
+- name: Keep the private seed request in this invocation's staging
+  ansible.builtin.copy:
+    content: "{{ rootgdr_seed_request.stdout }}"
+    dest: "{{ rootgdr_server_stage.path }}/seed-request.json"
+    mode: '0644'
+  no_log: true
+  diff: false
+
+- name: Seed only the reference world through the tested backend entrypoint
+  ansible.builtin.command:
+    argv:
+      - podman
+      - run
+      - '--rm'
+      - '--pull=never'
+      - "--network={{ rootgdr_plan.target.project }}_default"
+      - '--env-file'
+      - "{{ rootgdr_plan.release_directory }}/runtime_env"
+      - '-e'
+      - ENV_FILE=/dev/null
+      - '-e'
+      - YAML_CONFIG_FILE=/app/config.yaml
+      - '--read-only'
+      - '--tmpfs=/tmp:rw,nosuid,nodev,size=64m'
+      - '--cap-drop=ALL'
+      - '--security-opt=no-new-privileges'
+      - '-v'
+      - "{{ rootgdr_plan.release_directory }}/runtime_config:/app/config.yaml:ro,z"
+      - '-v'
+      - "{{ rootgdr_server_stage.path }}/seed-request.json:/opt/seed-request.json:ro,z"
+      - '--entrypoint=/opt/venv/bin/python'
+      - "{{ rootgdr_plan.artifact.image_id }}"
+      - '-m'
+      - backend.content.bootstrap
+      - '--request'
+      - /opt/seed-request.json
+  register: rootgdr_seed_result
+  no_log: true
+  diff: false
+
+- name: Require the typed seed outcome
+  ansible.builtin.assert:
+    that:
+      - (rootgdr_seed_result.stdout | from_json).action in ['created', 'preserved']
+      - (rootgdr_seed_result.stdout | from_json).world_id | length > 0
+  no_log: true

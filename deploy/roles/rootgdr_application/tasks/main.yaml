@@ -23,6 +23,7 @@
 - name: Retain only the validated nonsecret deployment plan
   ansible.builtin.set_fact:
     rootgdr_plan: "{{ rootgdr_planning.stdout | from_json }}"
+    rootgdr_bundle_file: "{{ rootgdr_bundle_file | default(playbook_dir + '/../seed/boschetto-di-smeraldo.yaml') }}"
   no_log: true
 
 - name: Run the locked manual rollout

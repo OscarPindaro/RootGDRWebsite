@@ -38,6 +38,7 @@ def main() -> int:
         "capture-spec",
         "manifest",
         "rollback",
+        "seed-request",
     ):
         operation = operations.add_parser(name)
         operation.add_argument("--plan", required=True, type=Path)
@@ -48,6 +49,9 @@ def main() -> int:
         elif name == "rollback":
             operation.add_argument("--previous", required=True, type=Path)
             operation.add_argument("--before", required=True, type=Path)
+        elif name == "seed-request":
+            operation.add_argument("--bundle", required=True, type=Path)
+            operation.add_argument("--email", required=True)
     args = parser.parse_args()
     try:
         if args.operation == "plan":
@@ -82,6 +86,22 @@ def main() -> int:
             before = json.loads(args.before.read_bytes())
             after = schema_heads(plan.target.database)
             print(json.dumps(rollback_allowed(previous, before, after)))
+        elif args.operation == "seed-request":
+            # Controller-only conversion: the standalone server copy never runs
+            # this path, so PyYAML stays out of the pinned target environment.
+            import yaml  # noqa: PLC0415
+
+            if not args.bundle.is_file():
+                raise BackupError("Seed bundle must be an existing file")
+            print(
+                json.dumps(
+                    {
+                        "owner_email": args.email,
+                        "expected_commit": plan.artifact.commit,
+                        "bundle": yaml.safe_load(args.bundle.read_text()),
+                    }
+                )
+            )
         return 0
     except BackupError, ValidationError, OSError, ValueError:
         print(

@@ -297,6 +297,21 @@ example `ssh -N -L 3458:127.0.0.1:3458 pinball@pinball-server.local` for the por
 the example variables. The `access_port` is the PC-side frontend URL; `target.port`
 is the server-side loopback listener. Server activation remains a separate step.
 
+## First-bootstrap reference seed
+
+The first rollout of a new production stack also seeds the committed reference
+world (`seed/boschetto-di-smeraldo.yaml`). `rollout_cli seed-request` converts the
+YAML on the controller — PyYAML never enters the pinned runtime — and the role
+mounts that private request into a one-shot container of the **selected immutable
+image**. `backend.content.bootstrap` refuses to run outside `env: production` or
+when `ROOTGDR_BUILD_COMMIT` differs from the selected commit, then, inside one
+transaction, takes an advisory lock on the owner email and either imports the
+bundle or returns `preserved`. Any existing world of that owner is never reset,
+renamed or duplicated; later rollouts skip the seed entirely. The typed outcome
+(`created`/`preserved` plus the world id) is asserted and the authenticated reads
+run again, so the verification proves the seeded reference world through the real
+password login.
+
 ## Limits
 
 Packaging, readiness, coordinated backup, isolated recovery and manual rollout
