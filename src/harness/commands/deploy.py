@@ -158,4 +158,78 @@ def register_commands(app: typer.Typer, *, is_dry_run: Callable[[], bool]) -> No
             else "Ansible deployment verified."
         )
 
+    @deploy_app.command("board")
+    def board(
+        inventory: Annotated[
+            Path, typer.Option(help="Absolute explicit board inventory.")
+        ],
+        vars_file: Annotated[
+            Path, typer.Option(help="Private absolute board variables or Vault file.")
+        ],
+        check: Annotated[
+            bool, typer.Option(help="Validate without creating accounts or storage.")
+        ] = False,
+        vault_password_file: Annotated[
+            Path | None, typer.Option(help="Optional private Vault password file.")
+        ] = None,
+    ) -> None:
+        try:
+            for path in (inventory, vars_file, vault_password_file):
+                if path is not None and (
+                    not path.is_absolute()
+                    or path.resolve() != path
+                    or not path.is_file()
+                ):
+                    raise BackupError("Board inputs must be canonical absolute files")
+            for path in (vars_file, vault_password_file):
+                if path is not None and path.stat().st_mode & 0o077:
+                    raise BackupError("Board credentials must be private")
+            root = state.worktree_root()
+            argv = [
+                "ansible-playbook",
+                "-i",
+                str(inventory),
+                str(root / "deploy/vikunja.yaml"),
+                "-e",
+                "@" + str(vars_file),
+                "-e",
+                json.dumps(
+                    {
+                        "vikunja_controller_command": [
+                            sys.executable,
+                            "-m",
+                            "harness.deploy.vikunja_cli",
+                        ]
+                    }
+                ),
+                "--ssh-common-args=-o BatchMode=yes",
+            ]
+            if check or is_dry_run():
+                argv.append("--check")
+            if vault_password_file is not None:
+                argv.extend(["--vault-password-file", str(vault_password_file)])
+            result = subprocess.run(
+                argv,
+                cwd=root,
+                capture_output=True,
+                stdin=subprocess.DEVNULL,
+                timeout=900,
+                env={**os.environ, "ANSIBLE_CONFIG": str(root / "deploy/ansible.cfg")},
+            )
+        except BackupError, OSError, ValueError, subprocess.TimeoutExpired:
+            err_console.print(
+                "[bold red]Board inputs or execution failed; no deployment verified.[/bold red]"
+            )
+            raise typer.Exit(1) from None
+        if result.returncode:
+            err_console.print(
+                "[bold red]Board Ansible operation failed; review the private inputs and pending bootstrap state.[/bold red]"
+            )
+            raise typer.Exit(result.returncode)
+        console.print(
+            "Board check passed."
+            if check or is_dry_run()
+            else "Board deployment verified."
+        )
+
     app.add_typer(deploy_app, name="deploy")

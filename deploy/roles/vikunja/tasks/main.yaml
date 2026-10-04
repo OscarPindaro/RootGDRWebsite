@@ -1,0 +1,26 @@
+---
+- name: Require explicit private board inputs
+  ansible.builtin.assert:
+    that:
+      - vikunja is defined
+      - vikunja_controller_command is defined
+
+- name: Validate the isolated target and private controller credentials
+  ansible.builtin.command:
+    argv: "{{ vikunja_controller_command + ['plan', '--compose', playbook_dir + '/vikunja.compose.yaml'] }}"
+    stdin: "{{ vikunja | to_json }}"
+    chdir: "{{ playbook_dir }}/.."
+  delegate_to: localhost
+  check_mode: false
+  register: vikunja_planning
+  changed_when: false
+  no_log: true
+
+- name: Retain only validated public board metadata
+  ansible.builtin.set_fact:
+    vikunja_plan: "{{ vikunja_planning.stdout | from_json }}"
+  no_log: true
+
+- name: Run the manually invoked locked board operation
+  ansible.builtin.include_tasks: operation.yaml
+  when: not ansible_check_mode

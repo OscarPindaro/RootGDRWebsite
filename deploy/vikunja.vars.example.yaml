@@ -1,0 +1,26 @@
+---
+vikunja:
+  run_id: "{{ board_run_id }}"
+  deployment_commit: "{{ board_deployment_commit }}"
+  secret_generation: "{{ board_secret_generation }}"
+  signing_secret_file: "{{ board_private_signing_secret_file }}"
+  target:
+    project: rootgdr-vikunja
+    base: /home/pinball/rootgdr-vikunja
+    port: 3458
+    manage_systemd: true
+  access_port: 3458
+  owner:
+    username: oscar
+    email: oscar.pindaro@gmail.com
+    password: "{{ vault_board_owner_password }}"
+  tooling:
+    username: bot-rootgdr-tooling
+    name: Root GDR tooling
+  project_title: Root GDR
+  proof:
+    commit: "{{ board_deployment_commit }}"
+    mode: local-bootstrap
+    result: passed
+    suites: [unit, frontend, integration, e2e]
+    checked_at: "{{ board_checks_completed_at }}"

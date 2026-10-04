@@ -1,0 +1,26 @@
+---
+- name: Read only the board user's home
+  ansible.builtin.command:
+    argv: [printenv, HOME]
+  register: vikunja_remote_home
+  changed_when: false
+
+- name: Ensure the native user-unit directory exists
+  ansible.builtin.file:
+    path: "{{ vikunja_remote_home.stdout }}/.config/systemd/user"
+    state: directory
+
+- name: Install only this board's native user service
+  ansible.builtin.template:
+    src: board.service.j2
+    dest: "{{ vikunja_remote_home.stdout }}/.config/systemd/user/{{ vikunja_plan.target.project }}.service"
+    mode: '0644'
+  register: vikunja_user_unit
+
+- name: Enable the board without restarting an already running instance
+  ansible.builtin.systemd_service:
+    name: "{{ vikunja_plan.target.project }}.service"
+    scope: user
+    daemon_reload: "{{ vikunja_user_unit.changed }}"
+    enabled: true
+    state: started

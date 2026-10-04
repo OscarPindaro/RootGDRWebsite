@@ -1,0 +1,220 @@
+---
+- name: Reset invocation-owned staging references
+  ansible.builtin.set_fact:
+    rootgdr_controller_stage: {}
+    rootgdr_server_stage: {}
+
+- name: Check the remote board namespace before mutation
+  ansible.builtin.command:
+    argv: [realpath, '--canonicalize-missing', "{{ vikunja_plan.target.base }}"]
+  register: vikunja_canonical_base
+  changed_when: false
+
+- name: Refuse unsafe board paths or disposable tool overrides on a live namespace
+  ansible.builtin.assert:
+    that:
+      - vikunja_canonical_base.stdout == vikunja_plan.target.base
+      - not (rootgdr_disposable_tools | default(false) | bool) or vikunja_plan.target.project.startswith('rootgdr-vikunja-disposable-')
+
+- name: Create only the separate private board directory
+  ansible.builtin.file:
+    path: "{{ vikunja_plan.target.base }}"
+    state: directory
+    mode: '0700'
+
+- name: Acquire the atomic board operation lock
+  ansible.builtin.command:
+    argv: [mkdir, '--mode=0700', "{{ vikunja_plan.target.base }}/.operation-lock"]
+
+- name: Operate only while this invocation owns the board lock
+  block:
+    - name: Mark lock ownership
+      ansible.builtin.copy:
+        content: "{{ vikunja_plan.run_id }}"
+        dest: "{{ vikunja_plan.target.base }}/.operation-lock/owner"
+        mode: '0600'
+
+    - name: Create private controller image staging
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: rootgdr-vikunja-images-
+      delegate_to: localhost
+      register: rootgdr_controller_stage
+
+    - name: Export only pinned board and recovery helper images
+      ansible.builtin.command:
+        argv: "{{ vikunja_controller_command + ['images', '--directory', rootgdr_controller_stage.path] }}"
+      delegate_to: localhost
+      register: vikunja_exported_images
+      changed_when: false
+      no_log: true
+
+    - name: Retain immutable transfer identities
+      ansible.builtin.set_fact:
+        rootgdr_transfers: "{{ vikunja_exported_images.stdout | from_json }}"
+        rootgdr_plan: "{{ vikunja_plan }}"
+      no_log: true
+
+    - name: Measure the board filesystem before installing tools or transferring images
+      ansible.builtin.command:
+        argv: [df, '--output=avail', '-B1', "{{ vikunja_plan.target.base }}"]
+      register: vikunja_initial_space
+      changed_when: false
+
+    - name: Require transfer, unpacking and reserve capacity without pruning other data
+      ansible.builtin.assert:
+        that:
+          - vikunja_initial_space.stdout_lines[-1] | int >= (rootgdr_transfers | map(attribute='archive_size') | sum) + 2 * (rootgdr_transfers | map(attribute='unpacked_size') | sum) + vikunja_plan.target.reserve_bytes
+
+    - name: Install the existing private pinned helper and Compose provider
+      ansible.builtin.include_role:
+        name: rootgdr_application
+        tasks_from: tools
+
+    - name: Install only the pinned board HTTP dependencies
+      ansible.builtin.command:
+        argv:
+          - "{{ vikunja_plan.target.base }}/tools/helper/bin/pip"
+          - install
+          - '--disable-pip-version-check'
+          - httpx==0.28.1
+          - httpcore==1.0.9
+          - anyio==4.12.1
+          - h11==0.16.0
+          - idna==3.19
+          - certifi==2026.5.20
+        creates: "{{ vikunja_plan.target.base }}/tools/helper/.httpx-0.28.1"
+      when: not (rootgdr_disposable_tools | default(false) | bool)
+      no_log: true
+
+    - name: Mark the minimal HTTP dependency installation
+      ansible.builtin.copy:
+        content: '0.28.1'
+        dest: "{{ vikunja_plan.target.base }}/tools/helper/.httpx-0.28.1"
+        mode: '0600'
+      when: not (rootgdr_disposable_tools | default(false) | bool)
+
+    - name: Copy the standalone typed board helpers
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../src/harness/deploy/{{ item }}"
+        dest: "{{ vikunja_plan.target.base }}/tools/python/harness/deploy/{{ item }}"
+        mode: '0600'
+      loop: [vikunja.py, vikunja_schemas.py, vikunja_bootstrap.py, vikunja_cli.py]
+
+    - name: Create invocation-owned remote staging
+      ansible.builtin.tempfile:
+        state: directory
+        path: "{{ vikunja_plan.target.base }}"
+        prefix: '.board-'
+      register: rootgdr_server_stage
+
+    - name: Store public metadata and Compose input privately
+      ansible.builtin.copy:
+        content: "{{ vikunja_plan | to_json }}"
+        dest: "{{ rootgdr_server_stage.path }}/plan.json"
+        mode: '0600'
+      no_log: true
+      diff: false
+
+    - name: Stage the reviewed board Compose definition
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/vikunja.compose.yaml"
+        dest: "{{ rootgdr_server_stage.path }}/compose.yaml"
+        mode: '0600'
+
+    - name: Stage only the dedicated private signing secret
+      ansible.builtin.copy:
+        src: "{{ vikunja_plan.signing_secret_file }}"
+        dest: "{{ rootgdr_server_stage.path }}/signing-secret"
+        mode: '0600'
+      no_log: true
+      diff: false
+
+    - name: Define the explicit remote board boundary
+      ansible.builtin.set_fact:
+        vikunja_remote_command: ["{{ rootgdr_python }}", '-m', harness.deploy.vikunja_cli]
+      no_log: true
+
+    - name: Refuse existing data or changed identities before runtime mutation
+      ansible.builtin.command:
+        argv: "{{ vikunja_remote_command + ['preflight', '--plan', rootgdr_server_stage.path + '/plan.json'] }}"
+      environment:
+        PYTHONPATH: "{{ vikunja_plan.target.base }}/tools/python"
+      changed_when: false
+      no_log: true
+
+    - name: Transfer verified immutable board/helper images without registry access
+      ansible.builtin.include_role:
+        name: image_transfer
+
+    - name: Initialize only new board storage and private configuration
+      ansible.builtin.command:
+        argv: "{{ vikunja_remote_command + ['initialize', '--plan', rootgdr_server_stage.path + '/plan.json', '--compose', rootgdr_server_stage.path + '/compose.yaml', '--secret', rootgdr_server_stage.path + '/signing-secret'] }}"
+        stdin: "{{ vikunja | to_json }}"
+      environment:
+        PYTHONPATH: "{{ vikunja_plan.target.base }}/tools/python"
+      register: vikunja_initialized
+      changed_when: (vikunja_initialized.stdout | from_json).initialized
+      no_log: true
+
+    - name: Bootstrap the new owner/project/bot and close registration on all outcomes
+      ansible.builtin.command:
+        argv: "{{ vikunja_remote_command + ['bootstrap', '--plan', rootgdr_server_stage.path + '/plan.json', '--provider', rootgdr_provider] }}"
+        stdin: "{{ vikunja | to_json }}"
+      environment:
+        PYTHONPATH: "{{ vikunja_plan.target.base }}/tools/python"
+      when: (vikunja_initialized.stdout | from_json).initialized
+      no_log: true
+
+    - name: Install the board native user lifecycle
+      ansible.builtin.include_tasks: systemd.yaml
+      when: vikunja_plan.target.manage_systemd
+
+    - name: Verify login, token boundaries and the closed loopback profile before publishing
+      ansible.builtin.command:
+        argv: "{{ vikunja_remote_command + ['finalize', '--plan', rootgdr_server_stage.path + '/plan.json'] }}"
+        stdin: "{{ vikunja | to_json }}"
+      environment:
+        PYTHONPATH: "{{ vikunja_plan.target.base }}/tools/python"
+      changed_when: false
+      no_log: true
+
+  rescue:
+    - name: Stop only a newly bootstrapped writer after unsuccessful final verification
+      ansible.builtin.command:
+        argv: [podman, stop, '--time=30', "{{ vikunja_plan.target.project }}_board_1"]
+      when: vikunja_initialized is defined and (vikunja_initialized.stdout | default('{"initialized":false}', true) | from_json).initialized
+      failed_when: false
+      no_log: true
+
+    - name: Leave incomplete bootstrap data for explicit recovery review
+      ansible.builtin.fail:
+        msg: Board operation failed; no deployment verified and existing accounts were not reset
+
+  always:
+    - name: Remove only invocation-owned server staging
+      ansible.builtin.file:
+        path: "{{ rootgdr_server_stage.path }}"
+        state: absent
+      when: rootgdr_server_stage.path is defined
+      no_log: true
+
+    - name: Remove only invocation-owned controller staging
+      ansible.builtin.file:
+        path: "{{ rootgdr_controller_stage.path }}"
+        state: absent
+      delegate_to: localhost
+      when: rootgdr_controller_stage.path is defined
+      no_log: true
+
+    - name: Re-read lock ownership before cleanup
+      ansible.builtin.slurp:
+        src: "{{ vikunja_plan.target.base }}/.operation-lock/owner"
+      register: vikunja_cleanup_owner
+      no_log: true
+
+    - name: Release only this invocation's board lock
+      ansible.builtin.file:
+        path: "{{ vikunja_plan.target.base }}/.operation-lock"
+        state: absent
+      when: vikunja_cleanup_owner.content | default('') | b64decode == vikunja_plan.run_id

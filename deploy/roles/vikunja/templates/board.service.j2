@@ -1,0 +1,16 @@
+[Unit]
+Description=Root GDR planning board {{ vikunja_plan.target.project }}
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory={{ vikunja_plan.target.base }}
+ExecStart="{{ rootgdr_provider }}" --env-file "{{ vikunja_plan.target.base }}/runtime/compose.env" -f "{{ vikunja_plan.target.base }}/runtime/compose.yaml" -p {{ vikunja_plan.target.project }} up -d --no-recreate --no-build --pull=never board
+ExecStop="{{ rootgdr_provider }}" --env-file "{{ vikunja_plan.target.base }}/runtime/compose.env" -f "{{ vikunja_plan.target.base }}/runtime/compose.yaml" -p {{ vikunja_plan.target.project }} stop board
+TimeoutStartSec=180
+TimeoutStopSec=90
+
+[Install]
+WantedBy=default.target

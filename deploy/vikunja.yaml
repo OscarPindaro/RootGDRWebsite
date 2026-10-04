@@ -1,0 +1,17 @@
+---
+- name: Require exactly one explicitly inventoried board target
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Refuse an empty or ambiguous board inventory
+      ansible.builtin.assert:
+        that:
+          - groups.get('vikunja_targets', []) | length == 1
+
+- name: Manually bootstrap or verify the separate pinned board
+  hosts: vikunja_targets
+  gather_facts: false
+  serial: 1
+  roles:
+    - vikunja

@@ -16,14 +16,26 @@ class BoardPage(BaseModel, Generic[T]):
     total_pages: int = Field(ge=0)
 
 
+class BoardLocalAuth(BaseModel):
+    enabled: bool
+    registration_enabled: bool
+
+
+class BoardAuthInfo(BaseModel):
+    local: BoardLocalAuth
+
+
 class BoardInfo(BaseModel):
     version: str
     link_sharing_enabled: bool
+    email_reminders_enabled: bool
+    auth: BoardAuthInfo
 
 
 class BoardUser(BaseModel):
     id: int = Field(gt=0)
     username: str
+    bot_owner_id: int = 0
 
 
 class BoardProject(BaseModel):

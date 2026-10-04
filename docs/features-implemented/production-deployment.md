@@ -238,6 +238,65 @@ Read-only helpers bind an existing volume's canonical mountpoint instead of
 mounting it by name: Podman otherwise chowns the volume root to the helper user,
 even on a read-only mount. Capture/capacity checks preserve runtime UID/GID/modes.
 
+## Separate planning-board deployment
+
+`deploy/vikunja.yaml` and the `vikunja` role bootstrap or verify one explicitly
+inventoried `vikunja_targets` host. The local demonstration Compose and Kanboard
+are not inputs. Vikunja 2.6.0 and the Python storage helper are digest-pinned;
+controller-cached images are exported as private OCI archives and transferred
+through the existing checksummed `image_transfer` role, without server pulls.
+
+```console
+uv run harness deploy board --inventory /private/board-inventory.yaml \
+  --vars-file /private/board.vault.yaml \
+  --vault-password-file /private/vault-password --check
+```
+
+Removing `--check` explicitly invokes bootstrap. `deploy/vikunja.vars.example.yaml`
+shows the typed private inputs: unique run/secret UUIDs, full deployment commit,
+canonical board base, loopback port, signing-secret file, owner credentials and
+owned `bot-` tooling account. A live bootstrap requires a matching passing proof
+for unit/frontend/integration/E2E. Generate dedicated credentials privately;
+store the controller inputs in Vault, never command arguments. The server runs
+only minimal pinned Python/HTTP and Compose environments under its board base.
+
+The owner logs in normally. The tooling bot has no password or email, receives
+read/write access only to the real project, and uses an API v2 token with reviewed
+project/view/bucket/task/comment scopes. It cannot manage tokens or create/delete
+projects. The token expires after one year; expiration is a reported verification
+failure, not an automatic token/account reset. Registration is temporarily enabled
+only on loopback for a new bootstrap and is closed on success or failure. Mail,
+reminders and public link sharing remain disabled. The private runtime directory
+contains owner credentials and the tooling token; read-only container signing-secret
+mounts are protected by the 0700 application/runtime directories on the host.
+
+The shared atomic operation lock covers initialization and verification. Existing
+storage without `current.json`, a stale lock or `.pending-bootstrap` is refused
+for operator review. Unchanged reapply verifies the owner, bot, token and listener
+without recreating accounts or restarting the writer; systemd user restart preserves
+SQLite and attachments. Configuration/image/credential changes are deliberately
+refused: upgrades require a separately reviewed coordinated recovery-gated rollout.
+Runtime binds use canonical mountpoints of the dedicated database/attachment
+volumes, avoiding Podman's repeated volume-root ownership changes.
+
+To capture the verified board, invoke its private helper's `capture-spec --plan
+<board-base>/runtime/deployment-plan.json` and supply that typed result to
+`deploy/backup.yaml`. The helper assigns a fresh capture UUID; `--purpose predeploy`
+selects the migration gate rather than the default weekly resume policy.
+The specification includes SQLite, attachments, closed configuration, Compose/env,
+signing secret, owner credentials, tooling token and deployment identity. The
+existing coordinated role stops writers, transfers/encrypts the snapshot on the
+PC, verifies read-back and resumes the unchanged writer for weekly capture.
+`deploy/restore.yaml` restores only a new `rootgdr-restore-...` target. Real local
+checks recover password login, task data, attachment bytes and the restricted token;
+they do not activate recovered data over the source stack. Keep recovery credentials
+and an offline repository copy securely. No timer or production restore is activated.
+
+For PC access, use an explicitly chosen tunnel distinct from the local demo, for
+example `ssh -N -L 3458:127.0.0.1:3458 pinball@pinball-server.local` for the ports in
+the example variables. The `access_port` is the PC-side frontend URL; `target.port`
+is the server-side loopback listener. Server activation remains a separate step.
+
 ## Limits
 
 Packaging, readiness, coordinated backup, isolated recovery and manual rollout
