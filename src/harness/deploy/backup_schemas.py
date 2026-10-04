@@ -96,6 +96,9 @@ class CaptureSpec(Boundary):
     files: FileSource
     configuration: list[ConfigurationFile] = Field(min_length=1)
     engine: Literal["podman", "docker"] = "podman"
+    # A target that received the reviewed helper as a transferred archive has it
+    # only by immutable ID; the pinned digest reference resolves on the controller.
+    helper_image: ImageId | None = None
 
     @model_validator(mode="after")
     def coherent(self) -> "CaptureSpec":

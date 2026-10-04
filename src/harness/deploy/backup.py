@@ -136,7 +136,9 @@ def source_mount(engine: str, source: FileSource) -> str:
     return f"{path}:/source:ro,z"
 
 
-def capture_files(engine: str, source: FileSource, target: Path) -> None:
+def capture_files(
+    engine: str, source: FileSource, target: Path, helper_image: str = HELPER_IMAGE
+) -> None:
     script = (
         "import sys,tarfile; "
         "t=tarfile.open(fileobj=sys.stdout.buffer,mode='w|'); "
@@ -153,7 +155,7 @@ def capture_files(engine: str, source: FileSource, target: Path) -> None:
             "-v",
             source_mount(engine, source),
             "--entrypoint=python",
-            HELPER_IMAGE,
+            helper_image,
             "-c",
             script,
         ],
@@ -464,7 +466,7 @@ with tempfile.TemporaryDirectory() as directory:
                     "-v",
                     source_mount(spec.engine, db.storage),
                     "--entrypoint=python",
-                    HELPER_IMAGE,
+                    spec.helper_image or HELPER_IMAGE,
                     "-c",
                     script,
                     db.filename,
@@ -472,7 +474,12 @@ with tempfile.TemporaryDirectory() as directory:
                 output=directory / "database.dump",
             )
             state = sqlite_state(directory / "database.dump")
-        capture_files(spec.engine, spec.files, directory / "files.tar")
+        capture_files(
+            spec.engine,
+            spec.files,
+            directory / "files.tar",
+            spec.helper_image or HELPER_IMAGE,
+        )
         files = file_inventory(directory / "files.tar")
         (directory / "config").mkdir(mode=0o700)
         for item in spec.configuration:

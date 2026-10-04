@@ -1,3 +1,4 @@
+import json
 import subprocess
 from datetime import UTC, datetime
 from uuid import uuid4
@@ -6,7 +7,14 @@ import pytest
 from pydantic import ValidationError
 
 from harness.deploy.artifact import ImageArtifact
-from harness.deploy.backup import BackupError, digest, write_private
+from harness.deploy.backup import (
+    HELPER_IMAGE,
+    BackupError,
+    command,
+    digest,
+    write_private,
+)
+from harness.deploy.backup_schemas import CaptureSpec
 from harness.deploy.rollout import current_deployment, plan_deployment
 from harness.deploy.rollout_schemas import (
     CapacityBudget,
@@ -172,6 +180,38 @@ def test_capacity_keeps_transfer_unpack_backup_and_operating_reserve():
         )
 
 
+def test_capture_spec_carries_the_transferred_helper_image(deployment):
+    spec, manifest = deployment
+    plan = plan_deployment(spec, manifest)
+    local = json.loads(command(["podman", "image", "inspect", HELPER_IMAGE]))[0]["Id"]
+    assert plan.helper_image_id == local
+    # A target receives reviewed tools as transferred archives, so it holds them
+    # only by immutable ID; the digest reference resolves on the controller.
+    base = {
+        "application": "vikunja",
+        "purpose": "weekly",
+        "run_id": uuid4(),
+        "build_commit": "a" * 40,
+        "image_id": local,
+        "writers": ["isolated_1"],
+        "database": {
+            "kind": "sqlite",
+            "storage": {"volume": "isolated-volume"},
+            "filename": "db",
+        },
+        "files": {"volume": "isolated-volume"},
+        "configuration": [
+            {"name": name, "path": "/etc/hosts"}
+            for name in ("configuration", "secrets", "compose")
+        ],
+    }
+    assert CaptureSpec.model_validate(base).helper_image is None
+    assert (
+        CaptureSpec.model_validate({**base, "helper_image": local}).helper_image
+        == local
+    )
+
+
 def test_rollback_requires_a_previous_verified_matching_schema(deployment):
     spec, manifest = deployment
     plan = plan_deployment(spec, manifest)
@@ -180,6 +220,7 @@ def test_rollback_requires_a_previous_verified_matching_schema(deployment):
         version=plan.artifact.version,
         commit=plan.artifact.commit,
         image_id=plan.artifact.image_id,
+        helper_image_id=plan.helper_image_id,
         configuration_digest=plan.configuration_digest,
         release_directory=plan.release_directory,
         schema_heads=["revision-a"],
@@ -200,6 +241,7 @@ def test_current_manifest_cannot_refer_to_unrelated_release(deployment, tmp_path
         version=plan.artifact.version,
         commit=plan.artifact.commit,
         image_id=plan.artifact.image_id,
+        helper_image_id=plan.helper_image_id,
         configuration_digest=plan.configuration_digest,
         release_directory=tmp_path,
         schema_heads=[],

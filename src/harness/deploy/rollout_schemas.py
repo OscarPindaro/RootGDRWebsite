@@ -131,6 +131,7 @@ class DeploymentPlan(Boundary):
     configuration_digest: Digest
     release_directory: Path
     proof: VerificationProof
+    helper_image_id: ImageId
 
 
 class CurrentDeployment(Boundary):
@@ -139,6 +140,7 @@ class CurrentDeployment(Boundary):
     commit: Commit
     version: str = Field(min_length=1)
     image_id: ImageId
+    helper_image_id: ImageId
     configuration_digest: Digest
     release_directory: Path
     schema_heads: list[str]

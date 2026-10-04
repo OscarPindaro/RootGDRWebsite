@@ -69,7 +69,7 @@ def main() -> int:
                 ImageTransfer.model_validate(item)
                 for item in json.loads(args.images.read_bytes())
             ]
-            print(capacity(plan.target, images).model_dump_json())
+            print(capacity(plan.target, images, plan.helper_image_id).model_dump_json())
         elif args.operation == "current":
             current = current_deployment(plan.target)
             print(current.model_dump_json() if current else "null")

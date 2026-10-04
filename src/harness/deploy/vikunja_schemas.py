@@ -87,6 +87,7 @@ class VikunjaPlan(Boundary):
     configuration_sha256: Digest
     compose_sha256: Digest
     image_id: ImageId
+    helper_image_id: ImageId
     access_port: int = Field(ge=1024, le=65535)
     owner_username: str
     tooling_username: str

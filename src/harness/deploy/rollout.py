@@ -87,6 +87,9 @@ def plan_deployment(spec: DeploymentSpec, artifact_path: Path) -> DeploymentPlan
         configuration.append(transfer)
         fingerprint.update(name.encode() + transfer.sha256.encode())
     configuration_digest = fingerprint.hexdigest()
+    helper = ImageSize.model_validate(
+        json.loads(command(["podman", "image", "inspect", HELPER_IMAGE]))[0]
+    )
     return DeploymentPlan(
         run_id=spec.run_id,
         target=spec.target,
@@ -98,6 +101,7 @@ def plan_deployment(spec: DeploymentSpec, artifact_path: Path) -> DeploymentPlan
         / "releases"
         / f"{artifact.commit[:12]}-{configuration_digest[:16]}",
         proof=spec.proof,
+        helper_image_id=helper.image_id,
     )
 
 
@@ -181,7 +185,11 @@ def schema_heads(source: PostgreSQLSource) -> list[str]:
     )
 
 
-def capacity(target: DeployTarget, images: list[ImageTransfer]) -> CapacityBudget:
+def capacity(
+    target: DeployTarget,
+    images: list[ImageTransfer],
+    helper_image: str = HELPER_IMAGE,
+) -> CapacityBudget:
     archive_size = sum(image.archive_size for image in images)
     unpacked_size = sum(image.unpacked_size for image in images)
     backup_size = 0
@@ -227,7 +235,7 @@ def capacity(target: DeployTarget, images: list[ImageTransfer]) -> CapacityBudge
                     "-v",
                     mount,
                     "--entrypoint=python",
-                    HELPER_IMAGE,
+                    helper_image,
                     "-c",
                     script,
                 ]
@@ -282,6 +290,7 @@ def recovery_spec(
                 "compose",
             )
         ],
+        helper_image=plan.helper_image_id,
     )
 
 
@@ -291,6 +300,7 @@ def verified_manifest(plan: DeploymentPlan) -> CurrentDeployment:
         commit=plan.artifact.commit,
         version=plan.artifact.version,
         image_id=plan.artifact.image_id,
+        helper_image_id=plan.helper_image_id,
         configuration_digest=plan.configuration_digest,
         release_directory=plan.release_directory,
         schema_heads=schema_heads(plan.target.database),

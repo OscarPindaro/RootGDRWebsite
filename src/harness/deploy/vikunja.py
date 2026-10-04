@@ -99,6 +99,9 @@ def plan_board(spec: VikunjaSpec, compose_file: Path | None = None) -> VikunjaPl
     image = ImageSize.model_validate(
         json.loads(command(["podman", "image", "inspect", VIKUNJA_IMAGE]))[0]
     )
+    helper = ImageSize.model_validate(
+        json.loads(command(["podman", "image", "inspect", HELPER_IMAGE]))[0]
+    )
     credentials = spec.owner.model_dump(mode="json")
     credentials["password"] = spec.owner.password.get_secret_value()
     credentials_sha256 = hmac.new(
@@ -127,6 +130,7 @@ def plan_board(spec: VikunjaSpec, compose_file: Path | None = None) -> VikunjaPl
         configuration_sha256=fingerprint.hexdigest(),
         compose_sha256=digest(compose_file),
         image_id=image.image_id,
+        helper_image_id=helper.image_id,
         access_port=access_port,
         owner_username=spec.owner.username,
         tooling_username=spec.tooling.username,
@@ -338,7 +342,7 @@ def initialize_board(
             f"{directories[0]}:/db:z",
             "-v",
             f"{directories[1]}:/files:z",
-            HELPER_IMAGE,
+            plan.helper_image_id,
             "-c",
             "import os; os.chown('/db',1000,1000); os.chown('/files',1000,1000)",
         ]
@@ -580,4 +584,5 @@ def board_recovery_spec(
                 ("deployment", plan.target.base / "current.json"),
             )
         ],
+        helper_image=plan.helper_image_id,
     )
