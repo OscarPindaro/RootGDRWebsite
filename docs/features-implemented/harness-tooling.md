@@ -54,6 +54,13 @@ change" answerable without guessing.
   'database or runtime' -x --tb=short`.
 - Browser journeys use `BrowserSession.expect_api(...)` after writes to assert
   persisted server state instead of trusting optimistic text in the page.
+- `tests/unit/test_payload_budget.py` measures the committed CSS, shell scripts,
+  fonts, icon markup and the lazy editor bundle (raw and gzip) against reviewed
+  limits. The same test also runs as the `payload-budget` pre-commit hook when
+  assets, editor sources or the bundle, the icon registry and its build inputs,
+  or the budget definition change — one set of thresholds, no second registry.
+  These are selected committed-file measurements, not a browser transfer trace
+  of every page.
 - `harness doctor` checks state, ports, Postgres readiness and connection usage,
   backend health, Playwright, and forgotten replay recording without exposing
   environment values. Small known test failures are recorded under

@@ -80,3 +80,13 @@ repos:
           --exclude-file src/backend/db/db.py
         language: system
         files: \.py$
+      - id: payload-budget
+        name: Check the payload budgets before commit
+        entry: uv run --frozen --no-sync python -m pytest tests/unit/test_payload_budget.py -q
+        language: system
+        # The same test file the unit suite runs; it measures committed files,
+        # so it takes no filenames. Only changes that can move a budget trigger
+        # it: assets, editor sources and bundle, icon registry and its build
+        # inputs, and the budget definition itself.
+        files: ^(src/frontend/static/(css|js|fonts)/|src/frontend/js/|src/backend/icons\.py|tools/build_icons\.mjs|package(-lock)?\.json|tests/unit/test_payload_budget\.py)
+        pass_filenames: false

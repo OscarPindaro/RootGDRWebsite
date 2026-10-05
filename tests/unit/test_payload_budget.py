@@ -12,10 +12,12 @@ purpose.
 """
 
 import gzip
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+import yaml
 
 from backend.icons import ICONS
 from backend.jinja import get_catalog
@@ -56,6 +58,22 @@ def _icon_payload() -> tuple[int, int]:
     return len(raw), _gzip(raw)
 
 
+def check_budget(
+    label: str,
+    measurement: tuple[int, int],
+    raw_limit: int,
+    gzip_limit: int,
+) -> list[str]:
+    """The one budget comparison: group, measured size and limit, or empty."""
+    raw, compressed = measurement
+    problems: list[str] = []
+    if raw > raw_limit:
+        problems.append(f"{label}: {raw} raw bytes > {raw_limit}")
+    if compressed > gzip_limit:
+        problems.append(f"{label}: {compressed} gzip bytes > {gzip_limit}")
+    return problems
+
+
 # label -> (measure, raw limit, gzip limit)
 # The font limits are equal on purpose: WOFF2 is already compressed, so gzip
 # cannot shrink it. The fonts are the one deliberate exception to a small
@@ -84,10 +102,43 @@ BUDGETS = {
 
 @pytest.mark.parametrize("label", sorted(BUDGETS))
 def test_the_baseline_stays_within_its_budget(label: str) -> None:
-    (raw, compressed), raw_limit, gzip_limit = BUDGETS[label]
+    measurement, raw_limit, gzip_limit = BUDGETS[label]
 
-    assert raw <= raw_limit, f"{label}: {raw} raw bytes > {raw_limit}"
-    assert compressed <= gzip_limit, f"{label}: {compressed} gzip bytes > {gzip_limit}"
+    assert not check_budget(label, measurement, raw_limit, gzip_limit)
+
+
+def test_an_oversized_fixture_reports_group_measurement_and_limit() -> None:
+    assert check_budget("fixture group", (1234, 999), 1000, 500) == [
+        "fixture group: 1234 raw bytes > 1000",
+        "fixture group: 999 gzip bytes > 500",
+    ]
+
+
+def test_the_pre_commit_hook_watches_the_budgeted_inputs() -> None:
+    config = yaml.safe_load((REPO / ".pre-commit-config.yaml").read_text("utf-8"))
+    hooks = [
+        hook
+        for repo in config["repos"]
+        for hook in repo["hooks"]
+        if hook["id"] == "payload-budget"
+    ]
+    assert len(hooks) == 1
+    hook = hooks[0]
+    assert hook["pass_filenames"] is False
+    assert "test_payload_budget.py" in hook["entry"]
+    pattern = re.compile(hook["files"])
+    for path in (
+        "src/frontend/static/css/main.css",
+        "src/frontend/static/js/editor.js",
+        "src/frontend/static/fonts/ibm-plex-sans.woff2",
+        "src/frontend/js/editor/index.js",
+        "src/backend/icons.py",
+        "tools/build_icons.mjs",
+        "tests/unit/test_payload_budget.py",
+    ):
+        assert pattern.search(path), path
+    assert not pattern.search("docs/features-implemented/harness-tooling.md")
+    assert not pattern.search("src/backend/server.py")
 
 
 def test_the_editor_is_the_largest_asset_by_far() -> None:
