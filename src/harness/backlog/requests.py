@@ -133,9 +133,7 @@ def scan_requests(
         match = _FRONTMATTER.match(text)
         if match is None:
             if path.name.startswith("REQ-"):
-                issues.append(
-                    RequestIssue(path=relative, detail="missing frontmatter")
-                )
+                issues.append(RequestIssue(path=relative, detail="missing frontmatter"))
             continue
         metadata = _parse_metadata(match.group(1), relative, issues)
         if metadata is None:
@@ -149,9 +147,7 @@ def scan_requests(
             )
         else:
             recorded[metadata.id] = relative
-        if path.name.startswith("REQ-") and not path.name.startswith(
-            f"{metadata.id}-"
-        ):
+        if path.name.startswith("REQ-") and not path.name.startswith(f"{metadata.id}-"):
             issues.append(
                 RequestIssue(
                     path=relative, detail=f"filename does not carry id {metadata.id}"

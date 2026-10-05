@@ -15,9 +15,7 @@ from harness.cli import app as harness_app
 
 cli = CliRunner()
 
-VALID_FRONTMATTER = (
-    "id: REQ-0012\nrequested_on: 2026-10-03\ntitle: Planning tooling"
-)
+VALID_FRONTMATTER = "id: REQ-0012\nrequested_on: 2026-10-03\ntitle: Planning tooling"
 
 
 def make_repo(tmp_path: Path) -> Path:
