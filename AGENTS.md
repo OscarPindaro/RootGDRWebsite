@@ -75,9 +75,12 @@ may run concurrently only through the approved workflow below.
   states; do not treat them as real requests or import them into the real backlog.
 - Choosing Vikunja does not authorize deleting Kanboard's data, migrating the
   historical backlog, or assigning release versions.
-- Towncrier with Markdown fragments is the selected release-note approach;
-  its tooling is not configured yet. Ask the user to choose the version at
-  release time. Never infer or apply a major/minor/patch bump without approval.
+- Towncrier with Markdown fragments is configured: one fragment per significant
+  change in `changelog.d/` named `REQ-nnnn-Tnn.<type>.md`, rendered with
+  `uv run towncrier build --draft --version UNRELEASED`. `pyproject.toml` is
+  the single version authority. Ask the user to choose the version at release
+  time; never infer or apply a major/minor/patch bump, tag or consume fragments
+  without approval.
 - A release may group an entire multi-ticket cycle. Git commits, board ticket IDs,
   application versions and Alembic revisions are distinct identifiers.
 - The approved 2026-10-03 cycle defers GitHub App/mandatory PR setup: local

@@ -1,6 +1,5 @@
 {
   "name": "rootgdr-frontend",
-  "version": "0.1.0",
   "private": true,
   "type": "module",
   "description": "Editor bundle and generated assets for the campaign archive (CodeMirror 6, Lucide icon registry).",
