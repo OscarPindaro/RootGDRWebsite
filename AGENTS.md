@@ -338,3 +338,14 @@ uv run harness content rebuild --email <email> [--world <world-id>]
 - The isolated Vikunja restart test also reproduces Podman named-volume root
   ownership changes. Runtime bind mounts use canonical existing volume mountpoints;
   initialize ownership only for new disposable/bootstrap volumes.
+- Reviewed tool images are pinned twice: by digest reference in the source
+  constants, and by immutable image ID at transfer time. A target that received
+  the image as a transferred archive holds it **only** by ID, so the digest
+  reference does not resolve there. `CaptureSpec.helper_image`,
+  `DeploymentPlan.helper_image_id`, `CurrentDeployment.helper_image_id` and
+  `VikunjaPlan.helper_image_id` carry the resolved ID into capture, capacity and
+  the board bootstrap. Oscar asked to re-evaluate this double pinning at the end
+  of the deployment cycle; do not change it as a side effect of another ticket.
+- The current cycle plan and a handoff for the next agent live in
+  `docs/development_processes/` (`afk-cycle-plan-2026-10-03.md`,
+  `handoff-2026-10-05.md`). The plan is committed only for that handoff.
