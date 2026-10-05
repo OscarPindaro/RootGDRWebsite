@@ -22,6 +22,6 @@ uv run pre-commit install
 if [ "$HARNESS" = true ]; then
     echo ""
     echo "Installing Playwright Chromium and harness MCP server..."
-    uv run playwright install chromium
+    uv run harness browsers
     uv run harness install --agent all --yes
 fi

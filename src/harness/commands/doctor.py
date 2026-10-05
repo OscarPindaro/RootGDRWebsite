@@ -14,11 +14,11 @@ from dotenv import dotenv_values
 from pydantic import BaseModel
 from rich.console import Console
 
+from .. import browser_runtime
 from ..dev import compose as dev_compose
 from ..dev import state as dev_state
 from ..test import compose, databases, ports
 from ..test import state as test_state
-from ..test.browser import BROWSERS_PATH
 
 console = Console()
 _REPLAY_FLAG = Path("harness-artifacts/replay/.recording.json")
@@ -300,14 +300,15 @@ def inspect() -> DoctorReport:
             )
         )
 
+    missing_browsers = browser_runtime.missing_browsers()
     checks.append(
         _check(
             "playwright",
-            CheckStatus.PASS if BROWSERS_PATH.exists() else CheckStatus.FAIL,
+            CheckStatus.FAIL if missing_browsers else CheckStatus.PASS,
             (
-                "Chromium is installed"
-                if BROWSERS_PATH.exists()
-                else "run `harness browsers`"
+                f"Chromium is installed in {browser_runtime.browsers_path()}"
+                if not missing_browsers
+                else f"missing {', '.join(missing_browsers)}; run `harness browsers`"
             ),
         )
     )

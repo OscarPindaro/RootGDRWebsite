@@ -24,6 +24,7 @@ from harness.deploy.backup_schemas import BackupReceipt, RestoreSpec, StorageSpe
 from harness.deploy.backup_storage import initialize_storage
 from harness.deploy.vikunja_bootstrap import bootstrap_accounts, login, request
 from harness.backlog.client import BoardClient, BoardError
+from harness.browser_runtime import ensure_browsers_path
 from harness.deploy.vikunja_schemas import VIKUNJA_IMAGE, VikunjaSpec
 from harness.test import state
 from harness.test.compose import _wait_for_http
@@ -1010,9 +1011,7 @@ def test_board_password_login_desktop_and_phone_evidence(board_deployment):
         "rootgdr-t01-review-" + spec.target.project.rsplit("-", 1)[-1]
     )
     output.mkdir(mode=0o755)
-    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(
-        state.worktree_root() / ".playwright-browsers"
-    )
+    ensure_browsers_path()
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         try:

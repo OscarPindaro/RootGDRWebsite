@@ -50,7 +50,8 @@ def _test_environment(tmp_path: Path) -> EnvironmentState:
 def _mock_common(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     browser_path = tmp_path / "browsers"
     browser_path.mkdir()
-    monkeypatch.setattr(doctor, "BROWSERS_PATH", browser_path)
+    monkeypatch.setattr(doctor.browser_runtime, "browsers_path", lambda: browser_path)
+    monkeypatch.setattr(doctor.browser_runtime, "missing_browsers", lambda *_: [])
     monkeypatch.setattr(doctor.test_state, "worktree_root", lambda: tmp_path)
     monkeypatch.setattr(doctor.compose, "_container_engine", lambda: "podman")
     monkeypatch.setattr(doctor.ports, "is_port_free", lambda _port: False)

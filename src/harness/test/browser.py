@@ -18,13 +18,14 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Playwright, sync_playwright
 from pydantic import BaseModel
 
+from ..browser_runtime import ensure_browsers_path
 from . import state
 
 # Playwright's default cache (``~/.cache/ms-playwright``) is pruned by some
 # environments, so the browser is downloaded again on every run. Keep it in the
-# repository instead; ``harness browsers`` installs it there.
-BROWSERS_PATH = Path(__file__).resolve().parents[3] / ".playwright-browsers"
-os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", str(BROWSERS_PATH))
+# repository instead; ``harness browsers`` installs it there. An explicit
+# ``PLAYWRIGHT_BROWSERS_PATH`` wins.
+ensure_browsers_path()
 
 
 class ScreenshotResult(BaseModel):

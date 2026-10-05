@@ -1,5 +1,6 @@
 import os
 from functools import lru_cache
+from pathlib import Path
 from typing import Annotated, Any, List, Literal, Protocol, Optional
 
 from dotenv import dotenv_values
@@ -10,6 +11,7 @@ from pydantic import (
     Field,
     SecretStr,
     ValidationError,
+    model_validator,
 )
 from pydantic_settings import BaseSettings
 from pydantic_settings import (
@@ -160,6 +162,19 @@ class FrontendConfig(BaseModel):
         default="src/frontend/static",
         description="Path to static files directory",
     )
+
+    @model_validator(mode="after")
+    def _resolve_relative_asset_dirs(self) -> "FrontendConfig":
+        """Relative asset directories resolve against the repository root, not
+        the process working directory, so tests can run from anywhere."""
+        root = Path(__file__).resolve().parents[2]
+        components = Path(self.components_dir)
+        if not components.is_absolute():
+            self.components_dir = str(root / components)
+        static = Path(self.static_dir)
+        if not static.is_absolute():
+            self.static_dir = str(root / static)
+        return self
 
 
 class LoggingConfig(BaseModel):

@@ -143,3 +143,16 @@ def test_runtime_configuration_does_not_require_migration_credentials(
 
     assert runtime.migrator is None
     assert runtime.database.user == "runtime"
+
+
+def test_frontend_asset_dirs_resolve_against_the_repository_root() -> None:
+    repository = Path(config_module.__file__).resolve().parents[2]
+    default = config_module.FrontendConfig()
+    assert default.components_dir == str(repository / "src/frontend/components")
+    assert default.static_dir == str(repository / "src/frontend/static")
+
+    explicit = config_module.FrontendConfig(
+        components_dir="/opt/components", static_dir="/opt/static"
+    )
+    assert explicit.components_dir == "/opt/components"
+    assert explicit.static_dir == "/opt/static"

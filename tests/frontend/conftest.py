@@ -15,8 +15,13 @@ import pytest
 from playwright.sync_api import sync_playwright
 
 from harness import artifacts
+from harness.browser_runtime import ensure_browsers_path
 from harness.frontend import state
 from harness.frontend.session import ComponentSession
+
+# Direct pytest must look where `harness browsers` installs, unless an explicit
+# PLAYWRIGHT_BROWSERS_PATH says otherwise.
+ensure_browsers_path()
 
 COMPONENTS_DIR = (
     Path(__file__).parents[2] / "src" / "frontend" / "components"

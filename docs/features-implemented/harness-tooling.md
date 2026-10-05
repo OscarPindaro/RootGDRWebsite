@@ -15,7 +15,14 @@ change" answerable without guessing.
   width divergence, vertical displacement, page overflow, missing landmarks,
   font family changes, and sub-44px touch targets on phone.
 - `harness prototype serve` opens the static prototype next to the app.
-- `harness browsers` installs Playwright's Chromium into the repository.
+- `harness browsers` installs Playwright's Chromium into the repository
+  (`.playwright-browsers/`), or into an explicit `PLAYWRIGHT_BROWSERS_PATH`.
+  It verifies the revision the installed Playwright needs and its binary, not
+  just the directory, and it distinguishes missing OS libraries from a missing
+  browser; `--with-deps` installs OS packages only when asked (CI runners).
+  Direct frontend pytest and the harness both default to the same location
+  through `src/harness/browser_runtime.py`, and `setup.sh --harness` calls this
+  command instead of `playwright install`.
 - `harness screenshot --base-url …` captures a page at desktop and phone width.
 - `harness test e2e --fresh` destructively resets only the E2E test database
   (`backend_e2e_test`) and clears that environment's uploads before running.
