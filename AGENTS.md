@@ -349,3 +349,7 @@ uv run harness content rebuild --email <email> [--world <world-id>]
 - The current cycle plan and a handoff for the next agent live in
   `docs/development_processes/` (`afk-cycle-plan-2026-10-03.md`,
   `handoff-2026-10-05.md`). The plan is committed only for that handoff.
+- This file has grown by accretion and mixes permanent rules with transient
+  environment notes. It needs an explicit cleanup pass at the end of the cycle;
+  the handoff lists what to prune, including the abandoned watchdog manual.
+  Until then, do not assume the current shape is the intended end state.
