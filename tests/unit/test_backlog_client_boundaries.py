@@ -257,6 +257,38 @@ def test_set_task_done_sends_only_the_flag_as_a_merge_patch():
     assert record.done is True
 
 
+def test_unchanged_patches_reread_after_vikunjas_empty_304():
+    calls: list[tuple[str, str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append((request.method, request.url.path))
+        if request.method == "PATCH":
+            return httpx.Response(304)
+        if "views" in request.url.path:
+            return httpx.Response(
+                200,
+                json={
+                    "id": 5,
+                    "title": "Kanban",
+                    "default_bucket_id": 3,
+                    "done_bucket_id": 9,
+                },
+            )
+        return httpx.Response(200, json={"id": 7, "title": "T", "done": True})
+
+    with client(handler) as board:
+        record = board.set_task_done(7, True)
+        view = board.set_view_buckets(2, 5, default=3, done=9)
+    assert record.done is True
+    assert (view.default_bucket_id, view.done_bucket_id) == (3, 9)
+    assert calls == [
+        ("PATCH", "/api/v2/tasks/7"),
+        ("GET", "/api/v2/tasks/7"),
+        ("PATCH", "/api/v2/projects/2/views/5"),
+        ("GET", "/api/v2/projects/2/views/5"),
+    ]
+
+
 def test_add_comment_once_does_not_duplicate_an_existing_marker():
     posts: list[str] = []
 

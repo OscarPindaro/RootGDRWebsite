@@ -406,12 +406,32 @@ uv run harness backlog projects [--json]
 uv run harness backlog list --project 2 [--query REQ-] [--json]
 uv run harness backlog show 17 [--json]
 uv run harness backlog create --project 2 --title "REQ-0012/T04 …" --description "…"
+uv run harness backlog workflow --project 2 [--view 12] [--json]
+uv run harness backlog import --project 2 --view 12 --bucket 13 [--dry-run] [--json]
 uv run harness backlog move 17 --project 2 --view 3 --bucket 8 [--json]
 uv run harness backlog close 17 --project 2 --view 3 [--json]
 uv run harness backlog reopen 17 --project 2 --view 3 [--bucket 7] [--json]
 uv run harness backlog comment 17 --text "…" --marker REQ-0012/T04 [--json]
 uv run harness backlog check-requests
 ```
+
+`workflow` is the owner-side setup command: it configures the project's kanban
+view — reusing and renaming the buckets a new view starts with — so `Backlog`,
+`In corso`, `Review` and `Conclusi` exist with explicit default and done bucket
+ids, and it prints those ids for the other commands. It needs a token allowed to
+create views and buckets, so the owner's, not the tooling token; a re-run is a
+no-op.
+
+`import` reads the cycle plan's ticket headings — the approved list plus the
+deferred `REQ-0001/T01` — and creates only the tickets missing from the board.
+The stable `REQ-nnnn/Tnn` key is the title prefix, the description links the
+request document and the plan section, and each new card is placed in the given
+bucket. Existing cards are never touched, so manual progress, descriptions and
+placement survive a re-import; a duplicate key already on the board is an
+error, not fuzzy matching; `--dry-run` writes nothing. Follow-up tickets that
+the plan's ticket sections do not define (for example the later REQ-0001/T10
+and T11 or REQ-0011/T09–T10) are created with `create` and closed with the
+same commands, using the request document as their specification.
 
 `move`, `close` and `reopen` read the current placement first, so a repeat or a
 retry after an ambiguous timeout is a reported no-op instead of a second write.

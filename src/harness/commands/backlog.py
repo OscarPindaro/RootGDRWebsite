@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Annotated
 
@@ -13,10 +14,13 @@ from rich.console import Console
 from ..backlog.client import (
     BoardClient,
     BoardError,
+    BoardTask,
     BoardTokenSource,
+    BoardView,
     default_token_source,
     record_table,
 )
+from ..backlog.plan import PLAN, load_plan_tickets, ticket_description
 from ..backlog.requests import REPO_ROOT, REQUESTS_DIR, scan_requests
 
 console = Console()
@@ -24,6 +28,33 @@ err_console = Console(stderr=True)
 backlog_app = typer.Typer(
     no_args_is_help=True, help="Read and create tickets on the isolated board."
 )
+
+WORKFLOW_BUCKETS = ("Backlog", "In corso", "Review", "Conclusi")
+# What a new kanban view starts with; the workflow reuses and renames them.
+NEW_VIEW_BUCKETS = {"Backlog": "To-Do", "In corso": "Doing", "Conclusi": "Done"}
+TICKET_KEY = re.compile(r"^REQ-\d{4}/T\d{2}(?!\d)")
+
+
+def _kanban_view(client: BoardClient, project: int, view: int | None) -> BoardView:
+    if view is not None:
+        board_view = client.view(project, view)
+        if board_view.view_kind != "kanban":
+            raise BoardError("The configured view is not a kanban view")
+        return board_view
+    kanban = [item for item in client.views(project) if item.view_kind == "kanban"]
+    if not kanban:
+        raise BoardError("Project has no kanban view to configure")
+    return next((item for item in kanban if item.title == "Kanban"), kanban[0])
+
+
+def _board_keys(tasks: list[BoardTask]) -> dict[str, int]:
+    keys: dict[str, int] = {}
+    for task in tasks:
+        found = TICKET_KEY.match(task.title)
+        if found:
+            key = found.group(0)
+            keys[key] = keys.get(key, 0) + 1
+    return keys
 
 
 def _client(token_file: Path | None, base_url: str) -> BoardClient:
@@ -329,6 +360,129 @@ def register_commands(app: typer.Typer) -> None:
                 as_json,
                 [(str(record.id), detail)],
             )
+        except BoardError, ValidationError, OSError, ValueError:
+            _fail()
+
+    @backlog_app.command("workflow")
+    def workflow(
+        project: Annotated[int, typer.Option(help="Project id.")],
+        view: Annotated[
+            int | None,
+            typer.Option(help="Kanban view id; defaults to the project's."),
+        ] = None,
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        """Ensure the kanban workflow — Backlog, In corso, Review, Conclusi —
+        with explicit default and done buckets. Needs a token allowed to
+        create views and buckets, so normally the owner's, not the tooling
+        token."""
+        try:
+            with _client(token_file, base_url) as client:
+                board_view = _kanban_view(client, project, view)
+                buckets = {
+                    item.title: item for item in client.buckets(project, board_view.id)
+                }
+                renamed: list[str] = []
+                created: list[str] = []
+                for name in WORKFLOW_BUCKETS:
+                    if name in buckets:
+                        continue
+                    fallback = NEW_VIEW_BUCKETS.get(name, "")
+                    if fallback and fallback in buckets:
+                        buckets[name] = client.rename_bucket(
+                            project,
+                            board_view.id,
+                            buckets.pop(fallback).id,
+                            name,
+                        )
+                        renamed.append(name)
+                    else:
+                        buckets[name] = client.create_bucket(
+                            project, board_view.id, name
+                        )
+                        created.append(name)
+                default = buckets[WORKFLOW_BUCKETS[0]].id
+                done = buckets[WORKFLOW_BUCKETS[-1]].id
+                board_view = client.set_view_buckets(
+                    project, board_view.id, default=default, done=done
+                )
+            payload = {
+                "view": board_view.id,
+                "buckets": {name: buckets[name].id for name in WORKFLOW_BUCKETS},
+                "default_bucket": default,
+                "done_bucket": done,
+                "renamed_buckets": renamed,
+                "created_buckets": created,
+            }
+            rows = [(str(board_view.id), f"view '{board_view.title}'")] + [
+                (str(buckets[name].id), name) for name in WORKFLOW_BUCKETS
+            ]
+            _emit(payload, as_json, rows)
+        except BoardError, ValidationError, OSError, ValueError:
+            _fail()
+
+    @backlog_app.command("import")
+    def import_tickets(
+        project: Annotated[int, typer.Option(help="Project id.")],
+        view: Annotated[int, typer.Option(help="Kanban view id.")],
+        bucket: Annotated[int, typer.Option(help="Bucket for new tickets.")],
+        plan: Annotated[Path, typer.Option(help="Cycle plan document.")] = PLAN,
+        dry_run: Annotated[
+            bool, typer.Option("--dry-run", help="Report without writing.")
+        ] = False,
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        """Create only the plan tickets missing from the board. Existing
+        tasks are never touched and a duplicate key is an error, not fuzzy
+        matching. `--dry-run` writes nothing."""
+        try:
+            tickets = load_plan_tickets(REPO_ROOT, plan)
+            with _client(token_file, base_url) as client:
+                keys = _board_keys(client.tasks(project))
+                duplicates = sorted(key for key, count in keys.items() if count > 1)
+                if duplicates:
+                    err_console.print(
+                        "[bold red]Board already has duplicate keys: "
+                        f"{', '.join(duplicates)}[/bold red]"
+                    )
+                    raise typer.Exit(1)
+                missing = [ticket for ticket in tickets if ticket.key not in keys]
+                created: list[str] = []
+                if not dry_run:
+                    for ticket in missing:
+                        record = client.create_task(
+                            project,
+                            title=f"{ticket.key} — {ticket.title}",
+                            description=ticket_description(ticket, plan),
+                        )
+                        client.place_task(project, view, bucket, record.id)
+                        created.append(ticket.key)
+            payload = {
+                "plan_tickets": len(tickets),
+                "missing": [ticket.key for ticket in missing],
+                "created": created,
+                "dry_run": dry_run,
+            }
+            rows = [(ticket.key, ticket.title) for ticket in missing]
+            _emit(payload, as_json, rows)
+            if not as_json:
+                action = "would be created" if dry_run else "created"
+                console.print(
+                    f"{len(missing)} ticket(s) {action}; "
+                    f"{len(tickets) - len(missing)} already present."
+                )
         except BoardError, ValidationError, OSError, ValueError:
             _fail()
 

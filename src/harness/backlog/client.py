@@ -37,6 +37,7 @@ class BoardTask(BoardRecord):
 
 class BoardView(BoardRecord):
     project_id: int = 0
+    view_kind: str = ""
     default_bucket_id: int = 0
     done_bucket_id: int = 0
 
@@ -177,9 +178,55 @@ class BoardClient:
             self._request("GET", f"/projects/{project}/views/{view}").json()
         )
 
+    def create_view(
+        self, project: int, title: str, *, kind: str = "kanban"
+    ) -> BoardView:
+        response = self._request(
+            "POST",
+            f"/projects/{project}/views",
+            json={
+                "title": title,
+                "view_kind": kind,
+                "bucket_configuration_mode": "manual",
+            },
+        )
+        return BoardView.model_validate(response.json())
+
+    def set_view_buckets(
+        self, project: int, view: int, *, default: int, done: int
+    ) -> BoardView:
+        response = self._request(
+            "PATCH",
+            f"/projects/{project}/views/{view}",
+            json={"default_bucket_id": default, "done_bucket_id": done},
+            content_type="application/merge-patch+json",
+        )
+        # Vikunja answers 304 with no body when the patch changes nothing.
+        if response.status_code == 304:
+            return self.view(project, view)
+        return BoardView.model_validate(response.json())
+
     def buckets(self, project: int, view: int) -> list[BoardBucket]:
         raw = self._paginate(f"/projects/{project}/views/{view}/buckets")
         return [BoardBucket.model_validate(item) for item in raw]
+
+    def create_bucket(self, project: int, view: int, title: str) -> BoardBucket:
+        response = self._request(
+            "POST",
+            f"/projects/{project}/views/{view}/buckets",
+            json={"title": title},
+        )
+        return BoardBucket.model_validate(response.json())
+
+    def rename_bucket(
+        self, project: int, view: int, bucket: int, title: str
+    ) -> BoardBucket:
+        response = self._request(
+            "PUT",
+            f"/projects/{project}/views/{view}/buckets/{bucket}",
+            json={"title": title, "limit": 0},
+        )
+        return BoardBucket.model_validate(response.json())
 
     def bucket_tasks(self, project: int, view: int) -> list[BoardBucket]:
         raw = self._paginate(f"/projects/{project}/views/{view}/buckets/tasks")
@@ -238,6 +285,9 @@ class BoardClient:
             json={"done": done},
             content_type="application/merge-patch+json",
         )
+        # Vikunja answers 304 with no body when the patch changes nothing.
+        if response.status_code == 304:
+            return self.task(task)
         return BoardTask.model_validate(response.json())
 
     def add_comment(self, task: int, comment: str) -> BoardComment:

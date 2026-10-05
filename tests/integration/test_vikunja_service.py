@@ -1,4 +1,5 @@
 import json
+import re
 import secrets
 import socket
 import subprocess
@@ -832,6 +833,173 @@ def test_backlog_move_close_reopen_and_idempotent_comments_on_the_real_board(
         record = board.task(task.id)
         assert record.done is True
         assert record.description == "keep me"
+
+
+def test_backlog_workflow_and_import_are_idempotent_on_the_real_board(
+    board_deployment,
+):
+    spec, directory = board_deployment
+    assert apply_board(spec, directory).returncode == 0
+    runtime = spec.target.base / "runtime"
+    identity = json.loads((runtime / "identity.json").read_bytes())
+    token_file = runtime / "tooling-token"
+    token = token_file.read_text().strip()
+    base = f"http://127.0.0.1:{spec.target.port}"
+    project = identity["project_id"]
+    owner_token_file = directory / "owner-token"
+    with httpx.Client(
+        base_url=base, timeout=20, follow_redirects=False, trust_env=False
+    ) as owner:
+        login(owner, spec.owner)
+        authorization = owner.headers["Authorization"]
+        write_private(owner_token_file, authorization.removeprefix("Bearer ").encode())
+
+    def cli(
+        *arguments: str, token_path: Path = token_file
+    ) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [
+                "uv",
+                "run",
+                "harness",
+                "backlog",
+                *arguments,
+                "--base-url",
+                base,
+                "--token-file",
+                str(token_path),
+            ],
+            cwd=state.worktree_root(),
+            capture_output=True,
+            text=True,
+            timeout=300,
+        )
+
+    plan = str(
+        state.worktree_root()
+        / "docs/development_processes/afk-cycle-plan-2026-10-03.md"
+    )
+    workflow = cli(
+        "workflow", "--project", str(project), "--json", token_path=owner_token_file
+    )
+    assert workflow.returncode == 0, workflow.stdout + workflow.stderr
+    configured = json.loads(workflow.stdout)
+    view = configured["view"]
+    buckets = configured["buckets"]
+    assert set(buckets) == {"Backlog", "In corso", "Review", "Conclusi"}
+    assert configured["default_bucket"] == buckets["Backlog"]
+    assert configured["done_bucket"] == buckets["Conclusi"]
+
+    repeated = cli(
+        "workflow", "--project", str(project), "--json", token_path=owner_token_file
+    )
+    assert repeated.returncode == 0, repeated.stdout + repeated.stderr
+    again = json.loads(repeated.stdout)
+    assert again["view"] == view and again["buckets"] == buckets
+    assert again["renamed_buckets"] == [] and again["created_buckets"] == []
+
+    def board_client() -> BoardClient:
+        return BoardClient(base, SecretStr(token))
+
+    dry = cli(
+        "import",
+        "--project",
+        str(project),
+        "--view",
+        str(view),
+        "--bucket",
+        str(buckets["Backlog"]),
+        "--plan",
+        plan,
+        "--dry-run",
+        "--json",
+    )
+    assert dry.returncode == 0, dry.stdout + dry.stderr
+    planned = json.loads(dry.stdout)
+    assert len(planned["missing"]) == 41
+    assert planned["created"] == []
+    with board_client() as board:
+        assert board.tasks(project) == []
+
+    first = cli(
+        "import",
+        "--project",
+        str(project),
+        "--view",
+        str(view),
+        "--bucket",
+        str(buckets["Backlog"]),
+        "--plan",
+        plan,
+        "--json",
+    )
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert len(json.loads(first.stdout)["created"]) == 41
+    key_pattern = re.compile(r"^REQ-\d{4}/T\d{2}(?!\d)")
+    with board_client() as board:
+        tasks = board.tasks(project)
+        keys = {key_pattern.match(item.title).group(0) for item in tasks}
+        assert len(tasks) == 41 and len(keys) == 41
+        sample = next(item for item in tasks if item.title.startswith("REQ-0012/T05"))
+        assert "docs/features-request/REQ-0012-planning-and-release-tooling.md" in (
+            sample.description
+        )
+        assert board.task_bucket(project, view, sample.id) == buckets["Backlog"]
+
+    with httpx.Client(
+        base_url=base,
+        timeout=20,
+        follow_redirects=False,
+        trust_env=False,
+        headers={"Authorization": "Bearer " + token},
+    ) as manual:
+        manual.patch(
+            f"/api/v2/tasks/{sample.id}",
+            json={"description": "edited by hand"},
+            headers={"Content-Type": "application/merge-patch+json"},
+        )
+    with board_client() as board:
+        board.place_task(project, view, buckets["Review"], sample.id)
+        for index in range(12):
+            board.create_task(project, title=f"Unrelated extra {index:02d}")
+
+    second = cli(
+        "import",
+        "--project",
+        str(project),
+        "--view",
+        str(view),
+        "--bucket",
+        str(buckets["Backlog"]),
+        "--plan",
+        plan,
+        "--json",
+    )
+    assert second.returncode == 0, second.stdout + second.stderr
+    repeated_import = json.loads(second.stdout)
+    assert repeated_import["created"] == [] and repeated_import["missing"] == []
+    with board_client() as board:
+        tasks = board.tasks(project)
+        assert len(tasks) == 53
+        kept = next(item for item in tasks if item.id == sample.id)
+        assert kept.description == "edited by hand"
+        assert board.task_bucket(project, view, sample.id) == buckets["Review"]
+
+    with board_client() as board:
+        board.create_task(project, title="REQ-0012/T05 — duplicate key")
+    duplicated = cli(
+        "import",
+        "--project",
+        str(project),
+        "--view",
+        str(view),
+        "--bucket",
+        str(buckets["Backlog"]),
+        "--plan",
+        plan,
+    )
+    assert duplicated.returncode == 1
+    assert "REQ-0012/T05" in duplicated.stdout + duplicated.stderr
 
 
 def test_board_password_login_desktop_and_phone_evidence(board_deployment):
