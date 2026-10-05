@@ -23,6 +23,18 @@ from ..test.browser import BROWSERS_PATH
 console = Console()
 _REPLAY_FLAG = Path("harness-artifacts/replay/.recording.json")
 
+# Keys the development stack needs in `.env`; `.env.example` must declare them.
+DEV_CONFIG_KEYS = {
+    "POSTGRES_DB",
+    "POSTGRES_USER",
+    "POSTGRES_PASSWORD",
+    "DEV_SHOW_DB",
+    "MIGRATOR__USER",
+    "MIGRATOR__PASSWORD",
+    "DATABASE__USER",
+    "DATABASE__PASSWORD",
+}
+
 
 class CheckStatus(str, Enum):
     PASS = "pass"
@@ -171,17 +183,7 @@ def _test_config(environment: test_state.EnvironmentState) -> DoctorCheck:
 
 def _dev_config() -> tuple[DoctorCheck, dict[str, str | None]]:
     values = dotenv_values(dev_compose.ENV_FILE)
-    required = {
-        "POSTGRES_DB",
-        "POSTGRES_USER",
-        "POSTGRES_PASSWORD",
-        "DEV_SHOW_DB",
-        "MIGRATOR__USER",
-        "MIGRATOR__PASSWORD",
-        "DATABASE__USER",
-        "DATABASE__PASSWORD",
-    }
-    missing = sorted(key for key in required if not values.get(key))
+    missing = sorted(key for key in DEV_CONFIG_KEYS if not values.get(key))
     return (
         _check(
             "config:dev",

@@ -176,5 +176,22 @@ Docker environment retains both integration/E2E databases and Alembic schemas
 after `env up --recreate`. Test recovery never resets work, showcase or board
 storage, and no exception converts an unavailable database into a passing test.
 
+## T10 — Complete the development environment template
+
+Follow-up found while continuing the cycle on a fresh checkout. Copying
+`.env.example` leaves the development stack unusable: `harness dev up` fails
+because `DEV_SHOW_DB` is missing, and `harness dev seed` cannot create the
+bootstrap admin because `AUTH__BOOTSTRAP_ADMIN_EMAIL` is unset; the app and the
+htmx payload hook also require `AUTH__JWT_SECRET`. The example still carried
+the pre-stack database name.
+
+**Change:** declare every key the development stack requires in
+`.env.example`, with development-only placeholder values and the documented
+`root_gdr_dev`/`root_gdr_show` database names.
+
+**Acceptance:** a unit test keeps the example aligned with the doctor's
+required dev keys plus the two auth keys; an environment with exactly those
+additions starts the stack and seeds the work database.
+
 Keep the retrospective as historical context; these tickets and the approved
 cycle decisions define the implementation scope.

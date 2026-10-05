@@ -5,8 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
+from dotenv import dotenv_values
 
 from harness.commands import dev as dev_commands
+from harness.commands.doctor import DEV_CONFIG_KEYS
 from harness.dev import compose as dev_compose
 from harness.dev import state as dev_state
 
@@ -30,6 +32,16 @@ def test_state_round_trips(tmp_path: Path, monkeypatch) -> None:
     assert dev_state.read(tmp_path) == dev
     dev_state.clear(tmp_path)
     assert dev_state.read(tmp_path) is None
+
+
+def test_env_example_declares_every_dev_key() -> None:
+    example = dev_compose.ENV_FILE.parent / ".env.example"
+    values = dotenv_values(example)
+    required = DEV_CONFIG_KEYS | {
+        "AUTH__JWT_SECRET",
+        "AUTH__BOOTSTRAP_ADMIN_EMAIL",
+    }
+    assert required <= set(values)
 
 
 def test_database_names_come_from_the_env_file(tmp_path: Path, monkeypatch) -> None:
