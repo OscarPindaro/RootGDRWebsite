@@ -1,7 +1,8 @@
 # Pre-existing failures found while working the frontend mega-plan
 
 Recorded 2026-09-21, during F2. Each was reproduced on the tree *before* the
-ticket's change, so none of them is caused by a mega-plan ticket.
+ticket's change, so none of them is caused by a mega-plan ticket. Load-dependent
+frontend-suite flakes live in [frontend-flakes.md](frontend-flakes.md).
 
 ## `harness test e2e` — originally 3 failures, 28 passed
 

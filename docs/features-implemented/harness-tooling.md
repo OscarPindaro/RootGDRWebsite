@@ -56,7 +56,10 @@ change" answerable without guessing.
   persisted server state instead of trusting optimistic text in the page.
 - `harness doctor` checks state, ports, Postgres readiness and connection usage,
   backend health, Playwright, and forgotten replay recording without exposing
-  environment values.
+  environment values. Small known test failures are recorded under
+  `docs/features-request/problems/` (the E2E note and the frontend-flake
+  register) so a new failure can be told apart from an old one; nothing there
+  skips a test or turns a failure green.
 - `harness smoke` authenticates and visits the main and world pages, failing on
   HTTP or browser errors. `harness logs` filters Compose output by structured
   request/trace id in Python.
