@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, SecretStr
 
 from ..deploy.backup import BackupError
 
@@ -16,6 +16,10 @@ MAX_PAGES = 50
 class BoardError(BackupError):
     """Bounded board failure. Never carries response bodies or credentials."""
 
+    def __init__(self, message: str, *, ambiguous: bool = False) -> None:
+        super().__init__(message)
+        self.ambiguous = ambiguous
+
 
 class BoardRecord(BaseModel):
     model_config = ConfigDict(extra="allow")
@@ -25,12 +29,21 @@ class BoardRecord(BaseModel):
     description: str = ""
 
 
+class BoardTask(BoardRecord):
+    project_id: int = 0
+    bucket_id: int = 0
+    done: bool = False
+
+
 class BoardView(BoardRecord):
     project_id: int = 0
+    default_bucket_id: int = 0
+    done_bucket_id: int = 0
 
 
 class BoardBucket(BoardRecord):
     project_view_id: int = 0
+    tasks: list[BoardRecord] | None = None
 
 
 class BoardComment(BaseModel):
@@ -77,7 +90,8 @@ def default_token_source() -> BoardTokenSource:
 
 
 class BoardClient:
-    """Minimal read/create surface. No deletion and no project administration."""
+    """Minimal read and write surface. No deletion and no project
+    administration."""
 
     def __init__(self, base_url: str, token: SecretStr, *, timeout: float = 20.0):
         if not base_url.startswith(("http://127.0.0.1:", "http://localhost:")):
@@ -106,18 +120,22 @@ class BoardClient:
         *,
         json: object = None,
         params: dict[str, Any] | None = None,
+        content_type: str | None = None,
     ) -> httpx.Response:
+        headers = {"Content-Type": content_type} if content_type else None
         try:
             response = self._client.request(
-                method, API + path, json=json, params=params
+                method, API + path, json=json, params=params, headers=headers
             )
         except httpx.TimeoutException:
             raise BoardError(
-                "Board request timed out; retry after reading current state"
+                "Board request timed out; retry after reading current state",
+                ambiguous=True,
             ) from None
         except httpx.HTTPError:
             raise BoardError(
-                "Board request failed before a response was received"
+                "Board request failed before a response was received",
+                ambiguous=True,
             ) from None
         if response.status_code in {401, 403}:
             raise BoardError("Board token is missing, expired or insufficiently scoped")
@@ -154,18 +172,34 @@ class BoardClient:
         raw = self._paginate(f"/projects/{project}/views")
         return [BoardView.model_validate(item) for item in raw]
 
+    def view(self, project: int, view: int) -> BoardView:
+        return BoardView.model_validate(
+            self._request("GET", f"/projects/{project}/views/{view}").json()
+        )
+
     def buckets(self, project: int, view: int) -> list[BoardBucket]:
         raw = self._paginate(f"/projects/{project}/views/{view}/buckets")
         return [BoardBucket.model_validate(item) for item in raw]
 
-    def tasks(self, project: int, query: str | None = None) -> list[BoardRecord]:
+    def bucket_tasks(self, project: int, view: int) -> list[BoardBucket]:
+        raw = self._paginate(f"/projects/{project}/views/{view}/buckets/tasks")
+        return [BoardBucket.model_validate(item) for item in raw]
+
+    def task_bucket(self, project: int, view: int, task: int) -> int:
+        """Current bucket of one task in a kanban view, 0 when unplaced."""
+        for bucket in self.bucket_tasks(project, view):
+            if any(item.id == task for item in bucket.tasks or []):
+                return bucket.id
+        return 0
+
+    def tasks(self, project: int, query: str | None = None) -> list[BoardTask]:
         raw = self._paginate(
             f"/projects/{project}/tasks", {"q": query} if query else None
         )
-        return [BoardRecord.model_validate(item) for item in raw]
+        return [BoardTask.model_validate(item) for item in raw]
 
-    def task(self, task_id: int) -> BoardRecord:
-        return BoardRecord.model_validate(
+    def task(self, task_id: int) -> BoardTask:
+        return BoardTask.model_validate(
             self._request("GET", f"/tasks/{task_id}").json()
         )
 
@@ -180,15 +214,61 @@ class BoardClient:
         title: str,
         description: str = "",
         bucket: int | None = None,
-    ) -> BoardRecord:
+    ) -> BoardTask:
         payload: dict[str, Any] = {"title": title, "description": description}
         if bucket is not None:
             payload["bucket_id"] = bucket
         response = self._request("POST", f"/projects/{project}/tasks", json=payload)
-        return BoardRecord.model_validate(response.json())
+        return BoardTask.model_validate(response.json())
 
+    def place_task(self, project: int, view: int, bucket: int, task: int) -> None:
+        """Place a task in a kanban bucket. Placing in the done bucket marks
+        the task done; placing elsewhere clears done."""
+        self._request(
+            "PUT",
+            f"/projects/{project}/views/{view}/buckets/{bucket}/tasks",
+            json={"task_id": task, "bucket_id": bucket, "project_view_id": view},
+        )
 
-RecordList = TypeAdapter(list[BoardRecord])
+    def set_task_done(self, task: int, done: bool) -> BoardTask:
+        """Minimal partial update: only the done flag, never the rich text."""
+        response = self._request(
+            "PATCH",
+            f"/tasks/{task}",
+            json={"done": done},
+            content_type="application/merge-patch+json",
+        )
+        return BoardTask.model_validate(response.json())
+
+    def add_comment(self, task: int, comment: str) -> BoardComment:
+        response = self._request(
+            "POST", f"/tasks/{task}/comments", json={"comment": comment}
+        )
+        return BoardComment.model_validate(response.json())
+
+    def add_comment_once(
+        self, task: int, comment: str, marker: str
+    ) -> tuple[BoardComment, bool]:
+        """Idempotent outcome comment. The marker is appended to the posted
+        body, so a re-run finds it. Returns the comment and whether this call
+        created it; a timeout re-reads before concluding anything."""
+        existing = self._comment_with_marker(task, marker)
+        if existing is not None:
+            return existing, False
+        try:
+            return self.add_comment(task, f"{comment}\n\n{marker}"), True
+        except BoardError as error:
+            if not error.ambiguous:
+                raise
+            existing = self._comment_with_marker(task, marker)
+            if existing is None:
+                raise
+            return existing, False
+
+    def _comment_with_marker(self, task: int, marker: str) -> BoardComment | None:
+        return next(
+            (item for item in self.comments(task) if marker in item.comment), None
+        )
 
 
 def record_table(records: list[BoardRecord]) -> list[tuple[str, str]]:

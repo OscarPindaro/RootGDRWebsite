@@ -396,8 +396,9 @@ schema, grants and configuration.
 
 ## Backlog CLI
 
-`harness backlog` reads and creates tickets on the isolated board over API v2.
-It never deletes anything and never administers projects, tokens or users.
+`harness backlog` reads, creates and moves tickets on the isolated board over
+API v2. It never deletes anything and never administers projects, tokens or
+users.
 
 ```console
 export ROOTGDR_BOARD_TOKEN_FILE=/private/board-tooling-token
@@ -405,7 +406,22 @@ uv run harness backlog projects [--json]
 uv run harness backlog list --project 2 [--query REQ-] [--json]
 uv run harness backlog show 17 [--json]
 uv run harness backlog create --project 2 --title "REQ-0012/T04 …" --description "…"
+uv run harness backlog move 17 --project 2 --view 3 --bucket 8 [--json]
+uv run harness backlog close 17 --project 2 --view 3 [--json]
+uv run harness backlog reopen 17 --project 2 --view 3 [--bucket 7] [--json]
+uv run harness backlog comment 17 --text "…" --marker REQ-0012/T04 [--json]
+uv run harness backlog check-requests
 ```
+
+`move`, `close` and `reopen` read the current placement first, so a repeat or a
+retry after an ambiguous timeout is a reported no-op instead of a second write.
+`close` places the task in the view's `done_bucket_id` (which is what marks it
+done in Vikunja); without a done bucket only the `done` flag is patched.
+`reopen` places it back in the view's default bucket, or an explicit one, and
+never into the done bucket. `comment --marker` is idempotent: the marker is
+appended to the posted body, an existing marker is left alone, and a timeout
+re-reads before concluding anything. The `done` flag is patched with a minimal
+JSON merge patch that never rewrites title, description or rich text.
 
 `BoardClient` is a typed httpx boundary: project, view, bucket, task and comment
 models; `BoardPage` for the v2 envelope; and full pagination up to a reviewed
@@ -417,12 +433,18 @@ from a server rejection, so an ambiguous write is never retried blindly.
 Credentials come from `--token-file` or `ROOTGDR_BOARD_TOKEN_FILE`, must be a
 canonical `0600` file, and never appear in argv, output or logs. The base URL
 must be an explicit loopback tunnel, matching the deployed board. Human output
-prints ids and titles only; `--json` prints the full records.
+prints ids and titles only; `--json` prints the full records. Placement reads
+need the reviewed `projects.views_buckets_tasks_get` token scope, which the
+bootstrap now requests; a token created before that scope existed must be
+recreated deliberately before `move`, `close` or `reopen` can read placements.
 
 Verified against the real isolated 2.6.0 board and against the live server board
 through its tunnel: pagination across more than one page (55 tasks), create with
 read-back, 404, 422, a wrong token and the tooling scope that resolves only the
-real project.
+real project. Later verification added a real kanban workflow: move with a
+repeated no-op, close into the done bucket, reopen into the default bucket, one
+comment for a repeated marker, a read-only token refused on write, and a
+description preserved across a `done` patch.
 
 ## Limits
 

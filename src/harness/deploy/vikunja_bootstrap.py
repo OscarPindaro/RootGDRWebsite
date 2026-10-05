@@ -175,6 +175,7 @@ def bootstrap_accounts(base_url: str, spec: VikunjaSpec) -> BoardBootstrapResult
                     "read_one",
                     "views_buckets",
                     "views_buckets_tasks",
+                    "views_buckets_tasks_get",
                 ],
                 "tasks": ["read_all", "read_one", "create", "update"],
                 "tasks_comments": ["read_all", "create"],

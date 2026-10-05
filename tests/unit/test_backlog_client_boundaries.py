@@ -178,3 +178,158 @@ def test_human_rows_never_include_the_description_body():
         rows = record_table(board.projects())
     assert rows == [("1", "Ticket")]
     assert TOKEN not in json.dumps(rows)
+
+
+def test_view_reads_done_and_default_buckets():
+    paths: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        paths.append(request.url.path)
+        return httpx.Response(
+            200,
+            json={
+                "id": 5,
+                "title": "Kanban",
+                "done_bucket_id": 9,
+                "default_bucket_id": 3,
+            },
+        )
+
+    with client(handler) as board:
+        view = board.view(2, 5)
+    assert (view.done_bucket_id, view.default_bucket_id) == (9, 3)
+    assert paths == ["/api/v2/projects/2/views/5"]
+
+
+def test_task_bucket_maps_placement_and_reports_unplaced_as_zero():
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json=envelope(
+                [
+                    {"id": 4, "title": "Backlog", "tasks": [{"id": 7}]},
+                    {"id": 5, "title": "Done", "tasks": None},
+                ]
+            ),
+        )
+
+    with client(handler) as board:
+        assert board.task_bucket(2, 3, 7) == 4
+        assert board.task_bucket(2, 3, 99) == 0
+
+
+def test_place_task_puts_only_the_reviewed_body():
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["method"] = request.method
+        captured["path"] = request.url.path
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"task_id": 7, "bucket_id": 4})
+
+    with client(handler) as board:
+        board.place_task(2, 5, 4, 7)
+    assert captured["method"] == "PUT"
+    assert captured["path"] == "/api/v2/projects/2/views/5/buckets/4/tasks"
+    assert captured["body"] == {
+        "task_id": 7,
+        "bucket_id": 4,
+        "project_view_id": 5,
+    }
+
+
+def test_set_task_done_sends_only_the_flag_as_a_merge_patch():
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["method"] = request.method
+        captured["content_type"] = request.headers["content-type"]
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(
+            200, json={"id": 7, "title": "T", "done": True, "description": "kept"}
+        )
+
+    with client(handler) as board:
+        record = board.set_task_done(7, True)
+    assert captured["method"] == "PATCH"
+    assert captured["content_type"] == "application/merge-patch+json"
+    assert captured["body"] == {"done": True}
+    assert record.done is True
+
+
+def test_add_comment_once_does_not_duplicate_an_existing_marker():
+    posts: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST":
+            posts.append(request.url.path)
+            return httpx.Response(201, json={"id": 2, "comment": "new"})
+        return httpx.Response(
+            200, json=envelope([{"id": 1, "comment": "outcome REQ-0012/T04 done"}])
+        )
+
+    with client(handler) as board:
+        record, created = board.add_comment_once(7, "new", "REQ-0012/T04")
+    assert (record.id, created) == (1, False)
+    assert posts == []
+
+
+def test_add_comment_once_posts_when_the_marker_is_absent():
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST":
+            captured["body"] = json.loads(request.content)
+            return httpx.Response(201, json={"id": 2, "comment": "new"})
+        return httpx.Response(200, json=envelope([]))
+
+    with client(handler) as board:
+        record, created = board.add_comment_once(7, "new", "REQ-0012/T04")
+    assert (record.id, created) == (2, True)
+    assert captured["body"] == {"comment": "new\n\nREQ-0012/T04"}
+
+
+def test_add_comment_once_rereads_after_an_ambiguous_timeout():
+    reads = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal reads
+        if request.method == "POST":
+            raise httpx.ReadTimeout("slow", request=request)
+        reads += 1
+        items = [] if reads == 1 else [{"id": 3, "comment": "outcome REQ-0012/T04"}]
+        return httpx.Response(200, json=envelope(items))
+
+    with client(handler) as board:
+        record, created = board.add_comment_once(7, "new", "REQ-0012/T04")
+    assert (record.id, created) == (3, False)
+    assert reads == 2
+
+
+def test_add_comment_once_reraises_when_the_reread_finds_nothing():
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST":
+            raise httpx.ReadTimeout("slow", request=request)
+        return httpx.Response(200, json=envelope([]))
+
+    with client(handler) as board:
+        with pytest.raises(BoardError, match="timed out") as error:
+            board.add_comment_once(7, "new", "REQ-0012/T04")
+    assert error.value.ambiguous is True
+
+
+def test_add_comment_once_does_not_reread_after_a_definitive_rejection():
+    reads = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal reads
+        if request.method == "POST":
+            return httpx.Response(404, json={"detail": "missing"})
+        reads += 1
+        return httpx.Response(200, json=envelope([]))
+
+    with client(handler) as board:
+        with pytest.raises(BoardError, match="not found") as error:
+            board.add_comment_once(7, "new", "REQ-0012/T04")
+    assert error.value.ambiguous is False
+    assert reads == 1

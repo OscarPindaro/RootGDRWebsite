@@ -177,4 +177,159 @@ def register_commands(app: typer.Typer) -> None:
         except BoardError, ValidationError, OSError, ValueError:
             _fail()
 
+    @backlog_app.command("move")
+    def move_task(
+        task: Annotated[int, typer.Argument(help="Task id.")],
+        project: Annotated[int, typer.Option(help="Project id.")],
+        view: Annotated[int, typer.Option(help="Kanban view id.")],
+        bucket: Annotated[int, typer.Option(help="Target bucket id.")],
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        """Place a task in one bucket. The current placement is read first, so
+        a retry after an ambiguous timeout never writes twice."""
+        try:
+            with _client(token_file, base_url) as client:
+                current = client.task_bucket(project, view, task)
+                changed = current != bucket
+                if changed:
+                    client.place_task(project, view, bucket, task)
+            detail = "moved" if changed else "already there"
+            _emit(
+                {"task": task, "bucket": bucket, "changed": changed},
+                as_json,
+                [(str(task), f"bucket {bucket} ({detail})")],
+            )
+        except BoardError, ValidationError, OSError, ValueError:
+            _fail()
+
+    @backlog_app.command("close")
+    def close_task(
+        task: Annotated[int, typer.Argument(help="Task id.")],
+        project: Annotated[int, typer.Option(help="Project id.")],
+        view: Annotated[int, typer.Option(help="Kanban view id.")],
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        """Close a task into the view's done bucket; without one, only the
+        done flag changes. The current placement is read first."""
+        try:
+            with _client(token_file, base_url) as client:
+                board_view = client.view(project, view)
+                if board_view.done_bucket_id > 0:
+                    current = client.task_bucket(project, view, task)
+                    changed = current != board_view.done_bucket_id
+                    if changed:
+                        client.place_task(
+                            project, view, board_view.done_bucket_id, task
+                        )
+                    bucket = board_view.done_bucket_id
+                    detail = "closed" if changed else "already in the done bucket"
+                else:
+                    record = client.task(task)
+                    changed = not record.done
+                    if changed:
+                        client.set_task_done(task, True)
+                    bucket = 0
+                    detail = "closed (done flag)" if changed else "already closed"
+            _emit(
+                {"task": task, "bucket": bucket, "done": True, "changed": changed},
+                as_json,
+                [(str(task), detail)],
+            )
+        except BoardError, ValidationError, OSError, ValueError:
+            _fail()
+
+    @backlog_app.command("reopen")
+    def reopen_task(
+        task: Annotated[int, typer.Argument(help="Task id.")],
+        project: Annotated[int, typer.Option(help="Project id.")],
+        view: Annotated[int, typer.Option(help="Kanban view id.")],
+        bucket: Annotated[
+            int | None, typer.Option(help="Bucket id; defaults to the view's.")
+        ] = None,
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        """Reopen a closed task into a non-done bucket; without a done bucket,
+        only the done flag changes."""
+        try:
+            with _client(token_file, base_url) as client:
+                board_view = client.view(project, view)
+                target = bucket if bucket is not None else board_view.default_bucket_id
+                if board_view.done_bucket_id > 0:
+                    if target <= 0 or target == board_view.done_bucket_id:
+                        err_console.print(
+                            "[bold red]Reopen needs a non-done bucket: pass "
+                            "--bucket or configure the view's default bucket."
+                            "[/bold red]"
+                        )
+                        raise typer.Exit(1)
+                    record = client.task(task)
+                    current = client.task_bucket(project, view, task)
+                    changed = current != target or record.done
+                    if changed:
+                        client.place_task(project, view, target, task)
+                    detail = "reopened" if changed else "already open"
+                    payload = {"task": task, "bucket": target, "done": False}
+                else:
+                    record = client.task(task)
+                    changed = record.done
+                    if changed:
+                        client.set_task_done(task, False)
+                    detail = "reopened (done flag)" if changed else "already open"
+                    payload = {"task": task, "bucket": 0, "done": False}
+            _emit(payload, as_json, [(str(task), detail)])
+        except BoardError, ValidationError, OSError, ValueError:
+            _fail()
+
+    @backlog_app.command("comment")
+    def comment_task(
+        task: Annotated[int, typer.Argument(help="Task id.")],
+        text: Annotated[str, typer.Option(help="Comment body.")],
+        marker: Annotated[
+            str | None,
+            typer.Option(help="Idempotency marker, e.g. the ticket id."),
+        ] = None,
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        """Comment on a task. With --marker the write is idempotent and an
+        ambiguous timeout re-reads before concluding anything."""
+        try:
+            with _client(token_file, base_url) as client:
+                if marker is None:
+                    record = client.add_comment(task, text)
+                    created = True
+                else:
+                    record, created = client.add_comment_once(task, text, marker)
+            detail = "created" if created else "already present"
+            _emit(
+                {"task": task, "comment_id": record.id, "created": created},
+                as_json,
+                [(str(record.id), detail)],
+            )
+        except BoardError, ValidationError, OSError, ValueError:
+            _fail()
+
     app.add_typer(backlog_app, name="backlog")

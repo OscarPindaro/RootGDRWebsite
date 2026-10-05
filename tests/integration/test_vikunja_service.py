@@ -5,6 +5,7 @@ import subprocess
 import shutil
 import sys
 import os
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -20,7 +21,7 @@ from harness.deploy.vikunja import board_recovery_spec, configuration, plan_boar
 from harness.deploy.backup_restore import restore_encrypted
 from harness.deploy.backup_schemas import BackupReceipt, RestoreSpec, StorageSpec
 from harness.deploy.backup_storage import initialize_storage
-from harness.deploy.vikunja_bootstrap import bootstrap_accounts, login
+from harness.deploy.vikunja_bootstrap import bootstrap_accounts, login, request
 from harness.backlog.client import BoardClient, BoardError
 from harness.deploy.vikunja_schemas import VIKUNJA_IMAGE, VikunjaSpec
 from harness.test import state
@@ -642,6 +643,195 @@ def test_backlog_client_paginates_creates_and_bounds_errors_on_the_real_board(
     with BoardClient(base, SecretStr("not-the-real-token-value-000000")) as wrong:
         with pytest.raises(BoardError, match="missing, expired or insufficiently"):
             wrong.projects()
+
+
+def test_backlog_move_close_reopen_and_idempotent_comments_on_the_real_board(
+    board_deployment,
+):
+    spec, directory = board_deployment
+    assert apply_board(spec, directory).returncode == 0
+    runtime = spec.target.base / "runtime"
+    identity = json.loads((runtime / "identity.json").read_bytes())
+    token_file = runtime / "tooling-token"
+    base = f"http://127.0.0.1:{spec.target.port}"
+    project = identity["project_id"]
+    with httpx.Client(
+        base_url=base, timeout=20, follow_redirects=False, trust_env=False
+    ) as owner:
+        login(owner, spec.owner)
+        view = request(
+            owner,
+            "POST",
+            f"/api/v2/projects/{project}/views",
+            data={
+                "title": "Workflow",
+                "view_kind": "kanban",
+                "bucket_configuration_mode": "manual",
+            },
+            expected=201,
+        ).json()
+        view_id = view["id"]
+        buckets = {}
+        for title in ("Backlog", "In corso", "Review", "Conclusi"):
+            buckets[title] = request(
+                owner,
+                "POST",
+                f"/api/v2/projects/{project}/views/{view_id}/buckets",
+                data={"title": title},
+                expected=201,
+            ).json()["id"]
+        request(
+            owner,
+            "PATCH",
+            f"/api/v2/projects/{project}/views/{view_id}",
+            data={"done_bucket_id": buckets["Conclusi"]},
+        )
+        read_only = request(
+            owner,
+            "POST",
+            "/api/v2/tokens",
+            data={
+                "owner_id": identity["tooling_id"],
+                "title": "Read-only evidence",
+                "permissions": {
+                    "projects": ["read_all", "read_one"],
+                    "tasks": ["read_all", "read_one"],
+                    "tasks_comments": ["read_all"],
+                    "projects_views": ["read_all", "read_one"],
+                    "projects_views_tasks": ["read_all"],
+                },
+                "expires_at": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
+            },
+            expected=201,
+        ).json()
+        read_only_file = directory / "read-only-token"
+        write_private(read_only_file, read_only["token"].encode())
+
+    def cli(*arguments: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [
+                "uv",
+                "run",
+                "harness",
+                "backlog",
+                *arguments,
+                "--base-url",
+                base,
+                "--token-file",
+                str(token_file),
+            ],
+            cwd=state.worktree_root(),
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+
+    def board_client() -> BoardClient:
+        return BoardClient(base, SecretStr(token_file.read_text().strip()))
+
+    with board_client() as board:
+        task = board.create_task(project, title="T04 flow", description="keep me")
+
+    moved = cli(
+        "move",
+        str(task.id),
+        "--project",
+        str(project),
+        "--view",
+        str(view_id),
+        "--bucket",
+        str(buckets["Backlog"]),
+    )
+    assert moved.returncode == 0, moved.stdout + moved.stderr
+    repeated = cli(
+        "move",
+        str(task.id),
+        "--project",
+        str(project),
+        "--view",
+        str(view_id),
+        "--bucket",
+        str(buckets["Backlog"]),
+    )
+    assert repeated.returncode == 0, repeated.stdout + repeated.stderr
+    assert "already there" in repeated.stdout
+    with board_client() as board:
+        assert board.task_bucket(project, view_id, task.id) == buckets["Backlog"]
+
+    closed = cli(
+        "close", str(task.id), "--project", str(project), "--view", str(view_id)
+    )
+    assert closed.returncode == 0, closed.stdout + closed.stderr
+    with board_client() as board:
+        assert board.task_bucket(project, view_id, task.id) == buckets["Conclusi"]
+        record = board.task(task.id)
+        assert record.done is True
+        assert record.description == "keep me"
+
+    reopened = cli(
+        "reopen", str(task.id), "--project", str(project), "--view", str(view_id)
+    )
+    assert reopened.returncode == 0, reopened.stdout + reopened.stderr
+    with board_client() as board:
+        assert board.task_bucket(project, view_id, task.id) == view["default_bucket_id"]
+        assert board.task(task.id).done is False
+
+    comment = "Outcome verified against the disposable board."
+    first = cli(
+        "comment",
+        str(task.id),
+        "--text",
+        comment,
+        "--marker",
+        "REQ-0012/T04",
+    )
+    second = cli(
+        "comment",
+        str(task.id),
+        "--text",
+        comment,
+        "--marker",
+        "REQ-0012/T04",
+    )
+    assert first.returncode == 0, first.stdout + first.stderr
+    assert second.returncode == 0, second.stdout + second.stderr
+    assert "already present" in second.stdout
+    with board_client() as board:
+        marked = [
+            item for item in board.comments(task.id) if "REQ-0012/T04" in item.comment
+        ]
+        assert len(marked) == 1
+
+    wrong_view = cli(
+        "move",
+        str(task.id),
+        "--project",
+        str(project),
+        "--view",
+        "999999",
+        "--bucket",
+        str(buckets["Backlog"]),
+    )
+    assert wrong_view.returncode == 1
+
+    with board_client() as board:
+        with pytest.raises(BoardError, match="not found"):
+            board.place_task(project, 999999, buckets["Backlog"], task.id)
+        with pytest.raises(BoardError, match="not found"):
+            board.view(project, 999999)
+    with BoardClient(
+        base, SecretStr(read_only_file.read_text().strip())
+    ) as read_only_client:
+        with pytest.raises(BoardError, match="insufficiently scoped"):
+            read_only_client.place_task(project, view_id, buckets["Review"], task.id)
+        with pytest.raises(BoardError, match="insufficiently scoped"):
+            read_only_client.add_comment(task.id, "refused")
+
+    with board_client() as board:
+        board.set_task_done(task.id, True)
+        record = board.task(task.id)
+        assert record.done is True
+        assert record.description == "keep me"
 
 
 def test_board_password_login_desktop_and_phone_evidence(board_deployment):
