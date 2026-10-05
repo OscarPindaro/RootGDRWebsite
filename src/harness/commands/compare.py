@@ -34,10 +34,12 @@ from ..test.browser import (
 )
 from ..test.compare import Comparison, pixel_diff, write_report
 from ..test.landmarks import (
-    MEASURE_JS,
     Landmark,
+    LandmarkIssue,
     PageMetrics,
-    structural_diagnostics,
+    measure_landmarks,
+    structural_failures,
+    structural_issues,
 )
 
 console = Console()
@@ -95,23 +97,28 @@ def _load_map(path: Path) -> PrototypeMap:
 
 
 def _measure(
-    url: str, selectors: dict[str, str], *, phone: bool, settle_ms: int
+    url: str,
+    selectors: dict[str, str],
+    *,
+    phone: bool,
+    settle_ms: int,
+    profile: str,
 ) -> PageMetrics:
     """Measure the page-level and landmark geometry of one URL."""
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         try:
             context = browser.new_context(
-                **viewport_options(playwright, phone, profile="pixel7")
+                **viewport_options(playwright, phone, profile=profile)
             )
             page = context.new_page()
             page.goto(url, wait_until="networkidle")
             settle_page(page, timeout_ms=settle_ms)
-            raw = page.evaluate(MEASURE_JS, selectors)
+            metrics = measure_landmarks(page, selectors)
             context.close()
         finally:
             browser.close()
-    return _to_metrics(raw, selectors)
+    return metrics
 
 
 def _measure_authenticated(
@@ -122,35 +129,22 @@ def _measure_authenticated(
     *,
     phone: bool,
     settle_ms: int,
+    profile: str,
 ) -> PageMetrics:
     """Measure an authenticated application page."""
     with sync_playwright() as playwright:
         browser, context = new_authenticated_context(
-            playwright, base_url, email=email, phone=phone
+            playwright, base_url, email=email, phone=phone, profile=profile
         )
         try:
             page = context.new_page()
             page.goto(f"{base_url}{path}", wait_until="networkidle")
             settle_page(page, timeout_ms=settle_ms)
-            raw = page.evaluate(MEASURE_JS, selectors)
+            metrics = measure_landmarks(page, selectors)
         finally:
             context.close()
             browser.close()
-    return _to_metrics(raw, selectors)
-
-
-def _to_metrics(raw: dict, selectors: dict[str, str]) -> PageMetrics:
-    return PageMetrics.model_validate(
-        {
-            "scroll_width": raw["scroll_width"],
-            "client_width": raw["client_width"],
-            "landmarks": {
-                name: {**metrics, "selector": selectors[name]}
-                for name, metrics in raw["landmarks"].items()
-                if metrics is not None
-            },
-        }
-    )
+    return metrics
 
 
 def _compare_landmarks(
@@ -158,11 +152,13 @@ def _compare_landmarks(
     app_path: str,
     prototype_base: str,
     *,
+    viewport: str,
     phone: bool,
     email: str,
     base_url: str | None,
     settle_ms: int,
-) -> list[str]:
+    profile: str,
+) -> list[LandmarkIssue]:
     app_base = base_url or _environment_base_url()
     app_metrics = _measure_authenticated(
         app_base,
@@ -171,15 +167,21 @@ def _compare_landmarks(
         email,
         phone=phone,
         settle_ms=settle_ms,
+        profile=profile,
     )
     prototype_metrics = _measure(
         f"{prototype_base}/{entry.prototype}",
         {name: landmark.prototype for name, landmark in entry.landmarks.items()},
         phone=phone,
         settle_ms=settle_ms,
+        profile=profile,
     )
-    return structural_diagnostics(
-        app_metrics, prototype_metrics, entry.landmarks, phone=phone
+    return structural_issues(
+        app_metrics,
+        prototype_metrics,
+        entry.landmarks,
+        route=app_path,
+        viewport=viewport,
     )
 
 
@@ -251,6 +253,21 @@ def register_command(app: typer.Typer) -> None:
                 help="Deadline in ms for fonts, layout and finite animations.",
             ),
         ] = SETTLE_DEFAULT_MS,
+        check_landmarks: Annotated[
+            bool,
+            typer.Option(
+                "--check-landmarks",
+                help="Exit non-zero when a mapped landmark is missing, "
+                "ambiguous or unexpectedly hidden.",
+            ),
+        ] = False,
+        phone_profile: Annotated[
+            str,
+            typer.Option(
+                "--phone-profile",
+                help="Phone viewport profile: pixel7 or phone390.",
+            ),
+        ] = "pixel7",
     ) -> None:
         """Compare an application page with its prototype and write a report."""
         if not path.startswith("/"):
@@ -289,6 +306,7 @@ def register_command(app: typer.Typer) -> None:
                 output_dir=output_dir,
                 base_url=base_url,
                 settle_ms=settle,
+                phone_profile=phone_profile,
             )
         except RuntimeError as error:
             if run is not None:
@@ -298,6 +316,7 @@ def register_command(app: typer.Typer) -> None:
 
         comparisons: list[Comparison] = []
         structure: list[tuple[str, list[str]]] = []
+        failures: list[LandmarkIssue] = []
         with _PrototypeServer(PROTOTYPE_DIR) as prototype_base:
             for viewport, phone in VIEWPORTS:
                 prototype_png = destination / f"prototype-{viewport}.png"
@@ -307,6 +326,7 @@ def register_command(app: typer.Typer) -> None:
                     phone=phone,
                     wait_for=".rail__inner",
                     settle_ms=settle,
+                    profile=phone_profile,
                 )
                 app_png = app_shots.phone if phone else app_shots.desktop
                 diff_png = destination / f"diff-{viewport}.png"
@@ -327,14 +347,19 @@ def register_command(app: typer.Typer) -> None:
                         entry,
                         path,
                         prototype_base,
+                        viewport=viewport,
                         phone=phone,
                         email=email,
                         base_url=base_url,
                         settle_ms=settle,
+                        profile=phone_profile,
                     )
                     for issue in diagnostics:
-                        console.print(f"[yellow]{viewport}: {issue}[/yellow]")
-                    structure.append((viewport, diagnostics))
+                        console.print(f"[yellow]{viewport}: {issue.render()}[/yellow]")
+                    failures.extend(structural_failures(diagnostics))
+                    structure.append(
+                        (viewport, [issue.render() for issue in diagnostics])
+                    )
 
         title = f"{entry.label or path} — app vs prototype"
         report = write_report(
@@ -353,7 +378,10 @@ def register_command(app: typer.Typer) -> None:
                     artifacts.ArtifactKind.COMPARE, destination / comparison.diff
                 )
             run.register(artifacts.ArtifactKind.COMPARE, report)
-            run.mark_passed()
+            if check_landmarks and failures:
+                run.mark_failed()
+            else:
+                run.mark_passed()
             console.print(f"Run: {run.id}")
 
         for comparison in comparisons:
@@ -364,4 +392,10 @@ def register_command(app: typer.Typer) -> None:
         console.print(f"[green]Report:[/green] {report}")
 
         if fail_on_diff and any(c.stats.differing for c in comparisons):
+            raise typer.Exit(1)
+        if check_landmarks and failures:
+            err_console.print(
+                f"[bold red]{len(failures)} landmark failure(s): missing, "
+                f"ambiguous or unexpectedly hidden.[/bold red]"
+            )
             raise typer.Exit(1)

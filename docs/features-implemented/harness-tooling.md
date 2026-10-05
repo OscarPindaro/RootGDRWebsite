@@ -12,8 +12,16 @@ change" answerable without guessing.
   instead of the harness environment. Entries in `seed/prototype_map.yaml` can
   declare `landmarks` (semantic app/prototype selector pairs); the report then
   gains a structural section that explains differences in geometry terms —
-  width divergence, vertical displacement, page overflow, missing landmarks,
-  font family changes, and sub-44px touch targets on phone.
+  width divergence, vertical displacement, page overflow, font family changes,
+  and sub-44px touch targets on phone.
+- `harness compare … --check-landmarks` gates on the mapping instead: a mapped
+  landmark that is missing, ambiguous (the selector matches several elements)
+  or unexpectedly hidden fails with its route, viewport, landmark, side and
+  selector. A landmark may declare `optional_on` or `hidden_on` viewports — the
+  app's rail is a closed drawer on phone, so it is `hidden_on: [phone]` and its
+  offscreen state is not a failure. Geometry and pixel differences stay
+  diagnostics; `--phone-profile phone390` runs the same gate at 390×844 with
+  both sides on the same geometry.
 - `harness prototype serve` opens the static prototype next to the app.
 - `harness browsers` installs Playwright's Chromium into the repository
   (`.playwright-browsers/`), or into an explicit `PLAYWRIGHT_BROWSERS_PATH`.

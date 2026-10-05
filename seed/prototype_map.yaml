@@ -15,6 +15,8 @@ entries:
       rail:
         app: ".rail"
         prototype: ".rail"
+        # The rail is a closed drawer on phone; being offscreen is expected.
+        hidden_on: [phone]
       container:
         app: ".container"
         prototype: ".container"
