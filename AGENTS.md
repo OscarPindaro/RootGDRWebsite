@@ -60,6 +60,13 @@ may run concurrently only through the approved workflow below.
 - Requests use stable numeric IDs and Markdown frontmatter; feature manuals keep
   thematic names. Many tickets require individual outcomes, not a new feature
   manual per ticket. Update an existing manual when the same capability evolves.
+- Request frontmatter is exactly `id`, `requested_on`, `title`; a request with
+  no stated date uses `requested_on: unknown` plus `recorded_on` as Git
+  evidence. Never add a status field: Vikunja owns current state.
+- `uv run harness backlog check-requests` validates request IDs, relative links
+  and ticket references offline. Historical documents and the retained
+  `H1`–`H7`/`F1`–`F22` aliases are catalogued in
+  `docs/development_processes/legacy-document-inventory.md`.
 - Vikunja is the chosen authority for backlog and current ticket status. The
   repository owns specifications, decisions, feature manuals and release notes.
   Do not manually mirror live status in both places.

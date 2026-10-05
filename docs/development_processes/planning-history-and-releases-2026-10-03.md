@@ -355,7 +355,11 @@ le card di una board esterna senza un'esportazione.
    non fabbricare una data in cui presumibilmente hai chiesto la feature.
 4. Collegare risultati ai commit e alle verifiche disponibili. "Implementato"
    non si presume soltanto perché un documento dice "done".
-5. Prima release tracciata: tu scegli versione e commit di baseline. Lo storico
+5. L'inventario operativo dei documenti legacy è
+   [legacy-document-inventory.md](legacy-document-inventory.md): date esplicite
+   o prima registrazione Git, alias `H1`–`H7`/`F1`–`F22` conservati, nessuna
+   rinomina e nessuna importazione nella board.
+6. Prima release tracciata: tu scegli versione e commit di baseline. Lo storico
    precedente può avere un riepilogo "sviluppo precedente alla prima release
    tracciata", senza inventare retroattivamente versioni che non sono esistite.
 

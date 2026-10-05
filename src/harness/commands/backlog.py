@@ -17,6 +17,7 @@ from ..backlog.client import (
     default_token_source,
     record_table,
 )
+from ..backlog.requests import REPO_ROOT, REQUESTS_DIR, scan_requests
 
 console = Console()
 err_console = Console(stderr=True)
@@ -129,6 +130,28 @@ def register_commands(app: typer.Typer) -> None:
             _emit(payload, as_json, rows)
         except BoardError, ValidationError, OSError, ValueError:
             _fail()
+
+    @backlog_app.command("check-requests")
+    def check_requests(
+        root: Annotated[Path, typer.Option(help="Repository root.")] = REPO_ROOT,
+    ) -> None:
+        """Validate request frontmatter, links and references (offline)."""
+        try:
+            documents, issues = scan_requests(root)
+        except OSError:
+            _fail()
+            return
+        for issue in issues:
+            err_console.print(f"[bold red]{issue.path}: {issue.detail}[/bold red]")
+        if not documents:
+            err_console.print(
+                f"[bold red]No request document found under "
+                f"{root / REQUESTS_DIR}[/bold red]"
+            )
+            raise typer.Exit(1)
+        if issues:
+            raise typer.Exit(1)
+        console.print(f"[green]{len(documents)} request document(s) valid.[/green]")
 
     @backlog_app.command("create")
     def create_task(
