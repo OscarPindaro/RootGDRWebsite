@@ -61,6 +61,9 @@ change" answerable without guessing.
   or the budget definition change — one set of thresholds, no second registry.
   These are selected committed-file measurements, not a browser transfer trace
   of every page.
+- Ruff 0.15.1 is a development dependency, so `uv run ruff check` and
+  `uv run ruff format --check` give the same verdict as the pre-commit hooks
+  before a commit, without reinstalling anything.
 - `harness doctor` checks state, ports, Postgres readiness and connection usage,
   backend health, Playwright, and forgotten replay recording without exposing
   environment values. Small known test failures are recorded under
