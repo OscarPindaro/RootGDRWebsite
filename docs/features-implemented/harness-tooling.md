@@ -30,7 +30,11 @@ change" answerable without guessing.
   browser; `--with-deps` installs OS packages only when asked (CI runners).
   Direct frontend pytest and the harness both default to the same location
   through `src/harness/browser_runtime.py`, and `setup.sh --harness` calls this
-  command instead of `playwright install`.
+  command instead of `playwright install`. The same setup step installs the
+  locked Node dependencies with `npm ci` (axe-core for the accessibility scan)
+  and resolves the repository from its own path, so it can be invoked from any
+  directory. The accessibility scan fails instead of skipping when axe is
+  missing.
 - `harness screenshot --base-url …` captures a page at desktop and phone width.
   Captures and comparisons settle first, within a bounded deadline: fonts,
   two animation frames and every finite animation must finish, so a drawer or
