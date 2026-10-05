@@ -7,6 +7,45 @@ import pytest
 from harness.test import browser
 
 
+class _NoDevices:
+    devices: dict = {}
+
+
+def test_viewport_options_expose_desktop_and_both_phone_profiles() -> None:
+    assert browser.viewport_options(_NoDevices(), False, profile="pixel7") == {
+        "viewport": {"width": 1440, "height": 900}
+    }
+    assert browser.viewport_options(_NoDevices(), True, profile="phone390") == {
+        "viewport": {"width": 390, "height": 844},
+        "is_mobile": True,
+        "has_touch": True,
+        "device_scale_factor": 1,
+    }
+    with pytest.raises(ValueError, match="Unknown phone profile"):
+        browser.viewport_options(_NoDevices(), True, profile="ipad")
+
+
+def test_capture_rejects_an_unbounded_settle_or_unknown_profile(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(ValueError, match="Settle deadline"):
+        browser.capture_screenshots(
+            "/x",
+            email="e@example.com",
+            output_dir=tmp_path,
+            base_url="http://127.0.0.1:1",
+            settle_ms=browser.SETTLE_MAX_MS + 1,
+        )
+    with pytest.raises(ValueError, match="Unknown phone profile"):
+        browser.capture_screenshots(
+            "/x",
+            email="e@example.com",
+            output_dir=tmp_path,
+            base_url="http://127.0.0.1:1",
+            phone_profile="ipad",
+        )
+
+
 def test_screenshot_forwards_email_to_both_viewports(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

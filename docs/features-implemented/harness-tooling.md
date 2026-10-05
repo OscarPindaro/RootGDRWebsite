@@ -24,6 +24,13 @@ change" answerable without guessing.
   through `src/harness/browser_runtime.py`, and `setup.sh --harness` calls this
   command instead of `playwright install`.
 - `harness screenshot --base-url …` captures a page at desktop and phone width.
+  Captures and comparisons settle first, within a bounded deadline: fonts,
+  two animation frames and every finite animation must finish, so a drawer or
+  dialog is never captured mid-slide. Perpetual animations are ignored and a
+  stalled request cannot hang the run; a reached deadline is reported instead.
+  `--settle` changes the deadline in milliseconds (max 15 s) for exceptional
+  cases, and `--phone-profile phone390` captures the 390×844 evidence profile
+  while `harness compare` keeps Pixel 7 on both sides.
 - `harness test e2e --fresh` destructively resets only the E2E test database
   (`backend_e2e_test`) and clears that environment's uploads before running.
   Integration tests use a separate `backend_integration_test` database in the

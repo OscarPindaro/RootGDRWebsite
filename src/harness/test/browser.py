@@ -13,7 +13,7 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from playwright.sync_api import APIResponse, Browser, BrowserContext
+from playwright.sync_api import APIResponse, Browser, BrowserContext, Page
 from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import Playwright, sync_playwright
 from pydantic import BaseModel
@@ -27,11 +27,70 @@ from . import state
 # ``PLAYWRIGHT_BROWSERS_PATH`` wins.
 ensure_browsers_path()
 
+SETTLE_DEFAULT_MS = 5000
+SETTLE_MAX_MS = 15000
+PHONE_PROFILES = ("pixel7", "phone390")
+
+_SETTLE_JS = """
+(deadlineMs) => new Promise((resolve) => {
+  const started = performance.now();
+  let done = false;
+  const settle = (value) => {
+    if (!done) { done = true; clearTimeout(guard); resolve(value); }
+  };
+  const guard = setTimeout(() => settle(false), deadlineMs + 250);
+  const running = () =>
+    document.getAnimations().some((animation) => {
+      const timing = animation.effect ? animation.effect.getTiming() : null;
+      if (!timing || timing.iterations === Infinity) return false;
+      return animation.playState === "running" || animation.playState === "pending";
+    });
+  const finish = () =>
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => settle(true)));
+  const step = () => {
+    if (performance.now() - started >= deadlineMs) { settle(false); return; }
+    if (running()) { requestAnimationFrame(step); return; }
+    document.fonts.ready.then(finish, finish);
+  };
+  step();
+})
+"""
+
+
+def settle_page(page: Page, *, timeout_ms: int = SETTLE_DEFAULT_MS) -> bool:
+    """Wait, within a bounded deadline, for fonts, layout and finite animations.
+
+    A capture taken mid-transition is a misleading defect; this waits for
+    fonts, two animation frames and every finite running animation instead of
+    sleeping unconditionally. Perpetual animations are ignored and the deadline
+    caps the wait, so a stalled request or animation cannot hang the caller.
+    Returns False when the deadline was reached with animations still running.
+    """
+    return bool(page.evaluate(_SETTLE_JS, timeout_ms))
+
+
+def viewport_options(playwright: Playwright, phone: bool, *, profile: str) -> dict:
+    """Context options for one capture side; both sides must use the same one."""
+    if not phone:
+        return {"viewport": {"width": 1440, "height": 900}}
+    if profile == "pixel7":
+        return dict(playwright.devices["Pixel 7"])
+    if profile == "phone390":
+        return {
+            "viewport": {"width": 390, "height": 844},
+            "is_mobile": True,
+            "has_touch": True,
+            "device_scale_factor": 1,
+        }
+    raise ValueError(f"Unknown phone profile: {profile}")
+
 
 class ScreenshotResult(BaseModel):
     desktop: Path
     phone: Path
     console_errors: list[str]
+    settle_warnings: list[str] = []
 
 
 class AuthSession(BaseModel):
@@ -112,6 +171,7 @@ def new_authenticated_context(
     *,
     email: str,
     phone: bool = False,
+    profile: str = "pixel7",
 ) -> tuple[Browser, BrowserContext]:
     """Create a browser context that is already authenticated.
 
@@ -119,12 +179,9 @@ def new_authenticated_context(
     capture and by the Playwright end-to-end tests.
     """
     browser = playwright.chromium.launch(headless=True)
-    context_options = (
-        playwright.devices["Pixel 7"]
-        if phone
-        else {"viewport": {"width": 1440, "height": 900}}
+    context = browser.new_context(
+        **viewport_options(playwright, phone, profile=profile)
     )
-    context = browser.new_context(**context_options)
     try:
         authenticate_context(context, base_url, email)
     except Exception:
@@ -140,20 +197,23 @@ def _capture(
     path: str,
     output: Path,
     console_errors: list[str],
+    settle_warnings: list[str],
     *,
     email: str,
     phone: bool,
+    profile: str,
     click: str | None,
     hover: str | None,
     expect_visible: str | None,
     expected_status: int,
+    settle_ms: int,
 ) -> None:
     browser, context = new_authenticated_context(
-        playwright, base_url, email=email, phone=phone
+        playwright, base_url, email=email, phone=phone, profile=profile
     )
     try:
         page = context.new_page()
-        profile = "phone" if phone else "desktop"
+        profile_name = "phone" if phone else "desktop"
         target_url = f"{base_url}{path}"
 
         def record_console_error(message) -> None:
@@ -163,12 +223,12 @@ def _capture(
                 and f"status of {expected_status}" in message.text
             )
             if message.type == "error" and not expected_navigation_error:
-                console_errors.append(f"{profile}: {message.text}")
+                console_errors.append(f"{profile_name}: {message.text}")
 
         page.on("console", record_console_error)
         page.on(
             "pageerror",
-            lambda error: console_errors.append(f"{profile}: {error}"),
+            lambda error: console_errors.append(f"{profile_name}: {error}"),
         )
         response = page.goto(f"{base_url}{path}", wait_until="networkidle")
         status = response.status if response is not None else None
@@ -197,6 +257,10 @@ def _capture(
                 expected.scroll_into_view_if_needed()
         except PlaywrightError as error:
             raise RuntimeError(f"Screenshot interaction failed: {error}") from error
+        if not settle_page(page, timeout_ms=settle_ms):
+            settle_warnings.append(
+                f"{profile_name}: settling deadline reached; the page may still be animating"
+            )
         page.screenshot(path=output)
     finally:
         context.close()
@@ -214,6 +278,8 @@ def capture_screenshots(
     expect_visible: str | None = None,
     expected_status: int = 200,
     base_url: str | None = None,
+    settle_ms: int = SETTLE_DEFAULT_MS,
+    phone_profile: str = "pixel7",
 ) -> ScreenshotResult:
     if base_url is None:
         environment_state = state.read()
@@ -233,6 +299,10 @@ def capture_screenshots(
         raise ValueError("Use either click or hover for one action per screenshot")
     if not 100 <= expected_status <= 599:
         raise ValueError("Expected status must be between 100 and 599")
+    if not 0 <= settle_ms <= SETTLE_MAX_MS:
+        raise ValueError(f"Settle deadline must be between 0 and {SETTLE_MAX_MS} ms")
+    if phone_profile not in PHONE_PROFILES:
+        raise ValueError(f"Unknown phone profile: {phone_profile}")
 
     root = state.worktree_root()
     destination = root / output_dir
@@ -242,6 +312,7 @@ def capture_screenshots(
     desktop = destination / f"{slug}-desktop.png"
     phone = destination / f"{slug}-phone.png"
     console_errors: list[str] = []
+    settle_warnings: list[str] = []
 
     with sync_playwright() as playwright:
         _capture(
@@ -250,12 +321,15 @@ def capture_screenshots(
             path,
             desktop,
             console_errors,
+            settle_warnings,
             email=email,
             phone=False,
+            profile=phone_profile,
             click=click,
             hover=hover,
             expect_visible=expect_visible,
             expected_status=expected_status,
+            settle_ms=settle_ms,
         )
         _capture(
             playwright,
@@ -263,18 +337,22 @@ def capture_screenshots(
             path,
             phone,
             console_errors,
+            settle_warnings,
             email=email,
             phone=True,
+            profile=phone_profile,
             click=click,
             hover=hover,
             expect_visible=expect_visible,
             expected_status=expected_status,
+            settle_ms=settle_ms,
         )
 
     return ScreenshotResult(
         desktop=desktop,
         phone=phone,
         console_errors=console_errors,
+        settle_warnings=settle_warnings,
     )
 
 
@@ -284,6 +362,8 @@ def capture_url(
     *,
     phone: bool = False,
     wait_for: str | None = None,
+    settle_ms: int = SETTLE_DEFAULT_MS,
+    profile: str = "pixel7",
 ) -> list[str]:
     """Screenshot an unauthenticated URL (the static prototype).
 
@@ -293,12 +373,9 @@ def capture_url(
     errors: list[str] = []
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
-        context_options = (
-            playwright.devices["Pixel 7"]
-            if phone
-            else {"viewport": {"width": 1440, "height": 900}}
+        context = browser.new_context(
+            **viewport_options(playwright, phone, profile=profile)
         )
-        context = browser.new_context(**context_options)
         try:
             page = context.new_page()
             page.on(
@@ -311,6 +388,7 @@ def capture_url(
             page.goto(url, wait_until="networkidle")
             if wait_for is not None:
                 page.wait_for_selector(wait_for, timeout=5000)
+            settle_page(page, timeout_ms=settle_ms)
             page.screenshot(path=output)
         finally:
             context.close()

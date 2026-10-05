@@ -23,7 +23,15 @@ from playwright.sync_api import sync_playwright
 
 from .. import artifacts
 from ..test import state
-from ..test.browser import capture_screenshots, capture_url, new_authenticated_context
+from ..test.browser import (
+    SETTLE_DEFAULT_MS,
+    SETTLE_MAX_MS,
+    capture_screenshots,
+    capture_url,
+    new_authenticated_context,
+    settle_page,
+    viewport_options,
+)
 from ..test.compare import Comparison, pixel_diff, write_report
 from ..test.landmarks import (
     MEASURE_JS,
@@ -86,19 +94,19 @@ def _load_map(path: Path) -> PrototypeMap:
     return PrototypeMap.model_validate(yaml.safe_load(path.read_text(encoding="utf-8")))
 
 
-def _measure(url: str, selectors: dict[str, str], *, phone: bool) -> PageMetrics:
+def _measure(
+    url: str, selectors: dict[str, str], *, phone: bool, settle_ms: int
+) -> PageMetrics:
     """Measure the page-level and landmark geometry of one URL."""
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True)
         try:
-            context_options = (
-                playwright.devices["Pixel 7"]
-                if phone
-                else {"viewport": {"width": 1440, "height": 900}}
+            context = browser.new_context(
+                **viewport_options(playwright, phone, profile="pixel7")
             )
-            context = browser.new_context(**context_options)
             page = context.new_page()
             page.goto(url, wait_until="networkidle")
+            settle_page(page, timeout_ms=settle_ms)
             raw = page.evaluate(MEASURE_JS, selectors)
             context.close()
         finally:
@@ -107,7 +115,13 @@ def _measure(url: str, selectors: dict[str, str], *, phone: bool) -> PageMetrics
 
 
 def _measure_authenticated(
-    base_url: str, path: str, selectors: dict[str, str], email: str, *, phone: bool
+    base_url: str,
+    path: str,
+    selectors: dict[str, str],
+    email: str,
+    *,
+    phone: bool,
+    settle_ms: int,
 ) -> PageMetrics:
     """Measure an authenticated application page."""
     with sync_playwright() as playwright:
@@ -117,6 +131,7 @@ def _measure_authenticated(
         try:
             page = context.new_page()
             page.goto(f"{base_url}{path}", wait_until="networkidle")
+            settle_page(page, timeout_ms=settle_ms)
             raw = page.evaluate(MEASURE_JS, selectors)
         finally:
             context.close()
@@ -146,6 +161,7 @@ def _compare_landmarks(
     phone: bool,
     email: str,
     base_url: str | None,
+    settle_ms: int,
 ) -> list[str]:
     app_base = base_url or _environment_base_url()
     app_metrics = _measure_authenticated(
@@ -154,11 +170,13 @@ def _compare_landmarks(
         {name: landmark.app for name, landmark in entry.landmarks.items()},
         email,
         phone=phone,
+        settle_ms=settle_ms,
     )
     prototype_metrics = _measure(
         f"{prototype_base}/{entry.prototype}",
         {name: landmark.prototype for name, landmark in entry.landmarks.items()},
         phone=phone,
+        settle_ms=settle_ms,
     )
     return structural_diagnostics(
         app_metrics, prototype_metrics, entry.landmarks, phone=phone
@@ -224,6 +242,15 @@ def register_command(app: typer.Typer) -> None:
                 "active harness environment.",
             ),
         ] = None,
+        settle: Annotated[
+            int,
+            typer.Option(
+                "--settle",
+                min=0,
+                max=SETTLE_MAX_MS,
+                help="Deadline in ms for fonts, layout and finite animations.",
+            ),
+        ] = SETTLE_DEFAULT_MS,
     ) -> None:
         """Compare an application page with its prototype and write a report."""
         if not path.startswith("/"):
@@ -261,6 +288,7 @@ def register_command(app: typer.Typer) -> None:
                 name="app",
                 output_dir=output_dir,
                 base_url=base_url,
+                settle_ms=settle,
             )
         except RuntimeError as error:
             if run is not None:
@@ -278,6 +306,7 @@ def register_command(app: typer.Typer) -> None:
                     prototype_png,
                     phone=phone,
                     wait_for=".rail__inner",
+                    settle_ms=settle,
                 )
                 app_png = app_shots.phone if phone else app_shots.desktop
                 diff_png = destination / f"diff-{viewport}.png"
@@ -301,6 +330,7 @@ def register_command(app: typer.Typer) -> None:
                         phone=phone,
                         email=email,
                         base_url=base_url,
+                        settle_ms=settle,
                     )
                     for issue in diagnostics:
                         console.print(f"[yellow]{viewport}: {issue}[/yellow]")

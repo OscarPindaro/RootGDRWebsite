@@ -6,7 +6,7 @@ from rich.console import Console
 
 from .. import artifacts
 from ..test import state
-from ..test.browser import capture_screenshots
+from ..test.browser import SETTLE_DEFAULT_MS, SETTLE_MAX_MS, capture_screenshots
 
 console = Console()
 err_console = Console(stderr=True)
@@ -67,6 +67,22 @@ def register_command(app: typer.Typer) -> None:
                 "active harness environment.",
             ),
         ] = None,
+        settle: Annotated[
+            int,
+            typer.Option(
+                "--settle",
+                min=0,
+                max=SETTLE_MAX_MS,
+                help="Deadline in ms for fonts, layout and finite animations.",
+            ),
+        ] = SETTLE_DEFAULT_MS,
+        phone_profile: Annotated[
+            str,
+            typer.Option(
+                "--phone-profile",
+                help="Phone viewport profile: pixel7 or phone390.",
+            ),
+        ] = "pixel7",
     ) -> None:
         """Capture authenticated desktop and phone screenshots."""
         run = None
@@ -85,6 +101,8 @@ def register_command(app: typer.Typer) -> None:
                 expect_visible=expect_visible,
                 expected_status=expected_status,
                 base_url=base_url,
+                settle_ms=settle,
+                phone_profile=phone_profile,
             )
         except (OSError, RuntimeError, ValueError) as error:
             if run is not None:
@@ -98,5 +116,7 @@ def register_command(app: typer.Typer) -> None:
             console.print(f"Run: {run.id}")
         console.print(f"Desktop: {result.desktop}")
         console.print(f"Phone: {result.phone}")
+        for warning in result.settle_warnings:
+            err_console.print(f"[yellow]Settling: {warning}[/yellow]")
         for error in result.console_errors:
             err_console.print(f"Browser console: {error}")
