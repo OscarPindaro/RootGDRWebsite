@@ -1,5 +1,5 @@
 {#def fields, base, version, can_manage=False, locked=False, canonical_prefix=None #}
-{#css editorial/Metadata.css, editorial/TintPicker.css, editorial/SessionPicker.css, common/ChoiceGrid.css #}
+{#css editorial/Metadata.css, editorial/TintPicker.css, editorial/SessionPicker.css, common/ChoiceGrid.css, common/DatePicker.css, common/Icon.css #}
 <div class="metadata" data-doc-metadata data-autosave-url="/api{{ base }}"
      {% if canonical_prefix %}data-canonical-prefix="{{ canonical_prefix }}"{% endif %}
      data-autosave-version="{{ version }}"
@@ -37,6 +37,9 @@
     <select name="{{ field.name }}" data-metadata-field data-value-kind="array" multiple {% if locked or not can_manage %}disabled{% endif %}>
       {% for option in field.options %}<option value="{{ option.value }}" {% if option.value in field.values %}selected{% endif %}>{{ option.label }}</option>{% endfor %}
     </select>
+    {% elif field.kind == "date" %}
+    <common.DatePicker :name="field.name" :value="field.value" :label="field.label"
+                       :id="field.name ~ '-date'" :disabled="locked or not can_manage" />
     {% else %}
     <input name="{{ field.name }}" type="{{ field.kind }}" value="{{ field.value if field.value is not none else '' }}"
            data-metadata-field data-value-kind="{{ 'integer' if field.kind == 'number' else ('nullable' if field.kind == 'date' else 'string') }}"

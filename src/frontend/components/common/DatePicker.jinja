@@ -1,0 +1,37 @@
+{#def name, value=None, label="Data", id="date-picker", disabled=False #}
+{#css common/DatePicker.css, common/Icon.css #}
+{#js common/DatePicker.js #}
+{# The canonical date field is the native input: typed entry always works, and
+   a phone keeps the platform picker. On a pointer device the calendar button
+   opens an atlas grid over the same value; the popover's open state is never
+   document state. #}
+<div class="date-picker" data-date-picker>
+  <input type="date" class="date-picker__input" id="{{ id }}-input" name="{{ name }}"
+         value="{{ value if value else '' }}"
+         data-metadata-field data-value-kind="nullable" data-date-input
+         {% if disabled %}disabled{% endif %}>
+  <button type="button" class="date-picker__trigger" data-date-open
+          aria-haspopup="dialog" aria-label="{{ label }}: apri il calendario"
+          {% if disabled %}disabled{% endif %}>
+    <common.Icon name="calendar" size=16 />
+  </button>
+  <div class="date-picker__panel" id="{{ id }}-panel" popover="auto"
+       data-menu data-menu-placement="bottom-start">
+    <div class="date-picker__head">
+      <button type="button" class="date-picker__nav" data-date-prev
+              aria-label="Mese precedente">‹</button>
+      <span class="date-picker__month" data-date-month aria-live="polite"></span>
+      <button type="button" class="date-picker__nav" data-date-next
+              aria-label="Mese successivo">›</button>
+    </div>
+    <div class="date-picker__weekdays" aria-hidden="true">
+      <span>L</span><span>M</span><span>M</span><span>G</span><span>V</span><span>S</span><span>D</span>
+    </div>
+    <div class="date-picker__grid" role="grid" data-date-grid
+         aria-label="{{ label }}"></div>
+    <div class="date-picker__actions">
+      <button type="button" class="date-picker__action" data-date-today>Oggi</button>
+      <button type="button" class="date-picker__action" data-date-clear>Cancella</button>
+    </div>
+  </div>
+</div>

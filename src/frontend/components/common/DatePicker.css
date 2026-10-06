@@ -1,0 +1,138 @@
+/* ---------- Date picker ----------
+   The canonical field is the native date input; the calendar button is a
+   desktop convenience. The grid is the atlas surface: paper, ink rules, the
+   vermilion selection. */
+.date-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-width: 0;
+}
+
+.date-picker__input {
+  min-height: var(--field-height);
+  padding: 0 var(--sp-3);
+  border: var(--rule-ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  min-width: 0;
+}
+
+.date-picker__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--sp-12);
+  height: var(--sp-12);
+  border: var(--rule-ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.date-picker__trigger:hover { background: var(--paper-deep); }
+.date-picker__trigger:disabled { cursor: not-allowed; opacity: 0.55; }
+
+.date-picker__panel {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: var(--sp-3);
+  width: max-content;
+  background: var(--surface);
+  border: var(--rule-ink);
+  border-radius: var(--radius-sm);
+  box-shadow: 5px 5px 0 rgba(23, 21, 15, 0.8);
+}
+
+.date-picker__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.date-picker__month {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.date-picker__nav {
+  width: var(--sp-8);
+  height: var(--sp-8);
+  border: var(--rule-ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  line-height: 1;
+}
+
+.date-picker__nav:hover { background: var(--paper-deep); }
+
+.date-picker__weekdays,
+.date-picker__grid {
+  display: grid;
+  grid-template-columns: repeat(7, var(--sp-8));
+  gap: var(--sp-1);
+}
+
+.date-picker__weekdays {
+  margin-bottom: var(--sp-1);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  text-align: center;
+}
+
+.date-picker__day {
+  width: var(--sp-8);
+  height: var(--sp-8);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.date-picker__day:hover { background: var(--paper-deep); }
+.date-picker__day[aria-current="date"] { box-shadow: inset 0 0 0 var(--rule-width-strong) var(--ink); }
+.date-picker__day[aria-selected="true"] { background: var(--vermilion); color: var(--surface); }
+.date-picker__day[data-outside="true"] { color: var(--muted); }
+.date-picker__day:focus-visible { outline: var(--rule-width-strong) solid var(--vermilion); }
+
+.date-picker__actions {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}
+
+.date-picker__action {
+  min-height: var(--sp-8);
+  padding: 0 var(--sp-2);
+  border: var(--rule-ink);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+.date-picker__action:hover { background: var(--paper-deep); }
+
+@media (max-width: 700px) {
+  /* A phone keeps the platform's own picker: no second calendar. */
+  .date-picker__trigger { display: none; }
+}
