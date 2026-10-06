@@ -27,11 +27,13 @@
     {% endif %}
     <common.IconButton :icon="'lock' if locked else 'lock-open'"
             :label="'Sblocca' if locked else 'Blocca'" :selected="locked"
+            data-requires-saved
             data-testid="document-lock"
             :hx-post="base ~ '/toggle/locked?value=' ~ ('false' if locked else 'true')"
             hx-swap="none" />
     <common.IconButton :icon="'upload' if is_draft else 'undo-2'"
             :label="'Pubblica' if is_draft else 'Riporta a bozza'"
+            data-requires-saved
             data-testid="document-publication"
             :hx-post="base ~ '/toggle/is_draft?value=' ~ ('false' if is_draft else 'true')"
             hx-swap="none" />

@@ -164,3 +164,33 @@ def test_delete_confirms_and_deletes(session: BrowserSession, seed_world) -> Non
     session.page.wait_for_url(re.compile(rf"/worlds/{world_id}/characters$"))
     assert session.expect_api(api, expected_status=404)
     assert session.errors == []
+
+
+def test_publication_waits_for_the_pending_body(
+    session: BrowserSession, seed_world
+) -> None:
+    """A command never publishes stale content: the body is saved first."""
+    world_id = seed_world(f"Mondo Barriera Docbar {uuid.uuid4().hex[:6]}")
+    character = _create(
+        session, world_id, "characters", {"name": "Da pubblicare", "is_draft": True}
+    )
+    path = f"/worlds/{world_id}/characters/{character['id']}"
+    api = f"/api{path}"
+
+    session.goto(path)
+    session.page.locator("[data-doc-render]").dblclick()
+    session.page.wait_for_selector(".cm-editor")
+    session.page.locator(".cm-content").click()
+    body = "Testo scritto appena prima della pubblicazione."
+    session.page.keyboard.type(body)
+    # Publish immediately, well inside the autosave idle window.
+    session.page.click('[data-testid="document-publication"]')
+    session.page.wait_for_function(
+        "() => document.querySelector('[data-publication-status]').dataset.state"
+        " === 'published'"
+    )
+
+    payload = session.expect_api(api).json()
+    assert payload["isDraft"] is False
+    assert payload["body"] == body
+    assert session.errors == []

@@ -25,7 +25,17 @@ class ComponentSession:
         self.page: Page | None = None
         self.console_errors: list[str] = []
         self.page_errors: list[str] = []
+        self._expected_errors: list[str] = []
         self._routes: list[server.JsonRoute] = []
+
+    def allow_console_errors(self, *patterns: str) -> None:
+        """Treat console errors containing these substrings as expected.
+
+        A test that deliberately drives a failing request (a conflict, an
+        offline save) says so here instead of the fixture failing on the
+        browser's own "failed to load resource" line.
+        """
+        self._expected_errors.extend(patterns)
 
     def mount(
         self,
@@ -54,6 +64,9 @@ class ComponentSession:
             lambda message: (
                 self.console_errors.append(message.text)
                 if message.type == "error"
+                and not any(
+                    pattern in message.text for pattern in self._expected_errors
+                )
                 else None
             ),
         )

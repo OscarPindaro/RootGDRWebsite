@@ -31,6 +31,10 @@ The reading page is where a document is written: no separate edit form, no
   without moving. Inside CodeMirror the arrows are native, Ctrl/⌘+Enter closes
   and returns focus to the block, Escape closes without moving. See
   [document-navigator.md](document-navigator.md).
+- A command that writes (publication, lock) waits for every pending save to
+  reach a known outcome before it fires, so publishing can never send stale
+  content. A failed, conflicting or offline save cancels the command and keeps
+  its recovery panel, and repeated clicks run it once.
 - Body and identity changes save automatically after about one idle second. A
   five-second ceiling covers continuous typing and changes of 200 characters
   flush immediately. `Ctrl/⌘ + Enter`, blur and navigation also flush.

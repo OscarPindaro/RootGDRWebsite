@@ -238,6 +238,35 @@ class AutosaveController {
     this.idleTimer = null;
     this.maxTimer = null;
     this.restoreChecked = false;
+    this.waiters = [];
+    this.lastError = null;
+  }
+
+  /* Resolve when nothing is left to write; reject when the last attempt failed
+     (offline, conflict, validation, lock). Commands await this instead of
+     trusting the status text or a single flush() call. */
+  settle() {
+    return new Promise((resolve, reject) => {
+      this.waiters.push({ resolve, reject });
+      this.drain();
+    });
+  }
+
+  drain() {
+    if (!this.waiters.length) return;
+    if (this.inFlight) return;
+    if (this.dirty.size && !this.lastError) {
+      /* Still dirty and the last attempt did not fail: drain the queue. A
+         failed attempt never retries on its own — the recovery panel owns
+         that decision. */
+      this.flush();
+      return;
+    }
+    const waiters = this.waiters;
+    const error = this.lastError;
+    this.waiters = [];
+    this.lastError = null;
+    waiters.forEach((waiter) => (error ? waiter.reject(error) : waiter.resolve()));
   }
 
   register(name, value, apply, root) {
@@ -326,6 +355,7 @@ class AutosaveController {
     if (!this.dirty.size) {
       this.clearTimers();
       this.setStatus("Salvato", "saved");
+      this.drain();
       return;
     }
     this.setStatus("Modifiche non salvate", "dirty");
@@ -383,10 +413,12 @@ class AutosaveController {
         if (field) field.saved = value;
         if (this.dirty.get(name) === value) this.dirty.delete(name);
       });
+      this.lastError = null;
       this.persist();
       this.hideRecovery();
       this.setStatus(this.dirty.size ? "Modifiche non salvate" : "Salvato", this.dirty.size ? "dirty" : "saved");
     } catch (_error) {
+      this.lastError = "offline";
       this.setStatus("Offline: modifiche conservate sul dispositivo", "error");
       this.showRetry();
     } finally {
@@ -397,10 +429,12 @@ class AutosaveController {
       } else if (this.dirty.size && !this.panel) {
         this.schedule();
       }
+      this.drain();
     }
   }
 
   async failed(status) {
+    this.lastError = status;
     if (status === 409) {
       this.setStatus("Conflitto: il documento è cambiato altrove", "conflict");
       this.showConflict();
@@ -507,6 +541,47 @@ function controllerFor(block) {
   if (!autosaves.has(url)) autosaves.set(url, new AutosaveController(url, block.dataset.autosaveVersion));
   return autosaves.get(url);
 }
+
+/* ---------- command barrier ---------- */
+
+/* A command marked with `data-requires-saved` runs only after every pending
+   write on the page has a known outcome, so a publication can never send stale
+   content. A failed, conflicting or offline save keeps its recovery panel and
+   the command does not run; the same path serves the visible controls and the
+   keyboard shortcuts. While one click is waiting, further clicks on the same
+   command are swallowed, so a double click cannot run it twice. */
+function runCommandAfterSaved(command) {
+  if (command.dataset.barrierWaiting === "true") return;
+  command.dataset.barrierWaiting = "true";
+  const run = () => {
+    delete command.dataset.barrierWaiting;
+    command.dataset.barrierPassed = "true";
+    command.click();
+    delete command.dataset.barrierPassed;
+  };
+  const pending = [...autosaves.values()].map((controller) => controller.settle());
+  if (!pending.length) {
+    run();
+    return;
+  }
+  Promise.all(pending)
+    .then(run)
+    .catch(() => {
+      delete command.dataset.barrierWaiting;
+    });
+}
+
+document.addEventListener(
+  "click",
+  (event) => {
+    const command = event.target.closest("[data-requires-saved]");
+    if (!command || command.dataset.barrierPassed === "true") return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    runCommandAfterSaved(command);
+  },
+  true,
+);
 
 /* ---------- document pages ---------- */
 
