@@ -20,7 +20,7 @@ from src.backend.db.db import DatabaseManager
 from src.backend.server import create_app
 from src.backend.users.models import UserModel
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.external_integrations
 
 
 @pytest.fixture

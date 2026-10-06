@@ -97,9 +97,14 @@ showcontent = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+# External integrations (containers, Ansible, restic, the board) are opt-in:
+# `harness test external_integrations` selects them explicitly. Nothing runs
+# them by default, and CI never does.
+addopts = "-m 'not external_integrations'"
 markers = [
     "unit: Unit tests - no external dependencies",
     "frontend: Component tests - real JinjaX components in Chromium, no backend",
     "integration: Integration tests - requires database",
     "e2e: End-to-end tests - full application stack",
+    "external_integrations: Tests that drive real containers, Ansible, restic or the board - local only, never in CI",
 ]

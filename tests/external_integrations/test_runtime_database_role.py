@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from harness.test import compose, state
 from src.backend.config import AppConfig
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.external_integrations
 ROOT = Path(__file__).resolve().parents[2]
 
 

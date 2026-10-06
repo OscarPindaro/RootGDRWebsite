@@ -112,17 +112,18 @@ def test_the_runner_is_prepared_for_the_suites(workflow: dict) -> None:
     assert text.count("cp .env.example .env") == len(workflow["jobs"]) - 1
     # The runner ships docker; podman there has no usable socket.
     assert workflow["env"]["HARNESS_CONTAINER_ENGINE"] == "docker"
-    # The pinned images the deployment and board suites run.
-    for image in (
-        "python@sha256:",
-        "postgres:18.3@sha256:",
-        "restic/restic:0.19.1@sha256:",
-        "vikunja/vikunja:2.6.0@sha256:",
-    ):
-        assert (
-            f"docker pull docker.io/library/{image}" in text
-            or f"docker pull docker.io/{image}" in text
-        ), image
+
+
+def test_the_external_integrations_stay_out_of_ci(workflow: dict) -> None:
+    """Containers, Ansible, restic and the board are local-only suites."""
+    text = WORKFLOW.read_text(encoding="utf-8")
+    runs = "\n".join(step.get("run", "") for step in _steps(workflow))
+    assert "external_integrations" not in runs
+    assert "external-integrations" not in runs
+    # No image is pulled or built: the fast suites use the compose files only.
+    assert "docker pull" not in runs
+    assert "podman pull" not in runs
+    assert "podman-compose" not in runs
 
 
 def test_diagnostics_are_failure_only_and_bounded(workflow: dict) -> None:

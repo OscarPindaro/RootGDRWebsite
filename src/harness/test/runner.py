@@ -16,6 +16,9 @@ class TestSuite(str, Enum):
     FRONTEND = "frontend"
     INTEGRATION = "integration"
     E2E = "e2e"
+    # Local only: real containers, Ansible, restic and the board. Never part of
+    # a default run and never part of CI; the marker is the opt-in.
+    EXTERNAL_INTEGRATIONS = "external_integrations"
 
 
 class PytestOptions(BaseModel):
@@ -105,11 +108,19 @@ def run(
     root = state.worktree_root()
     options = options or PytestOptions()
     command = ["uv", "run", "pytest"]
-    if suite in (TestSuite.INTEGRATION, TestSuite.E2E):
+    if suite in (
+        TestSuite.INTEGRATION,
+        TestSuite.E2E,
+        TestSuite.EXTERNAL_INTEGRATIONS,
+    ):
         command.extend(["-m", suite.value])
     if selectors:
         command.extend(_selectors(root, suite, selectors))
-    elif suite in (TestSuite.UNIT, TestSuite.FRONTEND):
+    elif suite in (
+        TestSuite.UNIT,
+        TestSuite.FRONTEND,
+        TestSuite.EXTERNAL_INTEGRATIONS,
+    ):
         command.append(f"tests/{suite.value}")
     if options.keyword:
         if options.keyword.startswith("-"):
@@ -148,6 +159,7 @@ def run(
     if environment_state is not None and suite in (
         TestSuite.INTEGRATION,
         TestSuite.E2E,
+        TestSuite.EXTERNAL_INTEGRATIONS,
     ):
         env_file, config_file = _suite_config(suite, environment_state)
         process_environment.update(
@@ -183,7 +195,7 @@ def _suite_config(
 ) -> tuple[Path, Path]:
     """Env and YAML config for a suite: integration in-process, E2E against Docker."""
     config = environment_state.config
-    if suite == TestSuite.INTEGRATION:
+    if suite in (TestSuite.INTEGRATION, TestSuite.EXTERNAL_INTEGRATIONS):
         return config.integration_env, config.integration_config
     return config.e2e_env, config.e2e_local_config
 

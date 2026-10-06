@@ -49,7 +49,10 @@ def test_trailing_tokens_are_forwarded_for_every_suite(tmp_path: Path, suite) ->
     assert "-x" in command
     if suite == runner.TestSuite.E2E:
         require.assert_called_once_with(state.EnvironmentMode.DOCKER)
-    elif suite == runner.TestSuite.INTEGRATION:
+    elif suite in (
+        runner.TestSuite.INTEGRATION,
+        runner.TestSuite.EXTERNAL_INTEGRATIONS,
+    ):
         require.assert_called_once_with()
     else:
         require.assert_not_called()

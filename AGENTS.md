@@ -161,6 +161,10 @@ Use the `fastapi-template-test-harness` MCP tools when available. Otherwise use 
 - Unit: `test_unit` or `uv run harness test unit`
 - Integration: `env_up(mode="local")`, then `test_integration`, then `env_teardown`
 - E2E: `env_up(mode="docker")`, then `test_e2e`, then `env_teardown`
+- External integrations (containers, Ansible, restic, the board):
+  `env_up(mode="local")`, then `uv run harness test external_integrations`.
+  Local only: never run by default (the `external_integrations` marker is
+  deselected in `addopts`) and never run by CI.
 
 ## New Feature Workflow
 

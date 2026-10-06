@@ -29,7 +29,7 @@ from harness.deploy.vikunja_schemas import VIKUNJA_IMAGE, VikunjaSpec
 from harness.test import state
 from harness.test.compose import _wait_for_http
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.external_integrations
 
 
 @pytest.fixture

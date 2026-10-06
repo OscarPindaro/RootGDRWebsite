@@ -144,11 +144,21 @@ def test_no_arguments_keep_defaults(test_root: Path, suite) -> None:
         ),
     ):
         result = runner.run(suite)
-    target = (
-        [f"tests/{suite.value}"]
-        if suite in (runner.TestSuite.UNIT, runner.TestSuite.FRONTEND)
-        else ["-m", suite.value]
+    folder_suites = (
+        runner.TestSuite.UNIT,
+        runner.TestSuite.FRONTEND,
+        runner.TestSuite.EXTERNAL_INTEGRATIONS,
     )
+    marked_suites = (
+        runner.TestSuite.INTEGRATION,
+        runner.TestSuite.E2E,
+        runner.TestSuite.EXTERNAL_INTEGRATIONS,
+    )
+    target = []
+    if suite in marked_suites:
+        target.extend(["-m", suite.value])
+    if suite in folder_suites:
+        target.append(f"tests/{suite.value}")
     assert result.command == ["uv", "run", "pytest", *target, "-q", "--tb=short"]
 
 

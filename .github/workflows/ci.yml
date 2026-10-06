@@ -43,16 +43,6 @@ jobs:
         run: |
           uv python install 3.14
           uv sync --frozen --dev
-      - name: Install podman-compose and pull the board images into podman
-        run: |
-          # The deployment and board code drives podman directly: the harness
-          # uses `podman-compose` when it is installed, and the backup helper is
-          # inspected through podman, so the runner needs both.
-          uv tool install podman-compose
-          podman pull docker.io/library/python@sha256:9ab8d9c8514b44f90cf0029dd42fdd7e9e211e639c8b995304cc04568dee900f
-          podman pull docker.io/library/postgres:18.3@sha256:69e8582b781cb44fa4557b98ed586fe68361e320d9b12f9707494335634f4f3d
-          podman pull docker.io/restic/restic:0.19.1@sha256:08916bcda4a4435f9d9828ebb4e91bb7ada3d2c8a53699788930e0ae1bd4fa67
-          podman pull docker.io/vikunja/vikunja:2.6.0@sha256:417ada6f94e81f0267aa2f007d0a811fc82d38dd2aa58351e3ea520ca01c2ea5
       - name: Prepare the local environment file
         run: cp .env.example .env
       - name: Repository hooks
@@ -127,26 +117,8 @@ jobs:
         run: |
           uv python install 3.14
           uv sync --frozen --dev
-      - name: Install Chromium
-        run: uv run harness browsers --with-deps
       - name: Prepare the local environment file
         run: cp .env.example .env
-      - name: Pull the pinned container images
-        run: |
-          docker pull docker.io/library/python@sha256:9ab8d9c8514b44f90cf0029dd42fdd7e9e211e639c8b995304cc04568dee900f
-          docker pull docker.io/library/postgres:18.3@sha256:69e8582b781cb44fa4557b98ed586fe68361e320d9b12f9707494335634f4f3d
-          docker pull docker.io/restic/restic:0.19.1@sha256:08916bcda4a4435f9d9828ebb4e91bb7ada3d2c8a53699788930e0ae1bd4fa67
-          docker pull docker.io/vikunja/vikunja:2.6.0@sha256:417ada6f94e81f0267aa2f007d0a811fc82d38dd2aa58351e3ea520ca01c2ea5
-      - name: Install podman-compose and pull the board images into podman
-        run: |
-          # The deployment and board code drives podman directly: the harness
-          # uses `podman-compose` when it is installed, and the backup helper is
-          # inspected through podman, so the runner needs both.
-          uv tool install podman-compose
-          podman pull docker.io/library/python@sha256:9ab8d9c8514b44f90cf0029dd42fdd7e9e211e639c8b995304cc04568dee900f
-          podman pull docker.io/library/postgres:18.3@sha256:69e8582b781cb44fa4557b98ed586fe68361e320d9b12f9707494335634f4f3d
-          podman pull docker.io/restic/restic:0.19.1@sha256:08916bcda4a4435f9d9828ebb4e91bb7ada3d2c8a53699788930e0ae1bd4fa67
-          podman pull docker.io/vikunja/vikunja:2.6.0@sha256:417ada6f94e81f0267aa2f007d0a811fc82d38dd2aa58351e3ea520ca01c2ea5
       - name: Start the integration database
         run: uv run harness env up --mode local
       - name: Integration tests

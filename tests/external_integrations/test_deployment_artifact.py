@@ -9,7 +9,7 @@ from harness.deploy.artifact import build_artifact, verify_artifact
 from harness.deploy.backup import BackupError, command
 from harness.test import state
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.external_integrations
 
 
 def test_real_image_artifact_uses_selected_commit_not_dirty_checkout(tmp_path):

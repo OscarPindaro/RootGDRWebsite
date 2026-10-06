@@ -791,6 +791,22 @@ handoff e in `production-deployment.md`:
   412/390 px sulla pagina storia (`b677c61`), insieme a due test che
   presupponevano la vecchia struttura.
 
+### Separazione delle suite esterne (richiesta di Oscar, 2026-10-06)
+
+Le suite che avviano container veri, Ansible, restic o la board sono state
+spostate in `tests/external_integrations/` con il marker
+`external_integrations`: `test_vikunja_service`, `test_backup_recovery`,
+`test_manual_rollout`, `test_production_health`, `test_runtime_database_role`,
+`test_deployment_artifact` e i sei test di confine del rollout che ispezionano
+l'immagine helper. `addopts` deseleziona il marker, quindi non girano né con un
+`pytest` nudo né in CI; si eseguono a richiesta con
+`uv run harness test external_integrations` (64 test). La CI non tira più
+immagini, non installa podman-compose e non avvia la board; il job di
+integrazione esegue il gruppo veloce. Misure locali dopo la separazione:
+integrazione 132 test in 35 s (prima 25–35 min), unit 763 test in 20 s,
+esterne 64 test a richiesta. Un test `unit` può comunque portare il marker
+quando solo lui ha bisogno dello stato esterno.
+
 ### Gate che restano aperti (non cancellati dal ciclo)
 
 1. Push ordinario su `main` e prima esecuzione hosted della CI: il push non

@@ -46,7 +46,7 @@ from harness.test import state
 from harness.deploy.backup_restore import restore_bundle, restore_encrypted
 from harness.deploy.backup_schemas import PostgreSQLSource, RestoreSpec, RestoreResult
 
-pytestmark = pytest.mark.integration
+pytestmark = pytest.mark.external_integrations
 
 
 @pytest.fixture

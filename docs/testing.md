@@ -82,22 +82,31 @@ Fuzzy tests live alongside unit or integration tests and are marked
 
 ```
 tests/
-├── conftest.py              # Shared fixtures (see below)
-├── unit/                    # Pure-function tests, no DB
+├── conftest.py                   # Shared fixtures (see below)
+├── unit/                         # Pure-function tests, no DB
 │   └── test_*.py
-├── integration/             # DB-backed tests, mocked externals
+├── frontend/                     # JinjaX components in Chromium, no backend
+├── integration/                  # DB-backed tests, mocked externals
 │   └── test_*.py
-├── e2e/                     # (planned) full workflow tests via HTTP
-└── factories/               # (planned) random data generators
+├── e2e/                          # Full workflow tests against the stack
+├── external_integrations/        # Real containers, Ansible, restic, the board
+└── factories/                    # Random data generators
 ```
 
 Every test file starts with a marker:
 
 ```python
-pytestmark = pytest.mark.integration  # or pytest.mark.unit
+pytestmark = pytest.mark.integration  # or unit, frontend, e2e
 ```
 
-CI runs them as separate jobs: `pytest -m unit` then `pytest -m integration`.
+`external_integrations` is the opt-in marker for the suites that drive real
+containers and external systems. `addopts` deselects it, so a default run — and
+CI — never starts one of those containers; run them deliberately with
+`uv run harness test external_integrations`. A single test can carry the marker
+too, when only it needs the external state.
+
+CI runs the suites as separate jobs: `pytest -m unit`, `-m integration`, the
+frontend job and `-m e2e`.
 
 The test harness uses Docker when its daemon is reachable and otherwise falls back
 to Podman. Set `HARNESS_CONTAINER_ENGINE=docker` or

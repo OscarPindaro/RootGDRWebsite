@@ -13,8 +13,9 @@ Four jobs on `ubuntu-24.04`, each with its own timeout and its own environment:
   unit suite.
 - **Frontend component tests** — `npm ci`, `harness browsers --with-deps` and
   `harness test frontend`.
-- **Integration tests** — `harness env up --mode local`, the integration suite,
-  and a teardown that runs even on failure.
+- **Integration tests** — `harness env up --mode local`, the integration suite
+  (the fast group: real PostgreSQL and FastAPI's test client), and a teardown
+  that runs even on failure.
 - **End-to-end tests** — the docker environment, `harness test e2e --fresh`, and
   the same always-on teardown.
 
@@ -42,6 +43,12 @@ The bundle is a diagnostic, never the deployment source or the backup archive.
 
 ## What CI deliberately does not do
 
+- **No external integrations.** The suites that drive real containers, Ansible,
+  restic or the Vikunja board live in `tests/external_integrations/` behind the
+  `external_integrations` marker. They are local only:
+  `uv run harness test external_integrations`. Nothing runs them by default —
+  `addopts` deselects the marker, so even a bare `pytest` skips them — and CI
+  never pulls an image or starts one of those containers.
 - No deployment, no Ansible, no SSH, no image push, no release.
 - No production secrets: the suites run against the committed `test.env`.
 - No `pull_request_target`, no pull-request write permissions, no mandatory PR
@@ -59,6 +66,7 @@ uv run harness test unit
 npm ci && uv run harness browsers --with-deps && uv run harness test frontend
 uv run harness env up --mode local && uv run harness test integration
 uv run harness env up --mode docker && uv run harness test e2e --fresh
+uv run harness test external_integrations   # local only, needs podman + the pinned images
 ```
 
 The first hosted run happens after the ordinary push to `main`; the plan does not

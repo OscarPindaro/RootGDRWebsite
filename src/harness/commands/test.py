@@ -101,6 +101,20 @@ def integration(pytest_args: PytestArguments = None) -> None:
     )
 
 
+@test_app.command(name="external_integrations")
+def external_integrations(pytest_args: PytestArguments = None) -> None:
+    """Run the local-only suites: containers, Ansible, restic and the board.
+
+    These are never part of a default run and never part of CI: they build and
+    start real containers and need the pinned images on the machine.
+    """
+    _require_environment()
+    _run_suite(
+        runner.TestSuite.EXTERNAL_INTEGRATIONS,
+        _parse_arguments(runner.TestSuite.EXTERNAL_INTEGRATIONS, pytest_args),
+    )
+
+
 @test_app.command()
 def e2e(
     fresh: Annotated[
