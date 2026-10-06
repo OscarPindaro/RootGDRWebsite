@@ -1,0 +1,170 @@
+# Continuous integration: checks and suites on a clean checkout.
+#
+# CI never deploys, never touches production and never reads a secret: it
+# installs from the lockfiles, runs the same commands a developer runs locally
+# and uploads a small, redacted diagnostic bundle only when a job fails. The
+# deployment stays manual (see docs/ci.md and REQ-0001).
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  # Keep uv quiet and deterministic on the runner.
+  UV_FROZEN: "1"
+  UV_NO_PROGRESS: "1"
+
+jobs:
+  checks:
+    name: Checks and unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+      - name: Install Python and the development environment
+        run: |
+          uv python install 3.14
+          uv sync --frozen --dev
+      - name: Repository hooks
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+      - name: Material tokens, requests and release fragments
+        run: |
+          uv run harness material check
+          uv run harness backlog check-requests
+          uv run towncrier build --draft --version UNRELEASED
+      - name: Unit tests
+        run: uv run harness test unit
+      - name: Collect diagnostics
+        if: failure()
+        run: uv run python tools/ci/collect_artifacts.py --root harness-artifacts --destination ci-artifacts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: diagnostics-checks
+          path: ci-artifacts
+          retention-days: 3
+          if-no-files-found: ignore
+
+  frontend:
+    name: Frontend component tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Install dependencies
+        run: |
+          uv python install 3.14
+          uv sync --frozen --dev
+          npm ci
+      - name: Install Chromium
+        run: uv run harness browsers --with-deps
+      - name: Component tests
+        run: uv run harness test frontend
+      - name: Collect diagnostics
+        if: failure()
+        run: uv run python tools/ci/collect_artifacts.py --root harness-artifacts --destination ci-artifacts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: diagnostics-frontend
+          path: ci-artifacts
+          retention-days: 3
+          if-no-files-found: ignore
+
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+      - name: Install the environment
+        run: |
+          uv python install 3.14
+          uv sync --frozen --dev
+      - name: Start the integration database
+        run: uv run harness env up --mode local
+      - name: Integration tests
+        run: uv run harness test integration
+      - name: Collect diagnostics
+        if: failure()
+        run: uv run python tools/ci/collect_artifacts.py --root harness-artifacts --destination ci-artifacts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: diagnostics-integration
+          path: ci-artifacts
+          retention-days: 3
+          if-no-files-found: ignore
+      - name: Stop the integration database
+        if: always()
+        run: uv run harness env teardown
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c18668ad3cf93ea998bef934396af7bb5c839dc7 # v10.2.0
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: lts/*
+          cache: npm
+      - name: Install dependencies
+        run: |
+          uv python install 3.14
+          uv sync --frozen --dev
+          npm ci
+      - name: Install Chromium
+        run: uv run harness browsers --with-deps
+      - name: Start the docker environment
+        run: uv run harness env up --mode docker
+      - name: End-to-end tests
+        run: uv run harness test e2e --fresh
+      - name: Collect diagnostics
+        if: failure()
+        run: uv run python tools/ci/collect_artifacts.py --root harness-artifacts --destination ci-artifacts
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        if: failure()
+        with:
+          name: diagnostics-e2e
+          path: ci-artifacts
+          retention-days: 3
+          if-no-files-found: ignore
+      - name: Stop the docker environment
+        if: always()
+        run: uv run harness env teardown
