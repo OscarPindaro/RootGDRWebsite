@@ -30,6 +30,7 @@ Template:
 | Component tests: JinjaX in Chromium | [component-tests.md](component-tests.md) |
 | Material 3 token provenance | [material-token-provenance.md](material-token-provenance.md) |
 | Create campaign content as drafts | [draft-first-content.md](draft-first-content.md) |
+| Pick a document tint | [tint-picker.md](tint-picker.md) |
 | Render and reference Markdown summaries | [markdown-summaries.md](markdown-summaries.md) |
 | A mention that reads as a link in a sentence | [mention-weight.md](mention-weight.md) |
 | Keep and restore uploaded images | [image-history.md](image-history.md) |

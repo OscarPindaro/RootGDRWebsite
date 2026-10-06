@@ -1,0 +1,31 @@
+{#def name, value, options, label="Colore", id="tint-picker", disabled=False #}
+{#css editorial/TintPicker.css, common/ChoiceGrid.css, common/Button.css #}
+{#js common/Menu.js, editorial/TintPicker.js #}
+{# The compact tint control: a swatch and the tint's name on the trigger, the
+   radio palette in a popover. The popover's open state is not document state,
+   and the radio value is the canonical ``p1``–``p12`` string the API stores. #}
+{% set selected = namespace(label=value, known=False) %}
+{% for option in options %}
+{% if option.value == value %}
+{% set selected.label = option.label %}
+{% set selected.known = True %}
+{% endif %}
+{% endfor %}
+<div class="tint-picker" data-tint-picker>
+  <button type="button" class="tint-picker__trigger" id="{{ id }}-trigger"
+          popovertarget="{{ id }}-panel" aria-haspopup="dialog"
+          aria-label="{{ label }}: {{ selected.label if selected.known else 'nessuna' }}"
+          {% if disabled %}disabled{% endif %}>
+    <span class="tint-picker__swatch" aria-hidden="true"
+          {% if selected.known %}style="--c: var(--{{ value }})"{% endif %}></span>
+    <span class="tint-picker__name" data-tint-name>{{ selected.label if selected.known else '—' }}</span>
+  </button>
+  <div class="tint-picker__panel" id="{{ id }}-panel" popover="auto"
+       data-menu data-menu-placement="bottom-start">
+    <common.ChoiceGrid :label="label" :name="name" :options="options"
+                       :value="value" kind="tint" :columns="6" />
+  </div>
+  {# The caller's canonical field (a hidden input) lives inside the control, so
+     the picker can write it and repaint from it. #}
+  {{ content }}
+</div>
