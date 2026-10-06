@@ -52,6 +52,17 @@ def _label_center(page) -> float:
     return label["y"] + label["height"] / 2
 
 
+def _rule_center(page) -> float:
+    """Where Chromium paints the fieldset's top rule.
+
+    The rule is drawn at the legend's vertical center, so the legend's center
+    is the visible border's position; measuring the fieldset's own box would
+    report the outline's top, half a notch above the rule.
+    """
+    legend = page.locator(".field__notch").first.bounding_box()
+    return legend["y"] + legend["height"] / 2
+
+
 # --- Semantics ---------------------------------------------------------------
 
 
@@ -145,9 +156,14 @@ def test_the_label_floats_on_focus(component, variant):
     page.locator(".field__input").focus()
     center = _label_center(page)
 
-    # Focused: the label moved to the top of the container (outlined: onto the
-    # rule, filled: inside the top edge).
-    assert box["y"] - 8 < center < box["y"] + 16
+    if variant == "outlined":
+        # Tight: the label is centred on the visible rule, and the rule is on
+        # the box's top edge (the notch's half-height offset cancels out).
+        assert abs(center - _rule_center(page)) <= 0.75
+        assert abs(_rule_center(page) - box["y"]) <= 0.75
+    else:
+        # Filled: the label moves to the top of the container, inside the edge.
+        assert box["y"] - 8 < center < box["y"] + 16
 
 
 @pytest.mark.parametrize("variant", ["outlined", "filled"])
@@ -157,7 +173,110 @@ def test_the_label_floats_when_populated(component, variant):
     box = _box(page)
     center = _label_center(page)
 
-    assert box["y"] - 8 < center < box["y"] + 16
+    if variant == "outlined":
+        assert abs(center - _rule_center(page)) <= 0.75
+    else:
+        assert box["y"] - 8 < center < box["y"] + 16
+
+
+def test_the_outlined_notch_has_an_explicit_height(component):
+    page = _mount(component, variant="outlined", reduced_motion=True)
+
+    notch = page.locator(".field__notch").first.bounding_box()
+    expected = page.evaluate(
+        """() => {
+            const root = getComputedStyle(document.documentElement);
+            const probe = document.createElement('div');
+            probe.style.height = root.getPropertyValue('--sp-1');
+            document.body.appendChild(probe);
+            const step = probe.getBoundingClientRect().height;
+            probe.remove();
+            return parseFloat(
+                root.getPropertyValue('--field-label-size-float')
+            ) + step;
+        }"""
+    )
+    assert notch["height"] == pytest.approx(expected, abs=0.5)
+    outline = page.locator(".field__outline").first.bounding_box()
+    assert outline["y"] == pytest.approx(_box(page)["y"] - expected / 2, abs=0.75)
+
+
+def test_the_outlined_textarea_keeps_the_label_on_the_rule(component):
+    page = _mount(
+        component,
+        variant="outlined",
+        type="textarea",
+        value="A longer recap.",
+        reduced_motion=True,
+    )
+
+    assert abs(_label_center(page) - _rule_center(page)) <= 0.75
+
+
+def test_the_outlined_error_field_keeps_the_label_on_the_rule(component):
+    page = _mount(
+        component,
+        variant="outlined",
+        error="Required field",
+        reduced_motion=True,
+    )
+
+    page.locator(".field__input").focus()
+    assert abs(_label_center(page) - _rule_center(page)) <= 0.75
+
+
+def test_an_autofilled_value_floats_the_label_onto_the_rule(component):
+    page = _mount(component, variant="outlined", reduced_motion=True)
+
+    page.evaluate(
+        """() => {
+            const input = document.querySelector('.field__input');
+            input.value = 'jane@example.com';
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+        }"""
+    )
+
+    assert abs(_label_center(page) - _rule_center(page)) <= 0.75
+
+
+def test_a_long_label_stays_on_the_rule_within_the_box(component):
+    page = _mount(
+        component,
+        variant="outlined",
+        label="Nome della campagna e del volume",
+        reduced_motion=True,
+    )
+
+    page.locator(".field__input").focus()
+    assert abs(_label_center(page) - _rule_center(page)) <= 0.75
+    label = page.locator(".field__label").first.bounding_box()
+    box = _box(page)
+    assert label["x"] >= box["x"]
+    assert label["x"] + label["width"] <= box["x"] + box["width"]
+
+
+def test_zoom_keeps_the_label_on_the_rule(component):
+    page = _mount(component, variant="outlined", reduced_motion=True)
+
+    page.evaluate("document.documentElement.style.zoom = '1.5'")
+    page.locator(".field__input").focus()
+
+    assert abs(_label_center(page) - _rule_center(page)) <= 0.75
+
+
+def test_focus_does_not_move_the_field_or_its_supporting_text(component):
+    page = _mount(component, variant="outlined", helper="Use your real name")
+
+    before_box = _box(page)
+    before_supporting = page.locator(".field__supporting").first.bounding_box()
+    before_page = page.evaluate("document.documentElement.scrollHeight")
+
+    page.locator(".field__input").focus()
+    page.wait_for_timeout(300)
+
+    assert _box(page) == before_box
+    assert page.locator(".field__supporting").first.bounding_box() == before_supporting
+    assert page.evaluate("document.documentElement.scrollHeight") == before_page
 
 
 @pytest.mark.parametrize("variant", ["outlined", "filled"])

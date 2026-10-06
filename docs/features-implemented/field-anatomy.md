@@ -30,6 +30,14 @@ Root GDR atlas skin.
   association. The alternative — a background-clipped label — was rejected
   because the "hole" colour would have to match whatever surface the field sits
   on.
+- **The rule is where the legend's center is.** Chromium paints a fieldset's top
+  border at the legend's vertical center, not at the fieldset's own top edge, so
+  the legend's height decides where the visible rule lands. The notch height is
+  explicit (`--field-label-size-float + --sp-1`) and the outline is shifted up
+  by half of it, which puts the rule exactly on the box's top edge where the
+  floating label is centered. The component test asserts the label center, the
+  legend center and the box top agree within 0.75px, so a font-metric or
+  fieldset-rendering change cannot silently move the rule again.
 - Floating is driven by `:focus-within` and `:placeholder-shown` (a single
   space placeholder is emitted when the caller gives none, so the selector
   always works). `prefers-reduced-motion` removes the label transition.

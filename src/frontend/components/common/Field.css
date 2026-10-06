@@ -97,9 +97,19 @@
 }
 
 /* ---------- Outlined ---------- */
+/* The legend decides where the browser paints the fieldset's top rule: it is
+   drawn at the legend's vertical center, half the notch below the outline's
+   top. The outline is therefore shifted up by half the notch so the rule lands
+   exactly on the box's top edge, where the floating label is centered. The
+   notch height is explicit so the rule cannot drift with the font metrics. */
+.field--outlined {
+  --field-notch-height: calc(var(--field-label-size-float) + var(--sp-1));
+}
+
 .field--outlined .field__outline {
   position: absolute;
   inset: 0;
+  top: calc(var(--field-notch-height) / -2);
   margin: 0;
   padding: 0;
   border: var(--field-outline-width) solid var(--clr-border-strong);
@@ -109,6 +119,7 @@
 
 /* The legend is the notch: hidden text, but its width carves the gap. */
 .field--outlined .field__notch {
+  height: var(--field-notch-height);
   margin-left: calc(var(--field-padding-inline) - var(--field-notch-padding));
   max-width: 0;
   padding: 0;
@@ -120,6 +131,7 @@
 
 .field--outlined .field__notch span {
   display: inline-block;
+  line-height: var(--field-notch-height);
   padding-inline: var(--field-notch-padding);
   font-size: var(--field-label-size-float);
 }
