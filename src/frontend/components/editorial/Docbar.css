@@ -54,3 +54,25 @@
     min-height: var(--sp-12);
   }
 }
+
+/* The shortcut list in the Scorciatoie dialog: key on the left, action on the
+   right, in the bar's own type. */
+.docbar__shortcuts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--sp-2) var(--sp-4);
+  margin: 0;
+}
+
+.docbar__shortcuts dt {
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.docbar__shortcuts dd {
+  margin: 0;
+  color: var(--muted);
+}

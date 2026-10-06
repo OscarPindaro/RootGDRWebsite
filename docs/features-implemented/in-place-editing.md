@@ -31,6 +31,15 @@ The reading page is where a document is written: no separate edit form, no
   without moving. Inside CodeMirror the arrows are native, Ctrl/⌘+Enter closes
   and returns focus to the block, Escape closes without moving. See
   [document-navigator.md](document-navigator.md).
+- Page-level shortcuts: `F2` opens the body when no block is focused (on a
+  focused block it opens that block), and `Ctrl/⌘ + Shift + Enter` invokes the
+  current publication command through the same persistence barrier. They are
+  inert while typing, inside the code editor, with an open menu or dialog, and
+  on repeated keydown; the editor's own `Ctrl/⌘ + Enter` keeps its preview
+  meaning, and no shortcut exists for delete or lock. The bar advertises them
+  with `aria-keyshortcuts`, and the `Scorciatoie` entry in the `Altre azioni`
+  menu opens the Italian help; a phone never needs a shortcut to reach a
+  command.
 - A command that writes (publication, lock) waits for every pending save to
   reach a known outcome before it fires, so publishing can never send stale
   content. A failed, conflicting or offline save cancels the command and keeps

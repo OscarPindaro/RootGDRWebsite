@@ -1,5 +1,5 @@
 {#def base, eyebrow=None, locked=False, is_draft=False, can_manage=False, badge=None, owner_label=None #}
-{#css common/Button.css, common/Pill.css, common/Menu.css, editorial/Docbar.css, editorial/PublicationStatus.css, common/Icon.css, common/Tooltip.css #}
+{#css common/Button.css, common/Pill.css, common/Menu.css, common/Dialog.css, editorial/Docbar.css, editorial/PublicationStatus.css, common/Icon.css, common/Tooltip.css #}
 {#js common/Dialog.js, common/Menu.js #}
 {# The document bar: facts on the left, commands on the right. `base` is the
    document's own URL prefix, so the lock/publish/delete commands and the
@@ -23,7 +23,8 @@
   <div class="docbar__commands">
     {% if not locked %}
     <common.IconButton icon="pencil" label="Modifica"
-            variant="primary" data-doc-edit-open data-testid="document-edit" />
+            variant="primary" aria-keyshortcuts="F2"
+            data-doc-edit-open data-testid="document-edit" />
     {% endif %}
     <common.IconButton :icon="'lock' if locked else 'lock-open'"
             :label="'Sblocca' if locked else 'Blocca'" :selected="locked"
@@ -33,6 +34,7 @@
             hx-swap="none" />
     <common.IconButton :icon="'upload' if is_draft else 'undo-2'"
             :label="'Pubblica' if is_draft else 'Riporta a bozza'"
+            aria-keyshortcuts="Control+Shift+Enter Meta+Shift+Enter"
             data-requires-saved
             data-testid="document-publication"
             :hx-post="base ~ '/toggle/is_draft?value=' ~ ('false' if is_draft else 'true')"
@@ -41,6 +43,7 @@
     <common.MenuTrigger icon="ellipsis-vertical" label="Altre azioni"
             target="docbar-more" variant="secondary" icon_only />
     <common.Menu id="docbar-more" labelledby="docbar-more-trigger" placement="bottom-end">
+      <common.MenuItem icon="list" label="Scorciatoie" data-dialog-open="docbar-shortcuts" />
       {% if is_draft %}
       <common.MenuItem icon="trash-2" label="Annulla bozza" variant="danger"
               data-testid="document-cancel-draft"
@@ -54,6 +57,15 @@
       {% endif %}
     </common.Menu>
   </div>
+  <common.Dialog title="Scorciatoie" id="docbar-shortcuts">
+    <dl class="docbar__shortcuts">
+      <dt>F2</dt><dd>Apri il blocco attivo, o il corpo del documento</dd>
+      <dt>Ctrl/⌘ + Invio</dt><dd>Mostra il risultato e chiudi la scrittura</dd>
+      <dt>Ctrl/⌘ + Shift + Invio</dt><dd>Pubblica, o riporta a bozza</dd>
+      <dt>Esc</dt><dd>Esci dalla scrittura</dd>
+      <dt>↑ / ↓</dt><dd>Passa fra i blocchi del documento</dd>
+    </dl>
+  </common.Dialog>
   {% endif %}
   <div id="docbar-confirm"></div>
 </div>

@@ -194,3 +194,38 @@ def test_publication_waits_for_the_pending_body(
     assert payload["isDraft"] is False
     assert payload["body"] == body
     assert session.errors == []
+
+
+def test_the_publication_shortcut_matches_the_mouse(
+    session: BrowserSession, seed_world
+) -> None:
+    """Ctrl/Command+Shift+Enter goes through the same command and barrier."""
+    world_id = seed_world(f"Mondo Scorciatoia Docbar {uuid.uuid4().hex[:6]}")
+    character = _create(
+        session,
+        world_id,
+        "characters",
+        {"name": "Da pubblicare col tasto", "is_draft": True},
+    )
+    path = f"/worlds/{world_id}/characters/{character['id']}"
+    api = f"/api{path}"
+
+    session.goto(path)
+    session.page.locator("[data-doc-render]").dblclick()
+    session.page.wait_for_selector(".cm-editor")
+    session.page.locator(".cm-content").click()
+    body = "Testo scritto prima della scorciatoia."
+    session.page.keyboard.type(body)
+    session.page.keyboard.press("Escape")
+    session.page.wait_for_selector(".cm-editor", state="detached")
+
+    session.page.keyboard.press("Control+Shift+Enter")
+    session.page.wait_for_function(
+        "() => document.querySelector('[data-publication-status]').dataset.state"
+        " === 'published'"
+    )
+
+    payload = session.expect_api(api).json()
+    assert payload["isDraft"] is False
+    assert payload["body"] == body
+    assert session.errors == []

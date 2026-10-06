@@ -71,9 +71,8 @@ def test_the_destructive_action_lives_in_a_labelled_menu(component):
     trigger.click()
     page.wait_for_selector("#docbar-more:popover-open")
 
-    item = page.locator("#docbar-more [role='menuitem']")
+    item = page.locator('#docbar-more [data-testid="document-delete"]')
     assert item.inner_text().strip() == "Elimina"
-    assert item.get_attribute("data-testid") == "document-delete"
     assert "/confirm/delete" in item.get_attribute("hx-get")
 
     # Activating the item closes the menu and hands over to the confirmation.
@@ -89,7 +88,7 @@ def test_a_draft_puts_cancel_draft_in_the_menu(component):
     page.locator("#docbar-more-trigger").click()
     page.wait_for_selector("#docbar-more:popover-open")
 
-    item = page.locator("#docbar-more [role='menuitem']")
+    item = page.locator('#docbar-more [data-testid="document-cancel-draft"]')
     assert item.inner_text().strip() == "Annulla bozza"
     assert "/confirm/cancel-draft" in item.get_attribute("hx-get")
 
@@ -124,4 +123,33 @@ def test_every_command_is_keyboard_reachable(component):
     assert page.evaluate(
         """() => document.activeElement ===
             document.querySelector('#docbar-more [role="menuitem"]')"""
+    )
+
+
+def test_the_commands_advertise_their_shortcuts(component):
+    page = _mount(component)
+
+    assert (
+        page.locator('[data-testid="document-edit"]').get_attribute("aria-keyshortcuts")
+        == "F2"
+    )
+    publication = page.locator('[data-testid="document-publication"]')
+    assert "Control+Shift+Enter" in publication.get_attribute("aria-keyshortcuts")
+
+
+def test_the_menu_opens_the_italian_shortcut_help(component):
+    page = _mount(component)
+
+    page.locator("#docbar-more-trigger").click()
+    page.wait_for_selector("#docbar-more:popover-open")
+    page.locator("#docbar-more [role='menuitem']", has_text="Scorciatoie").click()
+    page.wait_for_selector("#docbar-shortcuts[open]")
+
+    text = page.locator("#docbar-shortcuts").inner_text().lower()
+    assert "f2" in text
+    assert "ctrl" in text
+    assert "pubblica" in text
+    # The menu closed; the dialog owns the focus now.
+    assert page.evaluate(
+        "() => !document.querySelector('#docbar-more').matches(':popover-open')"
     )

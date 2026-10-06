@@ -583,6 +583,45 @@ document.addEventListener(
   true,
 );
 
+/* ---------- page-level shortcuts ---------- */
+
+/* Typing owns the keyboard: a page shortcut never fires inside a text entry, a
+   code editor, an autocomplete list or while a modal is open. Repeated keydown
+   and IME composition are ignored as well. */
+function typingOwnsTheKeyboard(target) {
+  if (target?.closest?.(
+    "input, textarea, select, [contenteditable='true'], .cm-editor, " +
+      "[data-autocomplete], [data-mention-menu], [data-menu]",
+  )) return true;
+  return Boolean(document.querySelector("dialog[data-dialog][open]"));
+}
+
+/* F2 opens the body when no document block is focused; on a focused block the
+   navigator's own handler opens that block. */
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "F2" || event.repeat || event.isComposing) return;
+  if (event.target.closest?.("[data-doc-block]")) return;
+  if (typingOwnsTheKeyboard(event.target)) return;
+  const body = document.querySelector("[data-doc-edit]");
+  if (!body?.docOpen) return;
+  event.preventDefault();
+  body.docOpen();
+});
+
+/* Ctrl/Command+Shift+Enter invokes the visible publication command through the
+   same persistence barrier; Mod+Enter stays the editor's own preview chord. */
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || !event.shiftKey) return;
+  if (!(event.ctrlKey || event.metaKey) || event.repeat || event.isComposing) return;
+  if (typingOwnsTheKeyboard(event.target)) return;
+  const command = document.querySelector(
+    '[data-testid="document-publication"][data-requires-saved]',
+  );
+  if (!command) return;
+  event.preventDefault();
+  runCommandAfterSaved(command);
+});
+
 /* ---------- document pages ---------- */
 
 function mountDocEdit(block) {
