@@ -1,4 +1,6 @@
 import uuid
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -21,7 +23,7 @@ from ..navigation import Crumb, MetadataField
 from ..users.schemas import User
 from ..worlds.service import is_master
 from ..worlds.views import _htmx_redirect
-from .schemas import SessionCreate, SessionUpdate
+from .schemas import SessionCreate, SessionNewRequest, SessionUpdate
 from .service import (
     create_session,
     delete_session,
@@ -32,6 +34,9 @@ from .service import (
 )
 
 router = APIRouter(tags=["session-views"])
+
+# The interactive fallback timezone when the browser sends no date.
+ROME = ZoneInfo("Europe/Rome")
 
 
 def _crumbs(world, *extra: Crumb) -> list[Crumb]:
@@ -78,14 +83,25 @@ async def session_new_page(world_id: uuid.UUID) -> RedirectResponse:
 @router.post("/worlds/{world_id}/sessions/new")
 async def session_new_submit(
     world_id: uuid.UUID,
+    payload: SessionNewRequest,
     db: AsyncSession = Depends(get_db_session, scope="function"),
     user: User = Depends(get_current_user),
 ) -> Response:
+    """Create the draft, dated with the creating browser's calendar date.
+
+    The trigger sends the browser's own local ISO date, so a session created
+    late at night keeps today's date there. When the value is absent, the
+    fallback is today in Europe/Rome rather than the server's UTC date.
+    """
+    real_date = payload.real_date or datetime.now(ROME).date()
     session = await create_session(
         db,
         world_id,
         SessionCreate(
-            title="Nuova sessione", in_world_date="Data da definire", is_draft=True
+            title="Nuova sessione",
+            in_world_date="Data da definire",
+            is_draft=True,
+            real_date=real_date,
         ),
         user,
     )

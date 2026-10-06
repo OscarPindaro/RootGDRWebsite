@@ -5,6 +5,7 @@ The six campaign document types start as private drafts and open on their normal
 ## What it does
 
 - Characters, NPCs, places, sessions, stories and static pages are created from their list or the world overview. Creation sends a POST and redirects to the detail page with in-place editing active.
+- A new session's `Data reale` starts at the creating browser's own calendar date: the trigger sends `localIsoDate()` (local components, never a UTC conversion) as an htmx value, and the route persists it before the redirect. When the value is absent the fallback is today in Europe/Rome, not the server's UTC date. The field stays editable, clears through the existing nullable update, and ordinary API/import dates are untouched.
 - Services assign an Italian working title. Sessions also start with `Data da definire`, stories are open, and generated page slugs receive a numeric suffix when needed.
 - Drafts appear separately from published content and are visible only to their author. `Annulla bozza` deletes only an item that is still a draft; published documents retain their normal delete action.
 - Session, story and page metadata autosaves with optimistic version checks. A changed page slug replaces the browser URL with its canonical slug URL while API writes continue to use the page UUID.

@@ -20,6 +20,17 @@ class SessionCreate(AppBaseModel):
     is_draft: Annotated[bool, Field(default=False)]
 
 
+class SessionNewRequest(AppBaseModel):
+    """The sessions page's draft trigger.
+
+    The browser computes its own calendar date and sends it as an ISO date;
+    when the value is absent, the interactive route falls back to today in
+    Europe/Rome. The ordinary API and imports never pass through this payload.
+    """
+
+    real_date: OptionalDate = None
+
+
 class SessionUpdate(ContentUpdate):
     title: Annotated[str | None, Field(default=None, min_length=1, max_length=255)]
     in_world_date: Annotated[

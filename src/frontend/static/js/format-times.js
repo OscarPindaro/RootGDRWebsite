@@ -14,5 +14,13 @@ function formatTimes(root = document) {
   });
 }
 
+// The browser's own calendar date as an ISO date string, from the local
+// components and never a UTC conversion: a session created late at night keeps
+// today's date here. Used by the new-session trigger's htmx values.
+function localIsoDate(now = new Date()) {
+  const pad = (value) => String(value).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 document.addEventListener("DOMContentLoaded", () => formatTimes());
 document.body.addEventListener("htmx:afterSwap", (e) => formatTimes(e.target));

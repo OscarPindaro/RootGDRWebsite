@@ -9,7 +9,7 @@
     lede="Dalla più recente. Ogni sessione ha un colore che la segue anche nelle timeline e nelle schede dei personaggi."
     :crumbs="crumbs">
     {% if can_manage %}
-    <common.IconButton icon="plus" label="Nuova sessione" variant="primary" size="sm" :hx-post="'/worlds/' ~ world.id ~ '/sessions/new'" hx-swap="none" data-testid="create-session" />
+    <common.IconButton icon="plus" label="Nuova sessione" variant="primary" size="sm" :hx-post="'/worlds/' ~ world.id ~ '/sessions/new'" hx-swap="none" hx-vals="js:{real_date: localIsoDate()}" data-testid="create-session" />
     {% endif %}
   </editorial.Masthead>
 
