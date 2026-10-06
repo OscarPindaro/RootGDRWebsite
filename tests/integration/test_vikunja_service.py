@@ -1035,7 +1035,9 @@ def test_board_password_login_desktop_and_phone_evidence(board_deployment):
                 page.locator("input#password").fill(
                     spec.owner.password.get_secret_value()
                 )
-                page.get_by_role("button", name="Accedi", exact=True).click()
+                # The button's label follows the browser locale; the submit
+                # control is the same in every language.
+                page.locator("form button[type=submit]").first.click()
                 page.wait_for_url(
                     lambda current: "/login" not in current, timeout=20000
                 )
