@@ -807,10 +807,35 @@ integrazione 132 test in 35 s (prima 25–35 min), unit 763 test in 20 s,
 esterne 64 test a richiesta. Un test `unit` può comunque portare il marker
 quando solo lui ha bisogno dello stato esterno.
 
+### CI hosted verde (2026-10-06)
+
+Il push ordinario ha attivato la CI e il gate hosted è stato osservato con
+accesso pubblico non autenticato, senza letture `gh` di settings o quote. La
+prima esecuzione è fallita su tutti e quattro i job e ogni giro ha ristretto la
+causa, tutta preparazione del runner o difetti veri:
+
+- hook di repository senza `.env` (il check htmx legge la configurazione);
+- immagini pinnate assenti e `podman-compose` mancante: i test di deployment e
+  board guidano podman, non docker;
+- fallback a podman per l'ambiente docker del runner → `HARNESS_CONTAINER_ENGINE=docker`;
+- il job di integrazione rende l'evidenza di login della board in Chromium;
+- un input senza etichetta nello specimen DocDetails (axe critical) e la data
+  field senza `aria-label`;
+- confronto colori con un'unità di arrotondamento diversa fra build di Chromium;
+- timeout del job di integrazione superato a metà suite (25 → 45 min, poi
+  irrilevante dopo la separazione delle suite esterne);
+- **due difetti veri nel menu delle menzioni**: mancava `completionKeymap`, quindi
+  il menu si apriva e ignorava Enter, le frecce ed Escape; e la sorgente asincrona
+  senza `validFor` ri-interrogava a ogni tasto, potendo scartare la voce attiva.
+  Ora digitare `@Fiam` e premere Enter inserisce `@[Fiamma Rossa]`.
+
+Esecuzione verde su `c94eaf5`: checks e unit 1.0 min, integrazione 1.2 min,
+frontend 5.1 min, e2e 6.5 min — quattro job su quattro.
+
 ### Gate che restano aperti (non cancellati dal ciclo)
 
-1. Push ordinario su `main` e prima esecuzione hosted della CI: il push non
-   deploya, attiva solo la CI.
+1. ~~Push ordinario su `main` e prima esecuzione hosted della CI~~ — fatto il
+   2026-10-06: push ordinario su `main`, CI verde su `c94eaf5` (nessun deploy).
 2. Rollout sul server: richiede il build del commit verificato e l'invocazione
    manuale del playbook (credenziali private, non presenti su questa macchina).
 3. Board reale: `harness backlog workflow` + `harness backlog import` con il
