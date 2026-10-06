@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
-from ..content.constants import ContentKind
+from ..content.constants import TINT_LABELS, ContentKind
 from ..content.policy import require_draft
 from ..content.view_helpers import (
     split_published_drafts,
@@ -126,6 +126,15 @@ async def story_detail_page(
         )
         for session in sessions
     ]
+    # The panel's summary: the facts a reader needs without opening it.
+    details_summary = " · ".join(
+        (
+            "In corso" if story.status is StoryStatus.OPEN else "Chiusa",
+            story.period_label or "Senza periodo",
+            f"{len(story.sessions)} sessioni",
+            TINT_LABELS[story.tint],
+        )
+    )
     return catalog.render(
         "pages.stories.StoryDetail",
         world=world,
@@ -150,7 +159,7 @@ async def story_detail_page(
             MetadataField(
                 name="session_ids",
                 label="Sessioni",
-                kind="multiselect",
+                kind="sessions",
                 values=[str(session.id) for session in story.sessions],
                 options=session_options,
             ),
@@ -163,6 +172,7 @@ async def story_detail_page(
             ),
         ],
         auto_edit=edit,
+        details_summary=details_summary,
         short_html=short_html,
         body_html=body_html,
         links=links,

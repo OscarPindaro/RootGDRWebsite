@@ -91,7 +91,7 @@ class MetadataField(BaseModel):
 
     name: str
     label: str
-    kind: Literal["text", "date", "number", "select", "multiselect", "tint"]
+    kind: Literal["text", "date", "number", "select", "multiselect", "tint", "sessions"]
     value: str | int | None = None
     values: list[str] = Field(default_factory=list)
     options: list[Option] = Field(default_factory=list)

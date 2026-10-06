@@ -1,11 +1,18 @@
 {#def fields, base, version, can_manage=False, locked=False, canonical_prefix=None #}
-{#css editorial/Metadata.css, editorial/TintPicker.css, common/ChoiceGrid.css #}
+{#css editorial/Metadata.css, editorial/TintPicker.css, editorial/SessionPicker.css, common/ChoiceGrid.css #}
 <div class="metadata" data-doc-metadata data-autosave-url="/api{{ base }}"
      {% if canonical_prefix %}data-canonical-prefix="{{ canonical_prefix }}"{% endif %}
      data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   {% for field in fields %}
-  {% if field.kind == "tint" %}
+  {% if field.kind == "sessions" %}
+  <div class="metadata__field metadata__field--wide">
+    <span class="eyebrow">{{ field.label }}</span>
+    <editorial.SessionPicker :name="field.name" :options="field.options"
+                             :chosen="field.values" :label="field.label"
+                             :filter_placeholder="'Cerca fra le ' ~ (field.label | lower)" />
+  </div>
+  {% elif field.kind == "tint" %}
   {# The tint is a popover picker, not a native control: the wrapper is not a
      label, and one hidden input carries the canonical value the autosave
      registers, so the radios never compete as twelve fields. #}

@@ -6,6 +6,11 @@
   border-block: var(--rule-hair);
 }
 
+/* A field whose control needs the whole row (the session picker). */
+.metadata__field--wide {
+  grid-column: 1 / -1;
+}
+
 .metadata__field {
   display: grid;
   gap: var(--sp-1);

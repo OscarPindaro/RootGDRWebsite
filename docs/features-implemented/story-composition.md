@@ -18,6 +18,22 @@ relationship keeps which sessions it covers.
   payload, clearing it empties the relationship, and version/lock checks keep
   working as before.
 
+## The authoring surface
+
+- The story page keeps the title, the summary and the text in the document; the
+  period, the progress, the tint and the session selection live in the details
+  panel (`editorial.DocDetails`), behind one summary line
+  (`In corso · Inverno, 4° anno · 3 sessioni · Cobalto`). The duplicated inline
+  progress band left the page; the band component stays for the surfaces that
+  still use it.
+- The session list is a searchable group of native checkboxes: a filter that
+  hides what does not match, except the chosen sessions, which never disappear.
+  The boxes write one hidden multiple select, so the story has a single
+  registered field saved with the rest of the metadata — no twelve competing
+  controls and no custom multiselect.
+- A reader or a locked story reads the facts in the summary and gets disabled
+  controls; the panel stays a manual dialog, so it never pops open by itself.
+
 ## How it is built
 
 - `stories/schemas.py` adds `StorySessionReference` and the `sessions` field on

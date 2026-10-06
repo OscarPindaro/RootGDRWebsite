@@ -1,0 +1,26 @@
+{#def name, options, chosen=None, label="Sessioni", filter_placeholder="Cerca fra le sessioni" #}
+{#css editorial/SessionPicker.css #}
+{#js editorial/SessionPicker.js #}
+{# A searchable list of native checkboxes for the story's sessions. The filter
+   only hides what does not match and is not selected, so a chosen session never
+   disappears; the checkboxes write one hidden multiple select, which is the
+   single field the autosave registers. #}
+<div class="session-picker" data-session-picker>
+  <input type="search" class="session-picker__filter" data-session-filter
+         placeholder="{{ filter_placeholder }}" aria-label="{{ filter_placeholder }}">
+  <div class="session-picker__list" role="group" aria-label="{{ label }}">
+    {% for option in options %}
+    <label class="session-picker__item" data-session-option>
+      <input type="checkbox" value="{{ option.value }}" data-session-choice
+             {% if chosen and option.value in chosen %}checked{% endif %}>
+      <span class="session-picker__label">{{ option.label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+  <p class="session-picker__empty" data-session-empty hidden>Nessuna sessione corrisponde.</p>
+  <select name="{{ name }}" multiple hidden data-metadata-field
+          data-value-kind="array" data-session-value>
+    {% for option in options %}<option value="{{ option.value }}"
+      {% if chosen and option.value in chosen %}selected{% endif %}>{{ option.label }}</option>{% endfor %}
+  </select>
+</div>
