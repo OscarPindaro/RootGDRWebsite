@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Annotated
 
 from pydantic import Field
@@ -42,6 +43,24 @@ class StorySummary(AppBaseModel, TimestampMixin, VersionedResponse):
     is_draft: Annotated[bool, Field(default=False)]
 
 
+class StorySessionReference(AppBaseModel):
+    """One session a story is composed of, as the API reports it.
+
+    Read-only and additive: the client updates counts and names from an
+    authenticated response instead of counting rendered rows.
+    """
+
+    id: Annotated[UUIDField, Field(description="Session ID")]
+    title: Annotated[str, Field(description="Session title")]
+    in_world_date: Annotated[str, Field(default="")]
+    real_date: Annotated[date | None, Field(default=None)]
+    tint: Annotated[Tint, Field(default=DEFAULT_TINT)]
+
+
 class StoryResponse(StorySummary):
     body: Annotated[str, Field(default="")]
     created_by: Annotated[UserResponse, Field(description="Master who wrote it")]
+    sessions: Annotated[
+        list[StorySessionReference],
+        Field(default_factory=list, description="Composed sessions, read-only"),
+    ]

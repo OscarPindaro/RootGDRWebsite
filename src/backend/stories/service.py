@@ -11,7 +11,7 @@ from ..content.references import refresh_references
 from ..log import get_logger
 from ..sessions.models import SessionModel
 from ..users.schemas import User
-from .exceptions import StoryNotFoundException
+from .exceptions import StoryNotFoundException, StorySessionsInvalid
 from .models import StoryModel, StoryStatus
 from .schemas import StoryCreate, StoryUpdate
 
@@ -34,22 +34,39 @@ async def _get(
 
 
 async def _resolve_sessions(
-    db: AsyncSession, world_id: uuid.UUID, session_ids: list[uuid.UUID]
+    db: AsyncSession,
+    world_id: uuid.UUID,
+    session_ids: list[uuid.UUID],
+    user: User,
 ) -> list[SessionModel]:
+    """The sessions a story is composed of, filtered like the sessions list.
+
+    A reference is refused when it is duplicated, belongs to another world or
+    points at a draft its author has not shared: the caller gets a typed 422,
+    never a 500.
+    """
     if not session_ids:
         return []
+    if len(set(session_ids)) != len(session_ids):
+        raise StorySessionsInvalid("Le sessioni collegate contengono duplicati.")
     sessions = list(
         (
             await db.scalars(
                 select(SessionModel).where(
                     SessionModel.world_id == world_id,
                     SessionModel.id.in_(session_ids),
+                    or_(
+                        SessionModel.is_draft.is_(False),
+                        SessionModel.created_by_id == user.id,
+                    ),
                 )
             )
         ).all()
     )
-    if len(sessions) != len(set(session_ids)):
-        raise ValueError("One or more sessions do not belong to this world")
+    if len(sessions) != len(session_ids):
+        raise StorySessionsInvalid(
+            "Una o più sessioni non esistono in questo mondo o non sono visibili."
+        )
     return sessions
 
 
@@ -68,7 +85,7 @@ async def create_story(
         body=data.body,
         is_draft=data.is_draft,
     )
-    story.sessions = await _resolve_sessions(db, world_id, data.session_ids)
+    story.sessions = await _resolve_sessions(db, world_id, data.session_ids, user)
     db.add(story)
     await db.flush()
     logger.info("Story created", world_id=world_id, story_id=story.id)
@@ -146,7 +163,7 @@ async def update_story(
     if data.body is not None:
         story.body = data.body
     if data.session_ids is not None:
-        story.sessions = await _resolve_sessions(db, world_id, data.session_ids)
+        story.sessions = await _resolve_sessions(db, world_id, data.session_ids, user)
     if data.locked is not None:
         story.locked = data.locked
     if data.is_draft is not None:
