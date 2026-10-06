@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import HTMLResponse
 from jinjax.catalog import Catalog
 from pydantic import Field
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import readable_world
@@ -185,11 +185,21 @@ async def document_action_confirm(
     )
 
 
+# How many matches one type may contribute before the menu's own cap.
+SUGGESTION_LIMIT = 8
+
+
 class MentionSuggestion(AppBaseModel):
+    """One ``@`` menu entry: the label, the kind cue and the mark to show."""
+
     name: Annotated[str, Field(description="Display name")]
     kind: Annotated[ContentKind, Field(description="Content kind")]
     tint: Annotated[str, Field(description="Tint token")]
     insert: Annotated[str, Field(description="Unambiguous mention label")]
+    animal: Annotated[
+        str | None, Field(default=None, description="Animal cue, characters and NPCs")
+    ]
+    shape: Annotated[str | None, Field(default=None, description="Shape cue, places")]
 
 
 class PreviewRequest(AppBaseModel):
@@ -209,63 +219,117 @@ async def mention_suggestions(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[MentionSuggestion]:
-    """Fuzzy-enough suggestions for the editor's ``@`` menu."""
+    """Bounded ``@`` suggestions, filtered like the list services.
+
+    Every type is queried with the draft policy its own list uses — a draft is
+    visible to its author — and capped, so a large world never ships all its
+    matches just to produce eight suggestions. The mark cues are stored tokens
+    (``animal``, ``shape``); the client renders them with fixed markup.
+    """
     await readable_world(db, world_id, user)
-    matches: list[tuple[str, ContentKind, str]] = []
-    character_stmt = select(CharacterModel).where(
-        CharacterModel.world_id == world_id, CharacterModel.name.ilike(f"%{q}%")
+    # (name, kind, tint, animal, shape)
+    rows: list[tuple[str, ContentKind, str, str | None, str | None]] = []
+
+    characters = await db.scalars(
+        select(CharacterModel)
+        .where(
+            CharacterModel.world_id == world_id,
+            CharacterModel.name.ilike(f"%{q}%"),
+            or_(
+                CharacterModel.is_draft.is_(False),
+                CharacterModel.owner_id == user.id,
+            ),
+        )
+        .order_by(CharacterModel.name.asc())
+        .limit(SUGGESTION_LIMIT)
     )
-    npc_stmt = select(NpcModel).where(
-        NpcModel.world_id == world_id, NpcModel.name.ilike(f"%{q}%")
+    rows.extend(
+        (item.name, ContentKind.CHARACTER, item.tint, item.animal, None)
+        for item in characters.all()
     )
-    place_stmt = select(PlaceModel).where(
-        PlaceModel.world_id == world_id, PlaceModel.name.ilike(f"%{q}%")
+    npcs = await db.scalars(
+        select(NpcModel)
+        .where(
+            NpcModel.world_id == world_id,
+            NpcModel.name.ilike(f"%{q}%"),
+            or_(NpcModel.is_draft.is_(False), NpcModel.created_by_id == user.id),
+        )
+        .order_by(NpcModel.name.asc())
+        .limit(SUGGESTION_LIMIT)
     )
-    session_stmt = select(SessionModel).where(
-        SessionModel.world_id == world_id, SessionModel.title.ilike(f"%{q}%")
+    rows.extend(
+        (item.name, ContentKind.NPC, item.tint, item.animal, None)
+        for item in npcs.all()
     )
-    story_stmt = select(StoryModel).where(
-        StoryModel.world_id == world_id, StoryModel.title.ilike(f"%{q}%")
+    places = await db.scalars(
+        select(PlaceModel)
+        .where(
+            PlaceModel.world_id == world_id,
+            PlaceModel.name.ilike(f"%{q}%"),
+            or_(PlaceModel.is_draft.is_(False), PlaceModel.created_by_id == user.id),
+        )
+        .order_by(PlaceModel.name.asc())
+        .limit(SUGGESTION_LIMIT)
     )
-    page_stmt = select(PageModel).where(
-        PageModel.world_id == world_id, PageModel.title.ilike(f"%{q}%")
+    rows.extend(
+        (item.name, ContentKind.PLACE, item.tint, None, item.shape)
+        for item in places.all()
     )
-    matches.extend(
-        (item.name, ContentKind.CHARACTER, item.tint)
-        for item in (await db.scalars(character_stmt)).all()
+    sessions = await db.scalars(
+        select(SessionModel)
+        .where(
+            SessionModel.world_id == world_id,
+            SessionModel.title.ilike(f"%{q}%"),
+            or_(
+                SessionModel.is_draft.is_(False),
+                SessionModel.created_by_id == user.id,
+            ),
+        )
+        .order_by(SessionModel.title.asc())
+        .limit(SUGGESTION_LIMIT)
     )
-    matches.extend(
-        (item.name, ContentKind.NPC, item.tint)
-        for item in (await db.scalars(npc_stmt)).all()
+    rows.extend(
+        (item.title, ContentKind.SESSION, item.tint, None, None)
+        for item in sessions.all()
     )
-    matches.extend(
-        (item.name, ContentKind.PLACE, item.tint)
-        for item in (await db.scalars(place_stmt)).all()
+    stories = await db.scalars(
+        select(StoryModel)
+        .where(
+            StoryModel.world_id == world_id,
+            StoryModel.title.ilike(f"%{q}%"),
+            or_(StoryModel.is_draft.is_(False), StoryModel.created_by_id == user.id),
+        )
+        .order_by(StoryModel.title.asc())
+        .limit(SUGGESTION_LIMIT)
     )
-    matches.extend(
-        (item.title, ContentKind.SESSION, item.tint)
-        for item in (await db.scalars(session_stmt)).all()
+    rows.extend(
+        (item.title, ContentKind.STORY, item.tint, None, None) for item in stories.all()
     )
-    matches.extend(
-        (item.title, ContentKind.STORY, item.tint)
-        for item in (await db.scalars(story_stmt)).all()
+    pages = await db.scalars(
+        select(PageModel)
+        .where(
+            PageModel.world_id == world_id,
+            PageModel.title.ilike(f"%{q}%"),
+            or_(PageModel.is_draft.is_(False), PageModel.created_by_id == user.id),
+        )
+        .order_by(PageModel.title.asc())
+        .limit(SUGGESTION_LIMIT)
     )
-    matches.extend(
-        (item.title, ContentKind.PAGE, item.tint)
-        for item in (await db.scalars(page_stmt)).all()
+    rows.extend(
+        (item.title, ContentKind.PAGE, item.tint, None, None) for item in pages.all()
     )
+
+    names = [name for name, *_ in rows]
     suggestions = [
         MentionSuggestion(
             name=name,
             kind=kind,
             tint=tint,
-            insert=(
-                f"{kind.value}:{name}"
-                if sum(candidate_name == name for candidate_name, _, _ in matches) > 1
-                else name
-            ),
+            animal=animal,
+            shape=shape,
+            insert=f"{kind.value}:{name}" if names.count(name) > 1 else name,
         )
-        for name, kind, tint in matches[:8]
+        for name, kind, tint, animal, shape in rows[:SUGGESTION_LIMIT]
     ]
     return ListResponse(data=suggestions)
 

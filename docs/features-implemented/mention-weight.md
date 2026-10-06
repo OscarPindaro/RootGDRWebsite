@@ -10,6 +10,12 @@ interrupts the line — and it reads the same while writing and while reading.
   and visible focus, but carry a lighter weight: a smaller inline padding, a
   smaller icon and gap, a reduced corner, a lighter border and regular font
   weight. The negative inline margin that crowded the surrounding words is gone.
+- The `@` menu is fed by `GET /api/worlds/{id}/mentions`: every content type is
+  queried with the same draft policy its own list uses (a draft belongs to its
+  author) and capped, so a large world never ships all its matches to produce
+  eight suggestions. A suggestion carries the stored mark tokens (`animal` for
+  characters and NPCs, `shape` for places) next to the name, kind, tint and the
+  unambiguous `insert` label — always as data, never as HTML built from a name.
 - The `@` suggestion menu (CodeMirror's autocomplete) keeps the app skin.
 - Both states read one set of `--mention-*` tokens, so the reading page and the
   editor cannot drift in size, radius or weight.
