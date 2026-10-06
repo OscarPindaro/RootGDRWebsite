@@ -47,26 +47,32 @@
   mask-size: contain;
 }
 .mention[data-kind="personaggio"],
+.mention-mark[data-kind="personaggio"],
 .cm-lp-mention[data-kind="personaggio"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='12' cy='8' r='3.6'/%3E%3Cpath d='M4.8 20.4a7.2 7.2 0 0 1 14.4 0'/%3E%3C/svg%3E");
 }
 .mention[data-kind="npc"],
+.mention-mark[data-kind="npc"],
 .cm-lp-mention[data-kind="npc"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='9' cy='8.6' r='3.2'/%3E%3Cpath d='M3.2 19.8a5.8 5.8 0 0 1 11.6 0'/%3E%3Cpath d='M16.4 6.4a3 3 0 0 1 0 5.4'/%3E%3Cpath d='M18 19.8a5.6 5.6 0 0 0-2.5-4.6'/%3E%3C/svg%3E");
 }
 .mention[data-kind="luogo"],
+.mention-mark[data-kind="luogo"],
 .cm-lp-mention[data-kind="luogo"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z'/%3E%3Ccircle cx='12' cy='10' r='2.6'/%3E%3C/svg%3E");
 }
 .mention[data-kind="sessione"],
+.mention-mark[data-kind="sessione"],
 .cm-lp-mention[data-kind="sessione"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='3' y='5.5' width='18' height='15.5'/%3E%3Cline x1='3' y1='10.5' x2='21' y2='10.5'/%3E%3Cline x1='8' y1='3' x2='8' y2='7.5'/%3E%3Cline x1='16' y1='3' x2='16' y2='7.5'/%3E%3C/svg%3E");
 }
 .mention[data-kind="storia"],
+.mention-mark[data-kind="storia"],
 .cm-lp-mention[data-kind="storia"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M4 5.6A2.6 2.6 0 0 1 6.6 3H19.5v15.5H6.6A2.6 2.6 0 0 0 4 21z'/%3E%3Cline x1='8.5' y1='7.8' x2='15.5' y2='7.8'/%3E%3Cline x1='8.5' y1='11.4' x2='15.5' y2='11.4'/%3E%3C/svg%3E");
 }
 .mention[data-kind="pagina"],
+.mention-mark[data-kind="pagina"],
 .cm-lp-mention[data-kind="pagina"] {
   --icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.6' stroke-linecap='round'%3E%3Cpath d='M6 3h8l4.5 4.5V21H6z'/%3E%3Cpolyline points='14,3 14,7.5 18.5,7.5'/%3E%3Cline x1='9' y1='12.5' x2='15' y2='12.5'/%3E%3Cline x1='9' y1='16' x2='15' y2='16'/%3E%3C/svg%3E");
 }
@@ -170,4 +176,78 @@ html[data-accent="gradiente"] a.mention {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--muted);
+}
+
+/* Il contrassegno nel menu @: un rettangolo di misura fissa che mostra
+   l'animale, la forma del luogo o il segno del tipo. La tinta colora il
+   contrassegno; un nome lungo non lo allarga mai. */
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: calc(var(--mention-menu-column) + var(--sp-1));
+  height: calc(var(--mention-menu-column) + var(--sp-1));
+  border: var(--rule-ink);
+  border-radius: var(--radius-sm);
+  color: var(--c, var(--ink));
+  font-size: 0.72rem;
+  line-height: 1;
+  overflow: hidden;
+}
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark--animal { border-color: transparent; }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape]::before,
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-kind]::before {
+  content: "";
+  width: 62%;
+  height: 62%;
+  background: currentColor;
+}
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-kind]::before {
+  -webkit-mask-image: var(--icon);
+  mask-image: var(--icon);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="cerchio"]::before { border-radius: 50%; }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="quadrato"]::before { border-radius: var(--radius-sm); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="triangolo"]::before { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="rombo"]::before { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="esagono"]::before { clip-path: polygon(25% 5%, 75% 5%, 100% 50%, 75% 95%, 25% 95%, 0 50%); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="pentagono"]::before { clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="stella"]::before { clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="croce"]::before { clip-path: polygon(38% 0, 62% 0, 62% 38%, 100% 38%, 100% 62%, 62% 62%, 62% 100%, 38% 100%, 38% 62%, 0 62%, 0 38%, 38% 38%); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="ottagono"]::before { clip-path: polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="semicerchio"]::before { border-radius: 50% 50% 0 0; }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="goccia"]::before { border-radius: 50% 50% 50% 0; }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-shape="anello"]::before { border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 var(--rule-width-strong) currentColor; }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p1"] { --c: var(--p1); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p2"] { --c: var(--p2); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p3"] { --c: var(--p3); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p4"] { --c: var(--p4); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p5"] { --c: var(--p5); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p6"] { --c: var(--p6); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p7"] { --c: var(--p7); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p8"] { --c: var(--p8); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p9"] { --c: var(--p9); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p10"] { --c: var(--p10); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p11"] { --c: var(--p11); }
+.cm-tooltip.cm-tooltip-autocomplete .mention-mark[data-tint="p12"] { --c: var(--p12); }
+
+/* Un nome lungo si accorcia con i puntini invece di allargare il menu. */
+.cm-tooltip.cm-tooltip-autocomplete .cm-completionLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+  /* Il menu resta dentro lo schermo anche sul telefono. */
+  .cm-tooltip.cm-tooltip-autocomplete {
+    max-width: calc(100vw - 2rem);
+  }
 }

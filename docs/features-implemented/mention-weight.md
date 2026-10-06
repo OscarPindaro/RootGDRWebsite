@@ -16,6 +16,12 @@ interrupts the line — and it reads the same while writing and while reading.
   eight suggestions. A suggestion carries the stored mark tokens (`animal` for
   characters and NPCs, `shape` for places) next to the name, kind, tint and the
   unambiguous `insert` label — always as data, never as HTML built from a name.
+- The menu's mark is a fixed rectangle: the stored animal for characters and
+  NPCs, the stored shape for places (drawn from the whitelisted shape tokens),
+  and the kind's own mask icon as the fallback, tinted by the document's tint.
+  CodeMirror's tint dot is off (`icons: false`), names are written as text and
+  long ones ellipsize instead of stretching the menu, which stays inside the
+  phone viewport.
 - The `@` suggestion menu (CodeMirror's autocomplete) keeps the app skin.
 - Both states read one set of `--mention-*` tokens, so the reading page and the
   editor cannot drift in size, radius or weight.

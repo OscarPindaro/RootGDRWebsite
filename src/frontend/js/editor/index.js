@@ -105,6 +105,10 @@ function mentionSource(worldId) {
           filterText: `@${entry.name}`,
           detail: entry.kind,
           type: entry.tint,
+          animal: entry.animal,
+          shape: entry.shape,
+          kind: entry.kind,
+          tint: entry.tint,
           apply: `@[${entry.insert}] `,
         })),
       };
@@ -123,7 +127,33 @@ function extensions({ worldId, onDocChanged, onModEnter, onEscape = null }) {
     markdown(),
     syntaxHighlighting(defaultHighlightStyle, { fallback: true }),
     livePreview,
-    autocompletion({ override: [mentionSource(worldId)] }),
+    autocompletion({
+      override: [mentionSource(worldId)],
+      /* The mark replaces CodeMirror's tint dot: a fixed rectangle that shows
+         the animal, the place shape or the kind cue. Names and tokens are
+         written as text or attributes, never as HTML. */
+      icons: false,
+      addToOptions: [
+        {
+          position: 10,
+          render(completion) {
+            const mark = document.createElement("span");
+            mark.className = "mention-mark";
+            mark.setAttribute("aria-hidden", "true");
+            mark.dataset.tint = completion.tint || "";
+            if (completion.animal) {
+              mark.classList.add("mention-mark--animal");
+              mark.textContent = completion.animal;
+            } else if (completion.shape) {
+              mark.dataset.shape = completion.shape;
+            } else {
+              mark.dataset.kind = completion.kind || "";
+            }
+            return mark;
+          },
+        },
+      ],
+    }),
     keymap.of([
       {
         key: "Mod-Enter",
