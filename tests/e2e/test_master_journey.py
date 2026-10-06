@@ -74,10 +74,15 @@ def test_master_can_draft_a_character(session: BrowserSession) -> None:
     session.page.wait_for_selector(".docidentity__input")
     session.page.fill(".docidentity__input", "Bozzetto")
     session.page.keyboard.press("Enter")
-    session.page.wait_for_selector(".pill-draft", timeout=10_000)
+    session.page.wait_for_selector(
+        '[data-publication-status][data-state="draft"]', timeout=10_000
+    )
 
     # Creation starts as an author-owned draft on the detail surface.
-    assert session.page.locator(".pill-draft").count() == 1
+    assert (
+        session.page.locator('[data-publication-status][data-state="draft"]').count()
+        == 1
+    )
     character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
     payload = session.expect_api(
         f"/api/worlds/{world_id}/characters/{character_id}"

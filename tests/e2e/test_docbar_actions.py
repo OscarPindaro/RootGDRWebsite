@@ -72,7 +72,12 @@ def test_publication_toggle_persists(session: BrowserSession, seed_world) -> Non
     api = f"/api/worlds/{world_id}/characters/{character['id']}"
 
     session.goto(f"/worlds/{world_id}/characters/{character['id']}")
-    assert session.page.locator(".docbar__status .pill-draft").count() == 1
+    assert (
+        session.page.locator(
+            '.docbar__status [data-publication-status][data-state="draft"]'
+        ).count()
+        == 1
+    )
     assert session.page.locator('[data-testid="document-cancel-draft"]').count() == 1
 
     session.page.click('[data-testid="document-publication"]')
@@ -80,7 +85,12 @@ def test_publication_toggle_persists(session: BrowserSession, seed_world) -> Non
         "() => document.querySelector('[data-testid=document-delete]') !== null"
     )
     assert session.expect_api(api).json()["isDraft"] is False
-    assert session.page.locator(".docbar__status .pill-draft").count() == 0
+    assert (
+        session.page.locator(
+            '.docbar__status [data-publication-status][data-state="draft"]'
+        ).count()
+        == 0
+    )
     assert session.page.locator(".docbar__status", has_text="Pubblicato").count() == 1
     assert session.errors == []
 

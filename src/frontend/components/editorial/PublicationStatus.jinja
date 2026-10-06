@@ -1,0 +1,11 @@
+{#def is_draft=False #}
+{#css editorial/PublicationStatus.css #}
+{# The publication fact, as a compact rectangular stamp: warm paper, the state
+   colour on the rule and the marker, readable ink for the word. Distinct from
+   the document tint, the story progress and the save feedback; the marker is
+   decoration and the text always carries the state. #}
+<span class="publication-status" data-publication-status
+      data-state="{{ 'draft' if is_draft else 'published' }}">
+  <span class="publication-status__marker" aria-hidden="true"></span>
+  {{ 'Bozza' if is_draft else 'Pubblicato' }}
+</span>

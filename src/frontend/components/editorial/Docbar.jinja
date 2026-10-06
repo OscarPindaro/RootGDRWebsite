@@ -1,5 +1,5 @@
 {#def base, eyebrow=None, locked=False, is_draft=False, can_manage=False, badge=None, owner_label=None #}
-{#css common/Button.css, common/Pill.css, common/Menu.css, editorial/Docbar.css, common/Icon.css, common/Tooltip.css #}
+{#css common/Button.css, common/Pill.css, common/Menu.css, editorial/Docbar.css, editorial/PublicationStatus.css, common/Icon.css, common/Tooltip.css #}
 {#js common/Dialog.js, common/Menu.js #}
 {# The document bar: facts on the left, commands on the right. `base` is the
    document's own URL prefix, so the lock/publish/delete commands and the
@@ -15,11 +15,7 @@
 <div class="docbar">
   <div class="docbar__status">
     <span class="eyebrow">{{ eyebrow }}</span>
-    {% if is_draft %}
-    <common.Pill variant="draft">Bozza</common.Pill>
-    {% else %}
-    <common.Pill variant="plain">Pubblicato</common.Pill>
-    {% endif %}
+    <editorial.PublicationStatus :is_draft="is_draft" />
     {% if owner_label %}<common.Pill variant="plain">{{ owner_label }}</common.Pill>{% endif %}
     {% if badge %}<common.Pill variant="forest">{{ badge }}</common.Pill>{% endif %}
   </div>

@@ -8,9 +8,13 @@ change it.
 `editorial.Docbar` has two regions and never mixes them:
 
 - the **status region** (`docbar__status`) holds the facts: the eyebrow
-  (kind/date/slug), the publication pill (`Bozza` / `Pubblicato`), the
-  ownership or role label (`Giocato da …`, `NPC del Master`), and the
-  current-scene badge (`Scena corrente`). It is shown to every reader.
+  (kind/date/slug), the publication stamp (`editorial.PublicationStatus`:
+  `Bozza` / `Pubblicato` on paper, the state colour on the rule and a square
+  marker — forest for published, ochre for draft — with the word always
+  written in readable ink), the ownership or role label (`Giocato da …`,
+  `NPC del Master`), and the current-scene badge (`Scena corrente`). It is
+  shown to every reader, is never focusable, and keeps the same height in both
+  states so the bar does not move when a document is published.
 - the **command region** (`docbar__commands`) holds the commands in one order:
   `Modifica`, the lock toggle, the publish toggle, the caller's
   document-specific command (only the place has one, the current scene), and
