@@ -34,6 +34,7 @@ const NAMES = [
   "chevron-up",
   "circle-dot",
   "download",
+  "ellipsis-vertical",
   "file-text",
   "grid-2x2",
   "history",

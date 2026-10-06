@@ -25,8 +25,20 @@
   function show(anchor) {
     active = anchor;
     surface.textContent = anchor.dataset.tooltip;
-    if (!surface.matches(':popover-open')) surface.showPopover();
     position();
+    /* The surface is a popover, and popover operations cannot overlap: a menu
+       opening or closing in the same turn (a trigger click, the focus coming
+       back when it closes) must not race the tooltip. Reveal on the next
+       frame, and only if this anchor is still the active one. */
+    if (!surface.matches(':popover-open')) {
+      requestAnimationFrame(function () {
+        if (active !== anchor || surface.matches(':popover-open')) return;
+        surface.showPopover();
+        position();
+        surface.classList.add('tooltip-surface-visible');
+      });
+      return;
+    }
     surface.classList.add('tooltip-surface-visible');
   }
 
@@ -52,6 +64,11 @@
   document.addEventListener('focusout', function (event) {
     var anchor = event.target.closest('[data-tooltip]');
     if (anchor && !anchor.contains(event.relatedTarget)) hide(anchor);
+  });
+  /* The tooltip yields to a menu: the menu takes the popover stack (and the
+     focus), and the two must never show in the same turn. */
+  document.addEventListener('toggle', function (event) {
+    if (event.target.matches && event.target.matches('[data-menu]')) hide();
   });
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') hide();

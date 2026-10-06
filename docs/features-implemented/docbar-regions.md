@@ -18,18 +18,22 @@ change it.
   shown only when the reader can manage the document.
 
 No status pill is a child of the command region, so a command is never read as
-a fact. Every command is a `common.Button`: icon plus text where recognition is
-strong (edit, lock, publish, delete, current scene), and the text kept for the
-ambiguous transitions (`Riporta a bozza`). A tooltip is never the only label.
+a fact. The commands are icon-only `common.IconButton`s — edit, lock/unlock,
+publication, the caller's document-specific command and the secondary-actions
+trigger — and each carries an Italian `aria-label` and tooltip that name the
+action available now (`Blocca`/`Sblocca`, `Pubblica`/`Riporta a bozza`). The
+facts keep their readable text: icon-only never applies to the status region.
 
-The destructive command is `variant="danger"` and opens the shared
-`common.ConfirmDialog` instead of `hx-confirm`; the confirmation is
+The destructive command is a labelled item in the `Altre azioni` menu
+(`common.MenuTrigger` + `common.Menu`), still `variant="danger"`, and it opens
+the shared `common.ConfirmDialog` instead of `hx-confirm`; the confirmation is
 action-specific (`Eliminare «…»?` names the document, `Annullare questa
-bozza?` for a draft).
+bozza?` for a draft). A menu closes when one of its items is activated, and the
+tooltip yields to the menu so the two popovers never show in the same turn.
 
 On a phone the bar stacks: the facts wrap above and the commands wrap below in
-a compact block. There is no horizontal strip, every command keeps the 44px
-touch target, and nothing overflows sideways.
+a compact block. There is no horizontal strip, every icon command keeps the
+44px touch target, and nothing overflows sideways.
 
 ## How it is built
 

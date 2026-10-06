@@ -1,12 +1,17 @@
 {#def base, eyebrow=None, locked=False, is_draft=False, can_manage=False, badge=None, owner_label=None #}
-{#css common/Button.css, common/Pill.css, editorial/Docbar.css, common/Icon.css #}
-{#js common/Dialog.js #}
+{#css common/Button.css, common/Pill.css, common/Menu.css, editorial/Docbar.css, common/Icon.css, common/Tooltip.css #}
+{#js common/Dialog.js, common/Menu.js #}
 {# The document bar: facts on the left, commands on the right. `base` is the
    document's own URL prefix, so the lock/publish/delete commands and the
    confirmation fragment are all derived from it and every document gets the
    same commands in the same order. The caller's `content` is a command slot
    for a document-specific control (the place's current scene); it lands after
-   the shared commands and before the destructive one. #}
+   the shared commands and before the secondary menu.
+
+   The commands are icon-only: each carries an Italian accessible label and
+   tooltip that name the action it performs now (`Blocca`/`Sblocca`,
+   `Pubblica`/`Riporta a bozza`). Destructive actions stay behind a labelled
+   menu that invokes the same confirmation dialogs as before. #}
 <div class="docbar">
   <div class="docbar__status">
     <span class="eyebrow">{{ eyebrow }}</span>
@@ -21,31 +26,35 @@
   {% if can_manage %}
   <div class="docbar__commands">
     {% if not locked %}
-    <common.Button variant="primary" size="sm" icon="pencil"
-            data-doc-edit-open data-testid="document-edit">Modifica</common.Button>
+    <common.IconButton icon="pencil" label="Modifica"
+            variant="primary" data-doc-edit-open data-testid="document-edit" />
     {% endif %}
-    <common.Button variant="secondary" size="sm"
-            :icon="'lock' if locked else 'lock-open'" :selected="locked"
+    <common.IconButton :icon="'lock' if locked else 'lock-open'"
+            :label="'Sblocca' if locked else 'Blocca'" :selected="locked"
             data-testid="document-lock"
             :hx-post="base ~ '/toggle/locked?value=' ~ ('false' if locked else 'true')"
-            hx-swap="none">{{ 'Bloccato' if locked else 'Sbloccato' }}</common.Button>
-    <common.Button variant="secondary" size="sm"
-            :icon="'upload' if is_draft else 'undo-2'"
+            hx-swap="none" />
+    <common.IconButton :icon="'upload' if is_draft else 'undo-2'"
+            :label="'Pubblica' if is_draft else 'Riporta a bozza'"
             data-testid="document-publication"
             :hx-post="base ~ '/toggle/is_draft?value=' ~ ('false' if is_draft else 'true')"
-            hx-swap="none">{{ 'Pubblica' if is_draft else 'Riporta a bozza' }}</common.Button>
+            hx-swap="none" />
     {{ content }}
-    {% if is_draft %}
-    <common.Button variant="danger" size="sm" icon="trash-2"
-            data-testid="document-cancel-draft"
-            :hx-get="base ~ '/confirm/cancel-draft'"
-            hx-target="#docbar-confirm" hx-swap="innerHTML">Annulla bozza</common.Button>
-    {% else %}
-    <common.Button variant="danger" size="sm" icon="trash-2"
-            data-testid="document-delete"
-            :hx-get="base ~ '/confirm/delete'"
-            hx-target="#docbar-confirm" hx-swap="innerHTML">Elimina</common.Button>
-    {% endif %}
+    <common.MenuTrigger icon="ellipsis-vertical" label="Altre azioni"
+            target="docbar-more" variant="secondary" icon_only />
+    <common.Menu id="docbar-more" labelledby="docbar-more-trigger" placement="bottom-end">
+      {% if is_draft %}
+      <common.MenuItem icon="trash-2" label="Annulla bozza" variant="danger"
+              data-testid="document-cancel-draft"
+              :hx-get="base ~ '/confirm/cancel-draft'"
+              hx-target="#docbar-confirm" hx-swap="innerHTML" />
+      {% else %}
+      <common.MenuItem icon="trash-2" label="Elimina" variant="danger"
+              data-testid="document-delete"
+              :hx-get="base ~ '/confirm/delete'"
+              hx-target="#docbar-confirm" hx-swap="innerHTML" />
+      {% endif %}
+    </common.Menu>
   </div>
   {% endif %}
   <div id="docbar-confirm"></div>

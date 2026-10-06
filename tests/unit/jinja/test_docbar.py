@@ -90,8 +90,34 @@ def test_a_locked_document_keeps_the_lock_toggle_and_drops_edit() -> None:
     commands = _region(html, "commands")
     assert "document-edit" not in commands
     assert "document-lock" in commands
-    assert "Bloccato" in commands
+    # The label names the action available now, not the state.
+    assert 'aria-label="Sblocca"' in commands
     assert 'aria-pressed="true"' in commands
+
+
+def test_the_commands_are_icon_only_with_italian_labels() -> None:
+    html = _render(eyebrow="Personaggio", is_draft=False, can_manage=True)
+
+    commands = _region(html, "commands")
+    # No visible command text: the label lives in the aria-label and tooltip.
+    assert "btn-label" not in commands
+    assert 'aria-label="Modifica"' in commands
+    assert 'aria-label="Blocca"' in commands
+    assert 'aria-label="Riporta a bozza"' in commands
+    assert 'aria-label="Altre azioni"' in commands
+    assert 'class="tooltip"' in commands
+
+
+def test_a_draft_offers_publication_and_cancel_behind_the_menu() -> None:
+    html = _render(eyebrow="Luogo", is_draft=True, can_manage=True)
+
+    commands = _region(html, "commands")
+    assert 'aria-label="Pubblica"' in commands
+    # The destructive action is a labelled item in the secondary menu.
+    assert 'role="menuitem"' in html
+    assert "Annulla bozza" in html
+    assert "Elimina" not in html
+    assert 'popovertarget="docbar-more"' in commands
 
 
 def test_a_non_manager_sees_the_facts_but_no_commands() -> None:

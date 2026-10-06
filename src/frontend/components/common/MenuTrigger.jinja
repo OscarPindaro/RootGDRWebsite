@@ -1,5 +1,12 @@
-{#def icon=None, label, target, variant="primary" #}
-{#css common/Button.css, common/Icon.css #}
+{#def icon=None, label, target, variant="primary", icon_only=False #}
+{#css common/Button.css, common/Tooltip.css, common/Icon.css #}
+{% if icon_only %}
+<common.Tooltip :text="label">
+  <common.Button :variant="variant" size="sm" type="button" :icon="icon" :label="label"
+                 icon_only shape="square" :id="target + '-trigger'" aria-haspopup="menu"
+                 aria-expanded="false" :aria-controls="target" :popovertarget="target" {{ attrs.render() }} />
+</common.Tooltip>
+{% else %}
 <common.Button :variant="variant" size="md" type="button" :id="target + '-trigger'" aria-haspopup="menu" aria-expanded="false" :aria-controls="target" :popovertarget="target" {{ attrs.render() }}>
 {% if icon %}
     <common.Icon :name="icon" size=16 />
@@ -7,3 +14,4 @@
 {{ label }}
 <common.Icon name="chevron-down" size=16 class="menu-trigger-chevron" />
 </common.Button>
+{% endif %}

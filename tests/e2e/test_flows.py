@@ -121,7 +121,7 @@ def test_master_fills_the_world_and_the_overview_updates(
         r"/places/[0-9a-f-]{36}$",
         "places",
     )
-    session.submit('button:has-text("Scena corrente")')
+    session.submit('[data-testid="document-current-set"]')
     # The toggle answers with an htmx redirect; wait for the re-rendered pill so
     # the navigation has settled before clicking back to the overview.
     session.page.wait_for_selector(".pill-forest")

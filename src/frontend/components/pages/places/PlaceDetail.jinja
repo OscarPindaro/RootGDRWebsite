@@ -11,11 +11,13 @@
     :can_manage="can_manage"
     :badge="'Scena corrente' if is_current else None">
     {% if is_current %}
-    <common.Button variant="secondary" size="sm" icon="map-pin-off"
-            :hx-post="'/worlds/' ~ world.id ~ '/places/current/clear'" hx-swap="none">Rimuovi scena corrente</common.Button>
+    <common.IconButton icon="map-pin-off" label="Rimuovi scena corrente"
+            data-testid="document-current-clear"
+            :hx-post="'/worlds/' ~ world.id ~ '/places/current/clear'" hx-swap="none" />
     {% else %}
-    <common.Button variant="secondary" size="sm" icon="map-pin"
-            :hx-post="'/worlds/' ~ world.id ~ '/places/' ~ place.id ~ '/current'" hx-swap="none">Scena corrente</common.Button>
+    <common.IconButton icon="map-pin" label="Imposta come scena corrente"
+            data-testid="document-current-set"
+            :hx-post="'/worlds/' ~ world.id ~ '/places/' ~ place.id ~ '/current'" hx-swap="none" />
     {% endif %}
   </editorial.Docbar>
 

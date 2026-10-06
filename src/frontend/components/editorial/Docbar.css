@@ -48,4 +48,9 @@
   .docbar__commands .btn {
     flex: 1 1 auto;
   }
+  /* Icon-only commands keep a 44px touch target on phone. */
+  .docbar__commands .btn-icon-only {
+    min-width: var(--sp-12);
+    min-height: var(--sp-12);
+  }
 }

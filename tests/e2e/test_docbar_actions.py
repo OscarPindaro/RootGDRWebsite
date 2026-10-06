@@ -21,6 +21,12 @@ CONFIRM = "#docbar-confirm dialog[data-dialog]"
 CONFIRM_RUN = "#docbar-confirm [data-dialog-confirm]"
 
 
+def _open_secondary_menu(session: BrowserSession) -> None:
+    """The destructive commands live in the bar's labelled menu."""
+    session.page.click("#docbar-more-trigger")
+    session.page.wait_for_selector("#docbar-more:popover-open")
+
+
 def _create(
     session: BrowserSession, world_id: str, collection: str, data: dict
 ) -> dict:
@@ -87,13 +93,13 @@ def test_current_scene_command_persists(session: BrowserSession, seed_world) -> 
     session.goto(f"/worlds/{world_id}/places/{place['id']}")
     assert session.expect_api(export).json()["world"]["currentPlace"] is None
 
-    session.page.click('button:has-text("Scena corrente")')
+    session.page.click('[data-testid="document-current-set"]')
     session.page.wait_for_function(
         "() => document.querySelector('.docbar__status .pill-forest') !== null"
     )
     assert session.expect_api(export).json()["world"]["currentPlace"] == "Radura Docbar"
 
-    session.page.click('button:has-text("Rimuovi scena corrente")')
+    session.page.click('[data-testid="document-current-clear"]')
     session.page.wait_for_function(
         "() => document.querySelector('.docbar__status .pill-forest') === null"
     )
@@ -113,6 +119,7 @@ def test_cancel_draft_confirms_and_deletes(session: BrowserSession, seed_world) 
     api = f"/api{path}"
 
     session.goto(path)
+    _open_secondary_menu(session)
     session.page.click('[data-testid="document-cancel-draft"]')
 
     dialog = session.page.locator(CONFIRM)
@@ -134,6 +141,7 @@ def test_delete_confirms_and_deletes(session: BrowserSession, seed_world) -> Non
     api = f"/api{path}"
 
     session.goto(path)
+    _open_secondary_menu(session)
     session.page.click('[data-testid="document-delete"]')
 
     dialog = session.page.locator(CONFIRM)

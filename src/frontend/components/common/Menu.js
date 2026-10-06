@@ -69,4 +69,13 @@
 
   window.addEventListener('resize', repositionOpenMenus);
   window.addEventListener('scroll', repositionOpenMenus, true);
+
+  /* A menu closes when one of its items is activated: the item's own action
+     (an htmx request, a link, a confirmation fragment) takes over from there. */
+  document.addEventListener('click', function (event) {
+    var item = event.target.closest('[data-menu] [role="menuitem"]');
+    if (!item) return;
+    var menu = item.closest('[data-menu]');
+    if (menu) menu.hidePopover();
+  });
 })();
