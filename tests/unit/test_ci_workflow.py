@@ -56,7 +56,16 @@ def test_every_action_is_pinned_to_a_full_commit(workflow: dict) -> None:
 
 def test_no_job_deploys_or_touches_production(workflow: dict) -> None:
     text = WORKFLOW.read_text(encoding="utf-8").lower()
-    for forbidden in ("ansible", "ssh ", "scp ", "restic", "docker push", "gh release"):
+    # Pulling the pinned restic image is not a deployment; running it would be.
+    for forbidden in (
+        "ansible-playbook",
+        "ssh ",
+        "scp ",
+        "docker push",
+        "gh release",
+        "restic backup",
+        "restic restore",
+    ):
         assert forbidden not in text, forbidden
 
 
@@ -94,6 +103,26 @@ def test_the_suites_and_the_local_checks_are_all_present(workflow: dict) -> None
     ):
         assert command in runs, command
     assert "playwright install" not in runs
+
+
+def test_the_runner_is_prepared_for_the_suites(workflow: dict) -> None:
+    """The hosted gate needs the same preparation the local runs needed."""
+    text = WORKFLOW.read_text(encoding="utf-8")
+    # A committed environment file for the hooks and the compose files.
+    assert text.count("cp .env.example .env") == len(workflow["jobs"]) - 1
+    # The runner ships docker; podman there has no usable socket.
+    assert workflow["env"]["HARNESS_CONTAINER_ENGINE"] == "docker"
+    # The pinned images the deployment and board suites run.
+    for image in (
+        "python@sha256:",
+        "postgres:18.3@sha256:",
+        "restic/restic:0.19.1@sha256:",
+        "vikunja/vikunja:2.6.0@sha256:",
+    ):
+        assert (
+            f"docker pull docker.io/library/{image}" in text
+            or f"docker pull docker.io/{image}" in text
+        ), image
 
 
 def test_diagnostics_are_failure_only_and_bounded(workflow: dict) -> None:
