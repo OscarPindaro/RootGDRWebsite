@@ -1,0 +1,21 @@
+{#def id, summary, title="Dettagli", eyebrow="Dettagli", manual=True #}
+{#css common/Dialog.css, editorial/DocDetails.css, common/Icon.css, common/Tooltip.css #}
+{#js common/Dialog.js #}
+{# The document's secondary controls live behind one reachable summary: the
+   trigger stays in the page flow, the panel is a right-side sheet on desktop
+   and full screen on phone. It is a manual dialog — a pre-rendered panel never
+   opens because an unrelated htmx swap landed near it — and opening it does not
+   touch the body, the editor or the URL. #}
+<div class="docdetails" data-doc-details>
+  <button type="button" class="docdetails__trigger" data-dialog-open="{{ id }}"
+          aria-haspopup="dialog">
+    <span class="docdetails__eyebrow">{{ eyebrow }}</span>
+    <span class="docdetails__summary">{{ summary }}</span>
+    <common.Icon name="settings" size=16 />
+  </button>
+  <common.Dialog :title="title" :id="id" :manual="manual">
+    <div class="docdetails__panel">
+      {{ content }}
+    </div>
+  </common.Dialog>
+</div>

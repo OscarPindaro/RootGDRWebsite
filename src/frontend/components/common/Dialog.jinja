@@ -1,6 +1,7 @@
-{#def title, id=None #}
+{#def title, id=None, manual=False #}
 {#css common/Tooltip.css, common/Dialog.css, common/Icon.css #}
 <dialog {% if id %}id="{{ id }}" aria-labelledby="{{ id }}-title"{% endif %}
+        {% if manual %}data-dialog-manual{% endif %}
         {{ attrs.render(class="dialog", data_dialog=True) }}>
   <div class="dialog-container">
     <header class="dialog-header">

@@ -123,9 +123,13 @@
   document.addEventListener('htmx:afterSwap', function (event) {
     var scope = event.target;
     if (!scope || !scope.querySelectorAll) return;
-    scope.querySelectorAll('dialog[data-dialog]').forEach(function (dialog) {
-      open(dialog, lastTrigger);
-    });
+    // `data-dialog-manual` marks a dialog the page renders itself: it opens
+    // only from its own trigger, never because a swap landed near it.
+    scope
+      .querySelectorAll('dialog[data-dialog]:not([data-dialog-manual])')
+      .forEach(function (dialog) {
+        open(dialog, lastTrigger);
+      });
     lastTrigger = null;
   });
 

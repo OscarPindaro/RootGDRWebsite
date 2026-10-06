@@ -56,6 +56,7 @@ Template:
 | The collection creation grammar: a card in grids, a masthead command elsewhere | [collection-create-card.md](collection-create-card.md) |
 | One collection language: entity cards, story bands, ledgers and rows | [collection-language.md](collection-language.md) |
 | Compose a story from sessions | [story-composition.md](story-composition.md) |
+| Open a document's details in a panel | [doc-details.md](doc-details.md) |
 | One accessible shell: rail, topbar, drawer and identity | [shell.md](shell.md) |
 | Search the archive from a dialog combobox | [palette.md](palette.md) |
 | The auth cover/colophon and the landing redirect | [auth-surface.md](auth-surface.md) |
