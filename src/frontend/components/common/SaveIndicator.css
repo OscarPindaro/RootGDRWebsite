@@ -7,12 +7,14 @@
    It overlays the container's top padding band instead of taking a row of its
    own: appearing and disappearing never shifts the masthead, the crumbs or the
    document bar, so the "Salvato" status is chrome, not a moving part of the
-   page. `--container-pad-top` is the same value `.container` pads with. */
+   page. `--container-pad-top` is the same value `.container` pads with, and
+   it is a minimum: a wrapped long message grows the box downward instead of
+   overflowing upward over the topbar. */
 .save-indicator {
   position: absolute;
   top: 0;
   right: var(--gutter);
-  height: var(--container-pad-top);
+  min-height: var(--container-pad-top);
   display: flex;
   align-items: flex-end;
   justify-content: flex-end;
@@ -28,7 +30,11 @@
 .save-indicator::before {
   content: "";
   flex: 0 0 auto;
-  align-self: center;
+  align-self: flex-end;
+  /* Center the dot on the text's line, not on the whole padding band: the line
+     box is --leading-normal × --text-sm tall, the dot's bottom rides the text's
+     bottom edge, so lift it by half the difference. */
+  margin-bottom: calc((var(--leading-normal) * var(--text-sm) - var(--sp-2)) / 2);
   width: var(--sp-2);
   height: var(--sp-2);
   border-radius: var(--radius-full);

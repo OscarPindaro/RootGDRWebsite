@@ -23,6 +23,12 @@ it is a component.
   component owns the markup and the appearance, the script owns the words.
 - The dot is a `::before`, not a child: the script writes `textContent`, which
   would wipe a child element.
+- The dot is bottom-aligned with the text and lifted by half the difference
+  between the line box (`--leading-normal × --text-sm`) and the dot, so its
+  center sits on the text's line instead of on the whole padding band. The box
+  has a minimum height, not a fixed one: a wrapped long message grows it
+  downward instead of climbing over the topbar, and the crumbs, the document
+  bar and the page height never move.
 - `common/SaveIndicator.css` reads the tokens (`--ochre`, `--forest`,
   `--vermilion`, `--sp-*`); the rules used to live in `main.css` with raw
   values.
