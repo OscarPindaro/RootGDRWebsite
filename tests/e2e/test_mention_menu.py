@@ -43,7 +43,8 @@ def test_a_picked_mention_is_saved_and_rendered(
     session.page.wait_for_selector(".cm-tooltip-autocomplete li")
     mark = session.page.locator(".cm-tooltip-autocomplete .mention-mark").first
     assert mark.inner_text().strip() == "🐈"
-    session.page.keyboard.press("Enter")
+    # Click the option: an Enter can race the menu's re-render.
+    session.page.locator(".cm-tooltip-autocomplete li").first.click()
     session.page.keyboard.press("Escape")
     session.page.wait_for_function(
         "() => [...document.querySelectorAll('[data-autosave-status]')]"

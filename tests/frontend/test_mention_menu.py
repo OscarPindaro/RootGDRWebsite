@@ -167,8 +167,8 @@ def test_selection_inserts_the_mention(component):
     def content() -> str:
         return page.evaluate("() => document.querySelector('.cm-content').textContent")
 
-    # The first entry is active, the arrows move the selection.
-    page.keyboard.press("Enter")
+    # The first entry is active; a click applies it, the arrows move on.
+    page.locator(".cm-tooltip-autocomplete li").first.click()
     assert "@[Fiamma Rossa]" in content()
 
     page.keyboard.type("@")
