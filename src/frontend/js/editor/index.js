@@ -24,7 +24,11 @@ import {
   indentWithTab,
 } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
-import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
+import {
+  autocompletion,
+  completionKeymap,
+  completionStatus,
+} from "@codemirror/autocomplete";
 import {
   syntaxHighlighting,
   defaultHighlightStyle,
@@ -99,6 +103,10 @@ function mentionSource(worldId) {
       const payload = await response.json();
       return {
         from: before.from,
+        /* The results stay valid while more name characters are typed, so the
+           async fetch never discards the active entry mid-keystroke: without
+           this, Enter can land while the source is pending and do nothing. */
+        validFor: /^@[\w'’\-À-ÿ]*$/,
         filter: false,
         options: payload.data.map((entry) => ({
           label: entry.name,
@@ -164,8 +172,10 @@ function extensions({ worldId, onDocChanged, onModEnter, onEscape = null }) {
       },
       {
         key: "Escape",
-        run: () => {
+        run: (view) => {
           if (!onEscape) return false;
+          /* The mention menu closes first: CodeMirror owns that Escape. */
+          if (completionStatus(view.state) === "active") return false;
           onEscape();
           return true;
         },

@@ -39,7 +39,14 @@ def test_a_picked_mention_is_saved_and_rendered(
     session.page.wait_for_selector(".cm-editor")
     session.page.locator(".cm-content").click()
     session.page.keyboard.press("Control+End")
-    session.page.keyboard.type("@Fiam")
+    # Wait for the fetch that matches the typed text, then let the menu settle:
+    # right after the async results land there is a window where the completion
+    # is not yet accepting keys, and an Enter there inserts a newline instead.
+    with session.page.expect_response(
+        lambda response: "/mentions" in response.url and "q=Fiam" in response.url
+    ):
+        session.page.keyboard.type("@Fiam")
+    session.page.wait_for_timeout(1200)
     session.page.wait_for_selector('.cm-tooltip-autocomplete li[aria-selected="true"]')
     mark = session.page.locator(".cm-tooltip-autocomplete .mention-mark").first
     assert mark.inner_text().strip() == "🐈"
