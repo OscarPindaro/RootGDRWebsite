@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..access import master_world
 from ..auth.dependencies import get_current_user
-from ..content.constants import ContentKind
+from ..content.constants import TINT_LABELS, ContentKind
 from ..content.policy import require_draft
 from ..content.view_helpers import (
     split_published_drafts,
@@ -104,6 +104,14 @@ async def page_detail_page(
     others = [
         other for other in await list_pages(db, world_id, user) if other.id != page.id
     ]
+    # The panel's summary: the address, the menu position and the tint.
+    details_summary = " · ".join(
+        (
+            f"Posizione {page.menu_position:02d}",
+            f"/{page.slug}",
+            TINT_LABELS[page.tint],
+        )
+    )
     return catalog.render(
         "pages.pages.PageDetail",
         world=world,
@@ -128,6 +136,7 @@ async def page_detail_page(
             ),
         ],
         auto_edit=edit,
+        details_summary=details_summary,
         short_html=short_html,
         body_html=body_html,
         links=links,

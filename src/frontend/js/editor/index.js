@@ -435,8 +435,27 @@ class AutosaveController {
         if (editor.querySelector("[data-image-choices]")?.dataset.autosaveUrl === this.url) editor.dataset.version = payload.version;
       });
       if ("slug" in sent && payload.slug && this.url.includes("/pages/")) {
-          const canonical = location.pathname.replace(/\/pages\/[^/]+$/, `/pages/${payload.slug}`);
-          location.replace(canonical);
+        /* The server acknowledged the new slug: swap the address and the links
+           that point at this page, without a navigation that would destroy the
+           editor. The API URL and the recovery key stay UUID-based. */
+        const previous = location.pathname;
+        const canonical = previous.replace(/\/pages\/[^/]+$/, `/pages/${payload.slug}`);
+        /* `history` here is CodeMirror's, so name the browser's explicitly. */
+        window.history.replaceState(null, "", canonical + location.search + location.hash);
+        document.querySelectorAll(`a[href="${previous}"]`).forEach((link) => {
+          link.setAttribute("href", canonical);
+        });
+        document.querySelectorAll("[data-page-slug]").forEach((node) => {
+          node.textContent = payload.slug;
+        });
+        document.querySelectorAll(".docdetails__summary").forEach((node) => {
+          node.textContent = node.textContent.replace(
+            `/${sent.slug}`,
+            `/${payload.slug}`,
+          );
+        });
+        const canonicalLink = document.querySelector('link[rel="canonical"]');
+        if (canonicalLink) canonicalLink.setAttribute("href", canonical);
       }
       Object.entries(sent).forEach(([name, value]) => {
         const field = this.fields.get(name);

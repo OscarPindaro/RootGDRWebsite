@@ -78,7 +78,7 @@ def _open_menu(component) -> None:
     page.wait_for_selector(".cm-editor")
     page.locator(".cm-content").click()
     page.keyboard.type("@")
-    page.wait_for_selector(".cm-tooltip-autocomplete")
+    page.wait_for_selector(".cm-tooltip-autocomplete li")
     return page
 
 
@@ -172,7 +172,7 @@ def test_selection_inserts_the_mention(component):
     assert "@[Fiamma Rossa]" in content()
 
     page.keyboard.type("@")
-    page.wait_for_selector(".cm-tooltip-autocomplete")
+    page.wait_for_selector(".cm-tooltip-autocomplete li")
     page.keyboard.press("ArrowDown")
     page.keyboard.press("Enter")
     assert "@[Radura]" in content()
