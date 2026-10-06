@@ -757,3 +757,47 @@ La consegna AFK termina con prove, stato board e manifest verificabili. La scelt
 - REQ-0004/T01 completed as 47b2a54: the autosave dot used `align-self: center` against the whole top padding band while the text sat at the band's bottom, so the mark floated above the wording. The dot is now bottom-aligned with the text and lifted by half the difference between the line box (`--leading-normal × --text-sm`) and the dot, putting its painted center on the text's line (measured 0.3px off); the box became a minimum height so a wrapped long message grows downward instead of climbing over the topbar. Component tests derive the dot's center from the real element/text/pseudo geometry in all five states plus wrapped wording, zoom and no-overflow; eight fail against the previous CSS. On the dev stack the crumbs, document bar and page height are identical across hidden/short/long messages at desktop and 390px. 336 frontend, 739 unit, hooks pass.
 - REQ-0002/T01 completed as 7f51d22: Chromium paints a fieldset's top border at the legend's vertical center, half the notch below the outline's top edge, so the floated outlined label settled a notch-height above the visible rule. The notch height is now explicit (`--field-label-size-float + --sp-1`) and the outline shifts up by half of it, putting the rule exactly on the box's top edge where the label is centered; the visible outlined rectangle is the full field height again. Component tests assert the label center, the legend center (where the rule is painted) and the box top agree within 0.75px and cover textarea, error, autofill, long label, zoom and a no-movement check; eight of them fail against the previous CSS. 328 frontend tests, 739 unit tests, changed-file hooks and desktop/Pixel-7/390×844 captures matching the prototype's "label on the rule" study.
 - REQ-0012/T04 completed as 0473b5d: `harness backlog move|close|reopen|comment` with read-first placement, done-bucket close semantics, never-done reopen, minimal merge-patch `done`, marker-idempotent comments with a timeout re-read, and bounded read-only refusal; the bootstrap's reviewed tooling scopes gain `projects.views_buckets_tasks_get`, which the placement read needs. Verification: 22 client unit tests, the three board integration tests (101s) including a real move/no-op, close into the done bucket, reopen, one comment for a repeated marker, read-only refusal and description preservation, changed-file hooks, and desktop/Pixel-7 captures byte-identical to T02's at `/tmp/rootgdr-t04-review`. Consequence for the live board: the existing server tooling token predates the new scope and must be recreated deliberately (Oscar, credentials) before `move`/`close`/`reopen` read placements there; `create` and `place` still work with it.
+
+## 12. Audit finale del ciclo (REQ-0001/T09)
+
+### Copertura delle richieste
+
+Trentadue ticket definiti nel piano; ognuno ha la sua riga di evidenza in questo
+documento (formato `completed in`/`completed as` con il commit) oppure appartiene
+ai ticket di deployment consegnati nella prima parte del ciclo e riportati nel
+handoff e in `production-deployment.md`:
+
+| Richiesta | Ticket | Esito |
+|---|---|---|
+| REQ-0001 | T00, T03–T08, T11 | Consegnati nella prima parte del ciclo (deployment, backup, rollout, artefatti) |
+| REQ-0001 | T01 | **Rinviato** per scelta del ciclo: nessuna GitHub App, nessuna policy PR obbligatoria |
+| REQ-0001 | T02 | Consegnato (`b307f37`): CI a quattro job |
+| REQ-0001 | T09 | Questo audit |
+| REQ-0002–REQ-0010 | tutti | Consegnati (12 ticket, uno per commit) |
+| REQ-0011 | H1–H7, T08–T10 | Consegnati (10 ticket) |
+| REQ-0012 | T01–T06 | Consegnati (6 ticket) |
+| REQ-0013 | — | Storico: il watchdog locale non viene riattivato né usato |
+
+### Verifica finale locale
+
+- Unit `757 passed`; frontend `398 passed`; E2E `72 passed` (suite completa);
+  integrazione: vedi sotto.
+- `pre-commit run --all-files`, `harness material check` (34 token coerenti),
+  `harness backlog check-requests` (13 documenti validi), `towncrier build
+  --draft` — tutti verdi, senza nuove versioni.
+- Confronti desktop/telefono: le prove per ticket sono in questo documento; le
+  pagine chiave sono state ricatturate dopo l'audit.
+- Il giro E2E completo ha trovato e fatto correggere un overflow orizzontale a
+  412/390 px sulla pagina storia (`b677c61`), insieme a due test che
+  presupponevano la vecchia struttura.
+
+### Gate che restano aperti (non cancellati dal ciclo)
+
+1. Push ordinario su `main` e prima esecuzione hosted della CI: il push non
+   deploya, attiva solo la CI.
+2. Rollout sul server: richiede il build del commit verificato e l'invocazione
+   manuale del playbook (credenziali private, non presenti su questa macchina).
+3. Board reale: `harness backlog workflow` + `harness backlog import` con il
+   token tooling ricreato (scope di lettura placement).
+4. Firewall LAN per la porta 8001 e verifica del telefono.
+5. Nessuna release, tag o import dello storico: restano decisioni di Oscar.
