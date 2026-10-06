@@ -5,6 +5,29 @@
   outline: none;
 }
 
+/* An empty editable body is a real writing target: a visible invitation, a
+   usable hit area and the same focus language as the other blocks (the
+   navigator's active treatment). The copy is drawn by CSS from the attribute,
+   so it never becomes document content. */
+.docedit__render[data-empty-label]:empty {
+  min-height: calc(var(--sp-16) * 2);
+  padding-block: var(--sp-3);
+  cursor: text;
+}
+
+.docedit__render[data-empty-label]:empty::before {
+  content: attr(data-empty-label);
+  color: var(--muted);
+}
+
+.docedit__render[data-empty-label]:empty:hover {
+  background: var(--paper-deep);
+}
+
+.docedit__render[data-empty-label]:empty:hover::before {
+  color: var(--ink);
+}
+
 /* The rendered text is the measure: the writing field takes its height. */
 .docedit__editor {
   border: 0;

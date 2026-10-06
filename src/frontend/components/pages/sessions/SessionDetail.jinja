@@ -29,7 +29,8 @@
           <editorial.DocEdit world_id={{ world.id }}
             :base="'/worlds/' ~ world.id ~ '/sessions/' ~ session.id"
             :body="session.body" :body_html="body_html"
-            :locked="session.locked" :version="session.version" :can_manage="can_manage" />
+            :locked="session.locked" :version="session.version" :can_manage="can_manage"
+            placeholder="Scrivi il resoconto…" />
         </div>
       </div>
 

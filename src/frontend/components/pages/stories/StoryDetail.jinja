@@ -36,7 +36,8 @@
           <editorial.DocEdit world_id={{ world.id }}
             :base="'/worlds/' ~ world.id ~ '/stories/' ~ story.id"
             :body="story.body" :body_html="body_html"
-            :locked="story.locked" :version="story.version" :can_manage="can_manage" />
+            :locked="story.locked" :version="story.version" :can_manage="can_manage"
+            placeholder="Inizia a scrivere…" />
         </div>
       </div>
     </div>

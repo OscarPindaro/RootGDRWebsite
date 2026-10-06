@@ -41,7 +41,8 @@
               <editorial.DocEdit world_id={{ world.id }}
                 :base="'/worlds/' ~ world.id ~ '/npcs/' ~ npc.id"
                 :body="npc.body" :body_html="body_html"
-                :locked="npc.locked" :version="npc.version" :can_manage="can_manage" />
+                :locked="npc.locked" :version="npc.version" :can_manage="can_manage"
+                placeholder="Aggiungi una descrizione…" />
             </div>
           </div>
         </div>

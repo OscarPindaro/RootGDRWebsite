@@ -25,7 +25,8 @@
       <editorial.DocEdit world_id={{ world.id }}
         :base="'/worlds/' ~ world.id ~ '/pages/' ~ page.id"
         :body="page.body" :body_html="body_html"
-        :locked="page.locked" :version="page.version" :can_manage="can_manage" />
+        :locked="page.locked" :version="page.version" :can_manage="can_manage"
+        placeholder="Inizia a scrivere…" />
     </article>
     <common.VStack element="aside">
       <div class="toc">

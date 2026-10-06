@@ -8,6 +8,14 @@ The reading page is where a document is written: no separate edit form, no
 - A double click on the rendered body opens the editor **in place**, at the
   character that was clicked. A double click on a reference follows the link
   instead; the *Modifica* command in the page bar is what enters writing there.
+- An empty editable body is a real writing target: it keeps a minimum height,
+  shows a CSS-drawn invitation in the document's own voice (`Aggiungi una
+  descrizione…`, `Scrivi il resoconto…`, `Inizia a scrivere…` per type) and
+  responds to the same commands — double click, Enter/F2 on the focused block
+  and the single-tap *Modifica*. The copy lives in an attribute and is drawn by
+  CSS, so it never enters the Markdown source, the preview or the API; readers
+  and locked documents get no invitation and no height. Clearing the body
+  restores the empty target.
 - While writing, the line the caret is on shows its Markdown and every other
   line is rendered — headings, bold, italic, code, links and mentions. `Ctrl/⌘
   + Enter` shows the result, rendered by the same server renderer readers get,
