@@ -16,8 +16,16 @@
 .document__id {
   padding-top: 0.4rem;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.5rem;
   align-content: start;
+  /* The column is a grid item: let its controls shrink instead of pushing the
+     page wider than the viewport. */
+  min-width: 0;
+}
+
+.document__id > * {
+  min-width: 0;
 }
 .document__page > .eyebrow {
   display: block;

@@ -40,7 +40,7 @@ def test_a_picked_mention_is_saved_and_rendered(
     session.page.locator(".cm-content").click()
     session.page.keyboard.press("Control+End")
     session.page.keyboard.type("@Fiam")
-    session.page.wait_for_selector(".cm-tooltip-autocomplete")
+    session.page.wait_for_selector(".cm-tooltip-autocomplete li")
     mark = session.page.locator(".cm-tooltip-autocomplete .mention-mark").first
     assert mark.inner_text().strip() == "🐈"
     session.page.keyboard.press("Enter")

@@ -166,7 +166,14 @@ def test_master_fills_the_world_and_the_overview_updates(
     session.page.wait_for_function(
         "() => [...document.querySelectorAll('[data-autosave-status]')].some(node => node.innerText === 'Salvato')"
     )
-    session.page.fill('[name="slug"]', "le-regole-della-casa")
+    session.page.click(".docdetails__trigger")
+    session.page.wait_for_selector("#page-details[open]")
+    session.page.fill('#page-details [name="slug"]', "le-regole-della-casa")
+    # The panel is modal: close it before driving the bar behind it.
+    session.page.keyboard.press("Escape")
+    session.page.wait_for_function(
+        "() => !document.getElementById('page-details').open"
+    )
     session.page.locator('[name="slug"]').blur()
     session.page.wait_for_url(re.compile(r"/pages/le-regole-della-casa$"))
     session.submit(

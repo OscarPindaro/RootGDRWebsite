@@ -28,7 +28,9 @@
 }
 
 @media (max-width: 1100px) {
-  .grid-split { grid-template-columns: 1fr; }
+  /* `minmax(0, 1fr)`, not a bare `1fr`: a track with an automatic minimum
+     would be widened by a nowrap control instead of letting it shrink. */
+  .grid-split { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 960px) {
@@ -39,5 +41,5 @@
   .grid-columns-2,
   .grid-columns-3,
   .grid-auto,
-  .grid-document { grid-template-columns: 1fr; }
+  .grid-document { grid-template-columns: minmax(0, 1fr); }
 }

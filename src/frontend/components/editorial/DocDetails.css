@@ -13,6 +13,7 @@
   align-items: center;
   gap: var(--sp-2);
   width: 100%;
+  min-width: 0;
   min-height: var(--field-height);
   padding: 0 var(--sp-3);
   border: var(--rule-ink);
@@ -27,7 +28,10 @@
 
 .docdetails__trigger:hover { background: var(--paper-deep); }
 
-.docdetails__trigger .icon { margin-left: auto; }
+.docdetails__trigger .icon {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
 
 .docdetails__eyebrow {
   font-family: var(--mono);
@@ -38,7 +42,10 @@
   white-space: nowrap;
 }
 
+/* The summary shrinks and ellipsizes: a long fact line never widens the page. */
 .docdetails__summary {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
