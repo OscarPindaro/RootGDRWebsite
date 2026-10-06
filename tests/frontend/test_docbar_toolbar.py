@@ -120,7 +120,7 @@ def test_every_command_is_keyboard_reachable(component):
     # The menu item is reachable once the menu is open, which also focuses it.
     page.locator("#docbar-more-trigger").click()
     page.wait_for_selector("#docbar-more:popover-open")
-    assert page.evaluate(
+    page.wait_for_function(
         """() => document.activeElement ===
             document.querySelector('#docbar-more [role="menuitem"]')"""
     )

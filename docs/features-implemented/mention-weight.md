@@ -22,6 +22,9 @@ interrupts the line — and it reads the same while writing and while reading.
   CodeMirror's tint dot is off (`icons: false`), names are written as text and
   long ones ellipsize instead of stretching the menu, which stays inside the
   phone viewport.
+- The menu is drivable by keyboard: Enter accepts the active entry, the arrows
+  walk the list, Escape closes it. That needs CodeMirror's `completionKeymap` in
+  the editor's keymap — without it the menu renders but nothing accepts it.
 - The `@` suggestion menu (CodeMirror's autocomplete) keeps the app skin.
 - Both states read one set of `--mention-*` tokens, so the reading page and the
   editor cannot drift in size, radius or weight.

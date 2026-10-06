@@ -40,11 +40,10 @@ def test_a_picked_mention_is_saved_and_rendered(
     session.page.locator(".cm-content").click()
     session.page.keyboard.press("Control+End")
     session.page.keyboard.type("@Fiam")
-    session.page.wait_for_selector(".cm-tooltip-autocomplete li")
+    session.page.wait_for_selector('.cm-tooltip-autocomplete li[aria-selected="true"]')
     mark = session.page.locator(".cm-tooltip-autocomplete .mention-mark").first
     assert mark.inner_text().strip() == "🐈"
-    # Click the option: an Enter can race the menu's re-render.
-    session.page.locator(".cm-tooltip-autocomplete li").first.click()
+    session.page.keyboard.press("Enter")
     session.page.keyboard.press("Escape")
     session.page.wait_for_function(
         "() => [...document.querySelectorAll('[data-autosave-status]')]"

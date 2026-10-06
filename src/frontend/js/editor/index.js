@@ -24,7 +24,7 @@ import {
   indentWithTab,
 } from "@codemirror/commands";
 import { markdown } from "@codemirror/lang-markdown";
-import { autocompletion } from "@codemirror/autocomplete";
+import { autocompletion, completionKeymap } from "@codemirror/autocomplete";
 import {
   syntaxHighlighting,
   defaultHighlightStyle,
@@ -170,6 +170,9 @@ function extensions({ worldId, onDocChanged, onModEnter, onEscape = null }) {
           return true;
         },
       },
+      /* Enter accepts the mention, the arrows walk it, Escape closes it:
+         without this keymap the `@` menu is unreachable by keyboard. */
+      ...completionKeymap,
       ...defaultKeymap,
       ...historyKeymap,
       indentWithTab,
