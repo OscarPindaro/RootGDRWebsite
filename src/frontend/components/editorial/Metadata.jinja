@@ -1,10 +1,25 @@
 {#def fields, base, version, can_manage=False, locked=False, canonical_prefix=None #}
-{#css editorial/Metadata.css #}
+{#css editorial/Metadata.css, editorial/TintPicker.css, common/ChoiceGrid.css #}
 <div class="metadata" data-doc-metadata data-autosave-url="/api{{ base }}"
      {% if canonical_prefix %}data-canonical-prefix="{{ canonical_prefix }}"{% endif %}
      data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   {% for field in fields %}
+  {% if field.kind == "tint" %}
+  {# The tint is a popover picker, not a native control: the wrapper is not a
+     label, and one hidden input carries the canonical value the autosave
+     registers, so the radios never compete as twelve fields. #}
+  <div class="metadata__field">
+    <span class="eyebrow">{{ field.label }}</span>
+    <editorial.TintPicker :name="field.name ~ '-picker'" :value="field.value"
+                          :options="field.options" :label="field.label"
+                          :id="field.name ~ '-picker'"
+                          :disabled="locked or not can_manage">
+      <input type="hidden" name="{{ field.name }}" value="{{ field.value }}"
+             data-metadata-field data-value-kind="string" data-tint-value>
+    </editorial.TintPicker>
+  </div>
+  {% else %}
   <label class="metadata__field">
     <span class="eyebrow">{{ field.label }}</span>
     {% if field.kind == "select" %}
@@ -21,5 +36,6 @@
            {% if field.kind == "number" %}min="0"{% endif %} {% if locked or not can_manage %}disabled{% endif %}>
     {% endif %}
   </label>
+  {% endif %}
   {% endfor %}
 </div>

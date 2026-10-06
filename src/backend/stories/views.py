@@ -157,7 +157,7 @@ async def story_detail_page(
             MetadataField(
                 name="tint",
                 label="Colore",
-                kind="select",
+                kind="tint",
                 value=story.tint,
                 options=tint_options(),
             ),

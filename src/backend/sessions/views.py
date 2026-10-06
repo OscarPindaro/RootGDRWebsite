@@ -147,7 +147,7 @@ async def session_detail_page(
             MetadataField(
                 name="tint",
                 label="Colore",
-                kind="select",
+                kind="tint",
                 value=session.tint,
                 options=tint_options(),
             ),

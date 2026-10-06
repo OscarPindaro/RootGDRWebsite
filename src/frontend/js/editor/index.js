@@ -855,6 +855,9 @@ function mountDocMetadata(block) {
     autosave.register(field.name, initial, (value) => {
       if (field.multiple) [...field.options].forEach((option) => { option.selected = value.includes(option.value); });
       else field.value = value ?? "";
+      /* An applied value (a restored draft, a server refresh) repaints any
+         visual control that mirrors this field, such as the tint picker. */
+      field.dispatchEvent(new Event("change", { bubbles: true }));
     }, block);
     field.addEventListener("change", () => { autosave.change(field.name, metadataValue(field)); autosave.flush(); });
     field.addEventListener("input", () => autosave.change(field.name, metadataValue(field)));
