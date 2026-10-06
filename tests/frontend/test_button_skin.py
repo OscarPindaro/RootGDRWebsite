@@ -6,6 +6,8 @@ is a low-radius control with a visible ink rule, and a state pill is quieter
 than a primary command.
 """
 
+import re
+
 import pytest
 
 pytestmark = pytest.mark.frontend
@@ -17,6 +19,17 @@ def _token(page, name: str) -> str:
         ".getPropertyValue(name).trim()",
         name,
     )
+
+
+def _same_color(first: str, second: str, tolerance: int = 1) -> bool:
+    """Two computed colours match within rounding (color-mix can differ by one
+    channel unit between Chromium builds)."""
+
+    def channels(value: str) -> list[int]:
+        return [int(part) for part in re.findall(r"\d+", value)[:3]]
+
+    left, right = channels(first), channels(second)
+    return all(abs(a - b) <= tolerance for a, b in zip(left, right, strict=True))
 
 
 def _resolve_color(page, name: str) -> str:
@@ -68,6 +81,6 @@ def test_a_state_pill_is_quieter_than_a_primary_command(component):
         "el => getComputedStyle(el).backgroundColor"
     )
 
-    assert command_fill == _resolve_color(page, "--clr-accent")
-    assert pill_fill == _resolve_color(page, "--surface")
+    assert _same_color(command_fill, _resolve_color(page, "--clr-accent"))
+    assert _same_color(pill_fill, _resolve_color(page, "--surface"))
     assert pill_fill != command_fill

@@ -123,6 +123,8 @@ jobs:
         run: |
           uv python install 3.14
           uv sync --frozen --dev
+      - name: Install Chromium
+        run: uv run harness browsers --with-deps
       - name: Prepare the local environment file
         run: cp .env.example .env
       - name: Pull the pinned container images
