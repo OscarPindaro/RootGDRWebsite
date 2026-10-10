@@ -108,7 +108,10 @@ of guessing flags or writing a new HTTP integration.
    for newly proposed scope.
 
 Upload approved evidence with `attach <task-id> <file>... --json`, then verify
-IDs/metadata using `attachments <task-id> --json`. The upload command verifies
+IDs/metadata using `attachments <task-id> --json`. Pass `--token-file` explicitly:
+use `ROOTGDR_BOARD_ATTACHMENT_TOKEN_FILE` when configured, or the confirmed private
+controller file `~/.config/devin/rootgdr/board-attachment-token`. The general tooling
+and classification tokens remain separate. The upload command verifies
 stored bytes and reuses identical filename/content matches. A partial batch exits
 nonzero but reports earlier verified uploads; inspect those before retrying.
 Record only confirmed attachment IDs. Uploads need `tasks_attachments` scopes

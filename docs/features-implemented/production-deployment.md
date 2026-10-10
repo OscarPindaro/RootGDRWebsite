@@ -498,6 +498,20 @@ provide an appropriately scoped private token. The CLI never creates, rotates
 or expands credentials. It also rejects redirects and URL userinfo rather than
 forwarding a bearer token away from the explicit loopback tunnel.
 
+The pinned API cannot edit token permissions. On 2026-10-10 the owner approved a
+separate attachment token for the existing tooling bot: token ID 2, preserving
+source token ID 1's scopes and expiry (`2027-10-04T23:03:07Z`) and adding only
+attachment list/read/create. The original token, accounts, deployment metadata,
+image and service were unchanged. Real reference images on task 2 were uploaded,
+byte-verified and reused on repeat without duplication.
+
+Use `--token-file ~/.config/devin/rootgdr/board-attachment-token` for `attach` and
+`attachments`, or pass `ROOTGDR_BOARD_ATTACHMENT_TOKEN_FILE` as that option when
+configured. A private recovery copy and activation receipt are under the board's
+`runtime/attachment-token` and `runtime/attachment-token-receipt.json`. These are
+separate from the original bootstrap credential bundle; keep the controller copy
+securely backed up. No credential value belongs in Git, command arguments or logs.
+
 `BoardClient` is a typed httpx boundary: project, view, bucket, task, comment,
 attachment, upload response and receipt models; `BoardPage` for the v2 envelope;
 and full pagination up to a reviewed bound. Status codes map to bounded messages:

@@ -116,7 +116,10 @@ If a Vikunja MCP is available, discover its tools first; otherwise use the exist
   with a unique evidence marker and read-back. Do not reset their progress.
 
 For approved board evidence, use `attach <task-id> <file>... --json` and verify
-with `attachments <task-id> --json`; retain captions and confirmed attachment
+with `attachments <task-id> --json`. Pass `--token-file` explicitly: use
+`ROOTGDR_BOARD_ATTACHMENT_TOKEN_FILE` when configured, or the confirmed private
+controller file `~/.config/devin/rootgdr/board-attachment-token`. Keep general tooling
+and classification credentials separate. Retain captions and confirmed attachment
 IDs in the report rather than committing upload sources when the user chose
 Vikunja. Uploads verify stored bytes and reuse identical filename/content matches.
 A failed batch reports earlier verified uploads; inspect before retrying. Required
