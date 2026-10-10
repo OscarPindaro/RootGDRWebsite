@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Disegni · Root GDR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="drawing.css">
+</head>
+<body data-page="disegni">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container container--wide">
+
+        <div class="masthead">
+          <div class="masthead__body">
+            <span class="eyebrow">Archivio · 3 disegni</span>
+            <h1 class="display">Disegni</h1>
+            <div class="rule-accent"></div>
+            <p class="lede">Tavole geometriche originali: personaggi, oggetti e scenari composti a partire da forme piene e contorni netti. Solo chi amministra può crearle e modificarle.</p>
+          </div>
+          <div class="masthead__aside">
+            <span class="eyebrow">Azione</span>
+            <div class="masthead__actions">
+              <a class="btn btn--primary" href="drawing-editor.html">Nuovo disegno</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid--covers">
+
+          <a class="cover" href="drawing-editor.html">
+            <div class="cover__plate">
+              <svg viewBox="0 0 640 480" role="img" aria-label="Anteprima di Altus Fanfaron">
+                <rect width="640" height="480" fill="var(--surface)"/>
+                <polygon points="180,200 300,150 430,210 470,330 400,430 250,430 170,330" fill="#1f7a7a" stroke="#17150f" stroke-width="4"/>
+                <polygon points="196,96 236,60 246,118" fill="#d1402a" stroke="#17150f" stroke-width="4"/>
+                <polygon points="200,92 360,120 286,206 196,168" fill="#3f7fb0" stroke="#17150f" stroke-width="4"/>
+                <polygon points="210,96 296,120 250,190" fill="#d97a26" stroke="#17150f" stroke-width="4"/>
+                <polygon points="300,200 322,200 316,400 306,420 296,400" fill="#e9e3d3" stroke="#17150f" stroke-width="4"/>
+              </svg>
+            </div>
+            <div class="cover__body">
+              <h2 class="cover__title">Altus Fanfaron</h2>
+              <p class="cover__sum">Testa triangolare, becco piegato in cinque vertici, cresta a tre punte e spada centrale.</p>
+            </div>
+            <div class="cover__foot">
+              <span>5 forme</span>
+              <span>Ieri</span>
+            </div>
+          </a>
+
+          <a class="cover" href="drawing-editor.html">
+            <div class="cover__plate">
+              <svg viewBox="0 0 640 480" role="img" aria-label="Anteprima di Luciano Piumalesta">
+                <rect width="640" height="480" fill="var(--surface)"/>
+                <polygon points="250,180 330,150 430,200 420,330 330,380 240,330 230,230" fill="#d1402a" stroke="#17150f" stroke-width="4"/>
+                <polygon points="280,80 330,70 340,140 300,170 270,140" fill="#3f7fb0" stroke="#17150f" stroke-width="4"/>
+                <polygon points="230,210 180,250 200,300 260,290" fill="#3f7fb0" stroke="#17150f" stroke-width="4"/>
+                <polygon points="420,210 470,250 450,300 390,290" fill="#3f7fb0" stroke="#17150f" stroke-width="4"/>
+                <line x1="300" y1="190" x2="310" y2="370" stroke="#17150f" stroke-width="3"/>
+                <line x1="350" y1="180" x2="355" y2="372" stroke="#17150f" stroke-width="3"/>
+              </svg>
+            </div>
+            <div class="cover__body">
+              <h2 class="cover__title">Luciano Piumalesta</h2>
+              <p class="cover__sum">Corpo ottagonale, testa separata e ali angolari, con le strisce del vestito.</p>
+            </div>
+            <div class="cover__foot">
+              <span>7 forme</span>
+              <span>3 giorni fa</span>
+            </div>
+          </a>
+
+          <a class="cover" href="drawing-editor.html">
+            <div class="cover__plate">
+              <svg viewBox="0 0 640 480" role="img" aria-label="Anteprima di una spada">
+                <rect width="640" height="480" fill="var(--surface)"/>
+                <polygon points="300,80 340,80 334,360 320,410 306,360" fill="#e9e3d3" stroke="#17150f" stroke-width="4"/>
+                <polygon points="270,200 370,200 370,230 270,230" fill="#e0a327" stroke="#17150f" stroke-width="4"/>
+                <polygon points="306,230 334,230 334,330 306,330" fill="#7b3f8f" stroke="#17150f" stroke-width="4"/>
+              </svg>
+            </div>
+            <div class="cover__body">
+              <h2 class="cover__title">Spada di Altus</h2>
+              <p class="cover__sum">Oggetto riutilizzabile: lama, guardia e impugnatura come forme separate.</p>
+            </div>
+            <div class="cover__foot">
+              <span>3 forme</span>
+              <span>1 settimana fa</span>
+            </div>
+          </a>
+
+        </div>
+
+        <p class="hint">Anteprima statica del prototipo: nessuna persistenza, i pulsanti aprono la tavola di esempio.</p>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="marks.js"></script>
+<script src="shell.js"></script>
+</body>
+</html>

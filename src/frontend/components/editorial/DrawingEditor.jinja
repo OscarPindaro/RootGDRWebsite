@@ -1,0 +1,128 @@
+{#def title, drawing_id=None, scene=None, editable=True #}
+{#css editorial/DrawingEditor.css, common/Button.css, common/Field.css, common/Icon.css, common/Tooltip.css #}
+{% set artboard = scene.artboard if scene else None %}
+{% set objects = scene.objects if scene else [] %}
+{% set selected_id = scene.selected if scene else None %}
+<div class="drawing-editor"
+     data-drawing-editor
+     {% if drawing_id %}data-drawing-id="{{ drawing_id }}"{% endif %}
+     {% if not editable %}data-readonly="true"{% endif %}>
+  <header class="drawing-editor__bar">
+    <h2 class="drawing-editor__title">{{ title }}</h2>
+    <div class="drawing-editor__commands">
+      <common.Button variant="secondary" size="sm" icon="undo-2" disabled={{ not editable }}>Annulla</common.Button>
+      <common.Button variant="secondary" size="sm" icon="redo-2" disabled={{ not editable }}>Ripeti</common.Button>
+      <common.Button variant="primary" size="sm" icon="save" disabled={{ not editable }} data-testid="drawing-save">Salva</common.Button>
+    </div>
+  </header>
+
+  <p class="drawing-editor__hint" data-testid="drawing-desktop-hint">
+    Disegno con mouse e tastiera: trascina i vertici, <kbd>Ctrl</kbd>+<kbd>Z</kbd> annulla,
+    <kbd>Ctrl</kbd>+<kbd>S</kbd> salva.
+  </p>
+  <p class="drawing-editor__phone-note" data-testid="drawing-phone-note">
+    Da telefono il disegno è solo un’anteprima. Apri questa tavola da un computer
+    per modificarla.
+  </p>
+
+  <div class="drawing-editor__workspace">
+    <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno" data-testid="drawing-toolbar">
+      <button type="button" class="drawing-editor__tool is-selected" aria-pressed="true" data-tool="select" data-testid="drawing-tool-select">
+        <common.Icon name="mouse-pointer-2" size=20 />
+        <span class="drawing-editor__tool-label">Seleziona</span>
+      </button>
+      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="triangle" data-testid="drawing-tool-triangle">
+        <common.Icon name="triangle" size=20 />
+        <span class="drawing-editor__tool-label">Triangolo</span>
+      </button>
+      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="square" data-testid="drawing-tool-square">
+        <common.Icon name="square" size=20 />
+        <span class="drawing-editor__tool-label">Rettangolo</span>
+      </button>
+      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="circle" data-testid="drawing-tool-circle">
+        <common.Icon name="circle" size=20 />
+        <span class="drawing-editor__tool-label">Cerchio</span>
+      </button>
+      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="polygon" data-testid="drawing-tool-polygon">
+        <common.Icon name="spline" size=20 />
+        <span class="drawing-editor__tool-label">Poligono</span>
+      </button>
+      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="line" data-testid="drawing-tool-line">
+        <common.Icon name="pen-tool" size=20 />
+        <span class="drawing-editor__tool-label">Linea</span>
+      </button>
+      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="cut" data-testid="drawing-tool-cut">
+        <common.Icon name="scissors" size=20 />
+        <span class="drawing-editor__tool-label">Taglia</span>
+      </button>
+    </div>
+
+    <div class="drawing-editor__canvas" data-testid="drawing-canvas">
+      <svg class="drawing-editor__artboard" viewBox="0 0 {{ artboard.width if artboard else 640 }} {{ artboard.height if artboard else 480 }}"
+           role="img" aria-label="Tavola da disegno">
+        <defs>
+          <pattern id="drawing-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M20 0H0V20" fill="none" stroke="var(--line)" stroke-width="1" />
+          </pattern>
+        </defs>
+        <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%" />
+        <rect class="drawing-editor__grid" x="0" y="0" width="100%" height="100%" fill="url(#drawing-grid)" />
+        {% for node in objects %}
+        {% if node.shape == "triangle" %}
+        <polygon class="drawing-editor__shape{{ ' is-selected' if node.id == selected_id }}"
+                 points="{{ node.points }}" fill="{{ node.fill }}" stroke="{{ node.stroke }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
+        {% elif node.shape == "rect" %}
+        <rect class="drawing-editor__shape{{ ' is-selected' if node.id == selected_id }}"
+              x="{{ node.x }}" y="{{ node.y }}" width="{{ node.width }}" height="{{ node.height }}" fill="{{ node.fill }}" stroke="{{ node.stroke }}" stroke-width="{{ node.stroke_width }}" />
+        {% elif node.shape == "path" %}
+        <path class="drawing-editor__shape{{ ' is-selected' if node.id == selected_id }}"
+              d="{{ node.d }}" fill="{{ node.fill }}" stroke="{{ node.stroke }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
+        {% endif %}
+        {% endfor %}
+        {% if scene and selected_id %}
+        {% for handle in scene.handles %}
+        <circle class="drawing-editor__handle" cx="{{ handle.x }}" cy="{{ handle.y }}" r="6" />
+        {% endfor %}
+        {% endif %}
+      </svg>
+    </div>
+
+    <div class="drawing-editor__side">
+      <section class="drawing-editor__panel" aria-label="Livelli" data-testid="drawing-layers">
+        <h3 class="drawing-editor__panel-title">Livelli</h3>
+        <ul class="drawing-editor__layers">
+          {% for node in objects %}
+          <li class="drawing-editor__layer{{ ' is-selected' if node.id == selected_id }}" data-node-id="{{ node.id }}">
+            <input class="drawing-editor__layer-check" type="checkbox" checked
+                   aria-label="Mostra {{ node.name }}" disabled={{ not editable }} />
+            <button type="button" class="drawing-editor__layer-name" aria-pressed="{{ 'true' if node.id == selected_id else 'false' }}"
+                    data-select-node="{{ node.id }}" data-testid="drawing-layer">{{ node.name }}</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </section>
+
+      <section class="drawing-editor__panel" aria-label="Proprietà" data-testid="drawing-inspector">
+        <h3 class="drawing-editor__panel-title">Proprietà</h3>
+        <div class="drawing-editor__field">
+          <span class="drawing-editor__field-label">Riempimento</span>
+          <span class="drawing-editor__swatch" data-testid="drawing-fill-swatch"
+                {% if scene and scene.selected_fill %}style="--swatch: {{ scene.selected_fill }}"{% endif %}></span>
+        </div>
+        <div class="drawing-editor__field">
+          <span class="drawing-editor__field-label">Contorno</span>
+          <span class="drawing-editor__swatch drawing-editor__swatch--stroke" data-testid="drawing-stroke-swatch"></span>
+        </div>
+        <div class="drawing-editor__field">
+          <span class="drawing-editor__field-label">Spessore</span>
+          <span class="drawing-editor__value mono">4</span>
+        </div>
+        <div class="drawing-editor__field">
+          <span class="drawing-editor__field-label">Opacità</span>
+          <span class="drawing-editor__value mono">100%</span>
+        </div>
+        <p class="hint">Modifica di forme, colori e livelli: in arrivo.</p>
+      </section>
+    </div>
+  </div>
+</div>

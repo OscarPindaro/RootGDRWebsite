@@ -71,3 +71,4 @@ Template:
 | Request IDs, dates and links, validated offline | [request-metadata.md](request-metadata.md) |
 | Release notes: write now, publish on Oscar's version | [release-notes.md](release-notes.md) |
 | Local AFK coordinator watchdog and safe CLI wake-up | [afk-watchdog.md](afk-watchdog.md) |
+| The drawing workspace: tools, artboard, layers | [drawing-workspace.md](drawing-workspace.md) |

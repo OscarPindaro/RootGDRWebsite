@@ -549,6 +549,14 @@ html[data-accent="gradiente"] .prose a:hover {
   --media-ratio-portrait: 4 / 5;
   --media-ratio-landscape: 16 / 7;
   --media-ratio-square: 1 / 1;
+  /* The drawing workspace (editorial.DrawingEditor): the two fixed rails around
+     the artboard, its proportion, the vertex handle, the layer checkbox and the
+     colour swatch. */
+  --drawing-tool-rail: 9.5rem;
+  --drawing-side-rail: 15rem;
+  --drawing-artboard-ratio: 4 / 3;
+  --drawing-swatch: 1.5rem;
+  --drawing-layer-check: 1.1rem;
   /* Field geometry, transcribed from the M3 text-field spec (see
      design-tokens/material3/text-fields.yaml). The corner is the atlas
      --radius, recorded as a web adaptation in the inventory. */

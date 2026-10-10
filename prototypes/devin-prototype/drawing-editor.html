@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Altus Fanfaron · Disegni · Root GDR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="drawing.css">
+</head>
+<body data-page="disegni">
+<a class="skip" href="#main">Salta al contenuto</a>
+<div class="shell">
+  <aside class="rail" id="rail"></aside>
+  <div class="scrim" id="scrim"></div>
+  <div class="main">
+    <header class="topbar" id="topbar"></header>
+    <main id="main">
+      <div class="container container--wide">
+
+        <div class="masthead">
+          <div class="masthead__body">
+            <nav class="crumbs">
+              <a href="drawings.html">Disegni</a>
+              <span class="crumbs__sep">/</span>
+              <span>Altus Fanfaron</span>
+            </nav>
+            <h1 class="display display--sm">Altus Fanfaron</h1>
+            <div class="rule-accent"></div>
+          </div>
+          <div class="masthead__aside">
+            <span class="eyebrow">Tavola 640 × 480</span>
+            <div class="masthead__actions">
+              <a class="btn btn--text" href="drawings.html">Elenco</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawing-editor">
+
+          <header class="drawing-editor__bar">
+            <h2 class="drawing-editor__title">Altus Fanfaron</h2>
+            <div class="drawing-editor__commands">
+              <button class="btn btn--secondary btn--sm" type="button" disabled>Annulla</button>
+              <button class="btn btn--secondary btn--sm" type="button" disabled>Ripeti</button>
+              <button class="btn btn--primary btn--sm" type="button">Salva</button>
+            </div>
+          </header>
+
+          <p class="drawing-editor__hint">Disegno con mouse e tastiera: trascina i vertici, <kbd>Ctrl</kbd>+<kbd>Z</kbd> annulla, <kbd>Ctrl</kbd>+<kbd>S</kbd> salva.</p>
+          <p class="drawing-editor__phone-note">Da telefono il disegno è solo un’anteprima. Apri questa tavola da un computer per modificarla.</p>
+
+          <div class="drawing-editor__workspace">
+
+            <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno">
+              <button class="drawing-editor__tool is-selected" type="button" aria-pressed="true" data-tool="select">
+                <span class="drawing-editor__tool-glyph">▣</span><span class="drawing-editor__tool-label">Seleziona</span>
+              </button>
+              <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="triangle">
+                <span class="drawing-editor__tool-glyph">△</span><span class="drawing-editor__tool-label">Triangolo</span>
+              </button>
+              <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="square">
+                <span class="drawing-editor__tool-glyph">□</span><span class="drawing-editor__tool-label">Rettangolo</span>
+              </button>
+              <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="circle">
+                <span class="drawing-editor__tool-glyph">○</span><span class="drawing-editor__tool-label">Cerchio</span>
+              </button>
+              <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="polygon">
+                <span class="drawing-editor__tool-glyph">⬡</span><span class="drawing-editor__tool-label">Poligono</span>
+              </button>
+              <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="line">
+                <span class="drawing-editor__tool-glyph">✎</span><span class="drawing-editor__tool-label">Linea</span>
+              </button>
+              <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="cut">
+                <span class="drawing-editor__tool-glyph">✂</span><span class="drawing-editor__tool-label">Taglia</span>
+              </button>
+            </div>
+
+            <div class="drawing-editor__canvas">
+              <svg class="drawing-editor__artboard" viewBox="0 0 640 480" role="img" aria-label="Tavola da disegno">
+                <defs>
+                  <pattern id="drawing-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                    <path d="M20 0H0V20" fill="none" stroke="var(--line)" stroke-width="1"/>
+                  </pattern>
+                </defs>
+                <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%"/>
+                <rect class="drawing-editor__grid" x="0" y="0" width="100%" height="100%" fill="url(#drawing-grid)"/>
+                <polygon class="drawing-editor__shape" points="180,200 300,150 430,210 470,330 400,430 250,430 170,330" fill="#1f7a7a" stroke="#17150f" stroke-width="4"/>
+                <polygon class="drawing-editor__shape" points="196,96 236,60 246,118" fill="#d1402a" stroke="#17150f" stroke-width="4"/>
+                <polygon class="drawing-editor__shape" points="200,92 360,120 286,206 196,168" fill="#3f7fb0" stroke="#17150f" stroke-width="4"/>
+                <polygon class="drawing-editor__shape is-selected" points="210,96 296,120 250,190" fill="#d97a26" stroke="#17150f" stroke-width="4"/>
+                <polygon class="drawing-editor__shape" points="300,200 322,200 316,400 306,420 296,400" fill="#e9e3d3" stroke="#17150f" stroke-width="4"/>
+                <circle class="drawing-editor__handle" cx="210" cy="96" r="6"/>
+                <circle class="drawing-editor__handle" cx="296" cy="120" r="6"/>
+                <circle class="drawing-editor__handle" cx="250" cy="190" r="6"/>
+              </svg>
+            </div>
+
+            <div class="drawing-editor__side">
+              <section class="drawing-editor__panel" aria-label="Livelli">
+                <h3 class="drawing-editor__panel-title">Livelli</h3>
+                <ul class="drawing-editor__layers">
+                  <li class="drawing-editor__layer">
+                    <input class="drawing-editor__layer-check" type="checkbox" checked aria-label="Mostra Corpo">
+                    <button class="drawing-editor__layer-name" type="button" aria-pressed="false">Corpo</button>
+                  </li>
+                  <li class="drawing-editor__layer">
+                    <input class="drawing-editor__layer-check" type="checkbox" checked aria-label="Mostra Cresta">
+                    <button class="drawing-editor__layer-name" type="button" aria-pressed="false">Cresta</button>
+                  </li>
+                  <li class="drawing-editor__layer">
+                    <input class="drawing-editor__layer-check" type="checkbox" checked aria-label="Mostra Testa">
+                    <button class="drawing-editor__layer-name" type="button" aria-pressed="false">Testa</button>
+                  </li>
+                  <li class="drawing-editor__layer is-selected">
+                    <input class="drawing-editor__layer-check" type="checkbox" checked aria-label="Mostra Becco">
+                    <button class="drawing-editor__layer-name" type="button" aria-pressed="true">Becco</button>
+                  </li>
+                  <li class="drawing-editor__layer">
+                    <input class="drawing-editor__layer-check" type="checkbox" checked aria-label="Mostra Spada">
+                    <button class="drawing-editor__layer-name" type="button" aria-pressed="false">Spada</button>
+                  </li>
+                </ul>
+              </section>
+
+              <section class="drawing-editor__panel" aria-label="Proprietà">
+                <h3 class="drawing-editor__panel-title">Proprietà</h3>
+                <div class="drawing-editor__field">
+                  <span class="drawing-editor__field-label">Riempimento</span>
+                  <span class="drawing-editor__swatch" style="--swatch: #d97a26"></span>
+                </div>
+                <div class="drawing-editor__field">
+                  <span class="drawing-editor__field-label">Contorno</span>
+                  <span class="drawing-editor__swatch drawing-editor__swatch--stroke"></span>
+                </div>
+                <div class="drawing-editor__field">
+                  <span class="drawing-editor__field-label">Spessore</span>
+                  <span class="drawing-editor__value mono">4</span>
+                </div>
+                <div class="drawing-editor__field">
+                  <span class="drawing-editor__field-label">Opacità</span>
+                  <span class="drawing-editor__value mono">100%</span>
+                </div>
+                <p class="hint">Modifica di forme, colori e livelli: in arrivo.</p>
+              </section>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+<script src="marks.js"></script>
+<script src="shell.js"></script>
+</body>
+</html>

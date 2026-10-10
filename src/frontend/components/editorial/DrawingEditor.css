@@ -1,0 +1,230 @@
+/* The drawing workspace: tools, artboard, layers and properties.
+   The three columns are the component's own composition, not a reusable page
+   grid: the toolbar and the side panel keep a fixed rail while the artboard
+   takes the remaining width. Below the phone breakpoint the workspace stacks
+   and precision drawing is a desktop activity, so the canvas becomes a
+   preview. */
+
+.drawing-editor {
+  display: grid;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+.drawing-editor__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  border-bottom: var(--rule-ink);
+  padding-bottom: var(--sp-2);
+}
+
+.drawing-editor__title {
+  font-family: var(--serif);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-tight);
+}
+
+.drawing-editor__commands {
+  display: flex;
+  gap: var(--sp-2);
+}
+
+.drawing-editor__hint {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.drawing-editor__hint kbd {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  border: var(--rule);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--sp-1);
+  background: var(--surface);
+}
+
+.drawing-editor__workspace {
+  display: grid;
+  grid-template-columns: var(--drawing-tool-rail) minmax(0, 1fr) var(--drawing-side-rail);
+  gap: var(--sp-4);
+  align-items: start;
+}
+
+/* ---------- tools ---------- */
+
+.drawing-editor__tools {
+  display: grid;
+  gap: var(--sp-1);
+  align-content: start;
+}
+
+.drawing-editor__tool {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--touch-target);
+  padding: var(--sp-1) var(--sp-2);
+  border: var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.drawing-editor__tool:hover { background: var(--paper-deep); }
+
+.drawing-editor__tool.is-selected {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.drawing-editor__tool-label {
+  font-size: var(--text-sm);
+}
+
+/* ---------- artboard ---------- */
+
+.drawing-editor__canvas {
+  min-width: 0;
+  border: var(--rule-ink);
+  background: var(--surface);
+}
+
+.drawing-editor__artboard {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: var(--drawing-artboard-ratio);
+}
+
+.drawing-editor__plate { fill: var(--surface); }
+
+.drawing-editor__shape {
+  stroke-linejoin: miter;
+  vector-effect: non-scaling-stroke;
+}
+
+.drawing-editor__shape.is-selected {
+  outline: none;
+}
+
+.drawing-editor__handle {
+  fill: var(--surface);
+  stroke: var(--cobalt);
+  stroke-width: 2;
+}
+
+/* ---------- side panel ---------- */
+
+.drawing-editor__side {
+  display: grid;
+  gap: var(--sp-4);
+  align-content: start;
+}
+
+.drawing-editor__panel {
+  display: grid;
+  gap: var(--sp-2);
+  border: var(--rule);
+  background: var(--surface);
+  padding: var(--sp-3);
+}
+
+.drawing-editor__panel-title {
+  font-family: var(--sans);
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.drawing-editor__layers {
+  display: grid;
+  gap: var(--sp-1);
+  list-style: none;
+}
+
+.drawing-editor__layer {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  min-height: var(--touch-target);
+  border: var(--rule);
+  padding: 0 var(--sp-2);
+}
+
+.drawing-editor__layer.is-selected {
+  border-color: var(--ink);
+  background: var(--paper-deep);
+}
+
+.drawing-editor__layer-check {
+  inline-size: var(--drawing-layer-check);
+  block-size: var(--drawing-layer-check);
+  accent-color: var(--cobalt);
+}
+
+.drawing-editor__layer-name {
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: var(--sp-2) 0;
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--text-sm);
+}
+
+.drawing-editor__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.drawing-editor__field-label {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+.drawing-editor__value { color: var(--muted); }
+
+.drawing-editor__swatch {
+  inline-size: var(--drawing-swatch);
+  block-size: var(--drawing-swatch);
+  border: var(--rule-ink);
+  background: var(--swatch, var(--ochre));
+}
+
+.drawing-editor__swatch--stroke { background: var(--ink); }
+
+/* ---------- phone: preview, not a drawing surface ---------- */
+
+.drawing-editor__phone-note { display: none; }
+
+@media (max-width: 900px) {
+  .drawing-editor__workspace { grid-template-columns: minmax(0, 1fr); }
+
+  .drawing-editor__tools {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+  }
+
+  .drawing-editor__hint { display: none; }
+
+  .drawing-editor__phone-note {
+    display: block;
+    border: var(--rule);
+    background: var(--paper-deep);
+    padding: var(--sp-3);
+    font-size: var(--text-sm);
+    color: var(--ink-soft);
+  }
+}

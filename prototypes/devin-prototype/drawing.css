@@ -1,0 +1,200 @@
+/* ============================================================
+   drawing.css — la tavola da disegno.
+   Un solo componente, due colonne fisse (strumenti, pannello) e la
+   tavola in mezzo. Sotto i 900px l'area diventa anteprima: il
+   disegno preciso resta un lavoro da mouse e tastiera.
+   ============================================================ */
+
+.drawing-editor {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.drawing-editor__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: var(--rule-ink);
+  padding-bottom: 0.5rem;
+}
+
+.drawing-editor__title {
+  font-family: var(--serif);
+  font-size: 1.375rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.drawing-editor__commands { display: flex; gap: 0.5rem; }
+
+.drawing-editor__hint { font-size: 0.875rem; color: var(--muted); }
+
+.drawing-editor__hint kbd {
+  font-family: var(--mono);
+  font-size: 0.85em;
+  border: var(--rule);
+  border-radius: 2px;
+  padding: 0 0.25rem;
+  background: var(--surface);
+}
+
+.drawing-editor__workspace {
+  display: grid;
+  grid-template-columns: 9.5rem minmax(0, 1fr) 15rem;
+  gap: 1rem;
+  align-items: start;
+}
+
+/* ---------- strumenti ---------- */
+
+.drawing-editor__tools { display: grid; gap: 0.25rem; align-content: start; }
+
+.drawing-editor__tool {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.25rem 0.5rem;
+  border: var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.drawing-editor__tool:hover { background: var(--paper-deep); }
+
+.drawing-editor__tool.is-selected {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface);
+}
+
+.drawing-editor__tool-glyph { font-size: 1rem; line-height: 1; }
+.drawing-editor__tool-label { font-size: 0.875rem; }
+
+/* ---------- tavola ---------- */
+
+.drawing-editor__canvas {
+  min-width: 0;
+  border: var(--rule-ink);
+  background: var(--surface);
+}
+
+.drawing-editor__artboard {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+
+.drawing-editor__plate { fill: var(--surface); }
+.drawing-editor__shape { stroke-linejoin: miter; }
+
+.drawing-editor__handle {
+  fill: var(--surface);
+  stroke: var(--cobalt);
+  stroke-width: 2;
+}
+
+/* ---------- pannello ---------- */
+
+.drawing-editor__side { display: grid; gap: 1rem; align-content: start; }
+
+.drawing-editor__panel {
+  display: grid;
+  gap: 0.5rem;
+  border: var(--rule);
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.drawing-editor__panel-title {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.drawing-editor__layers { display: grid; gap: 0.25rem; list-style: none; }
+
+.drawing-editor__layer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  border: var(--rule);
+  padding: 0 0.5rem;
+}
+
+.drawing-editor__layer.is-selected { border-color: var(--ink); background: var(--paper-deep); }
+
+.drawing-editor__layer-check {
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  accent-color: var(--cobalt);
+}
+
+.drawing-editor__layer-name {
+  flex: 1;
+  border: 0;
+  background: none;
+  padding: 0.5rem 0;
+  text-align: left;
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.drawing-editor__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.drawing-editor__field-label { font-size: 0.875rem; color: var(--ink-soft); }
+.drawing-editor__value { color: var(--muted); }
+
+.drawing-editor__swatch {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+  border: var(--rule-ink);
+  background: var(--swatch, var(--ochre));
+}
+
+.drawing-editor__swatch--stroke { background: var(--ink); }
+
+/* ---------- telefono: anteprima ---------- */
+
+.drawing-editor__phone-note { display: none; }
+
+@media (max-width: 900px) {
+  .drawing-editor__workspace { grid-template-columns: minmax(0, 1fr); }
+
+  .drawing-editor__tools {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    overflow-x: auto;
+  }
+
+  .drawing-editor__hint { display: none; }
+
+  .drawing-editor__phone-note {
+    display: block;
+    border: var(--rule);
+    background: var(--paper-deep);
+    padding: 0.75rem;
+    font-size: 0.875rem;
+    color: var(--ink-soft);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawing-editor * { transition: none !important; }
+}
