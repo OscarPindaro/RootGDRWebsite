@@ -1,0 +1,62 @@
+---
+- name: Require exactly one explicitly inventoried server
+  hosts: localhost
+  connection: local
+  become: false
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Refuse an empty or ambiguous server inventory
+      ansible.builtin.assert:
+        that:
+          - groups.get('rootgdr_targets', []) | length == 1
+        fail_msg: Explicitly inventory exactly one Root GDR server; no default target is allowed
+
+- name: Allow Root GDR from the approved home LAN
+  hosts: rootgdr_targets
+  serial: 1
+  become: true
+  gather_facts: false
+  vars:
+    rootgdr_firewall_zone: FedoraServer
+    rootgdr_firewall_rule: 'rule family="ipv4" source address="192.168.1.0/24" port port="8001" protocol="tcp" accept'
+  tasks:
+    - name: Read active firewall zones without changing them
+      ansible.builtin.command:
+        argv: [firewall-cmd, '--get-active-zones']
+      register: rootgdr_active_zones
+      changed_when: false
+      check_mode: false
+
+    - name: Require the selected firewall zone to be active
+      ansible.builtin.assert:
+        that:
+          - rootgdr_firewall_zone in rootgdr_active_zones.stdout_lines or (rootgdr_firewall_zone + ' (default)') in rootgdr_active_zones.stdout_lines
+        fail_msg: The selected firewall zone is not active; review the server before applying a rule
+
+    - name: Query both runtime and permanent LAN rules before changing either
+      ansible.builtin.command:
+        argv: "{{ ['firewall-cmd'] + (['--permanent'] if item == 'permanent' else []) + ['--zone=' + rootgdr_firewall_zone, '--query-rich-rule=' + rootgdr_firewall_rule] }}"
+      loop: [runtime, permanent]
+      register: rootgdr_firewall_queries
+      changed_when: false
+      failed_when: rootgdr_firewall_queries.rc not in [0, 1]
+      check_mode: false
+
+    - name: Report missing LAN rules in check mode without applying them
+      ansible.builtin.debug:
+        msg: "Would enable the {{ item.item }} LAN rule in {{ rootgdr_firewall_zone }}"
+      loop: "{{ rootgdr_firewall_queries.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: ansible_check_mode and item.rc == 1
+      changed_when: true
+
+    - name: Enable only missing LAN rules without reloading unrelated firewall state
+      ansible.builtin.command:
+        argv: "{{ ['firewall-cmd'] + (['--permanent'] if item.item == 'permanent' else []) + ['--zone=' + rootgdr_firewall_zone, '--add-rich-rule=' + rootgdr_firewall_rule] }}"
+      loop: "{{ rootgdr_firewall_queries.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: not ansible_check_mode and item.rc == 1
+      changed_when: true

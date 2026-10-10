@@ -1,9 +1,11 @@
 import json
 import subprocess
 from datetime import UTC, datetime
+from pathlib import Path
 from uuid import uuid4
 
 import pytest
+import yaml
 from pydantic import ValidationError
 
 from harness.deploy.artifact import ImageArtifact
@@ -203,3 +205,23 @@ def test_pending_recovery_and_linked_current_state_require_operator_review(deplo
     (spec.target.base / "current.json").symlink_to(spec.target.base / "missing.json")
     with pytest.raises(BackupError, match="linked"):
         current_deployment(spec.target)
+
+
+def test_server_firewall_setup_is_separate_and_lan_scoped():
+    deploy = Path(__file__).parents[2] / "deploy"
+    setup = yaml.safe_load((deploy / "server-setup.yaml").read_text())
+    assert setup[0]["hosts"] == "localhost"
+    assert (
+        "groups.get('rootgdr_targets', []) | length == 1"
+        in setup[0]["tasks"][0]["ansible.builtin.assert"]["that"]
+    )
+    assert setup[1]["hosts"] == "rootgdr_targets"
+    assert setup[1]["become"] is True
+    assert (
+        setup[1]["vars"]["rootgdr_firewall_rule"]
+        == 'rule family="ipv4" source address="192.168.1.0/24" port port="8001" protocol="tcp" accept'
+    )
+    ordinary = (deploy / "deploy.yaml").read_text()
+    assert "server-setup" not in ordinary
+    assert "become" not in ordinary
+    assert "--reload" not in (deploy / "server-setup.yaml").read_text()

@@ -64,6 +64,19 @@ and planning/release tooling. Independent tickets may use at most three
 isolated worktrees after the server bootstrap, with coordinator review and
 verification. Agents never operate directly on the production server.
 
+## Approved firewall follow-up — 2026-10-10
+
+Oscar requested Ansible automation for the remaining LAN firewall prerequisite.
+Extend REQ-0001/T07 with a separate, owner-run `deploy/server-setup.yaml`, using
+interactive sudo via `--ask-become-pass`. It adds only the approved IPv4
+`192.168.1.0/24` → TCP 8001 rule to the active `FedoraServer` zone, both immediately
+and persistently. Check mode must not change rules; reapply must be idempotent;
+missing/ambiguous inventory, an inactive zone and failed queries must stop setup.
+Do not reload unrelated firewall state, change SSH rules or give ordinary
+application deployment privileged access. Oscar runs the real privileged setup;
+agents may test only isolated targets. This supersedes the handoff's manual
+firewall-command step, not its owner-authorization boundary.
+
 ## Initial decisions — superseded where noted above
 
 - Use a dedicated GitHub App identity for the agent, installed only on this repo.

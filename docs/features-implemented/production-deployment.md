@@ -238,6 +238,35 @@ Read-only helpers bind an existing volume's canonical mountpoint instead of
 mounting it by name: Podman otherwise chowns the volume root to the helper user,
 even on a read-only mount. Capture/capacity checks preserve runtime UID/GID/modes.
 
+## Owner-run LAN firewall setup
+
+`deploy/server-setup.yaml` is separate from application rollout. Run it from the
+repository on the PC; `--ask-become-pass` prompts locally for the server's sudo
+password. It requires exactly one host in the existing `rootgdr_targets` inventory.
+
+```console
+ANSIBLE_CONFIG=deploy/ansible.cfg ansible-playbook \
+  -i ~/.config/devin/rootgdr/inventory.yaml deploy/server-setup.yaml \
+  --ask-become-pass --check
+
+ANSIBLE_CONFIG=deploy/ansible.cfg ansible-playbook \
+  -i ~/.config/devin/rootgdr/inventory.yaml deploy/server-setup.yaml \
+  --ask-become-pass
+```
+
+The approved rule allows only IPv4 `192.168.1.0/24` to TCP 8001 in `FedoraServer`.
+The zone check accepts firewalld's optional `(default)` annotation. The playbook
+refuses an inactive zone or failed firewall query, then adds only missing
+runtime/permanent copies. It does not reload the firewall, change other
+rules, install packages, start services or touch application data. Check mode
+runs read-only queries and reports missing rules without applying them; reapply
+with both copies present reports no changes. Ordinary deploys remain unprivileged.
+
+Ansible syntax and local execution checks cover check mode, partial rule state,
+repeat application, query failures and inventory/zone rejection using an isolated
+firewall-command stand-in. The owner applies the real privileged rule; then verify
+`http://192.168.1.201:8001/health/ready` from the PC and login from a LAN phone.
+
 ## Separate planning-board deployment
 
 `deploy/vikunja.yaml` and the `vikunja` role bootstrap or verify one explicitly
