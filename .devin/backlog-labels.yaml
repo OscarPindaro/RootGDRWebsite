@@ -1,0 +1,31 @@
+labels:
+  - title: type:bug
+    hex_color: '#DC2626'
+    description: Existing behaviour is reported as broken; this is not a severity rating.
+  - title: type:feature
+    hex_color: '#2563EB'
+    description: New or improved product functionality.
+  - title: type:maintenance
+    hex_color: '#B45309'
+    description: Refactoring, upgrades, deployment or infrastructure work.
+  - title: type:research
+    hex_color: '#7C3AED'
+    description: Investigation or evaluation before choosing a solution.
+  - title: area:frontend
+    hex_color: '#64748B'
+    description: User interface, interactions and browser behaviour.
+  - title: area:backend
+    hex_color: '#64748B'
+    description: Application services, API behaviour and authorization.
+  - title: area:database
+    hex_color: '#64748B'
+    description: Database schema, migrations and queries.
+  - title: area:deployment
+    hex_color: '#64748B'
+    description: Server setup, releases, networking and recovery operations.
+  - title: area:tooling
+    hex_color: '#64748B'
+    description: Harness, development automation and agent workflows.
+  - title: area:docs
+    hex_color: '#64748B'
+    description: Manuals, specifications and technical guidance.

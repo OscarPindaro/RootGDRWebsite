@@ -85,6 +85,42 @@ fail safely; partial batch JSON identifies verified uploads; unit coverage for
 ambiguous writes and corrupt read-back. Publishing or rotating the live scoped
 token is a separate owner decision. No frontend changes are required.
 
+## Label and colour taxonomy extension — recorded 2026-10-10
+
+Oscar approved four primary types and six area labels. Ticket key:
+`REQ-0012/T09`. The shared catalogue is `.devin/backlog-labels.yaml`:
+`type:bug` red, `type:feature` blue, `type:maintenance` amber and `type:research`
+purple; neutral areas are frontend, backend, database, deployment, tooling and
+docs. Exactly one primary type determines the default task colour. Workflow state,
+priority, severity and implementation approval are separate.
+
+Add typed label/colour API v2 support, `labels --ensure` and `classify <task>`.
+Read back persisted metadata, reconcile ambiguous writes, refuse duplicate label
+names or conflicting catalogue colours, and preserve task content, state and
+unrelated labels. Preserve an existing primary type and custom task colour by
+default; colour replacement requires explicit approval. Label definitions and
+classification are not atomic batches: report partial results without deleting
+metadata or creating duplicate tasks.
+
+Both opt-in intake skills read the shared catalogue. New bug/feature reports
+use the corresponding default type and only confirmed areas. Existing matching
+tickets retain human classification unless the user requests a change. An
+unavailable classification token or partial classification must not discard or
+recreate a successfully registered ticket. New token provisioning and changing
+an existing human colour remain explicit owner decisions.
+
+Acceptance: real disposable-board catalogue creation, classification, read-back,
+repeat/no-op, persistence after restart, denied scopes, explicit colour override,
+no changes to descriptions/priorities/state, plus desktop/phone label evidence.
+Keep the existing attachment work and active test environment intact.
+
+After clarification, Oscar approved one consolidated bot credential including the
+already approved attachment operations, and explicitly approved changing task 1
+from its custom red to feature blue. Preserve existing tokens without revocation,
+carry forward the approved scopes and original expiry, verify before switching,
+and use the same credential for all intake operations. This approval is separate
+from normal skill intake, which must never provision or rotate credentials.
+
 ## Tickets and acceptance
 
 | Ticket | Boundary | Acceptance |

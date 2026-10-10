@@ -87,9 +87,11 @@ and check `uv run harness backlog create --help` before using unfamiliar options
 If a Vikunja MCP is available, discover its tools first; otherwise use the existing
 `harness backlog` CLI or typed `BoardClient`, not a new HTTP integration.
 
-- Use the existing scoped tooling token through `--token-file` or
-  `ROOTGDR_BOARD_TOKEN_FILE`. Never read its value into chat, put it in command
-  arguments, or create/rotate credentials to make intake work.
+- Use the consolidated scoped token through `--token-file` or
+  `ROOTGDR_BOARD_TOKEN_FILE`. Without an override, the CLI uses the confirmed
+  private `~/.config/devin/rootgdr/board-unified-token` for tickets, attachments
+  and classification. Never read its value into chat, put it in arguments, or
+  create/rotate credentials to make intake work.
 - The deployed board uses server loopback port 3458 and the documented SSH tunnel
   to `pinball@pinball-server.local`. Prefer an existing verified tunnel. If one is
   needed, check the local port first and start a temporary loopback-only tunnel;
@@ -116,10 +118,9 @@ If a Vikunja MCP is available, discover its tools first; otherwise use the exist
   with a unique evidence marker and read-back. Do not reset their progress.
 
 For approved board evidence, use `attach <task-id> <file>... --json` and verify
-with `attachments <task-id> --json`. Pass `--token-file` explicitly: use
-`ROOTGDR_BOARD_ATTACHMENT_TOKEN_FILE` when configured, or the confirmed private
-controller file `~/.config/devin/rootgdr/board-attachment-token`. Keep general tooling
-and classification credentials separate. Retain captions and confirmed attachment
+with `attachments <task-id> --json`. Use the same consolidated token selected for
+registration; no separate attachment credential is required. Pass `--token-file`
+consistently if using an explicit override. Retain captions and confirmed attachment
 IDs in the report rather than committing upload sources when the user chose
 Vikunja. Uploads verify stored bytes and reuse identical filename/content matches.
 A failed batch reports earlier verified uploads; inspect before retrying. Required
@@ -128,6 +129,31 @@ or expand credentials during intake. Never claim an unconfirmed upload.
 For a missing token, unavailable tunnel, denied scope or board outage, keep the
 local report/evidence, explain the blocker, and ask for access help if necessary.
 Do not weaken permissions or mark the bug registered without confirmation.
+
+### Labels and task colour
+
+Read `.devin/backlog-labels.yaml`, the shared vocabulary and colour mapping.
+A new bug intake defaults to `type:bug`, including a reported issue that has not
+been reproduced. Select area labels only from confirmed affected responsibilities,
+not a guessed root cause. Red denotes the type, not severity or implementation
+approval; do not set priority or workflow state as part of classification.
+
+After ticket creation and successful read-back, check `classify --help` and run
+`classify <task-id> --project <verified-id> --type bug --area <confirmed-area>
+--token-file <tooling-token-file> --json`, repeating `--area` as needed
+or omitting it when the area is unknown. Use the same consolidated token selected
+for registration and attachments; no separate classification credential is required.
+Never print token values or mint/rotate tokens.
+The owner provisions the catalogue with `labels --ensure`; intake must not change
+label definitions or permissions to work around a failure.
+
+Read the classification receipt and task back. Confirm one primary type, selected
+areas and the resulting colour. Preserve human types and custom colours; never
+use `--replace-colour` without explicit approval. Existing matching tickets keep
+their labels and colour unless the user requests classification. If classification
+fails or is partial, keep the confirmed ticket ID, inspect its current state and
+report the limitation; never recreate the ticket to retry classification. Include
+confirmed labels/colour or the classification blocker in the intake receipt.
 
 ## 5. Return a concise receipt
 

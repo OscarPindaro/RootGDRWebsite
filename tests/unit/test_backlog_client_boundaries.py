@@ -8,9 +8,13 @@ from pydantic import SecretStr
 from harness.backlog.client import (
     BoardClient,
     BoardError,
+    BoardLabelSpec,
     BoardTokenSource,
+    default_token_source,
     record_table,
 )
+
+from harness.backlog.labels import classify_task, load_catalogue
 
 TOKEN = "private-board-token-sentinel-value"
 
@@ -45,6 +49,22 @@ def test_token_source_requires_a_private_canonical_file(tmp_path):
     assert BoardTokenSource(token_file=exposed).token().get_secret_value() == TOKEN
     with pytest.raises(BoardError):
         BoardTokenSource(token_file=tmp_path / "missing").token()
+
+
+def test_default_token_uses_unified_profile_and_respects_explicit_override(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.delenv("ROOTGDR_BOARD_TOKEN_FILE", raising=False)
+    unified = tmp_path / ".config/devin/rootgdr/board-unified-token"
+    unified.parent.mkdir(parents=True)
+    unified.write_text(TOKEN)
+    unified.chmod(0o600)
+    assert default_token_source().token_file == unified
+    assert default_token_source().token().get_secret_value() == TOKEN
+    override = tmp_path / "explicit-token"
+    monkeypatch.setenv("ROOTGDR_BOARD_TOKEN_FILE", str(override))
+    assert default_token_source().token_file == override
 
 
 def test_client_refuses_a_non_loopback_base_url():
@@ -446,6 +466,208 @@ def test_upload_attachment_does_not_treat_a_201_file_error_as_success(tmp_path):
     assert TOKEN not in str(error.value)
     assert error.value.ambiguous is False
     assert posts == 1
+
+
+def test_label_reads_follow_v2_pagination():
+    paths = []
+
+    def handler(request):
+        paths.append(request.url.path)
+        return httpx.Response(
+            200,
+            json=envelope([{"id": 4, "title": "type:feature", "hex_color": "2563eb"}]),
+        )
+
+    with client(handler) as board:
+        labels = board.labels()
+        attached = board.task_labels(7)
+    assert labels[0].hex_color == attached[0].hex_color == "2563EB"
+    assert paths == ["/api/v2/labels", "/api/v2/tasks/7/labels"]
+
+
+def test_add_label_once_verifies_persistence_and_recovers_an_ambiguous_write():
+    attached = False
+    posts = 0
+
+    def handler(request):
+        nonlocal attached, posts
+        if request.method == "POST":
+            posts += 1
+            assert request.url.path == "/api/v2/tasks/7/labels"
+            assert json.loads(request.content) == {"label_id": 4}
+            attached = True
+            raise httpx.ReadTimeout("ambiguous", request=request)
+        records = (
+            [{"id": 4, "title": "type:feature", "hex_color": "2563EB"}]
+            if attached
+            else []
+        )
+        return httpx.Response(200, json=envelope(records))
+
+    with client(handler) as board:
+        assert board.add_label_once(7, 4) is True
+        assert board.add_label_once(7, 4) is False
+    assert posts == 1
+
+
+def test_task_colour_patch_changes_only_colour_and_reads_it_back():
+    calls = []
+    colour = ""
+
+    def handler(request):
+        nonlocal colour
+        calls.append(request.method)
+        if request.method == "PATCH":
+            assert request.headers["content-type"] == "application/merge-patch+json"
+            assert json.loads(request.content) == {"hex_color": "2563EB"}
+            colour = "2563eb"
+            return httpx.Response(200, json={"id": 7, "hex_color": colour})
+        return httpx.Response(
+            200,
+            json={"id": 7, "description": "keep", "done": True, "hex_color": colour},
+        )
+
+    with client(handler) as board:
+        task = board.set_task_colour(7, "#2563EB")
+    assert task.hex_color == "2563EB"
+    assert task.description == "keep" and task.done is True
+    assert calls == ["PATCH", "GET"]
+
+
+def test_label_creation_reconciles_timeouts_without_duplicate_posts():
+    stored = []
+    posts = 0
+    spec = BoardLabelSpec(
+        title="type:feature", hex_color="#2563EB", description="feature"
+    )
+
+    def handler(request):
+        nonlocal posts
+        if request.method == "POST":
+            posts += 1
+            assert json.loads(request.content) == spec.model_dump()
+            stored.append({"id": 4, **spec.model_dump()})
+            raise httpx.ReadTimeout("ambiguous", request=request)
+        return httpx.Response(200, json=envelope(stored))
+
+    with client(handler) as board:
+        assert board.ensure_label(spec).id == board.ensure_label(spec).id == 4
+    assert posts == 1
+
+
+@pytest.mark.parametrize(
+    "records",
+    [
+        [{"id": 4, "title": "type:feature", "hex_color": "DC2626"}],
+        [
+            {"id": 4, "title": "type:feature", "hex_color": "2563EB"},
+            {"id": 5, "title": "type:feature", "hex_color": "2563EB"},
+        ],
+    ],
+)
+def test_catalogue_conflicts_do_not_overwrite_labels(records):
+    def handler(request):
+        assert request.method == "GET"
+        return httpx.Response(200, json=envelope(records))
+
+    with client(handler) as board:
+        with pytest.raises(BoardError, match="review"):
+            board.ensure_label(BoardLabelSpec(title="type:feature", hex_color="2563EB"))
+
+
+def test_classification_preserves_a_human_type_colour_and_unrelated_labels():
+    catalogue = load_catalogue()
+    available = [
+        {"id": 1, "title": "type:bug", "hex_color": "DC2626"},
+        {"id": 2, "title": "type:feature", "hex_color": "2563EB"},
+        {"id": 3, "title": "area:frontend", "hex_color": "64748B"},
+        {"id": 4, "title": "human-label", "hex_color": "111111"},
+    ]
+    attached = [available[0], available[3]]
+    posts = []
+
+    def handler(request):
+        if request.method == "POST":
+            label_id = json.loads(request.content)["label_id"]
+            posts.append(label_id)
+            attached.append(
+                next(label for label in available if label["id"] == label_id)
+            )
+            return httpx.Response(201, json={"label_id": label_id})
+        assert request.method == "GET"
+        if request.url.path == "/api/v2/tasks/7":
+            return httpx.Response(
+                200,
+                json={
+                    "id": 7,
+                    "project_id": 2,
+                    "hex_color": "AB1234",
+                    "description": "keep",
+                    "done": True,
+                },
+            )
+        return httpx.Response(
+            200, json=envelope(attached if "/tasks/" in request.url.path else available)
+        )
+
+    with client(handler) as board:
+        first = classify_task(board, catalogue, 7, 2, "feature", ["frontend"])
+        again = classify_task(board, catalogue, 7, 2, "feature", ["frontend"])
+    assert first.type_preserved and first.colour_preserved
+    assert first.task.description == "keep" and first.task.done
+    assert {label.title for label in first.task.labels} == {
+        "type:bug",
+        "area:frontend",
+        "human-label",
+    }
+    assert again.added_labels == []
+    assert posts == [3]
+
+
+def test_classification_rejects_the_wrong_project_before_any_write():
+    def handler(request):
+        assert request.method == "GET" and request.url.path == "/api/v2/tasks/7"
+        return httpx.Response(200, json={"id": 7, "project_id": 9})
+
+    with client(handler) as board:
+        with pytest.raises(BoardError, match="different project"):
+            classify_task(board, load_catalogue(), 7, 2, "feature", ["frontend"])
+
+
+def test_unknown_classification_is_rejected_without_network_requests():
+    def handler(request):
+        raise AssertionError("unknown vocabulary must not contact the board")
+
+    with client(handler) as board:
+        with pytest.raises(BoardError, match="approved"):
+            classify_task(board, load_catalogue(), 7, 2, "unknown", [])
+
+
+def test_default_catalogue_has_the_approved_types_and_neutral_areas():
+    catalogue = load_catalogue()
+    assert {
+        label.title: label.hex_color
+        for label in catalogue.labels
+        if label.title.startswith("type:")
+    } == {
+        "type:bug": "DC2626",
+        "type:feature": "2563EB",
+        "type:maintenance": "B45309",
+        "type:research": "7C3AED",
+    }
+    assert {
+        label.title for label in catalogue.labels if label.title.startswith("area:")
+    } == {
+        "area:frontend",
+        "area:backend",
+        "area:database",
+        "area:deployment",
+        "area:tooling",
+        "area:docs",
+    }
+    assert {
+        label.hex_color for label in catalogue.labels if label.title.startswith("area:")
+    } == {"64748B"}
 
 
 @pytest.mark.parametrize("failure", ["timeout", "server", "invalid"])

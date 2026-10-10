@@ -43,6 +43,7 @@ from harness.browser_runtime import ensure_browsers_path
 from harness.deploy.vikunja_schemas import VIKUNJA_IMAGE, VikunjaPlan, VikunjaSpec
 from harness.test import state
 from harness.test.compose import _wait_for_http
+from harness.test.browser import settle_page
 
 pytestmark = pytest.mark.external_integrations
 
@@ -1359,6 +1360,163 @@ def test_lan_update_failed_backup_preserves_runtime(board_deployment):
         ).strip()
         == b"true"
     )
+
+
+def test_backlog_label_catalogue_classification_and_colour_on_real_board(
+    board_deployment,
+):
+    spec, directory = board_deployment
+    assert apply_board(spec, directory).returncode == 0
+    runtime = spec.target.base / "runtime"
+    identity = json.loads((runtime / "identity.json").read_bytes())
+    url = f"http://127.0.0.1:{spec.target.port}"
+    permissions = {
+        "projects": ["read_all", "read_one"],
+        "tasks": ["read_one", "update"],
+        "labels": ["read_all", "create"],
+        "tasks_labels": ["read_all", "create"],
+    }
+    with httpx.Client(base_url=url, timeout=20, trust_env=False) as owner:
+        login(owner, spec.owner)
+        issued = request(
+            owner,
+            "POST",
+            "/api/v2/tokens",
+            data={
+                "owner_id": identity["tooling_id"],
+                "title": "Disposable classification",
+                "permissions": permissions,
+                "expires_at": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
+            },
+            expected=201,
+        ).json()
+        token_file = directory / "classification-token"
+        write_private(token_file, issued["token"].encode())
+        task = request(
+            owner,
+            "POST",
+            f"/api/v2/projects/{identity['project_id']}/tasks",
+            data={"title": "Classification proof", "description": "keep unchanged"},
+            expected=201,
+        ).json()
+        request(owner, "PATCH", f"/api/v2/tasks/{task['id']}", data={"priority": 3})
+
+    def cli(*arguments):
+        result = subprocess.run(
+            [
+                "uv",
+                "run",
+                "harness",
+                "backlog",
+                *arguments,
+                "--base-url",
+                url,
+                "--token-file",
+                str(token_file),
+                "--json",
+            ],
+            cwd=state.worktree_root(),
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+        assert issued["token"] not in result.stdout + result.stderr
+        assert result.returncode == 0, result.stdout + result.stderr
+        return json.loads(result.stdout)
+
+    catalogue = cli("labels", "--ensure")
+    assert catalogue["complete"] and len(catalogue["labels"]) == 10
+    with httpx.Client(base_url=url, timeout=20, trust_env=False) as owner:
+        login(owner, spec.owner)
+        visible = request(owner, "GET", "/api/v2/labels").json()["items"] or []
+        assert {label["title"] for label in catalogue["labels"]}.issubset(
+            {label["title"] for label in visible}
+        )
+    assert [label["id"] for label in cli("labels", "--ensure")["labels"]] == [
+        label["id"] for label in catalogue["labels"]
+    ]
+    arguments = (
+        "classify",
+        str(task["id"]),
+        "--project",
+        str(identity["project_id"]),
+        "--type",
+        "feature",
+        "--area",
+        "frontend",
+        "--area",
+        "backend",
+    )
+    classified = cli(*arguments)
+    assert classified["task"]["hex_color"] == "2563EB"
+    assert {label["title"] for label in classified["task"]["labels"]} == {
+        "type:feature",
+        "area:frontend",
+        "area:backend",
+    }
+    assert classified["task"]["description"] == "keep unchanged"
+    assert classified["task"]["priority"] == 3
+    assert cli(*arguments)["added_labels"] == []
+    with httpx.Client(base_url=url, timeout=20, trust_env=False) as owner:
+        login(owner, spec.owner)
+        request(
+            owner, "PATCH", f"/api/v2/tasks/{task['id']}", data={"hex_color": "AA1133"}
+        )
+    preserved = cli(*arguments)
+    assert preserved["colour_preserved"] and preserved["task"]["hex_color"] == "AA1133"
+    assert cli(*arguments, "--replace-colour")["task"]["hex_color"] == "2563EB"
+    with BoardClient(
+        url, SecretStr((runtime / "tooling-token").read_text().strip())
+    ) as limited:
+        with pytest.raises(BoardError, match="scoped"):
+            limited.labels()
+    command(["podman", "restart", spec.target.project + "_board_1"])
+    _wait_for_http(url + "/api/v2/info", attempts=60)
+    persisted = cli(*arguments)
+    assert persisted["task"]["hex_color"] == "2563EB"
+    assert persisted["added_labels"] == []
+    output = Path("/tmp") / (
+        "rootgdr-label-review-" + spec.target.project.rsplit("-", 1)[-1]
+    )
+    output.mkdir(mode=0o755)
+    ensure_browsers_path()
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        for name, options in (
+            ("desktop", {"viewport": {"width": 1440, "height": 1000}}),
+            (
+                "phone",
+                {
+                    "viewport": {"width": 390, "height": 844},
+                    "is_mobile": True,
+                    "has_touch": True,
+                },
+            ),
+        ):
+            context = browser.new_context(**options)
+            page = context.new_page()
+            page.goto(url + "/login", wait_until="networkidle")
+            page.locator("input#username").fill(spec.owner.username)
+            page.locator("input#password").fill(spec.owner.password.get_secret_value())
+            page.get_by_role(
+                "button", name=re.compile(r"^(Accedi|Log in)$", re.IGNORECASE)
+            ).click()
+            page.wait_for_url(lambda current: "/login" not in current, timeout=20000)
+            page.goto(
+                url + f"/projects/{identity['project_id']}", wait_until="networkidle"
+            )
+            page.get_by_text("Classification proof", exact=True).first.click()
+            page.wait_for_load_state("networkidle", timeout=10000)
+            page.locator("h1[contenteditable]").filter(
+                has_text="Classification proof"
+            ).wait_for()
+            page.wait_for_load_state("networkidle", timeout=10000)
+            assert settle_page(page)
+            page.get_by_text("type:feature", exact=True).first.wait_for()
+            page.screenshot(path=str(output / (name + ".png")), full_page=True)
+            context.close()
+        browser.close()
+    print("Label visual evidence: " + str(output))
 
 
 def test_board_password_login_desktop_and_phone_evidence(board_deployment):

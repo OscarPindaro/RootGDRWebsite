@@ -80,10 +80,12 @@ Discover a configured Vikunja MCP's tools before using them; otherwise use the
 existing `harness backlog` CLI or typed `BoardClient`. Check command help instead
 of guessing flags or writing a new HTTP integration.
 
-1. Use the existing scoped token via `ROOTGDR_BOARD_TOKEN_FILE` or `--token-file`.
-   The current controller file is `~/.config/devin/rootgdr/board-tooling-token`;
-   resolve it to an absolute path. Never print token values, put them in command
-   arguments, or create/rotate credentials to complete intake.
+1. Use the consolidated scoped token via `ROOTGDR_BOARD_TOKEN_FILE` or
+   `--token-file`. Without an override, the CLI uses the confirmed private
+   controller file `~/.config/devin/rootgdr/board-unified-token` for tickets,
+   attachments and classification. Resolve explicit paths to absolute paths.
+   Never print token values, put them in arguments, or create/rotate credentials
+   to complete intake.
 2. Access the deployed board through its documented loopback SSH tunnel:
    PC port 3458 → `pinball@pinball-server.local`, server `127.0.0.1:3458`.
    Verify an existing tunnel, or check the port before starting a temporary one.
@@ -108,10 +110,9 @@ of guessing flags or writing a new HTTP integration.
    for newly proposed scope.
 
 Upload approved evidence with `attach <task-id> <file>... --json`, then verify
-IDs/metadata using `attachments <task-id> --json`. Pass `--token-file` explicitly:
-use `ROOTGDR_BOARD_ATTACHMENT_TOKEN_FILE` when configured, or the confirmed private
-controller file `~/.config/devin/rootgdr/board-attachment-token`. The general tooling
-and classification tokens remain separate. The upload command verifies
+IDs/metadata using `attachments <task-id> --json`. Use the same consolidated token
+selected for registration; no separate attachment credential is required. Pass
+`--token-file` consistently if using an explicit override. The upload command verifies
 stored bytes and reuses identical filename/content matches. A partial batch exits
 nonzero but reports earlier verified uploads; inspect those before retrying.
 Record only confirmed attachment IDs. Uploads need `tasks_attachments` scopes
@@ -120,6 +121,31 @@ intake. Local upload sources are not remotely available until upload is confirme
 If token access, scope, the tunnel or the board is unavailable, keep the complete
 local request/evidence and explain the blocker. Ask for access help if needed;
 never weaken permissions or claim that registration succeeded without read-back.
+
+### Labels and task colour
+
+Read `.devin/backlog-labels.yaml`, the shared vocabulary and colour mapping.
+A new feature intake defaults to `type:feature`; maintenance/research types
+require an explicit user choice. Select area labels only from confirmed affected
+responsibilities, not speculative implementation dependencies. Classification
+is not implementation approval, verification, severity or priority.
+
+After ticket creation and successful read-back, check `classify --help` and run
+`classify <task-id> --project <verified-id> --type feature --area <confirmed-area>
+--token-file <tooling-token-file> --json`, repeating `--area` as needed
+or omitting it when the area is unknown. Use the same consolidated token selected
+for registration and attachments; no separate classification credential is required.
+Never print token values or mint/rotate tokens.
+The owner provisions the catalogue with `labels --ensure`; intake must not change
+label definitions or permissions to work around a failure.
+
+Read the classification receipt and task back. Confirm one primary type, selected
+areas and the resulting colour. Preserve human types and custom colours; never
+use `--replace-colour` without explicit approval. Existing matching tickets keep
+their labels and colour unless the user requests classification. If classification
+fails or is partial, keep the confirmed ticket ID, inspect its current state and
+report the limitation; never recreate the ticket to retry classification. Include
+confirmed labels/colour or the classification blocker in the intake receipt.
 
 ## 4. Return a receipt and stop
 

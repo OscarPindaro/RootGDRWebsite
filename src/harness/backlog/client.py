@@ -9,7 +9,14 @@ from typing import Annotated, Any, BinaryIO, Literal
 from urllib.parse import urlsplit
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    ValidationError,
+)
 
 from ..deploy.backup import BackupError
 
@@ -33,10 +40,39 @@ class BoardRecord(BaseModel):
     description: str = ""
 
 
+HexColour = Annotated[
+    str,
+    Field(pattern=r"^#?[0-9a-fA-F]{6}$"),
+    AfterValidator(lambda value: value.removeprefix("#").upper()),
+]
+
+
+class BoardLabelSpec(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    title: str = Field(min_length=1, max_length=250)
+    hex_color: HexColour
+    description: str = ""
+
+
+class BoardLabel(BoardRecord):
+    hex_color: HexColour | Literal[""] = ""
+
+
+class BoardColourPatch(BaseModel):
+    hex_color: HexColour
+
+
+class BoardLabelAssignment(BaseModel):
+    label_id: int = Field(gt=0)
+
+
 class BoardTask(BoardRecord):
     project_id: int = 0
     bucket_id: int = 0
     done: bool = False
+    hex_color: HexColour | Literal[""] = ""
+    labels: list[BoardLabel] | None = None
 
 
 class BoardView(BoardRecord):
@@ -124,9 +160,12 @@ class BoardTokenSource(BaseModel):
 
 def default_token_source() -> BoardTokenSource:
     configured = os.environ.get("ROOTGDR_BOARD_TOKEN_FILE")
-    if not configured:
-        raise BoardError("Set ROOTGDR_BOARD_TOKEN_FILE to a private token file")
-    return BoardTokenSource(token_file=Path(configured))
+    if configured:
+        return BoardTokenSource(token_file=Path(configured))
+    unified = Path.home() / ".config/devin/rootgdr/board-unified-token"
+    if unified.exists() or unified.is_symlink():
+        return BoardTokenSource(token_file=unified)
+    raise BoardError("Set ROOTGDR_BOARD_TOKEN_FILE to a private token file")
 
 
 class BoardClient:
@@ -312,6 +351,83 @@ class BoardClient:
         return BoardTask.model_validate(
             self._request("GET", f"/tasks/{task_id}").json()
         )
+
+    def labels(self) -> list[BoardLabel]:
+        return [BoardLabel.model_validate(item) for item in self._paginate("/labels")]
+
+    def ensure_label(self, spec: BoardLabelSpec) -> BoardLabel:
+        matches = [label for label in self.labels() if label.title == spec.title]
+        if len(matches) > 1:
+            raise BoardError("Duplicate label names require owner review")
+        if matches:
+            label = matches[0]
+        else:
+            try:
+                self._request("POST", "/labels", json=spec.model_dump())
+            except BoardError as error:
+                if not error.ambiguous:
+                    raise
+                matches = [
+                    label for label in self.labels() if label.title == spec.title
+                ]
+                if len(matches) != 1:
+                    raise error
+            matches = [label for label in self.labels() if label.title == spec.title]
+            if len(matches) != 1:
+                raise BoardError(
+                    "Label creation could not be confirmed; inspect before retrying",
+                    ambiguous=True,
+                )
+            label = matches[0]
+        if label.hex_color != spec.hex_color:
+            raise BoardError(
+                "Existing label colour differs from the catalogue; owner review required"
+            )
+        return label
+
+    def task_labels(self, task_id: int) -> list[BoardLabel]:
+        return [
+            BoardLabel.model_validate(item)
+            for item in self._paginate(f"/tasks/{task_id}/labels")
+        ]
+
+    def add_label_once(self, task_id: int, label_id: int) -> bool:
+        assignment = BoardLabelAssignment(label_id=label_id)
+        if any(label.id == label_id for label in self.task_labels(task_id)):
+            return False
+        try:
+            self._request(
+                "POST", f"/tasks/{task_id}/labels", json=assignment.model_dump()
+            )
+        except BoardError as error:
+            if not error.ambiguous or not any(
+                label.id == label_id for label in self.task_labels(task_id)
+            ):
+                raise
+        if not any(label.id == label_id for label in self.task_labels(task_id)):
+            raise BoardError(
+                "Task label was not confirmed; inspect before retrying", ambiguous=True
+            )
+        return True
+
+    def set_task_colour(self, task_id: int, colour: str) -> BoardTask:
+        patch = BoardColourPatch(hex_color=colour)
+        try:
+            self._request(
+                "PATCH",
+                f"/tasks/{task_id}",
+                json=patch.model_dump(),
+                content_type="application/merge-patch+json",
+            )
+        except BoardError as error:
+            if not error.ambiguous or self.task(task_id).hex_color != patch.hex_color:
+                raise
+        task = self.task(task_id)
+        if task.hex_color != patch.hex_color:
+            raise BoardError(
+                "Task colour was not confirmed; inspect before retrying", ambiguous=True
+            )
+        return task
 
     def attachments(self, task_id: int) -> list[BoardAttachment]:
         raw = self._paginate(f"/tasks/{task_id}/attachments")

@@ -523,12 +523,77 @@ attachment list/read/create. The original token, accounts, deployment metadata,
 image and service were unchanged. Real reference images on task 2 were uploaded,
 byte-verified and reused on repeat without duplication.
 
-Use `--token-file ~/.config/devin/rootgdr/board-attachment-token` for `attach` and
-`attachments`, or pass `ROOTGDR_BOARD_ATTACHMENT_TOKEN_FILE` as that option when
-configured. A private recovery copy and activation receipt are under the board's
+Legacy clients may still use `--token-file ~/.config/devin/rootgdr/board-attachment-token`
+for `attach` and `attachments`, or pass `ROOTGDR_BOARD_ATTACHMENT_TOKEN_FILE` as
+that option. New CLI/skill intake prefers the consolidated profile below. A private
+recovery copy and activation receipt for the attachment-only profile are under the board's
 `runtime/attachment-token` and `runtime/attachment-token-receipt.json`. These are
 separate from the original bootstrap credential bundle; keep the controller copy
 securely backed up. No credential value belongs in Git, command arguments or logs.
+
+### Consolidated tooling credential
+
+On 2026-10-11, Oscar approved one credential for existing ticket operations,
+attachments, labels and task colours. Token **3** belongs to the same tooling bot
+and preserves attachment token **2**'s scopes/expiry (`2027-10-04T23:03:07Z`),
+adding only label list/create and task-label list/create. Original tokens **1**
+and **2**, accounts, deployment identity, image and service remain unchanged;
+neither old key was revoked. The new token still cannot administer tokens or
+create/delete projects, and has no deletion scopes.
+
+The private controller file is `~/.config/devin/rootgdr/board-unified-token`.
+`ROOTGDR_BOARD_TOKEN_FILE` or `--token-file` explicitly overrides it; without an
+override the CLI selects this confirmed file. Both intake skills use that same
+credential for ticket creation, attachment uploads and classification. No separate
+attachment/classification environment variables are required. Explicit legacy
+clients continue to work, but an old token may lack attachment/label permissions.
+
+Private recovery material is under server `runtime/unified-token` and
+`runtime/unified-token-receipt.json`, separately from the bootstrap credential
+bundle; securely back up the controller copy. Verification covered the real
+project, both intake tasks, attachment/label read access, preserved old tokens and
+denied token administration. The ten catalogue labels were created and both
+current feature requests classified in blue; ticket content, priority, workflow
+state and task 2's nine attachments were preserved and read back.
+
+### Labels and task colours
+
+`.devin/backlog-labels.yaml` is the shared, typed catalogue for both opt-in intake
+skills. Four primary types use red (bug), blue (feature), amber (maintenance) and
+purple (research); frontend/backend/database/deployment/tooling/docs area labels
+use neutral grey. The type's label and the task colour are separate Vikunja fields.
+These classifications do not set workflow state, priority, severity or approval.
+
+```console
+uv run harness backlog labels --json
+uv run harness backlog labels --ensure --json
+uv run harness backlog classify 17 --project 2 --type feature --area frontend \
+  --area backend --json
+```
+
+`labels --ensure` creates only missing catalogue entries and confirms them by
+read-back. Existing descriptions are preserved; duplicate names and conflicting
+colours require owner review. A failed batch retains already verified labels and
+reports `complete: false`. It never deletes or renames labels.
+
+`classify` checks the task's project, resolves existing catalogue labels, adds
+only missing associations and fills an empty task colour through a minimal JSON
+merge patch. Existing primary types, unrelated labels and custom colours remain;
+`--replace-colour` is an explicit owner-approved override. Read-back verifies one
+primary type, selected areas and the colour, without changing descriptions,
+priorities, assignees, attachments or workflow state. Classification is sequential,
+not atomic; a concurrent type change or partial failure requires inspection.
+Neither failure nor denied scopes is a reason to recreate the intake ticket.
+
+Catalogue setup needs `labels.read_all` and `labels.create`; classification needs
+`tasks.read_one`, `tasks.update`, `labels.read_all`, `tasks_labels.read_all` and
+`tasks_labels.create`. Provision an appropriately scoped bot token explicitly;
+existing tokens and permissions are not changed by these commands or skills.
+The consolidated tooling profile above supplies these permissions. Pass an
+explicit `--token-file` only when selecting a different approved credential;
+older provisioning profiles may lack label scopes.
+Vikunja's v1 route registry reports PUT for creation, but the verified v2 endpoints
+use POST for labels and task-label associations.
 
 `BoardClient` is a typed httpx boundary: project, view, bucket, task, comment,
 attachment, upload response and receipt models; `BoardPage` for the v2 envelope;
@@ -538,8 +603,9 @@ and full pagination up to a reviewed bound. Status codes map to bounded messages
 and never echo an upstream body. Transport failure and timeout are distinguished
 from a server rejection, so an ambiguous write is never retried blindly.
 
-Credentials come from `--token-file` or `ROOTGDR_BOARD_TOKEN_FILE`, must be a
-canonical `0600` file, and never appear in argv, output or logs. The base URL
+Credentials come from `--token-file`, `ROOTGDR_BOARD_TOKEN_FILE` or the confirmed
+private unified profile when neither override is set. Files must be canonical
+and mode `0600`; values never appear in argv, output or logs. The base URL
 must be an explicit loopback tunnel, matching the deployed board. Human output
 prints ids and titles only; `--json` prints the full records. Placement reads
 need the reviewed `projects.views_buckets_tasks_get` token scope, which the

@@ -21,6 +21,7 @@ from ..backlog.client import (
     default_token_source,
     record_table,
 )
+from ..backlog.labels import CATALOGUE, CatalogueReceipt, classify_task, load_catalogue
 from ..backlog.plan import PLAN, load_plan_tickets, ticket_description
 from ..backlog.requests import REPO_ROOT, REQUESTS_DIR, scan_requests
 
@@ -208,6 +209,104 @@ def register_commands(app: typer.Typer) -> None:
             _emit(record.model_dump(mode="json"), as_json, record_table([record]))
         except BoardError, ValidationError, OSError, ValueError:
             _fail()
+
+    @backlog_app.command(
+        "labels",
+        help="List labels; --ensure creates missing catalogue labels without overwriting existing ones.",
+    )
+    def labels(
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private scoped token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        catalogue: Annotated[
+            Path, typer.Option(help="Approved label catalogue.")
+        ] = CATALOGUE,
+        ensure: Annotated[
+            bool,
+            typer.Option(
+                help="Create missing catalogue labels; requires label create scope."
+            ),
+        ] = False,
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        receipt = CatalogueReceipt()
+        try:
+            definitions = load_catalogue(catalogue)
+            with _client(token_file, base_url) as client:
+                if ensure:
+                    for spec in definitions.labels:
+                        receipt.labels.append(client.ensure_label(spec))
+                else:
+                    receipt.labels = client.labels()
+        except BoardError, ValidationError, OSError, ValueError:
+            receipt.complete = False
+        _emit(
+            receipt.model_dump(mode="json"),
+            as_json,
+            [
+                (str(label.id), f"{label.title} (#{label.hex_color})")
+                for label in receipt.labels
+            ],
+        )
+        if not receipt.complete:
+            err_console.print(
+                "[bold red]Label operation failed; verified labels are retained. Inspect before retrying.[/bold red]"
+            )
+            raise typer.Exit(1)
+
+    @backlog_app.command(
+        "classify",
+        help="Add approved type/area labels and task colour; preserves existing types and custom colours.",
+    )
+    def classify(
+        task: Annotated[int, typer.Argument(help="Task id.", min=1)],
+        project: Annotated[int, typer.Option(help="Verified project id.", min=1)],
+        kind: Annotated[
+            str, typer.Option("--type", help="Default task type from the catalogue.")
+        ],
+        area: Annotated[
+            list[str] | None,
+            typer.Option("--area", help="Confirmed affected area; repeat as needed."),
+        ] = None,
+        replace_colour: Annotated[
+            bool,
+            typer.Option(help="Explicitly replace an existing custom task colour."),
+        ] = False,
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private scoped token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        catalogue: Annotated[
+            Path, typer.Option(help="Approved label catalogue.")
+        ] = CATALOGUE,
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        try:
+            definitions = load_catalogue(catalogue)
+            with _client(token_file, base_url) as client:
+                receipt = classify_task(
+                    client,
+                    definitions,
+                    task,
+                    project,
+                    kind,
+                    area or [],
+                    replace_colour=replace_colour,
+                )
+            detail = "classified"
+            if receipt.type_preserved or receipt.colour_preserved:
+                detail += "; existing type/custom colour preserved"
+            _emit(receipt.model_dump(mode="json"), as_json, [(str(task), detail)])
+        except BoardError, ValidationError, OSError, ValueError:
+            err_console.print(
+                "[bold red]Classification was not confirmed; labels may already be attached. Inspect the task before retrying.[/bold red]"
+            )
+            raise typer.Exit(1) from None
 
     @backlog_app.command("attachments", help="List a task's attachment metadata.")
     def attachments(
