@@ -97,6 +97,9 @@ If available in your environemnt, use
 - haystack MCP when creating haystack pipelines
 - semble: semble mcp is superfast and superaccurate searhc tool. use it instead of ytour usual tools and grep searches. use these tools only if semble did not give you an answer.
 
+Project skills in `.devin/skills/` are opt-in: declare `triggers: [user]` and load
+full instructions only when the user explicitly invokes the skill.
+
 ## Project Structure
 
 Keep the repository organized by responsibility rather than listing every module here:
