@@ -19,15 +19,28 @@ import httpx
 import pytest
 from pydantic import SecretStr
 
-from harness.deploy.backup import HELPER_IMAGE, VolumeInfo, command, write_private
-from harness.deploy.vikunja import board_recovery_spec, configuration, plan_board
+from harness.deploy.backup import (
+    HELPER_IMAGE,
+    BackupError,
+    VolumeInfo,
+    command,
+    write_private,
+)
+from harness.deploy.vikunja import (
+    board_recovery_spec,
+    configuration,
+    plan_board,
+    preflight_board,
+    rebind_board,
+)
+from ipaddress import IPv4Address
 from harness.deploy.backup_restore import restore_encrypted
 from harness.deploy.backup_schemas import BackupReceipt, RestoreSpec, StorageSpec
 from harness.deploy.backup_storage import initialize_storage
 from harness.deploy.vikunja_bootstrap import bootstrap_accounts, login, request
 from harness.backlog.client import BoardClient, BoardError
 from harness.browser_runtime import ensure_browsers_path
-from harness.deploy.vikunja_schemas import VIKUNJA_IMAGE, VikunjaSpec
+from harness.deploy.vikunja_schemas import VIKUNJA_IMAGE, VikunjaPlan, VikunjaSpec
 from harness.test import state
 from harness.test.compose import _wait_for_http
 
@@ -1110,6 +1123,244 @@ def test_backlog_workflow_and_import_are_idempotent_on_the_real_board(
     assert "REQ-0012/T05" in duplicated.stdout + duplicated.stderr
 
 
+def apply_lan(spec, directory, storage_file, address, *, check=False):
+    inventory = directory / "lan-inventory.yaml"
+    if not inventory.exists():
+        write_private(
+            inventory,
+            b"all:\n  children:\n    rootgdr_targets:\n      hosts:\n        localhost:\n",
+        )
+    variables = directory / ("lan-" + uuid4().hex + ".vars.yaml")
+    write_private(
+        variables,
+        yaml.safe_dump(
+            {
+                "vikunja_application_base": str(spec.target.base),
+                "vikunja_lan_address": address,
+                "vikunja_helper_python": sys.executable,
+                "vikunja_compose_provider": shutil.which("podman-compose"),
+                "vikunja_backup_storage_file": str(storage_file),
+                "vikunja_backup_receipt_directory": str(directory),
+                "ansible_connection": "local",
+                "ansible_python_interpreter": sys.executable,
+            }
+        ).encode(),
+    )
+    argv = [
+        "ansible-playbook",
+        "-i",
+        str(inventory),
+        str(state.worktree_root() / "deploy/server-setup.yaml"),
+        "--tags",
+        "vikunja-lan",
+        "-e",
+        "@" + str(variables),
+    ]
+    if check:
+        argv.append("--check")
+    result = subprocess.run(
+        argv, cwd=state.worktree_root(), capture_output=True, text=True, timeout=450
+    )
+    assert spec.owner.password.get_secret_value() not in result.stdout + result.stderr
+    assert (
+        spec.target.base / "runtime/tooling-token"
+    ).read_text() not in result.stdout + result.stderr
+    return result
+
+
+def test_lan_update_preserves_data_noop_and_rolls_back_busy_listener(board_deployment):
+    spec, directory = board_deployment
+    assert apply_board(spec, directory).returncode == 0
+    runtime = spec.target.base / "runtime"
+    plan = VikunjaPlan.model_validate_json(
+        (runtime / "deployment-plan.json").read_bytes()
+    )
+    original = (spec.target.base / "current.json").read_bytes()
+    retained = {
+        name: (runtime / name).read_bytes()
+        for name in (
+            "identity.json",
+            "tooling-token",
+            "owner.json",
+            "signing-secret",
+            "compose.env",
+        )
+    }
+    identity = json.loads(retained["identity.json"])
+    url = f"http://127.0.0.1:{spec.target.port}"
+    with httpx.Client(base_url=url, timeout=20, trust_env=False) as client:
+        login(client, spec.owner)
+        task = request(
+            client,
+            "POST",
+            f"/api/v2/projects/{identity['project_id']}/tasks",
+            data={"title": "LAN persistence proof"},
+            expected=201,
+        ).json()
+        attachment = client.post(
+            f"/api/v2/tasks/{task['id']}/attachments",
+            files={"files": ("proof.txt", b"preserved LAN attachment", "text/plain")},
+        )
+        assert attachment.status_code == 201
+        attachment_id = client.get(f"/api/v2/tasks/{task['id']}/attachments").json()[
+            "items"
+        ][0]["id"]
+    with pytest.raises(BackupError, match="pre-deploy board backup"):
+        rebind_board(
+            plan,
+            IPv4Address("127.0.0.2"),
+            shutil.which("podman-compose"),
+            state.worktree_root() / "deploy/vikunja.compose.yaml",
+        )
+    assert (spec.target.base / "current.json").read_bytes() == original
+    repository = directory / "lan-repository"
+    repository.mkdir(mode=0o700)
+    password = directory / "lan-repository-password"
+    write_private(password, secrets.token_urlsafe(40).encode())
+    storage = StorageSpec(repository=repository, password_file=password)
+    initialize_storage(storage)
+    storage_file = directory / "lan-storage.json"
+    write_private(storage_file, storage.model_dump_json().encode())
+    dry = apply_lan(spec, directory, storage_file, "127.0.0.2", check=True)
+    assert dry.returncode == 0, dry.stdout + dry.stderr
+    assert (spec.target.base / "current.json").read_bytes() == original
+    result = apply_lan(spec, directory, storage_file, "127.0.0.2")
+    assert result.returncode == 0, result.stdout + result.stderr
+    new_plan = VikunjaPlan.model_validate_json(
+        (runtime / "deployment-plan.json").read_bytes()
+    )
+    assert str(new_plan.target.bind_address) == "127.0.0.2"
+    assert (
+        preflight_board(new_plan).current.identity.model_dump(mode="json") == identity
+    )
+    assert all(
+        (runtime / name).read_bytes() == content for name, content in retained.items()
+    )
+    new_manifest = (spec.target.base / "current.json").read_bytes()
+    started = command(
+        [
+            "podman",
+            "inspect",
+            "--format={{.State.StartedAt}}",
+            spec.target.project + "_board_1",
+        ]
+    )
+    again = apply_lan(spec, directory, storage_file, "127.0.0.2")
+    assert again.returncode == 0, again.stdout + again.stderr
+    assert "changed=0" in again.stdout
+    assert (spec.target.base / "current.json").read_bytes() == new_manifest
+    assert (
+        command(
+            [
+                "podman",
+                "inspect",
+                "--format={{.State.StartedAt}}",
+                spec.target.project + "_board_1",
+            ]
+        )
+        == started
+    )
+    with socket.socket() as busy:
+        busy.bind(("127.0.0.3", spec.target.port))
+        busy.listen()
+        failed = apply_lan(spec, directory, storage_file, "127.0.0.3")
+    assert failed.returncode != 0
+    assert (spec.target.base / "current.json").read_bytes() == new_manifest
+    assert not (spec.target.base / ".pending-network").exists()
+    assert not (spec.target.base / ".operation-lock").exists()
+    lan_url = f"http://127.0.0.2:{spec.target.port}"
+    with httpx.Client(base_url=lan_url, timeout=20, trust_env=False) as client:
+        login(client, spec.owner)
+        assert (
+            client.get(f"/api/v2/tasks/{task['id']}").json()["title"]
+            == "LAN persistence proof"
+        )
+        assert (
+            client.get(
+                f"/api/v2/tasks/{task['id']}/attachments/{attachment_id}"
+            ).content
+            == b"preserved LAN attachment"
+        )
+        assert f"window.API_URL = '{lan_url}/api/v1'" in client.get("/").text
+    output = Path("/tmp") / (
+        "rootgdr-lan-review-" + spec.target.project.rsplit("-", 1)[-1]
+    )
+    output.mkdir(mode=0o755)
+    ensure_browsers_path()
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True)
+        for name, options in (
+            ("desktop", {"viewport": {"width": 1440, "height": 1000}}),
+            (
+                "phone",
+                {
+                    "viewport": {"width": 390, "height": 844},
+                    "is_mobile": True,
+                    "has_touch": True,
+                },
+            ),
+        ):
+            context = browser.new_context(**options)
+            page = context.new_page()
+            page.goto(lan_url + "/login", wait_until="networkidle")
+            page.locator("input#username").fill(spec.owner.username)
+            page.locator("input#password").fill(spec.owner.password.get_secret_value())
+            page.get_by_role(
+                "button", name=re.compile(r"^(Accedi|Log in)$", re.IGNORECASE)
+            ).click()
+            page.wait_for_url(lambda current: "/login" not in current, timeout=20000)
+            page.goto(
+                lan_url + f"/projects/{identity['project_id']}",
+                wait_until="networkidle",
+            )
+            page.get_by_text("LAN persistence proof", exact=True).first.wait_for()
+            page.screenshot(path=str(output / (name + ".png")), full_page=True)
+            context.close()
+        browser.close()
+    print("LAN board visual evidence: " + str(output))
+
+
+def test_lan_update_failed_backup_preserves_runtime(board_deployment):
+    spec, directory = board_deployment
+    assert apply_board(spec, directory).returncode == 0
+    runtime = spec.target.base / "runtime"
+    original = {
+        name: (runtime / name).read_bytes()
+        for name in (
+            "compose.yaml",
+            "config.json",
+            "deployment-plan.json",
+            "tooling-token",
+        )
+    }
+    manifest = (spec.target.base / "current.json").read_bytes()
+    repository = directory / "missing-repository"
+    repository.mkdir(mode=0o700)
+    storage = StorageSpec(
+        repository=repository, password_file=directory / "missing-password"
+    )
+    storage_file = directory / "missing-storage.json"
+    write_private(storage_file, storage.model_dump_json().encode())
+    result = apply_lan(spec, directory, storage_file, "127.0.0.2")
+    assert result.returncode != 0
+    assert all(
+        (runtime / name).read_bytes() == content for name, content in original.items()
+    )
+    assert (spec.target.base / "current.json").read_bytes() == manifest
+    assert not (spec.target.base / ".operation-lock").exists()
+    assert (
+        command(
+            [
+                "podman",
+                "inspect",
+                "--format={{.State.Running}}",
+                spec.target.project + "_board_1",
+            ]
+        ).strip()
+        == b"true"
+    )
+
+
 def test_board_password_login_desktop_and_phone_evidence(board_deployment):
     spec, directory = board_deployment
     assert apply_board(spec, directory).returncode == 0
@@ -1144,7 +1395,9 @@ def test_board_password_login_desktop_and_phone_evidence(board_deployment):
                 )
                 # The button's label follows the browser locale; the submit
                 # control is the same in every language.
-                page.locator("form button[type=submit]").first.click()
+                page.get_by_role(
+                    "button", name=re.compile(r"^(Accedi|Log in)$", re.IGNORECASE)
+                ).click()
                 page.wait_for_url(
                     lambda current: "/login" not in current, timeout=20000
                 )

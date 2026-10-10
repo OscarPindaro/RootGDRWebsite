@@ -27,12 +27,16 @@ def firewall(tmp_path, request):
         "scope = 'permanent' if '--permanent' in args else 'runtime'\n"
         "if os.environ.get('TEST_FIREWALL_FAILURE') == scope:\n"
         "    sys.exit(42)\n"
+        "rule = next(arg.split('=', 1)[1] for arg in args if '-rich-rule=' in arg)\n"
+        "port = next(port for port in ('8001', '3458') if f'port port=\"{port}\"' in rule)\n"
+        'assert rule == f\'rule family="ipv4" source address="192.168.1.0/24" port port="{port}" protocol="tcp" accept\'\n'
+        "entry = scope + ':' + port\n"
         "rules = json.loads(state.read_text()) if state.exists() else []\n"
         "if any(arg.startswith('--query-rich-rule=') for arg in args):\n"
-        "    sys.exit(0 if scope in rules else 1)\n"
+        "    sys.exit(0 if entry in rules else 1)\n"
         "assert '--zone=FedoraServer' in args\n"
         "assert any(arg.startswith('--add-rich-rule=rule family=') for arg in args)\n"
-        "rules.append(scope)\n"
+        "rules.append(entry)\n"
         "state.write_text(json.dumps(rules))\n"
     )
     executable.chmod(0o700)
@@ -61,6 +65,8 @@ def apply(firewall, *arguments):
             "-i",
             str(inventory),
             str(REPO / "deploy" / "server-setup.yaml"),
+            "--tags",
+            "firewall",
             "-e",
             "ansible_become=false",
             *arguments,
@@ -73,32 +79,40 @@ def apply(firewall, *arguments):
     )
 
 
+LAN_RULES = ["permanent:3458", "permanent:8001", "runtime:3458", "runtime:8001"]
+
+
 @pytest.mark.parametrize(
-    "existing", [[], ["runtime"], ["permanent"], ["runtime", "permanent"]]
+    "existing", [[], ["runtime:8001"], ["permanent:3458"], LAN_RULES]
 )
 def test_server_setup_check_mode_never_changes_firewall(firewall, existing):
     firewall[1].write_text(json.dumps(existing))
     before = firewall[1].read_bytes()
     result = apply(firewall, "--check")
     assert result.returncode == 0, result.stdout + result.stderr
-    assert ("changed=0" if len(existing) == 2 else "changed=1") in result.stdout
-    for scope in ("runtime", "permanent"):
-        assert (f"Would enable the {scope}" in result.stdout) == (scope not in existing)
+    assert ("changed=0" if len(existing) == 4 else "changed=1") in result.stdout
+    for entry in LAN_RULES:
+        scope, port = entry.split(":")
+        assert (f"Would enable the {scope} LAN rule for {port}" in result.stdout) == (
+            entry not in existing
+        )
     assert firewall[1].read_bytes() == before
 
 
-@pytest.mark.parametrize("existing", [[], ["runtime"], ["permanent"]])
+@pytest.mark.parametrize(
+    "existing", [[], ["runtime:8001"], ["permanent:3458"], LAN_RULES]
+)
 def test_server_setup_adds_only_missing_rules_and_reapply_is_unchanged(
     firewall, existing
 ):
     firewall[1].write_text(json.dumps(existing))
     first = apply(firewall)
     assert first.returncode == 0, first.stdout + first.stderr
-    assert sorted(json.loads(firewall[1].read_text())) == ["permanent", "runtime"]
+    assert sorted(json.loads(firewall[1].read_text())) == LAN_RULES
     second = apply(firewall)
     assert second.returncode == 0, second.stdout + second.stderr
     assert "changed=0" in second.stdout
-    assert len(json.loads(firewall[1].read_text())) == 2
+    assert len(json.loads(firewall[1].read_text())) == 4
 
 
 @pytest.mark.parametrize("failure", ["runtime", "permanent"])

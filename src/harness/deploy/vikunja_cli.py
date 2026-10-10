@@ -1,12 +1,14 @@
 import argparse
 import json
 import sys
+from ipaddress import IPv4Address
 from pathlib import Path
 from uuid import uuid4
 
 from pydantic import ValidationError
 
 from .backup import BackupError
+from .backup_schemas import BackupReceipt
 from .vikunja import (
     board_images,
     board_recovery_spec,
@@ -15,6 +17,7 @@ from .vikunja import (
     initialize_board,
     plan_board,
     preflight_board,
+    rebind_board,
     verify_board,
 )
 from .vikunja_schemas import VikunjaPlan, VikunjaSpec
@@ -34,6 +37,8 @@ def main() -> int:
         "verify",
         "finalize",
         "capture-spec",
+        "lan-check",
+        "lan-apply",
     ):
         operation = operations.add_parser(name)
         operation.add_argument("--plan", required=True, type=Path)
@@ -44,6 +49,12 @@ def main() -> int:
             operation.add_argument("--secret", required=True, type=Path)
         if name == "bootstrap":
             operation.add_argument("--provider", required=True)
+        if name in {"lan-check", "lan-apply"}:
+            operation.add_argument("--compose", required=True, type=Path)
+            operation.add_argument("--address", required=True, type=IPv4Address)
+            operation.add_argument("--provider", required=True)
+            if name == "lan-apply":
+                operation.add_argument("--receipt", required=True, type=Path)
         if name == "capture-spec":
             operation.add_argument(
                 "--purpose", choices=("weekly", "predeploy"), default="weekly"
@@ -67,6 +78,22 @@ def main() -> int:
         plan = VikunjaPlan.model_validate_json(args.plan.read_bytes())
         if args.operation == "preflight":
             print(preflight_board(plan).model_dump_json())
+        elif args.operation in {"lan-check", "lan-apply"}:
+            receipt = (
+                BackupReceipt.model_validate_json(args.receipt.read_bytes())
+                if args.operation == "lan-apply"
+                else None
+            )
+            print(
+                rebind_board(
+                    plan,
+                    args.address,
+                    args.provider,
+                    args.compose,
+                    receipt=receipt,
+                    check=args.operation == "lan-check",
+                ).model_dump_json()
+            )
         elif args.operation == "capture-spec":
             plan.run_id = uuid4()
             print(board_recovery_spec(plan, args.purpose).model_dump_json())

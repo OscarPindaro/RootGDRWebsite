@@ -217,9 +217,16 @@ def test_server_firewall_setup_is_separate_and_lan_scoped():
     )
     assert setup[1]["hosts"] == "rootgdr_targets"
     assert setup[1]["become"] is True
+    assert setup[1]["vars"]["rootgdr_firewall_ports"] == ["8001", "3458"]
+    for port in ("8001", "3458"):
+        assert setup[1]["vars"]["rootgdr_firewall_rule"].format(port=port) == (
+            f'rule family="ipv4" source address="192.168.1.0/24" port port="{port}" protocol="tcp" accept'
+        )
+    assert setup[2]["become"] is False
+    assert setup[2]["vars"]["vikunja_lan_address"] == "192.168.1.201"
     assert (
-        setup[1]["vars"]["rootgdr_firewall_rule"]
-        == 'rule family="ipv4" source address="192.168.1.0/24" port port="8001" protocol="tcp" accept'
+        setup[2]["vars"]["vikunja_compose_provider"]
+        == "{{ vikunja_application_base }}/tools/compose/bin/podman-compose"
     )
     ordinary = (deploy / "deploy.yaml").read_text()
     assert "server-setup" not in ordinary

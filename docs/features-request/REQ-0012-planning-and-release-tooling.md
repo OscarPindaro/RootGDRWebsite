@@ -46,6 +46,26 @@ records the earlier alternatives and confirmed choices.
   metadata. Keep 0.1.0 for this cycle. Drafting notes does not publish, tag, bump
   or consume fragments; Oscar chooses the version at release time.
 
+## LAN access extension — recorded 2026-10-10
+
+Oscar approved direct board access at `http://192.168.1.201:3458`, restricted
+by the firewall to `192.168.1.0/24`, replacing the requirement that human access
+must use an SSH tunnel. Retain the loopback listener for tooling and backups.
+Extend the owner-run `deploy/server-setup.yaml` with the 3458 runtime/permanent
+LAN rules and a narrow update of the existing board listener/frontend API URL.
+
+The networking update must preserve the image, accounts, scoped token, tickets,
+attachments and storage ownership. Require a verified encrypted pre-deploy
+backup under the shared operation lock; verify owner login, token scope and the
+frontend API URL; restore previous networking on failed verification. Unchanged
+reapplication must not restart the writer or take another backup. Bootstrap
+registration remains loopback-only and general upgrades remain refused.
+
+Ticket key: `REQ-0012/T07`. Acceptance includes read-only check mode, isolated
+real-board persistence/rollback checks, LAN-only firewall checks and desktop/phone
+browser login. Privileged firewall application is owner-run with interactive sudo.
+This does not authorize public Internet exposure or any data reset.
+
 ## Attachment tooling extension — recorded 2026-10-10
 
 Oscar requested image-upload tooling after choosing Vikunja, not Git, as the

@@ -3,6 +3,7 @@ import hmac
 import json
 import time
 from datetime import UTC, datetime
+from ipaddress import IPv4Address
 from pathlib import Path
 from typing import Literal
 
@@ -19,7 +20,7 @@ from .backup import (
     private_directory,
     write_private,
 )
-from .backup_schemas import CaptureSpec, FileSource
+from .backup_schemas import BackupReceipt, CaptureSpec, FileSource
 from .rollout import ImageSize, ImageTransfer
 from .vikunja_bootstrap import (
     BoardBootstrapResult,
@@ -33,10 +34,13 @@ from .vikunja_bootstrap import (
 )
 from .vikunja_schemas import (
     VIKUNJA_IMAGE,
+    BoardLanOperation,
     BoardOperation,
+    VikunjaAccount,
     VikunjaDeployment,
     VikunjaPlan,
     VikunjaSpec,
+    VikunjaTarget,
 )
 
 
@@ -67,6 +71,17 @@ class BoardConfig(BaseModel):
     database: BoardDatabaseConfig = BoardDatabaseConfig()
     files: BoardFilesConfig = BoardFilesConfig()
     mailer: BoardMailerConfig = BoardMailerConfig()
+
+
+def board_compose_contents(source: bytes, address: IPv4Address) -> bytes:
+    binding = b"      - '127.0.0.1:${VIKUNJA_PORT:?VIKUNJA_PORT required}:3456'\n"
+    if source.count(binding) != 1:
+        raise BackupError("Board Compose must have its reviewed loopback binding")
+    if address == IPv4Address("127.0.0.1"):
+        return source
+    return source.replace(
+        binding, binding + binding.replace(b"127.0.0.1", str(address).encode())
+    )
 
 
 def plan_board(spec: VikunjaSpec, compose_file: Path | None = None) -> VikunjaPlan:
@@ -113,8 +128,15 @@ def plan_board(spec: VikunjaSpec, compose_file: Path | None = None) -> VikunjaPl
         hashlib.sha256,
     ).hexdigest()
     access_port = spec.access_port or spec.target.port
+    public_port = (
+        access_port
+        if spec.target.bind_address == IPv4Address("127.0.0.1")
+        else spec.target.port
+    )
     config = BoardConfig(
-        service=BoardServiceConfig(publicurl=f"http://127.0.0.1:{access_port}/")
+        service=BoardServiceConfig(
+            publicurl=f"http://{spec.target.bind_address}:{public_port}/"
+        )
     )
     fingerprint = hashlib.sha256(spec.target.model_dump_json().encode())
     fingerprint.update(config.model_dump_json().encode())
@@ -128,7 +150,9 @@ def plan_board(spec: VikunjaSpec, compose_file: Path | None = None) -> VikunjaPl
         signing_secret_sha256=digest(secret),
         credentials_sha256=credentials_sha256,
         configuration_sha256=fingerprint.hexdigest(),
-        compose_sha256=digest(compose_file),
+        compose_sha256=hashlib.sha256(
+            board_compose_contents(compose_file.read_bytes(), spec.target.bind_address)
+        ).hexdigest(),
         image_id=image.image_id,
         helper_image_id=helper.image_id,
         access_port=access_port,
@@ -143,9 +167,14 @@ def configuration(
 ) -> BoardConfig:
     if not 1024 <= controller_port <= 65535:
         raise BackupError("The explicit controller tunnel/listener port is invalid")
+    public_port = (
+        controller_port
+        if plan.target.bind_address == IPv4Address("127.0.0.1")
+        else plan.target.port
+    )
     return BoardConfig(
         service=BoardServiceConfig(
-            publicurl=f"http://127.0.0.1:{controller_port}/",
+            publicurl=f"http://{plan.target.bind_address}:{public_port}/",
             enableregistration=registration,
         )
     )
@@ -214,9 +243,9 @@ def preflight_board(plan: VikunjaPlan) -> BoardOperation:
             "Board operation requires its canonical private application directory"
         )
     current_file = base / "current.json"
-    if (base / ".pending-bootstrap").exists():
+    if (base / ".pending-bootstrap").exists() or (base / ".pending-network").exists():
         raise BackupError(
-            "Incomplete board bootstrap requires operator review, not account recreation"
+            "Incomplete board operation requires operator review, not account recreation"
         )
     if current_file.exists() or current_file.is_symlink():
         current = VikunjaDeployment.model_validate_json(
@@ -283,6 +312,10 @@ def initialize_board(
     operation = preflight_board(plan)
     if not operation.initialized:
         return operation
+    if plan.target.bind_address != IPv4Address("127.0.0.1"):
+        raise BackupError(
+            "Bootstrap remains loopback-only; enable LAN access after closed-registration verification"
+        )
     if (
         spec.target != plan.target
         or spec.owner.username != plan.owner_username
@@ -436,9 +469,16 @@ def bootstrap_board(plan: VikunjaPlan, spec: VikunjaSpec, provider: str) -> None
     wait_for_board(plan)
 
 
-def verify_board(plan: VikunjaPlan, spec: VikunjaSpec) -> None:
+def verify_board(plan: VikunjaPlan, spec: VikunjaSpec | None = None) -> None:
     wait_for_board(plan)
     runtime = plan.target.base / "runtime"
+    owner = (
+        spec.owner
+        if spec
+        else VikunjaAccount.model_validate_json(
+            private_board_file(runtime / "owner.json")
+        )
+    )
     identity = BoardBootstrapResult.model_validate(
         {
             "identity": json.loads(private_board_file(runtime / "identity.json")),
@@ -460,7 +500,7 @@ def verify_board(plan: VikunjaPlan, spec: VikunjaSpec) -> None:
             or not info.auth.local.enabled
         ):
             raise BackupError("Board public capability settings are unsafe")
-        login(client, spec.owner)
+        login(client, owner)
         user = BoardUser.model_validate(request(client, "GET", "/api/v2/user").json())
         if (
             user.id != identity.identity.owner_id
@@ -494,8 +534,14 @@ def verify_board(plan: VikunjaPlan, spec: VikunjaSpec) -> None:
         .decode()
         .strip()
     )
-    if binding != f"127.0.0.1:{plan.target.port}":
-        raise BackupError("Board listener differs from the reviewed loopback target")
+    expected = {
+        f"127.0.0.1:{plan.target.port}",
+        f"{plan.target.bind_address}:{plan.target.port}",
+    }
+    if set(binding.splitlines()) != expected:
+        raise BackupError(
+            "Board listeners differ from the reviewed loopback/LAN target"
+        )
     image_id = (
         command(
             [
@@ -551,6 +597,149 @@ def finalize_board(plan: VikunjaPlan, spec: VikunjaSpec) -> VikunjaDeployment:
     return current
 
 
+def rebind_board(
+    plan: VikunjaPlan,
+    address: IPv4Address,
+    provider: str,
+    compose_file: Path,
+    *,
+    receipt: BackupReceipt | None = None,
+    check: bool = False,
+) -> BoardLanOperation:
+    current = preflight_board(plan).current
+    if current is None:
+        raise BackupError("LAN access requires an existing verified board")
+    target = VikunjaTarget(
+        project=plan.target.project,
+        base=plan.target.base,
+        port=plan.target.port,
+        bind_address=address,
+        manage_systemd=plan.target.manage_systemd,
+        reserve_bytes=plan.target.reserve_bytes,
+    )
+    runtime = target.base / "runtime"
+    if compose_file.resolve() != compose_file or not compose_file.is_file():
+        raise BackupError("LAN Compose source must be canonical")
+    source = compose_file.read_bytes()
+    if (runtime / "compose.yaml").read_bytes() != board_compose_contents(
+        source, current.target.bind_address
+    ):
+        raise BackupError("LAN updates cannot change unrelated Compose configuration")
+    if target == current.target:
+        verify_board(plan)
+        return BoardLanOperation(changed=False, current=current)
+    if check:
+        return BoardLanOperation(changed=True, current=current)
+    if (
+        receipt is None
+        or receipt.application != "vikunja"
+        or receipt.purpose != "predeploy"
+    ):
+        raise BackupError("LAN access requires a verified pre-deploy board backup")
+    if private_board_file(target.base / ".operation-lock/owner").decode() != str(
+        receipt.run_id
+    ):
+        raise BackupError("LAN access requires the backup run's shared operation lock")
+    writer = target.project + "_board_1"
+    if (
+        command(
+            [
+                "podman",
+                "inspect",
+                "--format={{.State.Running}} {{.State.Paused}}",
+                writer,
+            ]
+        ).strip()
+        != b"false false"
+    ):
+        raise BackupError(
+            "The backed-up board writer must be stopped before changing listeners"
+        )
+    updated = plan.model_copy(deep=True)
+    updated.run_id = receipt.run_id
+    updated.target = target
+    config = configuration(updated, controller_port=updated.access_port)
+    fingerprint = hashlib.sha256(target.model_dump_json().encode())
+    fingerprint.update(config.model_dump_json().encode())
+    fingerprint.update(updated.project_title.encode())
+    updated.configuration_sha256 = fingerprint.hexdigest()
+    compose = board_compose_contents(source, address)
+    updated.compose_sha256 = hashlib.sha256(compose).hexdigest()
+    changes = [
+        (runtime / "compose.yaml", compose),
+        (runtime / "config.json", config.model_dump_json().encode()),
+        (runtime / "deployment-plan.json", updated.model_dump_json().encode()),
+    ]
+    originals = [
+        (path, path.read_bytes(), path.stat().st_mode & 0o777) for path, _ in changes
+    ]
+    manifest_file = target.base / "current.json"
+    originals.append((manifest_file, private_board_file(manifest_file), 0o600))
+    pending = target.base / ".pending-network"
+    write_private(pending, str(receipt.run_id).encode())
+
+    def replace_file(path: Path, contents: bytes, mode: int) -> None:
+        temporary = path.with_name(f".{path.name}.{receipt.run_id}.tmp")
+        write_private(temporary, contents)
+        temporary.chmod(mode)
+        temporary.replace(path)
+
+    try:
+        for path, contents in changes:
+            replace_file(path, contents, 0o644 if path.name == "config.json" else 0o600)
+        command(
+            [
+                *board_compose(updated, provider),
+                "up",
+                "-d",
+                "--force-recreate",
+                "--no-build",
+                "--pull=never",
+                "board",
+            ]
+        )
+        verify_board(updated)
+        with httpx.Client(
+            base_url=f"http://127.0.0.1:{target.port}", timeout=20, trust_env=False
+        ) as client:
+            html = request(client, "GET", "/").text
+            api_url = config.service.publicurl.rstrip("/") + "/api/v1"
+            if f"window.API_URL = '{api_url}'" not in html:
+                raise BackupError("Board frontend still points at another API endpoint")
+        current.target = target
+        current.configuration_sha256 = updated.configuration_sha256
+        current.compose_sha256 = updated.compose_sha256
+        current.verified_at = datetime.now(UTC)
+        replace_file(manifest_file, current.model_dump_json().encode(), 0o600)
+    except BackupError, OSError, ValueError:
+        try:
+            for path, contents, mode in originals:
+                replace_file(path, contents, mode)
+            command(
+                [
+                    *board_compose(plan, provider),
+                    "up",
+                    "-d",
+                    "--force-recreate",
+                    "--no-build",
+                    "--pull=never",
+                    "board",
+                ]
+            )
+            verify_board(plan)
+        except BackupError, OSError, ValueError:
+            command(["podman", "stop", "--time=30", writer])
+            raise BackupError(
+                "LAN rollback failed; board stopped and pending marker retained for operator review"
+            ) from None
+        pending.unlink()
+        raise BackupError(
+            "LAN update failed; the verified previous listeners were restored"
+        ) from None
+    pending.unlink()
+    return BoardLanOperation(changed=True, current=current)
+
+
 def board_recovery_spec(
     plan: VikunjaPlan, purpose: Literal["weekly", "predeploy"] = "weekly"
 ) -> CaptureSpec:
@@ -582,6 +771,7 @@ def board_recovery_spec(
                 ("tooling_token", runtime / "tooling-token"),
                 ("identity", runtime / "identity.json"),
                 ("deployment", plan.target.base / "current.json"),
+                ("deployment_plan", runtime / "deployment-plan.json"),
             )
         ],
         helper_image=plan.helper_image_id,

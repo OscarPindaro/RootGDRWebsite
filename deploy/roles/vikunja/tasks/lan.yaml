@@ -1,0 +1,140 @@
+---
+- name: Refuse a listener outside the approved board and LAN profile
+  ansible.builtin.assert:
+    that:
+      - (vikunja_application_base == '/home/pinball/rootgdr-vikunja' and vikunja_lan_address == '192.168.1.201') or (vikunja_application_base.split('/')[-1].startswith('rootgdr-vikunja-disposable-') and vikunja_lan_address.startswith('127.'))
+
+- name: Read the existing verified board plan without exposing credentials
+  ansible.builtin.slurp:
+    src: "{{ vikunja_application_base }}/runtime/deployment-plan.json"
+  register: vikunja_lan_existing
+  no_log: true
+
+- name: Determine whether the approved listener is already configured
+  ansible.builtin.set_fact:
+    vikunja_lan_needed: "{{ (vikunja_lan_existing.content | b64decode | from_json).target.bind_address != vikunja_lan_address }}"
+    vikunja_lan_command: ["{{ vikunja_helper_python }}", '-m', harness.deploy.vikunja_cli]
+  no_log: true
+
+- name: Verify current runtime identities before any writer or listener mutation
+  ansible.builtin.command:
+    argv: "{{ vikunja_lan_command + ['preflight', '--plan', vikunja_application_base + '/runtime/deployment-plan.json'] }}"
+  changed_when: false
+  check_mode: false
+  no_log: true
+
+- name: Report the backup-gated listener update in check mode
+  ansible.builtin.debug:
+    msg: "Would back up the existing board and enable {{ vikunja_lan_address }}:3458 while retaining loopback access"
+  when: ansible_check_mode and vikunja_lan_needed
+  changed_when: true
+
+- name: Verify an unchanged listener without a backup or restart
+  ansible.builtin.command:
+    argv: "{{ vikunja_lan_command + ['lan-check', '--plan', vikunja_application_base + '/runtime/deployment-plan.json', '--compose', vikunja_application_base + '/tools/python/harness/deploy/vikunja.compose.yaml', '--address', vikunja_lan_address, '--provider', vikunja_compose_provider] }}"
+  when: not ansible_check_mode and not vikunja_lan_needed
+  changed_when: false
+  no_log: true
+
+- name: Generate a fresh pre-deploy capture for the existing verified board
+  ansible.builtin.command:
+    argv: "{{ vikunja_lan_command + ['capture-spec', '--plan', vikunja_application_base + '/runtime/deployment-plan.json', '--purpose', 'predeploy'] }}"
+  register: vikunja_lan_capture
+  when: not ansible_check_mode and vikunja_lan_needed
+  changed_when: false
+  no_log: true
+
+- name: Keep the typed backup boundary private
+  ansible.builtin.set_fact:
+    backup_spec: "{{ vikunja_lan_capture.stdout | from_json }}"
+    backup_application_base: "{{ vikunja_application_base }}"
+    backup_capture_command: ["{{ vikunja_helper_python }}", '-m', harness.deploy.backup_cli]
+    backup_controller_command: [uv, run, '--frozen', '--no-sync', '--project', "{{ playbook_dir }}/..", python, '-m', harness.deploy.backup_cli]
+    backup_storage_file: "{{ vikunja_backup_storage_file }}"
+    backup_manage_lock: false
+  when: not ansible_check_mode and vikunja_lan_needed
+  no_log: true
+
+- name: Acquire the shared board lock without replacing another operation
+  ansible.builtin.command:
+    argv: [mkdir, '--mode=0700', "{{ vikunja_application_base }}/.operation-lock"]
+  when: not ansible_check_mode and vikunja_lan_needed
+
+- name: Change only networking under this invocation's verified recovery gate
+  when: not ansible_check_mode and vikunja_lan_needed
+  block:
+    - name: Mark this backup run as the lock owner
+      ansible.builtin.copy:
+        content: "{{ backup_spec.run_id }}"
+        dest: "{{ vikunja_application_base }}/.operation-lock/owner"
+        mode: '0600'
+
+    - name: Install only the reviewed standalone networking helpers
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../src/harness/deploy/{{ item }}"
+        dest: "{{ vikunja_application_base }}/tools/python/harness/deploy/{{ item }}"
+        mode: '0600'
+      loop: [vikunja.py, vikunja_schemas.py, vikunja_cli.py]
+
+    - name: Retain the reviewed loopback Compose source for narrow listener updates
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/vikunja.compose.yaml"
+        dest: "{{ vikunja_application_base }}/tools/python/harness/deploy/vikunja.compose.yaml"
+        mode: '0600'
+
+    - name: Select a unique controller recovery receipt
+      ansible.builtin.set_fact:
+        backup_receipt_file: "{{ vikunja_backup_receipt_directory }}/{{ backup_spec.run_id }}.receipt.json"
+
+    - name: Capture and verify the encrypted off-server recovery copy
+      ansible.builtin.include_role:
+        name: coordinated_backup
+
+    - name: Require the verified backup of this exact locked run
+      ansible.builtin.assert:
+        that:
+          - backup_verified | bool
+          - backup_verified_run_id == backup_spec.run_id
+
+    - name: Transfer only this run's verified receipt to the locked board boundary
+      ansible.builtin.copy:
+        src: "{{ backup_receipt_file }}"
+        dest: "{{ vikunja_application_base }}/.operation-lock/receipt.json"
+        mode: '0600'
+      no_log: true
+
+    - name: Enable the LAN listener and frontend URL without changing accounts or storage
+      ansible.builtin.command:
+        argv: "{{ vikunja_lan_command + ['lan-apply', '--plan', vikunja_application_base + '/runtime/deployment-plan.json', '--compose', vikunja_application_base + '/tools/python/harness/deploy/vikunja.compose.yaml', '--address', vikunja_lan_address, '--provider', vikunja_compose_provider, '--receipt', vikunja_application_base + '/.operation-lock/receipt.json'] }}"
+      changed_when: true
+      no_log: true
+
+  rescue:
+    - name: Check whether networking needs explicit operator recovery
+      ansible.builtin.stat:
+        path: "{{ vikunja_application_base }}/.pending-network"
+      register: vikunja_lan_pending
+
+    - name: Resume only the unchanged writers when no network recovery is pending
+      ansible.builtin.command:
+        argv: [podman, start, "{{ item }}"]
+      loop: "{{ backup_running_writers | default([]) }}"
+      when: not vikunja_lan_pending.stat.exists
+
+    - name: Report an unverified listener update without exposing private inputs
+      ansible.builtin.fail:
+        msg: Board LAN update failed; review the backup receipt and any pending network recovery marker
+
+  always:
+    - name: Re-read this invocation's lock owner before cleanup
+      ansible.builtin.slurp:
+        src: "{{ vikunja_application_base }}/.operation-lock/owner"
+      register: vikunja_lan_lock_owner
+      no_log: true
+
+    - name: Release only this invocation's operation lock
+      ansible.builtin.file:
+        path: "{{ vikunja_application_base }}/.operation-lock"
+        state: absent
+      when: vikunja_lan_lock_owner.content | default('') | b64decode == backup_spec.run_id
+      no_log: true

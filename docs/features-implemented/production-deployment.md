@@ -245,22 +245,40 @@ repository on the PC; `--ask-become-pass` prompts locally for the server's sudo
 password. It requires exactly one host in the existing `rootgdr_targets` inventory.
 
 ```console
-ANSIBLE_CONFIG=deploy/ansible.cfg ansible-playbook \
+ANSIBLE_CONFIG=deploy/ansible.cfg uv run ansible-playbook \
   -i ~/.config/devin/rootgdr/inventory.yaml deploy/server-setup.yaml \
   --ask-become-pass --check
 
-ANSIBLE_CONFIG=deploy/ansible.cfg ansible-playbook \
+ANSIBLE_CONFIG=deploy/ansible.cfg uv run ansible-playbook \
   -i ~/.config/devin/rootgdr/inventory.yaml deploy/server-setup.yaml \
   --ask-become-pass
 ```
 
-The approved rule allows only IPv4 `192.168.1.0/24` to TCP 8001 in `FedoraServer`.
-The zone check accepts firewalld's optional `(default)` annotation. The playbook
-refuses an inactive zone or failed firewall query, then adds only missing
-runtime/permanent copies. It does not reload the firewall, change other
-rules, install packages, start services or touch application data. Check mode
-runs read-only queries and reports missing rules without applying them; reapply
-with both copies present reports no changes. Ordinary deploys remain unprivileged.
+The approved rules allow only IPv4 `192.168.1.0/24` to TCP 8001 (Root GDR)
+and 3458 (Vikunja) in `FedoraServer`. The zone check accepts firewalld's optional
+`(default)` annotation. All four runtime/permanent queries must succeed before
+any missing rule is added. The firewall step does not reload firewalld or change
+unrelated rules. `--tags firewall` selects only that privileged step.
+
+The separate unprivileged `--tags vikunja-lan` step enables the existing board
+at `http://192.168.1.201:3458` while retaining `127.0.0.1:3458` for tooling.
+It updates the frontend's embedded API URL too. Under the shared operation lock,
+it takes and reads back an encrypted pre-deploy backup before recreating only the
+board container with the same image, accounts, token and storage. Login, scopes,
+listeners and frontend URL must pass before metadata is published. Failure restores
+and verifies the previous networking; failed rollback stops the board and leaves
+`.pending-network` for explicit operator review. No accounts or data are reset.
+
+The existing controller storage specification and pre-deploy receipt directory
+are used; no repository or credentials are initialized automatically. Controller
+backup runs through the project's locked `uv` environment, including when Ansible
+itself uses a system Python without the harness package. Check mode
+queries the firewall and validates current board identities without changing
+runtime configuration or stopping writers. Unchanged reapplication verifies the
+board without backup/restart. Bootstrap still uses loopback with registration
+closed before LAN access is enabled; general board upgrades remain refused.
+For later board deployment checks, private inputs must reflect the selected LAN
+`target.bind_address`. Ordinary deploys remain unprivileged.
 
 Ansible syntax and local execution checks cover check mode, partial rule state,
 repeat application, query failures and inventory/zone rejection using an isolated

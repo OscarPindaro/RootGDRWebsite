@@ -5,6 +5,7 @@
   become: false
   gather_facts: false
   any_errors_fatal: true
+  tags: [always]
   tasks:
     - name: Refuse an empty or ambiguous server inventory
       ansible.builtin.assert:
@@ -12,14 +13,16 @@
           - groups.get('rootgdr_targets', []) | length == 1
         fail_msg: Explicitly inventory exactly one Root GDR server; no default target is allowed
 
-- name: Allow Root GDR from the approved home LAN
+- name: Allow Root GDR and Vikunja from the approved home LAN
   hosts: rootgdr_targets
   serial: 1
   become: true
   gather_facts: false
+  tags: [firewall]
   vars:
     rootgdr_firewall_zone: FedoraServer
-    rootgdr_firewall_rule: 'rule family="ipv4" source address="192.168.1.0/24" port port="8001" protocol="tcp" accept'
+    rootgdr_firewall_ports: ['8001', '3458']
+    rootgdr_firewall_rule: 'rule family="ipv4" source address="192.168.1.0/24" port port="{port}" protocol="tcp" accept'
   tasks:
     - name: Read active firewall zones without changing them
       ansible.builtin.command:
@@ -34,10 +37,10 @@
           - rootgdr_firewall_zone in rootgdr_active_zones.stdout_lines or (rootgdr_firewall_zone + ' (default)') in rootgdr_active_zones.stdout_lines
         fail_msg: The selected firewall zone is not active; review the server before applying a rule
 
-    - name: Query both runtime and permanent LAN rules before changing either
+    - name: Query all runtime and permanent LAN rules before changing any
       ansible.builtin.command:
-        argv: "{{ ['firewall-cmd'] + (['--permanent'] if item == 'permanent' else []) + ['--zone=' + rootgdr_firewall_zone, '--query-rich-rule=' + rootgdr_firewall_rule] }}"
-      loop: [runtime, permanent]
+        argv: "{{ ['firewall-cmd'] + (['--permanent'] if item.1 == 'permanent' else []) + ['--zone=' + rootgdr_firewall_zone, '--query-rich-rule=' + rootgdr_firewall_rule.format(port=item.0)] }}"
+      loop: "{{ rootgdr_firewall_ports | product(['runtime', 'permanent']) | list }}"
       register: rootgdr_firewall_queries
       changed_when: false
       failed_when: rootgdr_firewall_queries.rc not in [0, 1]
@@ -45,7 +48,7 @@
 
     - name: Report missing LAN rules in check mode without applying them
       ansible.builtin.debug:
-        msg: "Would enable the {{ item.item }} LAN rule in {{ rootgdr_firewall_zone }}"
+        msg: "Would enable the {{ item.item.1 }} LAN rule for {{ item.item.0 }} in {{ rootgdr_firewall_zone }}"
       loop: "{{ rootgdr_firewall_queries.results }}"
       loop_control:
         label: "{{ item.item }}"
@@ -54,9 +57,28 @@
 
     - name: Enable only missing LAN rules without reloading unrelated firewall state
       ansible.builtin.command:
-        argv: "{{ ['firewall-cmd'] + (['--permanent'] if item.item == 'permanent' else []) + ['--zone=' + rootgdr_firewall_zone, '--add-rich-rule=' + rootgdr_firewall_rule] }}"
+        argv: "{{ ['firewall-cmd'] + (['--permanent'] if item.item.1 == 'permanent' else []) + ['--zone=' + rootgdr_firewall_zone, '--add-rich-rule=' + rootgdr_firewall_rule.format(port=item.item.0)] }}"
       loop: "{{ rootgdr_firewall_queries.results }}"
       loop_control:
         label: "{{ item.item }}"
       when: not ansible_check_mode and item.rc == 1
       changed_when: true
+
+- name: Enable LAN access to the existing board after a verified backup
+  hosts: rootgdr_targets
+  serial: 1
+  become: false
+  gather_facts: false
+  tags: [vikunja-lan]
+  vars:
+    vikunja_lan_address: 192.168.1.201
+    vikunja_application_base: /home/pinball/rootgdr-vikunja
+    vikunja_helper_python: "{{ vikunja_application_base }}/tools/helper/bin/python"
+    vikunja_compose_provider: "{{ vikunja_application_base }}/tools/compose/bin/podman-compose"
+    vikunja_backup_storage_file: "{{ lookup('ansible.builtin.env', 'HOME') }}/.config/devin/rootgdr/storage.json"
+    vikunja_backup_receipt_directory: "{{ lookup('ansible.builtin.env', 'HOME') }}/.local/share/rootgdr/backups/predeploy"
+  environment:
+    PYTHONPATH: "{{ vikunja_application_base }}/tools/python"
+  tasks:
+    - name: Update only the reviewed board listener and frontend URL
+      ansible.builtin.include_tasks: roles/vikunja/tasks/lan.yaml

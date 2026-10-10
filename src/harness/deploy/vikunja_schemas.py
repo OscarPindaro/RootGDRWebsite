@@ -1,4 +1,5 @@
 from datetime import datetime
+from ipaddress import IPv4Address, IPv4Network
 from pathlib import Path
 from typing import Literal
 from uuid import UUID
@@ -17,7 +18,7 @@ class VikunjaTarget(Boundary):
     )
     base: Path
     port: int = Field(ge=1024, le=65535)
-    bind_address: Literal["127.0.0.1"] = "127.0.0.1"
+    bind_address: IPv4Address = IPv4Address("127.0.0.1")
     manage_systemd: bool = True
     reserve_bytes: int = Field(default=512 * 1024 * 1024, ge=512 * 1024 * 1024)
 
@@ -35,6 +36,16 @@ class VikunjaTarget(Boundary):
             )
         if self.project == "rootgdr-vikunja" and not self.manage_systemd:
             raise ValueError("The server board requires its native user lifecycle")
+        trusted = self.bind_address.is_loopback or any(
+            self.bind_address in IPv4Network(network)
+            for network in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")
+        )
+        if not trusted or (
+            self.project != "rootgdr-vikunja" and not self.bind_address.is_loopback
+        ):
+            raise ValueError(
+                "Board listeners require an explicit trusted LAN address; disposable boards remain loopback-only"
+            )
         return self
 
 
@@ -122,3 +133,8 @@ class VikunjaDeployment(Boundary):
 class BoardOperation(Boundary):
     initialized: bool
     current: VikunjaDeployment | None = None
+
+
+class BoardLanOperation(Boundary):
+    changed: bool
+    current: VikunjaDeployment
