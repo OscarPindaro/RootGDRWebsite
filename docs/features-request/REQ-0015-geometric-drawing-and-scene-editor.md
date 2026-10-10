@@ -173,22 +173,24 @@ keep internal editor controls, skeleton guides and snap guides out of exports.
 Nine JPEGs were supplied and visually reviewed in the intake conversation. The
 user explicitly chose **Vikunja attachments**, not repository-stored image
 assets, as their durable location. The repository retains this specification,
-captions and confirmed task/attachment references only. The original session
-files are under `/tmp/devin-pasted-images/`; the user also supplied local JPEGs
-as upload sources. Neither set is a substitute for verified board attachments.
-Upload is not yet confirmed; no attachment IDs or image links are invented.
+captions and confirmed task/attachment references only.
 
-| Image | Original session filename | Caption |
-| --- | --- | --- |
-| 1 | `1791665969976335330-30103-1-pasted.jpg` | Vertex dragging and inserting edge points to bend a beak; a sword's grip attaches to a hand and follows its direction. |
-| 2 | `1791665969976832318-30103-2-pasted.jpg` | Editor sketch with left shape tools, central grid, right object/group list; editable keypoint skeletons and reusable body-size presets. |
-| 3 | `1791665969977213794-30103-3-pasted.jpg` | Tacito, an angular wolf with exposed upper body, a large back-mounted sword, head/belly scars, facial tattoo, red trousers, belt and boots; blue accent strokes. |
-| 4 | `1791665969977561820-30103-4-pasted.jpg` | J. Como Salvasterzi: blue animal silhouette, red vest, yellow trousers, belt, tail and small separate accessories. |
-| 5 | `1791665969977890072-30103-5-pasted.jpg` | Lizard al Gaib: green lizard with an open angular jaw, polygonal hat, tan shirt, brown lower clothing and a belt-mounted kris/dagger. |
-| 6 | `1791665969978229849-30103-6-pasted.jpg` | Edeladra: fox head in a green cloak, fist-shaped brooch, dark interior, facial tattoo and turquoise magic strokes. The user describes faint ghost drawings inside the cloak that are difficult to discern in the photograph. |
-| 7 | `1791665969978678481-30103-7-pasted.jpg` | Luciano Piumalesta: guinea fowl with an approximately octagonal body, separate neck/head, angular wings and striped clothing. |
-| 8 | `1791665969979271228-30103-8-pasted.jpg` | Altus Fanfaron: triangular head with a downward-bent beak, three red triangular crest points, angular blue body/clothing and a large central sword. |
-| 9 | `1791665969979832502-30103-9-pasted.jpg` | Mario Fintonio: orange animal face with a broad grin, tall hat, purple jacket, bow tie, trousers and cane; combines polygons with rounded details. |
+All nine images were uploaded to Vikunja task **2** on 2026-10-10. Metadata and
+stored bytes were verified through the API using SHA-256. Repeating the upload
+reused the same attachment IDs without creating duplicates. Local JPEGs remain
+upload sources only and are not committed as repository evidence.
+
+| Image | Attachment ID | Uploaded filename | Caption |
+| --- | --- | --- | --- |
+| 1 | 1 | `photo_2_2026-10-10_22-33-54.jpg` | Vertex dragging and inserting edge points to bend a beak; a sword's grip attaches to a hand and follows its direction. |
+| 2 | 2 | `photo_1_2026-10-10_22-33-54.jpg` | Editor sketch with left shape tools, central grid, right object/group list; editable keypoint skeletons and reusable body-size presets. |
+| 3 | 3 | `photo_7_2026-10-10_22-38-11.jpg` | Tacito, an angular wolf with exposed upper body, a large back-mounted sword, head/belly scars, facial tattoo, red trousers, belt and boots; blue accent strokes. |
+| 4 | 4 | `photo_6_2026-10-10_22-38-11.jpg` | J. Como Salvasterzi: blue animal silhouette, red vest, yellow trousers, belt, tail and small separate accessories. |
+| 5 | 5 | `photo_5_2026-10-10_22-38-11.jpg` | Lizard al Gaib: green lizard with an open angular jaw, polygonal hat, tan shirt, brown lower clothing and a belt-mounted kris/dagger. |
+| 6 | 6 | `photo_4_2026-10-10_22-38-11.jpg` | Edeladra: fox head in a green cloak, fist-shaped brooch, dark interior, facial tattoo and turquoise magic strokes. The user describes faint ghost drawings inside the cloak that are difficult to discern in the photograph. |
+| 7 | 7 | `photo_3_2026-10-10_22-38-11.jpg` | Luciano Piumalesta: guinea fowl with an approximately octagonal body, separate neck/head, angular wings and striped clothing. |
+| 8 | 8 | `photo_2_2026-10-10_22-38-11.jpg` | Altus Fanfaron: triangular head with a downward-bent beak, three red triangular crest points, angular blue body/clothing and a large central sword. |
+| 9 | 9 | `photo_1_2026-10-10_22-38-11.jpg` | Mario Fintonio: orange animal face with a broad grin, tall hat, purple jacket, bow tie, trousers and cane; combines polygons with rounded details. |
 
 The paper texture and hand-drawn lettering in these references are not a request
 for textured digital rendering or handwriting recognition. Printable cards do
@@ -211,12 +213,6 @@ need editable name/title text; font and layout choices remain open.
 - Portrait/document updates after editing the drawing: live references or
   explicitly published snapshots; export dimensions and card print dimensions,
   margins, typography and printing workflow.
-- Upload the nine images to Vikunja task **2**, then record confirmed attachment
-  IDs/references. The Backlog CLI now supports verified `attach` uploads under
-  [REQ-0012/T08](REQ-0012-planning-and-release-tooling.md#attachment-tooling-extension--recorded-2026-10-10),
-  but the existing tooling token needs separately approved attachment scopes.
-  Upload remains unconfirmed. Local JPEGs are upload sources only, not repository
-  evidence, and must not be staged as part of this request.
 
 ## Tracking
 
