@@ -198,3 +198,95 @@ def test_import_reports_preexisting_duplicate_keys(monkeypatch):
     )
     assert result.exit_code == 1
     assert "REQ-0012/T05" in result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("fail_second", [False, True])
+def test_attach_cli_reports_verified_uploads_and_partial_failure(
+    monkeypatch, tmp_path, fail_second
+):
+    images = [tmp_path / name for name in ("first.png", "second.jpg")]
+    for image in images:
+        image.write_bytes(b"image-content")
+    stored = []
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.method == "POST":
+            if stored and fail_second:
+                return httpx.Response(403, text="secret-bearing upstream body")
+            filename = images[len(stored)].name
+            item = {
+                "id": len(stored) + 1,
+                "task_id": 7,
+                "file": {
+                    "id": len(stored) + 1,
+                    "name": filename,
+                    "mime": "image/png",
+                    "size": 13,
+                },
+            }
+            stored.append(item)
+            return httpx.Response(201, json={"success": [item], "errors": []})
+        if request.url.path.endswith("/attachments"):
+            return httpx.Response(200, json=envelope(stored))
+        return httpx.Response(200, content=b"image-content")
+
+    runner = import_runner(monkeypatch, handler, calls)
+    result = runner.invoke(
+        harness_app, ["backlog", "attach", "7", *map(str, images), "--json"]
+    )
+    assert result.exit_code == int(fail_second), result.output
+    payload = json.loads(result.stdout)
+    assert payload["complete"] is not fail_second
+    assert len(payload["uploads"]) == (1 if fail_second else 2)
+    assert all(item["created"] for item in payload["uploads"])
+    assert "secret-bearing" not in result.stdout + result.stderr
+    if fail_second:
+        assert "insufficiently scoped" in result.stderr
+        assert "Verified uploads are retained" in " ".join(result.stderr.split())
+    else:
+        repeated = runner.invoke(
+            harness_app, ["backlog", "attach", "7", *map(str, images), "--json"]
+        )
+        assert repeated.exit_code == 0, repeated.output
+        assert all(
+            not item["created"] for item in json.loads(repeated.stdout)["uploads"]
+        )
+        assert len(stored) == 2
+
+
+def test_attach_cli_validates_all_paths_before_uploading(monkeypatch, tmp_path):
+    image = tmp_path / "first.png"
+    image.write_bytes(b"image")
+    calls: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("invalid path must stop before network access")
+
+    runner = import_runner(monkeypatch, handler, calls)
+    result = runner.invoke(
+        harness_app,
+        ["backlog", "attach", "7", str(image), str(tmp_path / "missing.png")],
+    )
+    assert result.exit_code == 2
+    assert calls == []
+
+
+def test_attachments_cli_lists_typed_metadata(monkeypatch):
+    attachment = {
+        "id": 5,
+        "task_id": 7,
+        "file": {"id": 8, "name": "portrait.png", "mime": "image/png", "size": 3},
+    }
+    calls: list[httpx.Request] = []
+    runner = import_runner(
+        monkeypatch,
+        lambda request: httpx.Response(200, json=envelope([attachment])),
+        calls,
+    )
+    result = runner.invoke(harness_app, ["backlog", "attachments", "7", "--json"])
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.stdout) == [attachment]
+    human = runner.invoke(harness_app, ["backlog", "attachments", "7"])
+    assert human.exit_code == 0
+    assert "portrait.png" in human.stdout

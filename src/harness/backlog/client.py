@@ -1,11 +1,15 @@
 """Typed Vikunja API v2 client. Tokens come from a private file, never argv."""
 
+import hashlib
+import mimetypes
 import os
+import stat
 from pathlib import Path
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, BinaryIO, Literal
+from urllib.parse import urlsplit
 
 import httpx
-from pydantic import BaseModel, ConfigDict, Field, SecretStr
+from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError
 
 from ..deploy.backup import BackupError
 
@@ -47,6 +51,41 @@ class BoardBucket(BoardRecord):
     tasks: list[BoardRecord] | None = None
 
 
+class BoardFile(BaseModel):
+    id: int = Field(gt=0)
+    name: str
+    mime: str
+    size: int = Field(ge=0)
+
+
+class BoardAttachment(BaseModel):
+    id: int = Field(gt=0)
+    task_id: int = Field(gt=0)
+    file: BoardFile
+
+
+class BoardUploadError(BaseModel):
+    code: int = 0
+
+
+class BoardAttachmentUpload(BaseModel):
+    success: list[BoardAttachment] | None = None
+    errors: list[BoardUploadError] | None = None
+
+
+class BoardUploadReceipt(BaseModel):
+    task: int
+    attachment: BoardAttachment
+    sha256: str
+    created: bool
+
+
+class BoardUploadBatch(BaseModel):
+    task: int
+    uploads: list[BoardUploadReceipt] = Field(default_factory=list)
+    complete: bool = True
+
+
 class BoardComment(BaseModel):
     model_config = ConfigDict(extra="allow")
 
@@ -56,7 +95,7 @@ class BoardComment(BaseModel):
 
 
 class BoardPage(BaseModel):
-    items: list[dict[str, Any]]
+    items: list[dict[str, Any]] | None
     total: int = 0
     page: int = 1
     per_page: int = 50
@@ -95,7 +134,22 @@ class BoardClient:
     administration."""
 
     def __init__(self, base_url: str, token: SecretStr, *, timeout: float = 20.0):
-        if not base_url.startswith(("http://127.0.0.1:", "http://localhost:")):
+        try:
+            parsed = urlsplit(base_url)
+            valid = (
+                parsed.scheme == "http"
+                and parsed.hostname in {"127.0.0.1", "localhost"}
+                and parsed.port is not None
+                and 1024 <= parsed.port <= 65535
+                and parsed.username is None
+                and parsed.password is None
+                and parsed.path in {"", "/"}
+                and not parsed.query
+                and not parsed.fragment
+            )
+        except ValueError:
+            valid = False
+        if not valid:
             raise BoardError("Board access must go through an explicit loopback tunnel")
         self._client = httpx.Client(
             base_url=base_url.rstrip("/"),
@@ -122,11 +176,17 @@ class BoardClient:
         json: object = None,
         params: dict[str, Any] | None = None,
         content_type: str | None = None,
+        files: dict[str, tuple[str, BinaryIO, str]] | None = None,
     ) -> httpx.Response:
         headers = {"Content-Type": content_type} if content_type else None
         try:
             response = self._client.request(
-                method, API + path, json=json, params=params, headers=headers
+                method,
+                API + path,
+                json=json,
+                params=params,
+                headers=headers,
+                files=files,
             )
         except httpx.TimeoutException:
             raise BoardError(
@@ -144,8 +204,11 @@ class BoardClient:
             raise BoardError("Board object was not found in this token's scope")
         if response.status_code == 422:
             raise BoardError("Board rejected the request payload")
-        if response.status_code >= 400:
-            raise BoardError(f"Board request failed ({response.status_code})")
+        if response.status_code >= 300 and response.status_code != 304:
+            raise BoardError(
+                f"Board request failed ({response.status_code})",
+                ambiguous=method not in {"GET", "HEAD"} and response.status_code >= 500,
+            )
         return response
 
     def _paginate(
@@ -158,7 +221,7 @@ class BoardClient:
                 "GET", path, params={"page": page, "per_page": 50, **(params or {})}
             )
             envelope = BoardPage.model_validate(response.json())
-            items.extend(envelope.items)
+            items.extend(envelope.items or [])
             if envelope.total_pages <= page:
                 return items
             page += 1
@@ -249,6 +312,82 @@ class BoardClient:
         return BoardTask.model_validate(
             self._request("GET", f"/tasks/{task_id}").json()
         )
+
+    def attachments(self, task_id: int) -> list[BoardAttachment]:
+        raw = self._paginate(f"/tasks/{task_id}/attachments")
+        records = [BoardAttachment.model_validate(item) for item in raw]
+        if any(item.task_id != task_id for item in records):
+            raise BoardError("Board returned attachments for a different task")
+        return records
+
+    def _matching_attachment(
+        self, task_id: int, name: str, size: int, digest: str
+    ) -> BoardAttachment | None:
+        for attachment in self.attachments(task_id):
+            if attachment.file.name != name or attachment.file.size != size:
+                continue
+            response = self._request(
+                "GET", f"/tasks/{task_id}/attachments/{attachment.id}"
+            )
+            if hashlib.sha256(response.content).hexdigest() == digest:
+                return attachment
+        return None
+
+    def upload_attachment_once(self, task_id: int, path: Path) -> BoardUploadReceipt:
+        try:
+            regular = stat.S_ISREG(path.stat().st_mode)
+        except OSError:
+            regular = False
+        if not regular:
+            raise BoardError("Attachment source must be a readable regular file")
+        with path.open("rb") as source:
+            size = os.fstat(source.fileno()).st_size
+            digest = hashlib.file_digest(source, "sha256").hexdigest()
+            existing = self._matching_attachment(task_id, path.name, size, digest)
+            if existing is not None:
+                return BoardUploadReceipt(
+                    task=task_id, attachment=existing, sha256=digest, created=False
+                )
+            source.seek(0)
+            upload_error: BoardError | None = None
+            try:
+                response = self._request(
+                    "POST",
+                    f"/tasks/{task_id}/attachments",
+                    files={
+                        "files": (
+                            path.name,
+                            source,
+                            mimetypes.guess_file_type(path)[0]
+                            or "application/octet-stream",
+                        )
+                    },
+                )
+                result = BoardAttachmentUpload.model_validate(response.json())
+                if result.errors:
+                    raise BoardError("Board rejected the attachment")
+                if not result.success:
+                    raise BoardError("Board did not confirm the upload", ambiguous=True)
+            except BoardError as error:
+                if not error.ambiguous:
+                    raise
+                upload_error = error
+            except ValidationError, ValueError:
+                upload_error = BoardError(
+                    "Board returned an invalid upload response", ambiguous=True
+                )
+            attachment = self._matching_attachment(task_id, path.name, size, digest)
+            if attachment is None:
+                raise upload_error or BoardError(
+                    "Attachment could not be verified; inspect the task before retrying",
+                    ambiguous=True,
+                )
+            return BoardUploadReceipt(
+                task=task_id,
+                attachment=attachment,
+                sha256=digest,
+                created=upload_error is None,
+            )
 
     def comments(self, task_id: int) -> list[BoardComment]:
         raw = self._paginate(f"/tasks/{task_id}/comments")

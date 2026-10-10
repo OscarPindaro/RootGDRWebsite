@@ -62,12 +62,14 @@ Keep the request human-sized with these sections:
 - **Open questions:** unresolved product decisions, assumptions and dependencies.
 - **Tracking:** stable ticket key and confirmed Vikunja project/task IDs only.
 
-Preserve accessible, safe screenshots/files in
-`docs/features-request/assets/REQ-nnnn/`, using descriptive names, captions and
-relative links. Keep originals unchanged and label any redacted/cropped copies.
-Never include credentials, private configuration or unrelated personal data. If
-chat attachments cannot be saved, request a safe durable copy and record the
-limitation instead of inventing links. Mockups are references, not implemented UI.
+Honor the user's evidence location. For Vikunja attachments, keep only captions
+and confirmed task/attachment references in the repository; do not commit image
+upload sources. If repository evidence is requested, use
+`docs/features-request/assets/REQ-nnnn/` with descriptive names and relative links.
+Keep originals unchanged and label redacted/cropped copies. Never include
+credentials, private configuration or unrelated personal data. If evidence
+cannot be preserved/uploaded, record the limitation and request a safe durable
+copy rather than inventing links. Mockups are references, not implemented UI.
 Run `uv run harness backlog check-requests` and resolve metadata/identity/link
 errors. Specifications belong in the repository; live progress belongs in Vikunja.
 
@@ -105,8 +107,13 @@ of guessing flags or writing a new HTTP integration.
    overwrite descriptions, change progress or treat an old approval as approval
    for newly proposed scope.
 
-The CLI does not upload attachments. Reference repository evidence and explicitly
-state that local files are not remotely available until shared or committed.
+Upload approved evidence with `attach <task-id> <file>... --json`, then verify
+IDs/metadata using `attachments <task-id> --json`. The upload command verifies
+stored bytes and reuses identical filename/content matches. A partial batch exits
+nonzero but reports earlier verified uploads; inspect those before retrying.
+Record only confirmed attachment IDs. Uploads need `tasks_attachments` scopes
+`read_all`, `read_one` and `create`; do not rotate or expand credentials during
+intake. Local upload sources are not remotely available until upload is confirmed.
 If token access, scope, the tunnel or the board is unavailable, keep the complete
 local request/evidence and explain the blocker. Ask for access help if needed;
 never weaken permissions or claim that registration succeeded without read-back.

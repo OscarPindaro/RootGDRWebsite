@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import json
 import re
 import secrets
@@ -616,6 +618,111 @@ def test_coordinated_encrypted_backup_restores_real_board_login_task_and_attachm
                 "import os; paths=['/cleanup']; paths.extend(os.path.join(root,name) for root,dirs,files in os.walk('/cleanup') for name in dirs+files); [os.chown(path,0,0) for path in paths]",
             ]
         )
+
+
+def test_backlog_image_uploads_are_verified_retry_safe_and_scoped(board, tmp_path):
+    spec, compose, config, url = board
+    result = bootstrap_accounts(url, spec)
+    with BoardClient(url, result.token) as client:
+        task = client.create_task(result.identity.project_id, title="Image evidence")
+    with httpx.Client(base_url=url, timeout=20, trust_env=False) as owner:
+        login(owner, spec.owner)
+        routes = request(owner, "GET", "/api/v2/routes").json()
+        permissions = {"tasks_attachments": ["read_all", "read_one", "create"]}
+        assert set(permissions["tasks_attachments"]).issubset(
+            routes["tasks_attachments"]
+        )
+        token = request(
+            owner,
+            "POST",
+            "/api/v2/tokens",
+            data={
+                "owner_id": result.identity.tooling_id,
+                "title": "Disposable attachment tooling",
+                "permissions": permissions,
+                "expires_at": (datetime.now(UTC) + timedelta(days=1)).isoformat(),
+            },
+            expected=201,
+        ).json()
+    token_file = tmp_path / "attachment-token"
+    write_private(token_file, token["token"].encode())
+    data = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jF2kAAAAASUVORK5CYII="
+    )
+    images = [tmp_path / "first.png", tmp_path / "second.png"]
+    for index, image in enumerate(images):
+        image.write_bytes(data + bytes([index]))
+
+    def cli(*arguments: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [
+                "uv",
+                "run",
+                "harness",
+                "backlog",
+                *arguments,
+                "--base-url",
+                url,
+                "--token-file",
+                str(token_file),
+                "--json",
+            ],
+            cwd=state.worktree_root(),
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+
+    first = cli("attach", str(task.id), *map(str, images))
+    assert first.returncode == 0, first.stdout + first.stderr
+    uploaded = json.loads(first.stdout)
+    assert uploaded["complete"] is True
+    assert len(uploaded["uploads"]) == 2
+    assert all(item["created"] for item in uploaded["uploads"])
+    assert token["token"] not in first.stdout + first.stderr
+    with BoardClient(url, SecretStr(token["token"])) as client:
+        attachments = client.attachments(task.id)
+        assert len(attachments) == 2
+        for attachment, image in zip(attachments, images, strict=True):
+            assert attachment.file.name == image.name
+            assert attachment.file.mime == "image/png"
+        with pytest.raises(BoardError, match="not found"):
+            client.upload_attachment_once(999_999, images[0])
+    with httpx.Client(base_url=url, timeout=20, trust_env=False) as owner:
+        login(owner, spec.owner)
+        for receipt, image in zip(uploaded["uploads"], images, strict=True):
+            attachment = receipt["attachment"]
+            content = request(
+                owner, "GET", f"/api/v2/tasks/{task.id}/attachments/{attachment['id']}"
+            ).content
+            assert content == image.read_bytes()
+            assert hashlib.sha256(content).hexdigest() == receipt["sha256"]
+    with BoardClient(url, result.token) as restricted:
+        with pytest.raises(BoardError, match="insufficiently scoped"):
+            restricted.upload_attachment_once(task.id, images[0])
+    config.write_text(
+        configuration(
+            plan_board(spec), controller_port=spec.target.port
+        ).model_dump_json()
+    )
+    command([*compose, "restart", "board"])
+    _wait_for_http(url + "/api/v2/info", attempts=60)
+    repeated = cli("attach", str(task.id), *map(str, images))
+    assert repeated.returncode == 0, repeated.stdout + repeated.stderr
+    assert all(not item["created"] for item in json.loads(repeated.stdout)["uploads"])
+    listed = cli("attachments", str(task.id))
+    assert listed.returncode == 0, listed.stdout + listed.stderr
+    assert len(json.loads(listed.stdout)) == 2
+    with httpx.Client(
+        base_url=url,
+        headers={"Authorization": "Bearer " + token["token"]},
+        timeout=20,
+        trust_env=False,
+    ) as restricted:
+        assert restricted.get("/api/v2/tokens").status_code in {401, 403}
+        assert restricted.delete(
+            f"/api/v2/tasks/{task.id}/attachments/{attachments[0].id}"
+        ).status_code in {401, 403}
 
 
 def test_backlog_client_paginates_creates_and_bounds_errors_on_the_real_board(

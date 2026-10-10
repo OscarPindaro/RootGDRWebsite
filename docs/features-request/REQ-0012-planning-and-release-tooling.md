@@ -46,6 +46,25 @@ records the earlier alternatives and confirmed choices.
   metadata. Keep 0.1.0 for this cycle. Drafting notes does not publish, tag, bump
   or consume fragments; Oscar chooses the version at release time.
 
+## Attachment tooling extension — recorded 2026-10-10
+
+Oscar requested image-upload tooling after choosing Vikunja, not Git, as the
+location of REQ-0015's visual references. Ticket key: `REQ-0012/T08`.
+
+Add typed attachment metadata, `attach <task> <files>...` and `attachments <task>`
+to the existing API v2 client/CLI. Stream uploads, verify persisted bytes by
+read-back, reuse identical filename/content matches and reconcile ambiguous
+writes before retrying. A 201 response containing per-file errors is not success.
+Batches retain earlier verified uploads and report partial results on failure.
+Use explicit local file paths, bounded errors and private token files; never log
+credentials, delete attachments or silently expand a live token's permissions.
+
+Acceptance: real disposable-board PNG upload/download and persistence across
+restart; repeat upload produces no duplicate; missing task/file and denied scopes
+fail safely; partial batch JSON identifies verified uploads; unit coverage for
+ambiguous writes and corrupt read-back. Publishing or rotating the live scoped
+token is a separate owner decision. No frontend changes are required.
+
 ## Tickets and acceptance
 
 | Ticket | Boundary | Acceptance |
@@ -56,6 +75,7 @@ records the earlier alternatives and confirmed choices.
 | REQ-0012/T04 | Move/close/comments | Correct project/view/bucket and done semantics, partial updates preserve unrelated fields, ambiguous retries do not duplicate writes. |
 | REQ-0012/T05 | Import new cycle tickets | Dry-run is read-only; repeated imports preserve manual progress and descriptions; demo/history cards never enter the real backlog. |
 | REQ-0012/T06 | Towncrier and version authority | Draft leaves files/version unchanged; fragment validation/aggregation and runtime build metadata work, without an actual release. |
+| REQ-0012/T08 | Verified attachment uploads | Typed image upload/list, byte read-back, sequential retry protection, partial-batch receipts and scope denial on an isolated real board. |
 
 Deploy and recovery sequencing follow
 [REQ-0001](REQ-0001-github-ci-and-manual-deployment.md). The board is bootstrapped

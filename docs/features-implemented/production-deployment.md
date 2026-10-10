@@ -441,6 +441,8 @@ uv run harness backlog move 17 --project 2 --view 3 --bucket 8 [--json]
 uv run harness backlog close 17 --project 2 --view 3 [--json]
 uv run harness backlog reopen 17 --project 2 --view 3 [--bucket 7] [--json]
 uv run harness backlog comment 17 --text "…" --marker REQ-0012/T04 [--json]
+uv run harness backlog attach 17 /path/to/image.png /path/to/image.jpg [--json]
+uv run harness backlog attachments 17 [--json]
 uv run harness backlog check-requests
 ```
 
@@ -472,10 +474,35 @@ appended to the posted body, an existing marker is left alone, and a timeout
 re-reads before concluding anything. The `done` flag is patched with a minimal
 JSON merge patch that never rewrites title, description or rich text.
 
-`BoardClient` is a typed httpx boundary: project, view, bucket, task and comment
-models; `BoardPage` for the v2 envelope; and full pagination up to a reviewed
-bound. Status codes map to bounded messages — 401/403 "missing, expired or
-insufficiently scoped", 404 "not found", 422 "rejected the request payload" —
+`attach` streams explicitly named files as multipart attachments, including
+PNG/JPEG images. Before uploading it checks existing filename/size candidates
+and downloads them to compare SHA-256; an identical file is reused. New uploads
+are listed and downloaded again to verify their stored bytes. Per-file failures
+inside a 201 response are failures, not successful uploads. An ambiguous timeout,
+server error or invalid upload response triggers read-back, never a blind POST
+retry. This is sequential retry protection, not atomic deduplication across
+concurrent clients. Read-back currently buffers one attachment in memory.
+
+Batches upload sequentially and stop on failure. Earlier verified attachments
+remain; JSON reports `complete: false` with their IDs, metadata and hashes, and
+the command exits nonzero. No attachment is deleted or replaced. Validate every
+input path before starting a batch. `attachments` lists paginated metadata for
+inspection, without downloading file bodies. Store image evidence on Vikunja
+when requested; the repository specification can retain captions and confirmed
+attachment IDs instead of committed image files.
+
+These operations require `tasks_attachments.read_all`, `read_one` and `create`
+scopes, verified against the pinned board's route registry. No delete scope is
+needed. Existing bootstrap/live tokens are unchanged: the owner must deliberately
+provide an appropriately scoped private token. The CLI never creates, rotates
+or expands credentials. It also rejects redirects and URL userinfo rather than
+forwarding a bearer token away from the explicit loopback tunnel.
+
+`BoardClient` is a typed httpx boundary: project, view, bucket, task, comment,
+attachment, upload response and receipt models; `BoardPage` for the v2 envelope;
+and full pagination up to a reviewed bound. Status codes map to bounded messages:
+401/403 "missing, expired or insufficiently scoped", 404 "not found", and
+422 "rejected the request payload" —
 and never echo an upstream body. Transport failure and timeout are distinguished
 from a server rejection, so an ambiguous write is never retried blindly.
 

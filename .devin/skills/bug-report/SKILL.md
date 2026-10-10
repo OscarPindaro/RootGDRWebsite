@@ -115,8 +115,13 @@ If a Vikunja MCP is available, discover its tools first; otherwise use the exist
 - Existing matching tickets receive only new factual evidence through `comment`
   with a unique evidence marker and read-back. Do not reset their progress.
 
-The current CLI does not upload attachments. Preserve evidence in the repository
-and state that it is local until shared or committed; never claim an upload.
+For approved board evidence, use `attach <task-id> <file>... --json` and verify
+with `attachments <task-id> --json`; retain captions and confirmed attachment
+IDs in the report rather than committing upload sources when the user chose
+Vikunja. Uploads verify stored bytes and reuse identical filename/content matches.
+A failed batch reports earlier verified uploads; inspect before retrying. Required
+`tasks_attachments` scopes are `read_all`, `read_one` and `create`; do not rotate
+or expand credentials during intake. Never claim an unconfirmed upload.
 For a missing token, unavailable tunnel, denied scope or board outage, keep the
 local report/evidence, explain the blocker, and ask for access help if necessary.
 Do not weaken permissions or mark the bug registered without confirmation.

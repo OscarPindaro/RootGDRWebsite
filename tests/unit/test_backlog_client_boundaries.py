@@ -52,6 +52,12 @@ def test_client_refuses_a_non_loopback_base_url():
         "http://board.example",
         "https://127.0.0.1:3458",
         "http://192.168.1.9:3458",
+        "http://127.0.0.1:3458@board.example",
+        "http://localhost:3458@board.example",
+        "http://127.0.0.1:3458/api",
+        "http://127.0.0.1:3458?token=private",
+        "http://127.0.0.1:bad",
+        "http://localhost:3458/#private",
     ):
         with pytest.raises(BoardError):
             BoardClient(url, SecretStr(TOKEN))
@@ -89,6 +95,7 @@ def test_pagination_is_bounded():
 @pytest.mark.parametrize(
     ("status", "message"),
     [
+        (302, "failed (302)"),
         (401, "missing, expired or insufficiently scoped"),
         (403, "missing, expired or insufficiently scoped"),
         (404, "not found"),
@@ -365,3 +372,188 @@ def test_add_comment_once_does_not_reread_after_a_definitive_rejection():
             board.add_comment_once(7, "new", "REQ-0012/T04")
     assert error.value.ambiguous is False
     assert reads == 1
+
+
+def test_upload_attachment_verifies_stored_bytes_and_reuses_identical_files(tmp_path):
+    image = tmp_path / "portrait.png"
+    data = b"\x89PNG\r\n\x1a\nimage-content"
+    image.write_bytes(data)
+    attachment = {
+        "id": 5,
+        "task_id": 7,
+        "file": {"id": 8, "name": image.name, "mime": "image/png", "size": len(data)},
+    }
+    uploaded = False
+    posts = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal uploaded, posts
+        if request.method == "POST":
+            posts += 1
+            assert request.url.path == "/api/v2/tasks/7/attachments"
+            assert "multipart/form-data; boundary=" in request.headers["content-type"]
+            assert b'name="files"; filename="portrait.png"' in request.content
+            assert b"Content-Type: image/png" in request.content
+            assert data in request.content
+            assert str(tmp_path).encode() not in request.content
+            uploaded = True
+            return httpx.Response(201, json={"success": [attachment], "errors": None})
+        if request.url.path.endswith("/5"):
+            return httpx.Response(200, content=data)
+        return httpx.Response(200, json=envelope([attachment] if uploaded else []))
+
+    with client(handler) as board:
+        first = board.upload_attachment_once(7, image)
+        second = board.upload_attachment_once(7, image)
+    assert first.attachment.id == second.attachment.id == 5
+    assert first.created is True
+    assert second.created is False
+    assert len(first.sha256) == 64
+    assert posts == 1
+
+
+def test_upload_attachment_rejects_non_files_without_network_requests(tmp_path):
+    def handler(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("invalid input must not contact the board")
+
+    with client(handler) as board:
+        for path in (tmp_path, tmp_path / "missing.png"):
+            with pytest.raises(BoardError, match="regular file"):
+                board.upload_attachment_once(7, path)
+
+
+def test_upload_attachment_does_not_treat_a_201_file_error_as_success(tmp_path):
+    image = tmp_path / "portrait.png"
+    image.write_bytes(b"image")
+    posts = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal posts
+        if request.method == "POST":
+            posts += 1
+            return httpx.Response(
+                201,
+                json={
+                    "success": None,
+                    "errors": [{"code": 10001, "message": TOKEN}],
+                },
+            )
+        return httpx.Response(200, json=envelope([]))
+
+    with client(handler) as board:
+        with pytest.raises(BoardError, match="rejected the attachment") as error:
+            board.upload_attachment_once(7, image)
+    assert TOKEN not in str(error.value)
+    assert error.value.ambiguous is False
+    assert posts == 1
+
+
+@pytest.mark.parametrize("failure", ["timeout", "server", "invalid"])
+@pytest.mark.parametrize("persisted", [False, True])
+def test_upload_attachment_reconciles_ambiguous_writes_without_retrying(
+    tmp_path, failure, persisted
+):
+    image = tmp_path / "portrait.jpg"
+    data = b"image-content"
+    image.write_bytes(data)
+    attachment = {
+        "id": 5,
+        "task_id": 7,
+        "file": {"id": 8, "name": image.name, "mime": "image/jpeg", "size": len(data)},
+    }
+    posts = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal posts
+        if request.method == "POST":
+            posts += 1
+            if failure == "timeout":
+                raise httpx.ReadTimeout(TOKEN, request=request)
+            if failure == "server":
+                return httpx.Response(500, text=TOKEN)
+            return httpx.Response(201, text=TOKEN)
+        if request.url.path.endswith("/5"):
+            return httpx.Response(200, content=data)
+        items = [attachment] if posts and persisted else []
+        return httpx.Response(200, json=envelope(items))
+
+    with client(handler) as board:
+        if persisted:
+            receipt = board.upload_attachment_once(7, image)
+            assert receipt.attachment.id == 5
+            assert receipt.created is False
+        else:
+            with pytest.raises(BoardError) as error:
+                board.upload_attachment_once(7, image)
+            assert error.value.ambiguous is True
+            assert TOKEN not in str(error.value)
+    assert posts == 1
+
+
+def test_upload_attachment_checks_content_not_just_name_and_size(tmp_path):
+    image = tmp_path / "portrait.png"
+    image.write_bytes(b"new")
+    old = {
+        "id": 5,
+        "task_id": 7,
+        "file": {"id": 8, "name": image.name, "mime": "image/png", "size": 3},
+    }
+    new = {**old, "id": 6}
+    uploaded = False
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal uploaded
+        if request.method == "POST":
+            uploaded = True
+            return httpx.Response(201, json={"success": [new], "errors": []})
+        if request.url.path.endswith("/5"):
+            return httpx.Response(200, content=b"old")
+        if request.url.path.endswith("/6"):
+            return httpx.Response(200, content=b"new")
+        return httpx.Response(200, json=envelope([old, new] if uploaded else [old]))
+
+    with client(handler) as board:
+        receipt = board.upload_attachment_once(7, image)
+    assert receipt.attachment.id == 6
+    assert receipt.created is True
+
+
+def test_upload_attachment_rejects_corrupted_readback(tmp_path):
+    image = tmp_path / "portrait.png"
+    image.write_bytes(b"new")
+    attachment = {
+        "id": 5,
+        "task_id": 7,
+        "file": {"id": 8, "name": image.name, "mime": "image/png", "size": 3},
+    }
+    posts = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal posts
+        if request.method == "POST":
+            posts += 1
+            return httpx.Response(201, json={"success": [attachment], "errors": []})
+        if request.url.path.endswith("/5"):
+            return httpx.Response(200, content=b"bad")
+        return httpx.Response(200, json=envelope([attachment] if posts else []))
+
+    with client(handler) as board:
+        with pytest.raises(BoardError, match="could not be verified") as error:
+            board.upload_attachment_once(7, image)
+    assert error.value.ambiguous is True
+    assert posts == 1
+
+
+def test_attachments_accepts_empty_null_pages_and_rejects_another_task():
+    with client(
+        lambda request: httpx.Response(200, json={**envelope([]), "items": None})
+    ) as board:
+        assert board.attachments(7) == []
+    foreign = {
+        "id": 5,
+        "task_id": 99,
+        "file": {"id": 8, "name": "portrait.png", "mime": "image/png", "size": 3},
+    }
+    with client(lambda request: httpx.Response(200, json=envelope([foreign]))) as board:
+        with pytest.raises(BoardError, match="different task"):
+            board.attachments(7)

@@ -16,6 +16,7 @@ from ..backlog.client import (
     BoardError,
     BoardTask,
     BoardTokenSource,
+    BoardUploadBatch,
     BoardView,
     default_token_source,
     record_table,
@@ -207,6 +208,83 @@ def register_commands(app: typer.Typer) -> None:
             _emit(record.model_dump(mode="json"), as_json, record_table([record]))
         except BoardError, ValidationError, OSError, ValueError:
             _fail()
+
+    @backlog_app.command("attachments", help="List a task's attachment metadata.")
+    def attachments(
+        task: Annotated[int, typer.Argument(help="Task id.", min=1)],
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        try:
+            with _client(token_file, base_url) as client:
+                records = client.attachments(task)
+            _emit(
+                [item.model_dump(mode="json") for item in records],
+                as_json,
+                [(str(item.id), item.file.name) for item in records],
+            )
+        except BoardError, ValidationError, OSError, ValueError:
+            _fail()
+
+    @backlog_app.command(
+        "attach",
+        help="Upload files and verify stored bytes. Identical files are reused; "
+        "uploads are sequential, not atomic. Needs attachment list/download/create scopes.",
+    )
+    def attach_files(
+        task: Annotated[int, typer.Argument(help="Task id.", min=1)],
+        files: Annotated[
+            list[Path],
+            typer.Argument(
+                help="Explicit file paths to attach.",
+                exists=True,
+                file_okay=True,
+                dir_okay=False,
+                readable=True,
+            ),
+        ],
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        batch = BoardUploadBatch(task=task)
+        detail = "Board upload failed"
+        try:
+            with _client(token_file, base_url) as client:
+                for path in files:
+                    batch.uploads.append(client.upload_attachment_once(task, path))
+        except BoardError as error:
+            batch.complete = False
+            detail = str(error)
+        except ValidationError, OSError, ValueError:
+            batch.complete = False
+        _emit(
+            batch.model_dump(mode="json"),
+            as_json,
+            [
+                (
+                    str(item.attachment.id),
+                    f"{item.attachment.file.name} "
+                    f"({'uploaded' if item.created else 'already present or recovered'})",
+                )
+                for item in batch.uploads
+            ],
+        )
+        if not batch.complete:
+            err_console.print(
+                f"[bold red]{detail}. Verified uploads are retained; "
+                "inspect attachments before retrying.[/bold red]"
+            )
+            raise typer.Exit(1)
 
     @backlog_app.command("move")
     def move_task(
