@@ -16,6 +16,8 @@ import {
 } from "./geometry.js";
 import {
   History,
+  migrateScene,
+  newId,
   addNode,
   createEllipse,
   createPath,
@@ -93,7 +95,7 @@ export function createController(root) {
   const saveUrl = root.dataset.saveUrl || null;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
-  let scene = sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 1, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] };
+  let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 2, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
   const history = new History(scene);
   let selection = [];
   let selectedId = null;
@@ -420,10 +422,13 @@ export function createController(root) {
 
   function insertVertex(edgeIndex, localPoint) {
     const node = selected().node;
+    if (node.constraint) { announce("Sblocca la forma prima di aggiungere vertici."); return; }
     const points = node.points.map((point) => [...point]);
     points.splice(edgeIndex + 1, 0, [round(localPoint[0]), round(localPoint[1])]);
     if (!validPolygon(points)) return;
-    const patch = { points };
+    const pointIds = [...node.pointIds];
+    pointIds.splice(edgeIndex + 1, 0, newId("v"));
+    const patch = { points, pointIds };
     if (node.edgeVisible) {
       const visible = edgeVisibility(node);
       // The split edge keeps its own visibility on both halves.
@@ -435,6 +440,7 @@ export function createController(root) {
 
   function removeVertex(index) {
     const node = selected().node;
+    if (node.constraint) { announce("Sblocca la forma prima di rimuovere vertici."); return; }
     if (node.points.length <= 3) {
       announce("Un poligono ha almeno tre vertici.");
       return;
@@ -444,7 +450,7 @@ export function createController(root) {
       announce("Il poligono perderebbe la sua area.");
       return;
     }
-    const patch = { points };
+    const patch = { points, pointIds: node.pointIds.filter((_, position) => position !== index) };
     if (node.edgeVisible) {
       patch.edgeVisible = edgeVisibility(node).filter((_, position) => position !== index);
     }
@@ -506,7 +512,9 @@ export function createController(root) {
     const node = findNode(scene, nodeId).node;
     const points = node.points.map((point) => [...point]);
     points.splice(boundary.index, 0, [round(boundary.point[0]), round(boundary.point[1])]);
-    const patch = { points };
+    const pointIds = [...node.pointIds];
+    pointIds.splice(boundary.index, 0, newId("v"));
+    const patch = { points, pointIds };
     if (node.edgeVisible) {
       const visible = edgeVisibility(node);
       visible.splice(boundary.index, 0, visible[boundary.index - 1] !== false);
@@ -750,8 +758,11 @@ export function createController(root) {
           const command = commands[index];
           const end = command.numbers.slice(-2);
           if (command.name === "L" && distanceToSegment(local, previous, end) < SNAP_TOLERANCE_PX / viewport[0]) {
+            const pointIds = [...node.pointIds];
+            const position = commands.slice(0, index).reduce((count, entry) => count + entry.numbers.length / 2, 0);
+            pointIds.splice(position, 0, newId("h"));
             commands.splice(index, 0, { name: "L", numbers: local.map(round) });
-            commit(patchNode(scene, selectedId, { d: commands.map(c => c.name + c.numbers.join(" ")).join(" ") }));
+            commit(patchNode(scene, selectedId, { d: commands.map(c => c.name + c.numbers.join(" ")).join(" "), pointIds }));
             return;
           }
           previous = end;
@@ -1130,10 +1141,11 @@ export function createController(root) {
     ungroup: { label: "Separa", enabled: () => selection.length === 1 && selected()?.node.kind === "group", run: ungroupSelected },
     forward: { label: "Avanti", enabled: () => Boolean(selected()) && selected().index < selected().siblings.length - 1, run: () => commit(reorderNode(scene, selectedId, 1)) },
     backward: { label: "Dietro", enabled: () => Boolean(selected()) && selected().index > 0, run: () => commit(reorderNode(scene, selectedId, -1)) },
+    unlock: { label: "Sblocca geometria", enabled: () => selection.length === 1 && Boolean(selected()?.node.constraint), run: () => commit(patchNode(scene, selectedId, { constraint: null })) },
   };
 
   for (const name of [...Object.keys(SHAPE_NAMES), "curve", "cut"]) {
-    actions[`tool-${name}`] = { label: SHAPE_NAMES[name] || (name === "curve" ? "Curva" : "Taglia"), enabled: () => name !== "cut" || (selection.length === 1 && selected()?.node.kind === "polygon"), run: () => setTool(name) };
+    actions[`tool-${name}`] = { label: SHAPE_NAMES[name] || (name === "curve" ? "Curva" : "Taglia"), enabled: () => name !== "cut" || (selection.length === 1 && selected()?.node.kind === "polygon" && !selected().node.constraint), run: () => setTool(name) };
   }
 
   function canExecute(id) {
@@ -1206,6 +1218,9 @@ export function createController(root) {
     selectButton.classList.toggle("btn-selected", tool === "select" && mode === "select");
     selectButton.setAttribute("aria-pressed", String(tool === "select" && mode === "select"));
     root.querySelector("[data-drawing-mode-label]").textContent = tool === "select" ? {select:"Seleziona", vertex:"Modifica forma", transform:"Trasforma"}[mode] : SHAPE_NAMES[tool] || (tool === "curve" ? "Curva" : "Taglia");
+    const constraint = root.querySelector("[data-drawing-constraint]");
+    constraint.textContent = node?.constraint ? "Geometria vincolata" : "Geometria libera";
+    root.querySelector("[data-drawing-unlock]").hidden = !node?.constraint;
     const hint = root.querySelector("[data-testid='drawing-inspector-hint']");
     if (hint) hint.hidden = Boolean(node);
   }
@@ -1241,7 +1256,7 @@ export function createController(root) {
       "[data-drawing-undo]": "undo", "[data-drawing-redo]": "redo", "[data-testid='drawing-save']": "save",
       "[data-drawing-duplicate]": "duplicate", "[data-drawing-delete]": "delete", "[data-drawing-group]": "group",
       "[data-drawing-ungroup]": "ungroup", "[data-drawing-mode='vertex']": "edit", "[data-drawing-mode='transform']": "transform",
-      "[data-drawing-order='1']": "forward", "[data-drawing-order='-1']": "backward",
+      "[data-drawing-order='1']": "forward", "[data-drawing-order='-1']": "backward", "[data-drawing-unlock]": "unlock",
     };
     for (const [selector, id] of Object.entries(bindings)) {
       root.querySelectorAll(selector).forEach(button => {

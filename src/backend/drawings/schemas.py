@@ -13,14 +13,16 @@ document written by a future version cannot lose data by being read here.
 from __future__ import annotations
 
 import re
-from typing import Annotated, Literal
+from copy import deepcopy
+from math import isclose
+from typing import Annotated, Any, Literal
 
 from pydantic import ConfigDict, Field, model_validator
 
 from ..concurrency import VersionedResponse, VersionedUpdate
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 
-SCENE_FORMAT_VERSION = 1
+SCENE_FORMAT_VERSION = 2
 
 # Bounds: a drawing is a bounded illustration, not an unlimited scene. The
 # numbers are generous for the intended artwork and keep a request cheap to
@@ -61,6 +63,30 @@ class Artboard(AppBaseModel):
     background: Colour = "#fffdf6"
 
 
+class GeometryConstraint(AppBaseModel):
+    model_config = AppBaseModel.model_config | DOMAIN
+
+    kind: Literal[
+        "triangle_isosceles",
+        "triangle_equilateral",
+        "triangle_right_right",
+        "triangle_right_left",
+        "rectangle",
+        "square",
+        "regular_polygon",
+        "circle",
+    ]
+
+
+class NativeAnchor(AppBaseModel):
+    model_config = AppBaseModel.model_config | DOMAIN
+
+    id: NodeId
+    name: Annotated[str, Field(min_length=1, max_length=120)]
+    position: Point
+    angle: Annotated[float, Field(ge=-360, le=360)] = 0
+
+
 class NodeBase(AppBaseModel):
     model_config = AppBaseModel.model_config | DOMAIN
 
@@ -69,6 +95,9 @@ class NodeBase(AppBaseModel):
     transform: Matrix = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
     opacity: Opacity = 1.0
     visible: bool = True
+    anchors: Annotated[list[NativeAnchor], Field(max_length=256)] = Field(
+        default_factory=list
+    )
 
     @model_validator(mode="after")
     def _transform_is_invertible(self) -> NodeBase:
@@ -84,6 +113,7 @@ class ShapeNode(NodeBase):
     fill: Colour | None = None
     stroke: Colour | None = "#17150f"
     stroke_width: StrokeWidth = 4.0
+    constraint: GeometryConstraint | None = None
 
 
 class PolygonNode(ShapeNode):
@@ -92,6 +122,9 @@ class PolygonNode(ShapeNode):
     # Per outgoing edge: whether the outline is drawn from this point to the
     # next. Empty means every edge is visible.
     edge_visible: list[bool] | None = None
+    point_ids: Annotated[list[NodeId], Field(max_length=MAX_POLYGON_POINTS)] = Field(
+        default_factory=list
+    )
 
     @model_validator(mode="after")
     def _polygon_is_valid(self) -> PolygonNode:
@@ -101,6 +134,14 @@ class PolygonNode(ShapeNode):
             raise ValueError("polygon has no area")
         if not simple_polygon(self.points):
             raise ValueError("polygon must be simple")
+        if "point_ids" not in self.model_fields_set and not self.point_ids:
+            self.point_ids.extend(f"v{i}" for i in range(len(self.points)))
+        if len(self.point_ids) != len(self.points) or len(set(self.point_ids)) != len(
+            self.point_ids
+        ):
+            raise ValueError("point_ids must be unique and match polygon points")
+        if self.constraint and not locked_polygon(self.points, self.constraint.kind):
+            raise ValueError("geometry does not satisfy the primitive constraint")
         return self
 
 
@@ -111,12 +152,24 @@ class EllipseNode(ShapeNode):
     rx: Annotated[float, Field(gt=0, le=MAX_COORDINATE)]
     ry: Annotated[float, Field(gt=0, le=MAX_COORDINATE)]
 
+    @model_validator(mode="after")
+    def _ellipse_constraint(self) -> EllipseNode:
+        if self.constraint and (
+            self.constraint.kind != "circle"
+            or not isclose(self.rx, self.ry, rel_tol=1e-6)
+        ):
+            raise ValueError("circle constraint requires equal radii")
+        return self
+
 
 class PathNode(ShapeNode):
     """An open line or curve, the tool for detail strokes."""
 
     kind: Literal["path"] = "path"
     d: Annotated[str, Field(min_length=1, max_length=8_000, pattern=_PATH.pattern)]
+    point_ids: Annotated[list[NodeId], Field(max_length=MAX_PATH_COMMANDS * 6)] = Field(
+        default_factory=list
+    )
 
     @model_validator(mode="after")
     def _path_is_supported(self) -> PathNode:
@@ -127,6 +180,13 @@ class PathNode(ShapeNode):
             raise ValueError("path must start with a move command")
         if not any(name in {"L", "C"} for name, _ in commands):
             raise ValueError("path must draw at least one segment")
+        count = sum(len(numbers) // 2 for _, numbers in commands)
+        if "point_ids" not in self.model_fields_set and not self.point_ids:
+            self.point_ids.extend(f"h{i}" for i in range(count))
+        if len(self.point_ids) != count or len(set(self.point_ids)) != count:
+            raise ValueError("point_ids must be unique and match path handles")
+        if self.constraint:
+            raise ValueError("paths cannot have primitive constraints")
         return self
 
 
@@ -150,6 +210,42 @@ class SceneDocument(AppBaseModel):
     nodes: Annotated[list[Node], Field(max_length=MAX_NODES)] = Field(
         default_factory=list
     )
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_v1(cls, value: Any) -> Any:
+        if (
+            not isinstance(value, dict)
+            or value.get(
+                "schemaVersion", value.get("schema_version", SCENE_FORMAT_VERSION)
+            )
+            != 1
+        ):
+            return value
+        if not isinstance(value.get("nodes", []), list):
+            raise ValueError("drawing nodes must be a list")
+        migrated = deepcopy(value)
+        nodes = list(migrated.get("nodes", []))
+        total = 0
+        while nodes:
+            node = nodes.pop()
+            total += 1
+            if total > MAX_NODES:
+                raise ValueError("drawing has too many nodes")
+            if not isinstance(node, dict):
+                continue
+            if any(
+                key in node
+                for key in ("constraint", "anchors", "pointIds", "point_ids")
+            ):
+                raise ValueError("version 1 cannot contain version 2 geometry metadata")
+            if node.get("kind") == "group":
+                if not isinstance(node.get("nodes", []), list):
+                    raise ValueError("group nodes must be a list")
+                nodes.extend(node.get("nodes", []))
+        key = "schemaVersion" if "schemaVersion" in migrated else "schema_version"
+        migrated[key] = SCENE_FORMAT_VERSION
+        return migrated
 
     @model_validator(mode="after")
     def _tree_is_valid(self) -> SceneDocument:
@@ -204,7 +300,9 @@ def count_nodes(scene: SceneDocument) -> int:
     return len(scene.nodes)
 
 
-def _walk(nodes: list[Node], ids: set[str], depth: int) -> int:
+def _walk(
+    nodes: list[Node], ids: set[str], depth: int, parent: Matrix = (1, 0, 0, 1, 0, 0)
+) -> int:
     if depth > MAX_DEPTH:
         raise ValueError("drawing is nested too deeply")
     total = 0
@@ -213,9 +311,75 @@ def _walk(nodes: list[Node], ids: set[str], depth: int) -> int:
             raise ValueError(f"duplicate node id: {node.id}")
         ids.add(node.id)
         total += 1
+        a, b, c, d, e, f = parent
+        na, nb, nc, nd, ne, nf = node.transform
+        world = (
+            a * na + c * nb,
+            b * na + d * nb,
+            a * nc + c * nd,
+            b * nc + d * nd,
+            a * ne + c * nf + e,
+            b * ne + d * nf + f,
+        )
+        anchor_ids = [anchor.id for anchor in node.anchors]
+        element_ids = anchor_ids + (
+            node.point_ids if isinstance(node, (PolygonNode, PathNode)) else []
+        )
+        if len(set(element_ids)) != len(element_ids):
+            raise ValueError("element identities must be unique within a node")
+        if isinstance(node, PolygonNode) and node.constraint:
+            wa, wb, wc, wd, we, wf = world
+            points = [
+                (wa * x + wc * y + we, wb * x + wd * y + wf) for x, y in node.points
+            ]
+            if not locked_polygon(points, node.constraint.kind):
+                raise ValueError("world transform violates a geometry constraint")
+        if isinstance(node, EllipseNode) and node.constraint:
+            wa, wb, wc, wd, _, _ = world
+            if not isclose(
+                wa * wa + wb * wb, wc * wc + wd * wd, rel_tol=1e-6
+            ) or not isclose(wa * wc + wb * wd, 0, abs_tol=1e-6 * (wa * wa + wb * wb)):
+                raise ValueError(
+                    "world transform would turn a locked circle into an ellipse"
+                )
         if isinstance(node, GroupNode):
-            total += _walk(node.nodes, ids, depth + 1)
+            total += _walk(node.nodes, ids, depth + 1, world)
     return total
+
+
+def locked_polygon(points: list[Point], kind: str) -> bool:
+    if kind == "circle":
+        return False
+    size = len(points)
+    edges = [
+        (points[(i + 1) % size][0] - x, points[(i + 1) % size][1] - y)
+        for i, (x, y) in enumerate(points)
+    ]
+    lengths = [x * x + y * y for x, y in edges]
+    equal = lambda x, y: isclose(x, y, rel_tol=1e-6, abs_tol=1e-8)
+    perpendicular = lambda u, v: (
+        abs(u[0] * v[0] + u[1] * v[1])
+        <= 1e-6 * (sum(n * n for n in u) * sum(n * n for n in v)) ** 0.5
+    )
+    if kind.startswith("triangle_"):
+        if size != 3:
+            return False
+        if kind == "triangle_isosceles":
+            return equal(lengths[1], lengths[2])
+        if kind == "triangle_equilateral":
+            return all(equal(lengths[0], length) for length in lengths[1:])
+        corner = 1 if kind == "triangle_right_right" else 0
+        return perpendicular(edges[corner], edges[(corner - 1) % size])
+    if kind in {"rectangle", "square"}:
+        rectangle = size == 4 and all(
+            perpendicular(edges[i], edges[(i + 1) % size]) for i in range(size)
+        )
+        return rectangle and (kind == "rectangle" or equal(lengths[0], lengths[1]))
+    cx, cy = sum(x for x, _ in points) / size, sum(y for _, y in points) / size
+    radii = [(x - cx) ** 2 + (y - cy) ** 2 for x, y in points]
+    return all(equal(lengths[0], length) for length in lengths[1:]) and all(
+        equal(radii[0], radius) for radius in radii[1:]
+    )
 
 
 def _area(points: list[Point]) -> float:

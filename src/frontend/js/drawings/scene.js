@@ -21,6 +21,56 @@ export function cloneScene(scene) {
   return JSON.parse(JSON.stringify(scene));
 }
 
+export function migrateScene(scene) {
+  const next = cloneScene(scene);
+  if (![1, 2].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
+  next.schemaVersion = 2;
+  walk(next.nodes, node => {
+    node.anchors ??= [];
+    if (node.kind !== "group") node.constraint ??= null;
+    if (node.kind === "polygon") node.pointIds ??= node.points.map((_, index) => `v${index}`);
+    if (node.kind === "path") node.pointIds ??= pathHandles(node.d).map((_, index) => `h${index}`);
+  });
+  return next;
+}
+
+export function lockedPolygon(points, kind) {
+  if (kind === "circle") return false;
+  const edges = points.map((point, i) => [points[(i + 1) % points.length][0] - point[0], points[(i + 1) % points.length][1] - point[1]]);
+  const lengths = edges.map(([x, y]) => x * x + y * y);
+  const equal = (a, b) => Math.abs(a - b) <= Math.max(1e-8, 1e-6 * Math.max(Math.abs(a), Math.abs(b)));
+  const perpendicular = (a, b) => Math.abs(a[0] * b[0] + a[1] * b[1]) <= 1e-6 * Math.hypot(...a) * Math.hypot(...b);
+  if (kind.startsWith("triangle_")) {
+    if (points.length !== 3) return false;
+    if (kind === "triangle_isosceles") return equal(lengths[1], lengths[2]);
+    if (kind === "triangle_equilateral") return lengths.every(length => equal(length, lengths[0]));
+    const corner = kind === "triangle_right_right" ? 1 : 0;
+    return perpendicular(edges[corner], edges[(corner + 2) % 3]);
+  }
+  if (kind === "rectangle" || kind === "square") {
+    return points.length === 4 && edges.every((edge, i) => perpendicular(edge, edges[(i + 1) % 4])) && (kind === "rectangle" || equal(lengths[0], lengths[1]));
+  }
+  const center = points.reduce((sum, point) => [sum[0] + point[0] / points.length, sum[1] + point[1] / points.length], [0, 0]);
+  const radii = points.map(point => (point[0] - center[0]) ** 2 + (point[1] - center[1]) ** 2);
+  return kind === "regular_polygon" && lengths.every(length => equal(length, lengths[0])) && radii.every(radius => equal(radius, radii[0]));
+}
+
+export function constraintsValid(scene) {
+  let valid = true;
+  walk(scene.nodes, node => {
+    if (!node.constraint) return;
+    const world = nodeFrame(scene, node.id).world;
+    if (node.kind === "polygon") {
+      valid &&= lockedPolygon(node.points, node.constraint.kind) && lockedPolygon(node.points.map(point => apply(world, point)), node.constraint.kind);
+    } else if (node.kind === "ellipse" && node.constraint.kind === "circle") {
+      const [a, b, c, d] = world;
+      const first = a * a + b * b, second = c * c + d * d;
+      valid &&= Math.abs(node.rx - node.ry) <= 1e-6 * Math.max(node.rx, node.ry) && Math.abs(first - second) <= 1e-6 * Math.max(first, second) && Math.abs(a * c + b * d) <= 1e-6 * first;
+    } else valid = false;
+  });
+  return valid;
+}
+
 /** Visit every node in the tree, depth first, in drawing order. */
 export function walk(nodes, visit, parent = null) {
   nodes.forEach((node, index) => {
@@ -252,6 +302,9 @@ export function createPolygon(name, points, fill = "#e0a327") {
     stroke: DEFAULT_STROKE,
     strokeWidth: 4,
     points,
+    pointIds: points.map(() => newId("v")),
+    anchors: [],
+    constraint: null,
     edgeVisible: null,
   };
 }
@@ -271,6 +324,8 @@ export function createEllipse(name, center, rx, ry, fill = "#e0a327") {
     cy: center[1],
     rx,
     ry,
+    anchors: [],
+    constraint: null,
   };
 }
 
@@ -286,6 +341,9 @@ export function createPath(name, d, stroke = DEFAULT_STROKE) {
     stroke,
     strokeWidth: 4,
     d,
+    pointIds: pathHandles(d).map(() => newId("h")),
+    anchors: [],
+    constraint: null,
   };
 }
 
@@ -358,7 +416,7 @@ export function patchNode(scene, id, patch) {
   const found = findNode(next, id);
   if (!found) return next;
   Object.assign(found.node, patch);
-  return next;
+  return constraintsValid(next) ? next : scene;
 }
 
 export function setTransform(scene, id, matrix) {
@@ -426,6 +484,7 @@ export function groupNodes(scene, ids) {
     opacity: 1,
     visible: true,
     nodes: members,
+    anchors: [],
   };
   siblings.splice(index, 0, group);
   return { scene: next, id: group.id };
@@ -565,7 +624,7 @@ function cutVisibility(sourceVisible, indices) {
  */
 export function cutNode(scene, id, i, j) {
   const found = findNode(scene, id);
-  if (!found || found.node.kind !== "polygon") return null;
+  if (!found || found.node.kind !== "polygon" || found.node.constraint) return null;
   const node = found.node;
   const split = splitPolygonAt(node.points, i, j);
   if (!split) return null;
@@ -573,12 +632,14 @@ export function cutNode(scene, id, i, j) {
   const next = cloneScene(scene);
   const target = findNode(next, id);
   target.node.points = split.aPoints.map(p => [...p]);
+  if (node.pointIds) target.node.pointIds = split.aIndices.map(index => node.pointIds[index]);
   target.node.edgeVisible = cutVisibility(node.edgeVisible, split.aIndices);
   const piece = {
     ...cloneScene(node),
     id: newId("poly"),
     name: `${node.name.slice(0, 111)} tagliata`,
     points: split.bPoints.map(p => [...p]),
+    ...(node.pointIds ? { pointIds: split.bIndices.map(index => node.pointIds[index]) } : {}),
     edgeVisible: cutVisibility(node.edgeVisible, split.bIndices),
   };
   target.siblings.splice(target.index + 1, 0, piece);

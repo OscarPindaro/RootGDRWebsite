@@ -145,6 +145,8 @@
 
       <section class="drawing-editor__panel" aria-label="Proprietà" data-testid="drawing-inspector">
         <h3 class="drawing-editor__panel-title">Proprietà</h3>
+        <p class="hint" data-drawing-constraint>Geometria libera</p>
+        <common.Button size="xs" variant="secondary" icon="lock-open" data-drawing-unlock disabled={{ not editable }}>Sblocca geometria</common.Button>
         <div class="drawing-editor__palette" role="group" aria-label="Tavolozza">
           <button type="button" class="drawing-editor__chip" data-palette="#ffffff" style="--swatch: #ffffff" aria-label="Bianco"></button>
           <button type="button" class="drawing-editor__chip" data-palette="#000000" style="--swatch: #000000" aria-label="Nero"></button>

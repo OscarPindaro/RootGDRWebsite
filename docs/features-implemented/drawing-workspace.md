@@ -66,11 +66,22 @@ library, skeleton, publishing or export capabilities.
 - Alembic creates a `drawings` table with creator, timestamps, optimistic version
   and a JSONB native document. A feature-local `SceneJSON` adapter keeps the
   model attribute typed as `SceneDocument`; a save replaces the complete value.
-- Format version 1 stores an artboard and ordered polygon/ellipse/path/group
+- Format version 2 stores an artboard and ordered polygon/ellipse/path/group
   nodes with stable node IDs, names, affine transforms, styles and visibility.
-  Polygon vertices are ordered coordinate pairs; edge visibility follows each
+  Polygon vertices and path handles have node-scoped stable `pointIds`; authored
+  anchors have IDs, names, positions and angles. Insert/remove/cut keep surviving
+  identities; duplication changes node IDs while retaining scoped element IDs.
+  Polygon vertices remain ordered coordinate pairs; edge visibility follows each
   outgoing edge. Paths use absolute M/L/C/Z commands. UI selection, viewport,
   handles and guides are not saved as artwork.
+- Version 1 is explicitly upgraded in memory on read, with deterministic IDs and
+  no inferred preset locks. Geometry, transforms and styles are unchanged. The
+  database row is rewritten only by explicit Save; no schema reset is required.
+  Unknown versions and version-2 metadata disguised as version 1 are rejected.
+- Optional typed primitive constraints validate geometry in local and composed
+  world coordinates. Incompatible point or parent transforms are refused; locks
+  survive copy/history/save. **Sblocca geometria** removes only the constraint,
+  retaining appearance and IDs, as one undo step. Preset creation UI is separate.
 - Validation rejects unknown fields/versions, duplicate IDs, malformed paths,
   non-finite/singular transforms and self-intersecting/zero-area polygons.
   Limits are 2,000 nodes, eight nested group levels, 256 points per polygon,
@@ -104,6 +115,6 @@ specimen in the component showcase.
 - Groups must be consecutive siblings to preserve overlap order. The layer list
   is a connected, collapsible scene tree. Group styling is not exposed.
 - No angle/aspect-ratio snapping or zoom readout/fit control. Numeric coordinate
-  authoring and stable vertex IDs for future linked-asset overrides are deferred.
+  authoring and linked-asset overrides are deferred; stable native IDs are present.
 - JavaScript is required for complete interactive rendering, including groups;
   the server-rendered first paint is not a complete no-JavaScript renderer.

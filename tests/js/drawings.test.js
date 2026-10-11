@@ -50,7 +50,7 @@ import { visibleRuns } from "../../src/frontend/js/drawings/render.js";
 const IDENTITY = [1, 0, 0, 1, 0, 0];
 
 function sceneWith(nodes) {
-  return { schemaVersion: 1, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
+  return { schemaVersion: 2, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
 }
 
 function triangle(id = "a") {
@@ -207,7 +207,7 @@ test("history undoes, redoes and branches", () => {
 
 test("history ignores a commit that changes nothing", () => {
   const history = new History(sceneWith([triangle("a")]));
-  history.commit(sceneWith([triangle("a")]));
+  history.commit(history.present);
   assert.equal(history.canUndo, false);
 });
 
@@ -443,4 +443,33 @@ test("all original cut edges keep their visibility", () => {
   const result = cutNode(sceneWith([node]), "a", 0, 2);
   assert.deepEqual(result.scene.nodes[1].edgeVisible, [true, true, false]);
   assert.equal(cutNode(sceneWith([node]), "a", 0, 20), null);
+});
+
+test("native migration preserves legacy geometry and assigns stable scoped identities", async () => {
+  const {migrateScene} = await import("../../src/frontend/js/drawings/scene.js");
+  const legacy = {schemaVersion:1, artboard:{width:640,height:480,background:"#fffdf6"}, nodes:[{...triangle("a"), name:"Triangolo"}]};
+  delete legacy.nodes[0].pointIds;
+  delete legacy.nodes[0].constraint;
+  const migrated = migrateScene(legacy);
+  assert.equal(migrated.schemaVersion, 2);
+  assert.equal(legacy.schemaVersion, 1);
+  assert.deepEqual(migrated.nodes[0].points, legacy.nodes[0].points);
+  assert.deepEqual(migrated.nodes[0].pointIds, ["v0","v1","v2"]);
+  assert.equal(migrated.nodes[0].constraint, null);
+  assert.deepEqual(migrateScene(migrated), migrated);
+});
+
+test("constraints reject incompatible edits and parent transforms without changing the source", async () => {
+  const {constraintsValid, transformInWorld} = await import("../../src/frontend/js/drawings/scene.js");
+  const square = {...createRect("Square",[0,0],[100,100]),id:"p",constraint:{kind:"square"}};
+  const scene = sceneWith([{kind:"group",id:"g",name:"Group",transform:IDENTITY,opacity:1,visible:true,anchors:[],nodes:[square]}]);
+  assert.equal(constraintsValid(scene),true);
+  assert.deepEqual(transformInWorld(scene,"g",scaleAbout([0,0],2,3)),scene);
+  assert.deepEqual(patchNode(scene,"p",{points:[[0,0],[100,0],[80,100],[0,100]]}),scene);
+  assert.equal(cutNode(scene,"p",0,2),null);
+  const unlocked = patchNode(scene,"p",{constraint:null});
+  assert.notDeepEqual(transformInWorld(unlocked,"g",scaleAbout([0,0],2,3)),unlocked);
+  const copy = duplicateNode(scene,"p").scene.nodes[0].nodes[1];
+  assert.deepEqual(copy.pointIds,square.pointIds);
+  assert.deepEqual(copy.constraint,square.constraint);
 });

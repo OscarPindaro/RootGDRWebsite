@@ -143,7 +143,7 @@ def test_the_scene_travels_as_json_for_the_client(component):
     payload = page.evaluate(
         "() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"
     )
-    assert payload["schemaVersion"] == 1
+    assert payload["schemaVersion"] == 2
     assert [node["id"] for node in payload["nodes"]] == ["head", "beak"]
     assert payload["nodes"][1]["points"][1] == [296.0, 120.0]
 
@@ -1228,3 +1228,44 @@ def test_ellipse_defaults_to_direct_center_and_axis_controls(component):
     assert _scene_of(page)["nodes"][0]["rx"] == pytest.approx(140, abs=1)
     page.get_by_test_id("drawing-undo").click()
     assert _scene_of(page)["nodes"][0]["rx"] == pytest.approx(100, abs=1)
+
+
+def test_unlocking_a_native_preset_is_explicit_appearance_preserving_and_undoable(
+    component,
+):
+    scene = _square()
+    scene.nodes[0].constraint = {"kind": "square"}
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.mouse.click(*_at(page, 150, 100))
+    assert _scene_of(page) == before
+    page.locator("[data-drawing-unlock]").click()
+    after = _scene_of(page)
+    assert after["nodes"][0]["constraint"] is None
+    assert after["nodes"][0]["points"] == before["nodes"][0]["points"]
+    assert after["nodes"][0]["pointIds"] == before["nodes"][0]["pointIds"]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page) == before
+
+
+def test_insert_remove_and_cut_keep_surviving_vertex_identities(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)["nodes"][0]["pointIds"]
+    page.mouse.click(*_at(page, 150, 100))
+    inserted = _scene_of(page)["nodes"][0]["pointIds"]
+    assert inserted[0] == before[0] and inserted[2:] == before[1:]
+    page.keyboard.down("Alt")
+    page.mouse.click(*_at(page, 150, 100))
+    page.keyboard.up("Alt")
+    assert _scene_of(page)["nodes"][0]["pointIds"] == before
+    page.get_by_test_id("drawing-tool-cut").click()
+    page.mouse.click(*_at(page, 100, 100))
+    page.mouse.click(*_at(page, 400, 400))
+    assert all(
+        len(node["pointIds"]) == len(node["points"])
+        for node in _scene_of(page)["nodes"]
+    )
