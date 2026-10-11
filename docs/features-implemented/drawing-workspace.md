@@ -27,8 +27,11 @@ library, skeleton, publishing or export capabilities.
   fill/stroke colours, width and opacity
   support angular silhouettes and faint details. For paths, palette choices
   change the stroke colour.
-- Grid, visible vertices, polygon midpoints and path endpoints provide snapping;
-  Alt bypasses it. **Griglia** toggles the grid and its snapping. Wheel zooms;
+- A floating selection bar keeps vertex/group/order actions and independent
+  grid visibility, grid snap and geometry snap controls together. Moving an
+  object or group snaps its anchor, excluding the selected objects themselves.
+  Vertices, polygon midpoints and path endpoints are geometry targets;
+  Alt bypasses snapping. Hiding the grid does not change snap preferences. Wheel zooms;
   Space-drag or the middle mouse button pans.
 - Undo/redo is in-memory and bounded to 60 completed operations. A drag or
   property change is one step; view changes and selection are excluded.

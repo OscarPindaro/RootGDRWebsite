@@ -61,6 +61,22 @@
   background: var(--surface);
 }
 
+.drawing-editor__selection-bar {
+  position: sticky;
+  top: var(--sp-2);
+  z-index: 3;
+  justify-self: center;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-1);
+  max-width: 100%;
+  padding: var(--sp-2);
+  background: var(--surface);
+  border: var(--rule-ink);
+  box-shadow: var(--shadow-sm);
+}
+
 .drawing-editor__workspace {
   display: grid;
   grid-template-columns: var(--drawing-tool-rail) minmax(0, 1fr) var(--drawing-side-rail);
@@ -371,6 +387,7 @@
     overflow-x: auto;
   }
 
+  .drawing-editor__selection-bar,
   .drawing-editor__hint,
   .drawing-editor__bar,
   .drawing-editor__tools { display: none; }

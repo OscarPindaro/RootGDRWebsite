@@ -186,6 +186,7 @@ def _live_props(scene=None) -> dict:
 
 
 def _drag(page, start, end) -> None:
+    page.locator("[data-drawing-artboard]").scroll_into_view_if_needed()
     first = _at(page, start[0], start[1])
     second = _at(page, end[0], end[1])
     page.mouse.move(first[0], first[1])
@@ -781,6 +782,55 @@ def test_palette_includes_white_and_black_for_fill_and_stroke(component, colour)
     _drag(page, (100, 450), (300, 450))
     page.locator(f"[data-palette='{colour}']").click()
     assert _scene_of(page)["nodes"][-1]["stroke"] == colour
+
+
+def test_moving_a_shape_snaps_its_anchor_to_the_grid(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    _drag(page, (250, 250), (263, 267))
+    assert _scene_of(page)["nodes"][0]["transform"][4:] == pytest.approx(
+        [10, 20], abs=1
+    )
+
+
+def test_object_movement_snaps_to_other_shapes_not_itself(component):
+    scene = _square()
+    scene.nodes.append(
+        PolygonNode(
+            id="target",
+            name="Target",
+            points=[(450, 80), (500, 80), (500, 130), (450, 130)],
+            fill="#000000",
+        )
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-snap-grid]").click()
+    _drag(page, (250, 250), (596, 234))
+    assert _scene_of(page)["nodes"][0]["transform"][4:] == pytest.approx(
+        [350, -20], abs=1
+    )
+
+
+def test_grid_visibility_and_snap_modes_are_independent(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-grid]").click()
+    assert not page.locator(".drawing-editor__grid").is_visible()
+    assert (
+        page.locator("[data-snap-grid]").get_attribute("aria-pressed", timeout=1000)
+        == "true"
+    )
+    page.locator("[data-snap-grid]").click()
+    page.locator("[data-snap-shapes]").click()
+    _drag(page, (250, 250), (263, 267))
+    assert _scene_of(page)["nodes"][0]["transform"][4:] == pytest.approx(
+        [13, 17], abs=1
+    )
+    assert page.locator("[data-drawing-selection-bar]").is_visible()
 
 
 def test_space_activates_a_focused_tool_button(component):

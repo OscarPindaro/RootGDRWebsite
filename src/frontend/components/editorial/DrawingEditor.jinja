@@ -17,7 +17,6 @@
     <div class="drawing-editor__commands">
       <common.Button variant="secondary" size="sm" icon="undo-2" disabled={{ not editable }} data-drawing-undo data-testid="drawing-undo">Annulla</common.Button>
       <common.Button variant="secondary" size="sm" icon="redo-2" disabled={{ not editable }} data-drawing-redo data-testid="drawing-redo">Ripeti</common.Button>
-      <common.Button variant="secondary" size="sm" icon="grid-2x2" data-drawing-grid aria-pressed="true">Griglia</common.Button>
       <common.Button variant="primary" size="sm" icon="save" disabled={{ not editable }} data-testid="drawing-save">Salva</common.Button>
     </div>
   </header>
@@ -40,6 +39,19 @@
     <common.Button variant="secondary" size="sm" data-dialog-close>Annulla</common.Button>
     <common.Button variant="danger" size="sm" data-drawing-reload>Scarta e ricarica</common.Button>
   </common.Dialog>
+
+  <div class="drawing-editor__selection-bar" data-drawing-selection-bar role="toolbar" aria-label="Selezione e agganci">
+    <common.IconButton icon="spline" label="Vertici" data-drawing-mode="vertex" disabled={{ not editable }} />
+    <common.IconButton icon="grid-2x2" label="Raggruppa" data-drawing-group data-testid="drawing-group" disabled={{ not editable }} />
+    <common.IconButton icon="list" label="Separa" data-drawing-ungroup data-testid="drawing-ungroup" disabled={{ not editable }} />
+    <common.IconButton icon="copy" label="Duplica" data-drawing-duplicate data-testid="drawing-duplicate" disabled={{ not editable }} />
+    <common.IconButton icon="trash-2" label="Elimina" data-drawing-delete data-testid="drawing-delete" disabled={{ not editable }} />
+    <common.IconButton icon="arrow-right" label="Avanti" data-drawing-order="1" disabled={{ not editable }} />
+    <common.IconButton icon="arrow-left" label="Dietro" data-drawing-order="-1" disabled={{ not editable }} />
+    <common.IconButton icon="grid-2x2" label="Mostra griglia" selected={{ True }} data-drawing-grid />
+    <common.Button size="xs" variant="secondary" selected={{ True }} data-snap-grid>Aggancia griglia</common.Button>
+    <common.Button size="xs" variant="secondary" selected={{ True }} data-snap-shapes>Aggancia oggetti</common.Button>
+  </div>
 
   <div class="drawing-editor__workspace">
     <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno" data-testid="drawing-toolbar">
@@ -190,15 +202,7 @@
                  disabled={{ not editable }} />
           <span class="drawing-editor__value mono" data-style-value="opacity">{{ (selected.opacity * 100) | round | int if selected else 100 }}%</span>
         </div>
-        <div class="drawing-editor__actions">
-          <common.Button variant="secondary" size="sm" icon="spline" data-drawing-mode="vertex" disabled={{ not editable }}>Vertici</common.Button>
-          <common.Button variant="secondary" size="sm" icon="grid-2x2" data-drawing-group data-testid="drawing-group" disabled={{ not editable }}>Raggruppa</common.Button>
-          <common.Button variant="secondary" size="sm" icon="list" data-drawing-ungroup data-testid="drawing-ungroup" disabled={{ not editable }}>Separa</common.Button>
-          <common.Button variant="secondary" size="sm" icon="copy" data-drawing-duplicate data-testid="drawing-duplicate" disabled={{ not editable }}>Duplica</common.Button>
-          <common.Button variant="secondary" size="sm" icon="trash-2" data-drawing-delete data-testid="drawing-delete" disabled={{ not editable }}>Elimina</common.Button>
-          <common.Button variant="secondary" size="sm" icon="arrow-right" data-drawing-order="1" disabled={{ not editable }}>Avanti</common.Button>
-          <common.Button variant="secondary" size="sm" icon="arrow-left" data-drawing-order="-1" disabled={{ not editable }}>Dietro</common.Button>
-        </div>
+
         <p class="hint" data-testid="drawing-inspector-hint">Seleziona un oggetto per modificarne colore, spessore e opacità.</p>
       </section>
     </div>

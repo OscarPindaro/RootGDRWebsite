@@ -104,6 +104,8 @@ export function createController(root) {
   let cut = null;
   let cutCursor = null;
   let spaceDown = false;
+  let snapGrid = true;
+  let snapShapes = true;
   let cutBefore = null;
   let gestureBefore = null;
   let title = root.dataset.title || "Nuovo disegno";
@@ -358,13 +360,13 @@ export function createController(root) {
   const SNAP_GRID = 10;
 
   /** Snap a world point to the grid or a sibling vertex; Alt bypasses it. */
-  function snapWorld(point, node, excludeIndex, bypass) {
+  function snapWorld(point, node, excludeIndex, bypass, excluded = []) {
     if (bypass) return { point, snapped: false };
     const tolerance = SNAP_TOLERANCE_PX / (viewport[0] * Math.abs(svg.getScreenCTM().a));
     let best = null;
     let bestDistance = tolerance;
     walk(scene.nodes, candidate => {
-      if (candidate.visible === false || (ancestorsOf(candidate.id) || []).some(id => !findNode(scene, id).node.visible)) return;
+      if (!snapShapes || excluded.includes(candidate.id) || candidate.visible === false || (ancestorsOf(candidate.id) || []).some(id => excluded.includes(id) || !findNode(scene, id).node.visible)) return;
       const points = candidate.kind === "polygon" ? candidate.points : candidate.kind === "path" ? pathHandles(candidate.d).filter(h => !h.control).map(h => h.point) : [];
       const world = nodeFrame(scene, candidate.id).world;
       const targets = points.filter((p, i) => candidate.id !== node?.id || i !== excludeIndex);
@@ -377,7 +379,7 @@ export function createController(root) {
     });
     const gridX = Math.round(point[0] / SNAP_GRID) * SNAP_GRID;
     const gridY = Math.round(point[1] / SNAP_GRID) * SNAP_GRID;
-    if (!root.querySelector("[data-drawing-grid]")?.dataset.off && Math.hypot(gridX - point[0], gridY - point[1]) < bestDistance) {
+    if (snapGrid && Math.hypot(gridX - point[0], gridY - point[1]) < bestDistance) {
       best = [gridX, gridY];
     }
     return best ? { point: best, snapped: true } : { point, snapped: false };
@@ -771,6 +773,7 @@ export function createController(root) {
     drag = {
       kind: "move",
       from: scenePoint(event),
+      anchor: worldCorners(selected().node)[0],
       transforms: selection.map((id) => ({ id, transform: nodeFrame(scene, id).world })),
     };
   }
@@ -795,7 +798,10 @@ export function createController(root) {
     }
     if (drag.kind === "move") {
       const point = scenePoint(event);
-      const delta = translation(point[0] - drag.from[0], point[1] - drag.from[1]);
+      const wanted = [drag.anchor[0] + point[0] - drag.from[0], drag.anchor[1] + point[1] - drag.from[1]];
+      const snapped = snapWorld(wanted, null, -1, event.altKey, selection);
+      snapPoint = snapped.snapped ? snapped.point : null;
+      const delta = translation(snapped.point[0] - drag.anchor[0], snapped.point[1] - drag.anchor[1]);
       let next = scene;
       for (const entry of drag.transforms) {
         next = transformInWorld(next, entry.id, delta, entry.transform);
@@ -1092,6 +1098,16 @@ export function createController(root) {
       grid.dataset.off = on ? "" : "true";
       svg.querySelector(".drawing-editor__grid").style.display = on ? "" : "none";
     });
+    for (const kind of ["grid", "shapes"]) {
+      const button = root.querySelector(`[data-snap-${kind}]`);
+      button.addEventListener("click", () => {
+        const on = button.getAttribute("aria-pressed") !== "true";
+        if (kind === "grid") snapGrid = on;
+        else snapShapes = on;
+        button.setAttribute("aria-pressed", String(on));
+        button.classList.toggle("btn-selected", on);
+      });
+    }
     const titleInput = root.querySelector("[data-drawing-title]");
     if (titleInput) titleInput.addEventListener("input", () => { title = titleInput.value.trim(); refresh(); });
     root.querySelector("[data-drawing-save-copy]").addEventListener("click", () => save(true));
