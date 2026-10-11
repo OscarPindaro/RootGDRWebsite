@@ -17,6 +17,7 @@ from .npcs.routes import router as npcs_router
 from .palette import router as palette_router
 from .pages.routes import router as pages_router
 from .places.routes import router as places_router
+from .reports.routes import router as reports_router
 from .sessions.routes import router as sessions_router
 from .stories.routes import router as stories_router
 from .config import AppConfig, get_app_config
@@ -95,6 +96,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(palette_router)
     app.include_router(places_router)
     app.include_router(pages_router)
+    app.include_router(reports_router)
     app.include_router(sessions_router)
     app.include_router(stories_router)
 

@@ -47,6 +47,10 @@
                      aria-keyshortcuts="Alt+Space Control+K Meta+K">
         <span class="mono">Cerca</span><span class="mono muted">Alt+Spazio · Ctrl K</span>
       </common.Button>
+      <common.Button variant="text" size="sm" icon="file-text"
+                     data-dialog-open="report-panel">
+        <span>Segnala un problema</span>
+      </common.Button>
       {% if current_user %}
       <layout.UserMenu current_user={{ current_user }} />
       {% endif %}

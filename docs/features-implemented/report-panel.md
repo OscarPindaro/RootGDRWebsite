@@ -1,0 +1,51 @@
+# Report panel
+
+A reader can report a problem from the page they are on, without leaving it.
+
+## What it does
+
+- A trigger in the topbar opens a floating panel over the current page. Opening,
+  dismissing and reopening never reload the page or replace its state.
+- The reader writes what is not working. The description is saved on the backend
+  as they type, so a navigation, a reload or a closed browser does not lose
+  saved work.
+- The first open captures the rendered page HTML and two screenshots — the
+  visible viewport and the whole page — and attaches them to the draft.
+  **Riprendi schermata** captures them again.
+- A draft is not a board ticket. Saving or reopening one creates nothing on the
+  board; submission is a later step (REQ-0014/T05).
+
+## How it is built
+
+- `src/backend/reports/` owns two tables, `reports` and `report_evidence`
+  (Alembic revision `28dbcd3b4eb6`). One evidence row per capture kind, its file
+  under `reports/<report id>/` on the configured filesystem.
+- The report id is a random UUID: the browser keeps it in `localStorage`
+  (`rootgdr.report.draft`) and it is the whole handle on a draft for a reader
+  who is not signed in. A signed-in reader may only open their own draft; an
+  administrator may open any. Saving, reading and capturing are refused with a
+  409 once a report is submitted.
+- API: `POST /api/reports/`, `GET` and `PATCH /api/reports/{id}`,
+  `PUT` and `GET /api/reports/{id}/evidence/{kind}`.
+- Frontend: `editorial.ReportPanel` is a `common.Dialog` rendered by
+  `layout.Page`, opened by the topbar trigger. The capture is a bundle
+  (`src/frontend/js/report/index.js` → `/static/js/report.js`) built by esbuild
+  and fetched on demand by `editorial/ReportPanel.js`, so a reading page pays
+  nothing for it. `html-to-image` (MIT, pinned) renders the DOM to a canvas; the
+  visible screenshot is the full-page canvas cropped to the current scroll.
+- A screenshot's type comes from its leading bytes, never from the declared
+  name; the page HTML is stored as `text/html`. Limits are 5 MB per screenshot
+  and 2 MB of HTML.
+
+## Limits
+
+- The panel is on shelled pages only. The standalone error pages, including the
+  500 page that shows its request id, cannot open it yet.
+- One capture per kind: capturing again replaces the previous file, so there is
+  no before/after pair.
+- `localStorage` holds the draft id and nothing else. Clearing storage loses the
+  handle, not the row, and there is no draft list in the UI to find it again.
+- Retention is not implemented: drafts and their files stay until a cleanup step
+  exists.
+- The panel captures the page as it stands when it opens. The optional
+  reproduction and the ticket submission are REQ-0014/T04 and REQ-0014/T05.

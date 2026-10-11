@@ -4,9 +4,10 @@
   "type": "module",
   "description": "Editor bundle and generated assets for the campaign archive (CodeMirror 6, the drawing editor, Lucide icon registry).",
   "scripts": {
-    "build": "npm run build:editor && npm run build:drawings",
+    "build": "npm run build:editor && npm run build:drawings && npm run build:report",
     "build:editor": "esbuild src/frontend/js/editor/index.js --bundle --minify --format=iife --target=es2020 --outfile=src/frontend/static/js/editor.js",
     "build:drawings": "esbuild src/frontend/js/drawings/index.js --bundle --minify --format=iife --target=es2020 --outfile=src/frontend/static/js/drawings.js",
+    "build:report": "esbuild src/frontend/js/report/index.js --bundle --minify --format=iife --target=es2020 --outfile=src/frontend/static/js/report.js",
     "test:drawings": "node --test tests/js/*.test.js",
     "icons": "node tools/build_icons.mjs"
   },
@@ -22,6 +23,7 @@
     "@codemirror/language": "^6.12.4",
     "@codemirror/state": "^6.7.5",
     "@codemirror/view": "^6.43.12",
-    "codemirror": "^6.0.2"
+    "codemirror": "^6.0.2",
+    "html-to-image": "1.11.13"
   }
 }

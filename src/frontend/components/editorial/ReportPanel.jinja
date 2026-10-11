@@ -1,0 +1,21 @@
+{#def #}
+{#css editorial/ReportPanel.css, common/Button.css, common/Dialog.css, common/Icon.css, common/Tooltip.css #}
+{#js common/Dialog.js, editorial/ReportPanel.js #}
+<common.Dialog title="Segnala un problema" id="report-panel" manual={{ True }}>
+  <p class="report-panel__lead">
+    Racconta cosa non funziona. La schermata visibile, la pagina intera e l’HTML
+    di questa pagina vengono allegati da soli alla bozza.
+  </p>
+  <label class="report-panel__field">
+    <span class="report-panel__label">Cosa non funziona</span>
+    <textarea class="report-panel__text" rows="6" data-report-description
+              data-dialog-autofocus
+              placeholder="Cosa hai fatto, cosa ti aspettavi, cosa è successo."></textarea>
+  </label>
+  <ul class="report-panel__attachments" data-report-evidence hidden
+      aria-label="Allegati della segnalazione"></ul>
+  <p class="report-panel__status" data-report-status role="status"></p>
+  <common.Button variant="secondary" size="sm" data-report-recapture>
+    Riprendi schermata
+  </common.Button>
+</common.Dialog>

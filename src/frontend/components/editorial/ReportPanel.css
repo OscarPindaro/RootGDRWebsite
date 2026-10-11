@@ -1,0 +1,87 @@
+/* The report panel: a dialog the reader fills in while the page stays as it is.
+
+   It lives in `layout.Page`, so every shelled page can open it. The status line
+   belongs to the draft save only; the page's own autosave is
+   `common.SaveIndicator`, and the two never write to the same element. */
+.report-panel__lead {
+  margin: 0 0 var(--sp-4);
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+}
+
+.report-panel__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-4);
+}
+
+.report-panel__label {
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  color: var(--ink);
+}
+
+.report-panel__text {
+  width: 100%;
+  min-height: calc(var(--sp-8) * 3);
+  box-sizing: border-box;
+  padding: var(--sp-3);
+  border: var(--field-outline-width) solid var(--clr-border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-sunk);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  resize: vertical;
+}
+
+.report-panel__text:focus {
+  outline: none;
+  border-color: var(--clr-accent);
+}
+
+.report-panel__attachments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+  margin: 0 0 var(--sp-3);
+  padding: 0;
+  list-style: none;
+}
+
+.report-panel__attachment {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
+.report-panel__size {
+  font-size: var(--text-xs);
+}
+
+.report-panel__status {
+  min-height: var(--text-sm);
+  margin: 0 0 var(--sp-3);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+
+.report-panel__status[data-state="opening"],
+.report-panel__status[data-state="capturing"],
+.report-panel__status[data-state="saving"] {
+  color: var(--ochre);
+}
+
+.report-panel__status[data-state="saved"] {
+  color: var(--forest);
+}
+
+.report-panel__status[data-state="failed"],
+.report-panel__status[data-state="captureFailed"] {
+  color: var(--vermilion);
+}

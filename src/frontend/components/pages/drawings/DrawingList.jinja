@@ -1,5 +1,5 @@
 {#def drawings, current_user=None, total=None, page=1 #}
-{#css common/Button.css, common/EmptyState.css, common/Icon.css, common/Tooltip.css, editorial/Crumbs.css, editorial/Ledger.css, editorial/Masthead.css, editorial/Row.css, layout/Page.css, common/Alert.css, common/Avatar.css, common/Mark.css, common/Menu.css, common/RequestFallback.css, common/SaveIndicator.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css #}
+{#css common/Button.css, common/EmptyState.css, common/Icon.css, common/Tooltip.css, editorial/Crumbs.css, editorial/Ledger.css, editorial/Masthead.css, editorial/Row.css, layout/Page.css, common/Alert.css, common/Avatar.css, common/Mark.css, common/Menu.css, common/RequestFallback.css, common/SaveIndicator.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css, common/Dialog.css, editorial/ReportPanel.css #}
 {% set count = total if total is not none else drawings | length %}
 {% set eyebrow_text = "Archivio · " ~ count ~ (" disegno" if count == 1 else " disegni") %}
 <layout.Page title="Disegni" current_user={{ current_user }} active="disegni" wide={{ True }}>

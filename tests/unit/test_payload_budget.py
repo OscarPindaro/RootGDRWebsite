@@ -34,6 +34,7 @@ SHELL_SCRIPTS = tuple(
 FONTS = tuple(sorted((STATIC / "fonts").glob("*.woff2")))
 EDITOR = (STATIC / "js" / "editor.js",)
 DRAWINGS = (STATIC / "js" / "drawings.js",)
+REPORT = (STATIC / "js" / "report.js",)
 
 # How common.Icon renders one icon; the icon budget measures the whole registry.
 _ICON_MARKUP = (
@@ -103,6 +104,11 @@ BUDGETS = {
         120_000,
         40_000,
     ),
+    "lazy report panel (report.js, only when the panel is opened)": (
+        _measure(REPORT),
+        22_000,
+        9_000,
+    ),
 }
 
 
@@ -136,8 +142,10 @@ def test_the_pre_commit_hook_watches_the_budgeted_inputs() -> None:
     for path in (
         "src/frontend/static/css/main.css",
         "src/frontend/static/js/editor.js",
+        "src/frontend/static/js/report.js",
         "src/frontend/static/fonts/ibm-plex-sans.woff2",
         "src/frontend/js/editor/index.js",
+        "src/frontend/js/report/index.js",
         "src/backend/icons.py",
         "tools/build_icons.mjs",
         "tests/unit/test_payload_budget.py",
@@ -163,6 +171,16 @@ def test_the_drawing_bundle_is_loaded_only_through_its_loader() -> None:
     assert "/static/js/drawings.js" in loader
     for path in (REPO / "src" / "frontend" / "components").rglob("*.jinja"):
         assert "/static/js/drawings.js" not in path.read_text(encoding="utf-8"), path
+
+
+def test_the_report_bundle_is_loaded_only_through_its_loader() -> None:
+    """The panel fetches the capture bundle through the component's loader."""
+    loader = (
+        REPO / "src" / "frontend" / "components" / "editorial" / "ReportPanel.js"
+    ).read_text(encoding="utf-8")
+    assert "/static/js/report.js" in loader
+    for path in (REPO / "src" / "frontend" / "components").rglob("*.jinja"):
+        assert "/static/js/report.js" not in path.read_text(encoding="utf-8"), path
 
 
 def test_a_read_only_page_does_not_load_the_editor_eagerly() -> None:

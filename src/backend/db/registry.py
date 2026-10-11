@@ -22,6 +22,10 @@ from ..images.models import ImageRevisionModel  # noqa: F401
 from ..npcs.models import NpcModel  # noqa: F401
 from ..pages.models import PageModel  # noqa: F401
 from ..places.models import PlaceModel  # noqa: F401
+from ..reports.models import (  # noqa: F401
+    ReportEvidenceModel,
+    ReportModel,
+)
 from ..sessions.models import SessionModel  # noqa: F401
 from ..stories.models import StoryModel  # noqa: F401
 from ..tasks.models import TaskModel  # noqa: F401
@@ -42,6 +46,8 @@ __all__ = [
     "PageModel",
     "PlaceModel",
     "ReferenceModel",
+    "ReportEvidenceModel",
+    "ReportModel",
     "SessionModel",
     "StoryModel",
     "TaskModel",
