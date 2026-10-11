@@ -68,6 +68,16 @@ function remember(id) {
   }
 }
 
+/* A submitted report is done: forgetting the handle is what lets the next open
+   start a new one instead of reopening the ticket. */
+function forget() {
+  try {
+    window.localStorage.removeItem(DRAFT_KEY);
+  } catch (error) {
+    /* nothing to forget */
+  }
+}
+
 function setStatus(status, key) {
   if (!status) return;
   status.textContent = MESSAGES[key] || "";
@@ -406,6 +416,8 @@ function mount(dialog) {
   const reproduction = dialog.querySelector("[data-report-reproduction]");
   const submit = dialog.querySelector("[data-report-submit]");
   const submitActions = dialog.querySelector("[data-report-submit-actions]");
+  const newActions = dialog.querySelector("[data-report-new-actions]");
+  const newReport = dialog.querySelector("[data-report-new]");
   const ticket = dialog.querySelector("[data-report-ticket]");
 
   function renderSubmission(draft) {
@@ -414,6 +426,7 @@ function mount(dialog) {
     recapture.hidden = submitted;
     reproduction.hidden = submitted;
     textarea.readOnly = submitted;
+    newActions.hidden = !submitted;
     if (submitted) editor.close();
     ticket.hidden = !submitted && !ticket.dataset.state;
     if (!submitted) return;
@@ -439,6 +452,8 @@ function mount(dialog) {
           })
         )
       );
+      // The ticket is the record now, so the panel is free for a new report.
+      forget();
       setStatus(status, "submitted");
     } catch (error) {
       setStatus(status, "submitFailed");
@@ -514,6 +529,15 @@ function mount(dialog) {
     } catch (error) {
       setStatus(status, "failed");
     }
+  });
+
+  newReport.addEventListener("click", async () => {
+    forget();
+    draftId = null;
+    textarea.value = "";
+    ticket.hidden = true;
+    delete ticket.dataset.state;
+    await openPanel();
   });
 
   document.addEventListener("report:refused", async () => {

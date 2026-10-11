@@ -38,6 +38,10 @@ A reader can report a problem from the page they are on, without leaving it.
   captures and one `diagnostics.json`. The ticket id is shown, the panel becomes
   read-only — no annotating, no recapturing, no reproduction, and the
   description cannot be edited — and a second press returns the same ticket.
+- A submitted report is finished, so its handle is forgotten and
+  **Nuova segnalazione** starts a fresh one from the same panel: new captures,
+  empty description, no reproduction. The ticket on the board is the record of
+  what was sent.
 - A draft is not a board ticket. Saving or reopening one creates nothing on the
   board; submission is a later step (REQ-0014/T05).
 

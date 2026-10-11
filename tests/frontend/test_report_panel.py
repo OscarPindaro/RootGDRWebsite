@@ -459,6 +459,29 @@ def test_a_submitted_report_offers_nothing_to_change(component):
     assert page.locator("[data-report-submit-actions]").is_hidden()
 
 
+def test_a_new_report_can_be_started_after_submitting(component):
+    component.route_json("GET", f"/api/reports/{DRAFT_ID}", body=_submitted())
+    component.route_json(
+        "POST",
+        "/api/reports/",
+        status=201,
+        body=_draft(evidence=[_capture("page_html")]),
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _open(component)
+    page.wait_for_selector("[data-report-ticket]:not([hidden])")
+
+    page.click("[data-report-new]")
+    _wait_for_state(page, "saved")
+
+    assert component.local_storage(DRAFT_KEY) == DRAFT_ID
+    assert page.locator("[data-report-ticket]").is_hidden()
+    assert page.locator("[data-report-submit-actions]").is_visible()
+    assert page.locator("[data-report-reproduction]").is_visible()
+    assert page.locator("[data-report-description]").get_attribute("readonly") is None
+
+
 def test_a_refused_annotation_reads_the_submitted_report_back(component):
     # The report was submitted elsewhere: the write is refused, and the panel
     # shows the truth instead of asking the reader to try again.
@@ -582,6 +605,9 @@ def test_the_report_is_submitted_and_shows_its_ticket(component):
         "Segnalazione inviata: #42."
     )
     assert page.locator("[data-report-submit-actions]").is_hidden()
+    # The ticket is the record now, and the panel is free for a new report.
+    assert component.local_storage(DRAFT_KEY) is None
+    assert page.locator("[data-report-new-actions]").is_visible()
     # Nothing the server would refuse is still on offer.
     assert page.locator("[data-report-annotate]").count() == 0
     assert page.locator("[data-report-recapture]").is_hidden()
