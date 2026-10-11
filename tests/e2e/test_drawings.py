@@ -559,3 +559,66 @@ def test_context_duplicate_saves_native_artwork_and_global_search_stays_separate
     page.locator("#palette").wait_for(state="visible")
     assert not page.locator("#drawing-context-menu").is_visible()
     page.keyboard.press("Escape")
+
+
+def test_global_palette_creates_and_finds_drawings_through_native_api(
+    session: BrowserSession,
+):
+    _create(session)
+    page = session.page
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Control+k")
+    page.locator(".palette__input").fill("Nuovo disegno")
+    create = page.locator(".palette__item").filter(
+        has=page.locator(".palette__kind", has_text="Crea")
+    )
+    create.first.wait_for()
+    old = _drawing_id(page.url)
+    create.first.click()
+    page.wait_for_url(
+        lambda url: "/drawings/" in str(url) and not str(url).endswith(old)
+    )
+    identifier = _drawing_id(page.url)
+    stored = session.expect_api(f"/api/drawings/{identifier}").json()
+    assert stored["title"] == "Nuovo disegno" and stored["scene"]["nodes"] == []
+    result = session.expect_api("/api/palette?q=disegn").json()
+    assert any(item["href"] == "/drawings" for item in result["data"])
+    assert any(
+        item["method"] == "POST" and item["href"] == "/drawings/new"
+        for item in result["data"]
+    )
+
+
+def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    target = session.expect_api(
+        "/api/drawings/",
+        method="POST",
+        expected_status=201,
+        data={"title": "Palette navigation target"},
+    ).json()
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (250, 220))
+    local = _local_node_scene(session)
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Control+k")
+    page.locator(".palette__input").fill("Palette navigation target")
+    page.locator(".palette__item").filter(
+        has_text="Palette navigation target"
+    ).first.wait_for()
+    page.on("dialog", lambda dialog: dialog.dismiss())
+    with page.expect_event("dialog") as leaving:
+        page.locator(".palette__item").filter(
+            has_text="Palette navigation target"
+        ).first.click()
+    assert leaving.value.type == "beforeunload"
+    assert page.url.endswith(identifier)
+    assert _local_node_scene(session) == local
+    assert (
+        session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"] == []
+    )
+    assert session.expect_api(f"/api/drawings/{target['id']}").status == 200

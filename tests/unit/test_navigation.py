@@ -5,7 +5,13 @@ section id, so ``personaggi`` linked to ``/worlds/{id}/personaggi`` while the
 route is ``/worlds/{id}/characters`` — a 404 for two of the seven entries.
 """
 
-from backend.navigation import build_quicks, global_nav, world_nav
+from backend.navigation import (
+    GLOBAL_FEATURES,
+    build_quicks,
+    global_nav,
+    visible_features,
+    world_nav,
+)
 
 WORLD = "01a0bc24-aeb6-7e03-acff-4922a42d3e98"
 
@@ -59,3 +65,16 @@ def test_global_nav_hides_the_drawing_area_from_non_admins() -> None:
     hrefs = [item.href for item in global_nav("worlds", is_admin=False, env="dev")]
 
     assert "/drawings" not in hrefs
+
+
+def test_feature_registry_drives_navigation_and_permission_filtered_discovery():
+    assert len({feature.id for feature in GLOBAL_FEATURES}) == len(GLOBAL_FEATURES)
+    assert {feature.href for feature in visible_features(True, "dev")} == {
+        item.href for item in global_nav(None, True, "dev")
+    }
+    assert {feature.id for feature in visible_features(False, "dev")} == {"worlds"}
+    assert "showcase" not in {
+        feature.id for feature in visible_features(True, "production")
+    }
+    drawing = next(feature for feature in GLOBAL_FEATURES if feature.id == "drawings")
+    assert drawing.create_href == "/drawings/new" and drawing.create_method == "POST"

@@ -8,6 +8,13 @@ library, skeleton, publishing or export capabilities.
 
 - `/drawings` lists saved drawings in pages of 24; create a blank drawing,
   rename it in the workspace and save explicitly with **Salva** or Ctrl/Cmd+S.
+  Global Ctrl/Cmd+K search finds the drawing area, permitted creation and drawings
+  by title. A typed feature registry supplies both global navigation and search
+  destinations, including admin/development visibility. Search filters before a
+  metadata-only SQL union, then returns stable 12-result pages with total/count;
+  **Altri risultati** loads more. Existing world/content permissions stay enforced.
+  Creation is an explicit POST; unconfirmed failures do not offer a blind retry.
+  Navigating from dirty artwork retains the existing leave warning.
 - Drag locked triangles/rectangles onto the artboard. The triangle split button
   keeps isosceles as its primary action; its menu offers equilateral and right
   triangles with the right angle on either side. Rectangle offers square; polygon

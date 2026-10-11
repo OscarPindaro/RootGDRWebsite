@@ -418,3 +418,101 @@ def test_the_phone_dialog_stays_in_the_viewport_and_scrolls_its_list(component):
     assert page.eval_on_selector(
         ".palette__list", "el => el.scrollHeight > el.clientHeight"
     )
+
+
+def test_hotkey_returns_focus_to_an_on_screen_opener_not_an_off_canvas_rail(component):
+    page = _mount(component)
+    component.route_json("GET", "/api/palette", body={"data": []})
+    _inject_opener(page, "visible-opener")
+    _inject_opener(page, "off-canvas-opener")
+    page.locator("#off-canvas-opener").evaluate(
+        "el => el.style.transform = 'translateX(-200vw)'"
+    )
+    page.evaluate("() => document.activeElement.blur()")
+    page.keyboard.press("Control+k")
+    page.wait_for_selector("#palette[open]")
+    page.keyboard.press("Escape")
+    page.wait_for_selector("#palette[open]", state="detached")
+    page.wait_for_function("() => document.activeElement.id === 'visible-opener'")
+    assert page.evaluate("() => document.activeElement.id") == "visible-opener"
+
+
+def test_more_results_fetches_the_next_page_and_keeps_prior_options(component):
+    page = _mount(component)
+    component.route_json(
+        "GET",
+        "/api/palette",
+        responses=[
+            {"body": {"data": RESULTS["data"], "total": 4, "page": 1}},
+            {
+                "body": {
+                    "data": [
+                        {"kind": "Disegno", "name": "Altus", "href": "/drawings/altus"}
+                    ],
+                    "total": 4,
+                    "page": 2,
+                }
+            },
+        ],
+    )
+    _open(page)
+    page.wait_for_selector(".palette__item")
+    with page.expect_request("**/api/palette*page=2"):
+        page.locator("[data-palette-more]").click()
+    page.wait_for_function(
+        "() => document.querySelectorAll('.palette__item').length === 4"
+    )
+    assert page.locator("[data-palette-more]").is_hidden()
+    assert page.locator(".palette__name").last.inner_text() == "Altus"
+
+
+def test_creation_entry_uses_post_and_a_verified_local_redirect(component):
+    page = _mount(component)
+    component.route_json(
+        "GET",
+        "/api/palette",
+        body={
+            "data": [
+                {
+                    "kind": "Crea",
+                    "name": "Nuovo disegno",
+                    "href": "/drawings/new",
+                    "method": "POST",
+                }
+            ]
+        },
+    )
+    page.route(
+        "**/drawings/new",
+        lambda route: route.fulfill(
+            status=204, headers={"HX-Redirect": "/drawings/created"}
+        ),
+    )
+    page.route(
+        "**/drawings/created",
+        lambda route: route.fulfill(
+            status=200,
+            content_type="text/html",
+            body="<html><body>Created</body></html>",
+        ),
+    )
+    _open(page)
+    page.wait_for_selector(".palette__item")
+    with page.expect_request("**/drawings/new") as request:
+        page.keyboard.press("Enter")
+    assert request.value.method == "POST"
+    page.wait_for_url("**/drawings/created")
+
+
+def test_ambiguous_creation_failure_is_not_blindly_retryable(component):
+    page = _mount(component)
+    page.evaluate(
+        "() => { window.fetch = (url, options) => options?.method === 'POST' ? Promise.resolve(new Response('{}', {status:500})) : Promise.resolve(new Response(JSON.stringify({data:[{kind:'Crea',name:'Nuovo disegno',href:'/drawings/new',method:'POST'}]}), {status:200})); }"
+    )
+    _open(page)
+    page.wait_for_selector(".palette__item")
+    page.keyboard.press("Enter")
+    page.wait_for_function(
+        "() => document.querySelector('[data-palette-message]').textContent.includes('Creazione non confermata')"
+    )
+    assert page.locator("[data-palette-retry]").is_hidden()

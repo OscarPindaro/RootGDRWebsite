@@ -16,6 +16,10 @@
   var message = dialog.querySelector("[data-palette-message]");
   var retry = dialog.querySelector("[data-palette-retry]");
   var status = dialog.querySelector("[data-palette-status]");
+  var more = dialog.querySelector("[data-palette-more]");
+  var pageNumber = 1;
+  var total = 0;
+  var following = false;
   var worldId = dialog.dataset.worldId || "";
 
   var DEBOUNCE_MS = 150;
@@ -24,7 +28,8 @@
     empty: "Nessun risultato.",
     offline: "Sei offline. Controlla la connessione e riprova.",
     unauthorized: "Sessione scaduta. Ricarica la pagina per continuare.",
-    error: "Non è stato possibile cercare. Riprova."
+    error: "Non è stato possibile cercare. Riprova.",
+    creation: "Creazione non confermata. Controlla l’elenco prima di riprovare."
   };
 
   var results = [];
@@ -52,7 +57,8 @@
   function visibleOpener() {
     var openers = document.querySelectorAll("[data-open-palette]");
     for (var i = 0; i < openers.length; i += 1) {
-      if (openers[i].offsetParent !== null) return openers[i];
+      var rect = openers[i].getBoundingClientRect();
+      if (openers[i].offsetParent !== null && rect.width > 0 && rect.height > 0 && rect.right > 0 && rect.bottom > 0 && rect.left < window.innerWidth && rect.top < window.innerHeight) return openers[i];
     }
     return null;
   }
@@ -118,6 +124,7 @@
     list.hidden = false;
     state.hidden = true;
     input.setAttribute("aria-expanded", "true");
+    more.hidden = items.length >= total;
     setActive(0);
     announce(items.length === 1 ? "1 risultato" : items.length + " risultati");
   }
@@ -127,6 +134,7 @@
     options = [];
     list.textContent = "";
     list.hidden = true;
+    more.hidden = true;
     clearActive();
     input.setAttribute("aria-expanded", "false");
     state.hidden = false;
@@ -135,17 +143,39 @@
     announce(MESSAGES[kind]);
   }
 
-  function follow(item) {
-    if (item && item.href) window.location.assign(item.href);
+  function localTarget(href) {
+    if (typeof href !== "string" || href[0] !== "/" || href.slice(0, 2) === "//") return null;
+    try { return new URL(href, window.location.href).origin === window.location.origin ? href : null; }
+    catch (error) { return null; }
   }
 
-  function endpoint(query) {
+  function follow(item) {
+    var href = item && localTarget(item.href);
+    if (!href || following) return;
+    if (item.method !== "POST") { window.location.assign(href); return; }
+    following = true;
+    showState("loading");
+    fetch(href, {method:"POST", credentials:"same-origin", headers:{Accept:"text/html", "HX-Request":"true"}})
+      .then(function (response) {
+        if (!response.ok) { showState(response.status === 401 || response.status === 403 ? "unauthorized" : "creation"); return; }
+        var target = localTarget(response.headers.get("HX-Redirect"));
+        if (target) window.location.assign(target);
+        else showState("creation");
+      })
+      .catch(function () { showState(navigator.onLine === false ? "offline" : "creation"); })
+      .finally(function () { following = false; });
+  }
+
+  function endpoint(query, page) {
     var url = "/api/palette?q=" + encodeURIComponent(query);
     if (worldId) url += "&world_id=" + encodeURIComponent(worldId);
+    if (page > 1) url += "&page=" + page;
     return url;
   }
 
-  function run(query) {
+  function run(query, append) {
+    var previous = append ? results.slice() : [];
+    var requestedPage = append ? pageNumber + 1 : 1;
     var current = (sequence += 1);
     if (controller) controller.abort();
     controller = new AbortController();
@@ -155,7 +185,7 @@
       return;
     }
     showState("loading");
-    fetch(endpoint(query), {
+    fetch(endpoint(query, requestedPage), {
       headers: { Accept: "application/json" },
       signal: controller.signal
     })
@@ -172,7 +202,11 @@
         return response.json().then(function (payload) {
           if (current !== sequence) return;
           var items = (payload && payload.data) || [];
-          if (items.length) showList(items);
+          pageNumber = requestedPage;
+          total = typeof payload.total === "number" ? payload.total : items.length;
+          var seen = new Set();
+          var combined = previous.concat(items).filter(function (item) { var key = (item.method || "GET") + ":" + item.href; if (seen.has(key)) return false; seen.add(key); return true; });
+          if (combined.length) showList(combined);
           else showState("empty");
         });
       })
@@ -228,6 +262,7 @@
     input.focus();
     run(input.value);
   });
+  more.addEventListener("click", function () { run(input.value, true); input.focus(); });
 
   /* The native backdrop is part of the <dialog> box: a click on it closes. */
   dialog.addEventListener("click", function (event) {

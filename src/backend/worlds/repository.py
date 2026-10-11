@@ -43,7 +43,7 @@ class WorldRepository:
         ]
 
     @staticmethod
-    def _visible(user_id: uuid.UUID):
+    def visible_filter(user_id: uuid.UUID):
         return or_(
             WorldModel.created_by_id == user_id,
             WorldModel.memberships.any(WorldMembershipModel.user_id == user_id),
@@ -89,7 +89,7 @@ class WorldRepository:
             .where(WorldModel.id == world_id)
         )
         if not is_admin:
-            stmt = stmt.where(self._visible(user_id))
+            stmt = stmt.where(self.visible_filter(user_id))
         return (await self.db.execute(stmt)).scalar_one_or_none()
 
     async def get_page(
@@ -102,7 +102,7 @@ class WorldRepository:
     ) -> tuple[list[WorldModel], int]:
         if page < 1 or page_size < 1:
             raise ValueError("page and page_size must be positive")
-        visibility = self._visible(user_id)
+        visibility = self.visible_filter(user_id)
         count_stmt = select(func.count()).select_from(WorldModel)
         stmt = select(WorldModel).options(*self._options(include_members))
         if not is_admin:
