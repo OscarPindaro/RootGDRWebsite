@@ -926,6 +926,13 @@ def test_both_bezier_endpoints_can_be_selected_and_edited(component):
     assert _scene_of(page)["nodes"][0]["d"].startswith("M100 101")
 
 
+def test_read_only_scene_tree_keeps_valid_treeitem_semantics(component):
+    page = component.mount("editorial.DrawingEditor", props=PROPS)
+    tree = page.get_by_role("tree", name="Oggetti della scena")
+    assert tree.get_by_role("treeitem").count() == 2
+    assert tree.get_by_role("listitem").count() == 0
+
+
 def test_space_activates_a_focused_tool_button(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props())
     _mounted(page)

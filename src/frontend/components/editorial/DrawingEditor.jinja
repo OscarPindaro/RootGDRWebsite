@@ -133,7 +133,7 @@
         <template data-scene-arrow><common.Icon name="chevron-down" size=20 /></template>
         <ul class="drawing-editor__layers" role="tree" aria-label="Oggetti della scena">
           {% for node in objects %}
-          <li class="drawing-editor__layer{{ ' is-selected' if node.id == (selected.id if selected else None) }}" data-node-id="{{ node.id }}">
+          <li class="drawing-editor__layer{{ ' is-selected' if node.id == (selected.id if selected else None) }}" data-node-id="{{ node.id }}" role="treeitem" aria-level="1" aria-selected="{{ 'true' if node.id == (selected.id if selected else None) else 'false' }}" aria-label="{{ node.name | e }}">
             <button type="button" class="drawing-editor__layer-name" aria-pressed="{{ 'true' if node.id == (selected.id if selected else None) else 'false' }}"
                     data-select-node="{{ node.id }}" data-testid="drawing-layer">{{ node.name | e }}</button>
             <button type="button" class="drawing-editor__visibility" data-node-visible="{{ node.id }}" aria-pressed="{{ 'true' if node.visible else 'false' }}" aria-label="{{ 'Nascondi' if node.visible else 'Mostra' }} {{ node.name | e }}" {% if not editable %}disabled{% endif %}><common.Icon :name="'eye' if node.visible else 'eye-off'" size=20 /></button>
