@@ -19,10 +19,12 @@ A reader can report a problem from the page they are on, without leaving it.
   a second line when the panel is narrow. The tools are icons with a name —
   the arrow carries its origin, the box its outline, the text a **T**, the blur
   a fog mark.
-- Text is placed the way a drawing tool does it: **T**, then drag out the area,
-  then type into the field that appears inside it. The box is a selection, not a
-  mark — it is gone once the text is placed — and the text's capitals are
-  exactly as tall as the box was. A click without a drag leaves nothing.
+- Text is placed the way a drawing tool does it: **T**, then drag out an area,
+  then type into the field that appears inside it. The area decides where the
+  note wraps, not how tall its letters are: the size comes from the capture it
+  is written on, and the note grows downward. The area itself is a selection,
+  not a mark — it is gone once the text is placed — and a click without a drag
+  leaves nothing.
 - The capture opens fitted to the panel and can be zoomed with **−** / **+** /
   **Adatta**, or with Ctrl and the wheel, between 20% and 400%. A capture is
   worth reading whole before it is worth zooming into.
@@ -33,8 +35,9 @@ A reader can report a problem from the page they are on, without leaving it.
   normally and both the browser steps and the backend calls stay attached to
   this report. **Interrompi la registrazione** keeps what was collected.
 - **Invia la segnalazione** creates the board ticket: the description, the
-  captures and one `diagnostics.json`. The ticket id is shown, the draft
-  becomes read-only, and a second press returns the same ticket.
+  captures and one `diagnostics.json`. The ticket id is shown, the panel becomes
+  read-only — no annotating, no recapturing, no reproduction, and the
+  description cannot be edited — and a second press returns the same ticket.
 - A draft is not a board ticket. Saving or reopening one creates nothing on the
   board; submission is a later step (REQ-0014/T05).
 
@@ -126,3 +129,8 @@ A reader can report a problem from the page they are on, without leaving it.
   rather than adding to it.
 - The recording survives a reload but not a different browser: the session is in
   `sessionStorage`, so a second tab records its own reproduction.
+- A write the server refuses because the report is already submitted is not a
+  failure to retry: the panel re-reads the report and shows it read-only. That
+  covers a submission made in another tab or by another session.
+- A note is one paragraph: it wraps at the area that was dragged, but there is
+  no hard line break inside it and no way to move it once placed.

@@ -187,12 +187,14 @@ dialog.report-panel-dialog {
 .report-panel__inline {
   position: absolute;
   box-sizing: border-box;
+  overflow: hidden;
   padding: 0;
   border: var(--field-outline-width) dashed var(--clr-accent);
   background: transparent;
   font-family: var(--sans);
   font-weight: var(--weight-bold);
-  line-height: 1;
+  line-height: 1.25;
+  resize: none;
 }
 
 .report-panel__inline::placeholder {

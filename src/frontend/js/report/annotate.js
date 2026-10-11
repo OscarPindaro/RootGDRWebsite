@@ -5,9 +5,9 @@
    is why a blur is painted by re-drawing the image inside the clip rather than
    kept as a separate layer.
 
-   Text is placed the way a drawing tool does it: the tool drags out a box, the
-   reader types into it, and the box goes away. What stays is the text, whose
-   capitals are as tall as the box was. */
+   Text is placed the way a drawing tool does it: the tool drags out an area,
+   the reader types into it, and the area goes away. What stays is a note: the
+   text wraps at the width that was dragged, and grows downward from there. */
 
 export const COLOURS = [
   "#d1402a",
@@ -20,11 +20,11 @@ export const COLOURS = [
 
 const FONT = "600 %dpx system-ui, -apple-system, Segoe UI, sans-serif";
 const MIN_DRAG = 4;
-// Cap height of the sans face, as a share of the em. A box the reader dragged
-// out gets a font whose capitals are exactly as tall as that box, and the
-// inline field uses the same ratio so the preview matches what is placed.
-export const CAP_RATIO = 0.72;
-const MIN_FONT = 8;
+// The text is a note, not a stretched shape: its size comes from the capture it
+// is written on, and the area the reader drags decides where it wraps.
+const TEXT_SCALE = 0.022;
+const LINE_HEIGHT = 1.25;
+const MIN_FONT = 14;
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 4;
 
@@ -48,6 +48,29 @@ export function createAnnotator(canvas) {
 
   function strokeWidth() {
     return Math.max(2, canvas.width / 360);
+  }
+
+  function textSize() {
+    return Math.max(MIN_FONT, canvas.width * TEXT_SCALE);
+  }
+
+  /* The dragged area is a width to wrap at, so the note breaks lines the way a
+     text box in a drawing tool does. */
+  function wrapText(context, value, wrap) {
+    const words = value.split(/\s+/).filter(Boolean);
+    const lines = [];
+    let line = "";
+    for (const word of words) {
+      const candidate = line ? line + " " + word : word;
+      if (line && context.measureText(candidate).width > wrap) {
+        lines.push(line);
+        line = word;
+      } else {
+        line = candidate;
+      }
+    }
+    if (line) lines.push(line);
+    return lines.length ? lines : [value];
   }
 
   function normalise(box) {
@@ -88,10 +111,12 @@ export function createAnnotator(canvas) {
       );
       context.stroke();
     } else if (shape.tool === "text") {
-      // The baseline is the bottom of the box the text was dragged into.
       context.font = FONT.replace("%d", String(shape.size));
-      context.textBaseline = "alphabetic";
-      context.fillText(shape.text, shape.x, shape.y);
+      context.textBaseline = "top";
+      const lineHeight = shape.size * LINE_HEIGHT;
+      wrapText(context, shape.text, shape.wrap).forEach((line, index) => {
+        context.fillText(line, shape.x, shape.y + index * lineHeight);
+      });
     } else if (shape.tool === "blur") {
       context.beginPath();
       context.rect(shape.x, shape.y, shape.w, shape.h);
@@ -154,18 +179,19 @@ export function createAnnotator(canvas) {
     draft = null;
     render();
     const area = normalise(pending);
-    if (area.w < MIN_DRAG || area.h < MIN_DRAG) return;
     if (pending.tool === "text") {
-      if (onTextBox) {
-        onTextBox(area, {
-          x: area.x * zoom,
-          y: area.y * zoom,
-          w: area.w * zoom,
-          h: area.h * zoom,
-        });
-      }
+      // Only the width matters: it is where the note wraps.
+      if (area.w < MIN_DRAG || !onTextBox) return;
+      onTextBox(area, {
+        x: area.x * zoom,
+        y: area.y * zoom,
+        w: area.w * zoom,
+        h: area.h * zoom,
+        fontSize: textSize() * zoom,
+      });
       return;
     }
+    if (area.w < MIN_DRAG || area.h < MIN_DRAG) return;
     // An arrow keeps the direction it was drawn in; the other marks do not.
     shapes.push(pending.tool === "arrow" ? pending : { ...area, tool: pending.tool, colour: pending.colour });
     render();
@@ -219,8 +245,9 @@ export function createAnnotator(canvas) {
         tool: "text",
         colour,
         x: box.x,
-        y: box.y + box.h,
-        size: Math.max(MIN_FONT, box.h / CAP_RATIO),
+        y: box.y,
+        size: textSize(),
+        wrap: Math.max(MIN_DRAG, box.w),
         text,
       });
       render();

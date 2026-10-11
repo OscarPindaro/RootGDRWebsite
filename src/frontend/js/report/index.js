@@ -11,7 +11,7 @@
 
 import { toCanvas } from "html-to-image";
 
-import { CAP_RATIO, COLOURS, createAnnotator } from "./annotate.js";
+import { COLOURS, createAnnotator } from "./annotate.js";
 import {
   forgetSession,
   rememberSession,
@@ -48,6 +48,9 @@ const MESSAGES = {
 
 let draftId = null;
 let saveTimer = null;
+// A submitted report is read-only: the server refuses its writes with a 409,
+// so the panel stops offering them.
+let submitted = false;
 
 function stored() {
   try {
@@ -84,7 +87,7 @@ function renderEvidence(list, evidence) {
     size.className = "report-panel__size mono muted";
     size.textContent = Math.max(1, Math.round(item.byteSize / 1024)) + " kB";
     entry.append(size);
-    if (SCREENSHOTS.includes(item.kind)) {
+    if (SCREENSHOTS.includes(item.kind) && !submitted) {
       const annotate = document.createElement("button");
       annotate.type = "button";
       annotate.className = "report-panel__annotate";
@@ -113,14 +116,17 @@ function blobOf(canvas) {
 async function json(response) {
   if (!response.ok) {
     // The server's own sentence is the useful one: "not connected to a board"
-    // is something the reader can act on, "request failed" is not.
+    // is something the reader can act on, "request failed" is not. The status
+    // travels with the error so a caller can tell a refusal from a failure.
     let detail = "";
     try {
       detail = (await response.json()).detail || "";
     } catch (error) {
       detail = "";
     }
-    throw new Error(detail || "request failed");
+    const failure = new Error(detail || "request failed");
+    failure.status = response.status;
+    throw failure;
   }
   return response.json();
 }
@@ -169,6 +175,11 @@ async function saveDescription(textarea, status) {
     );
     setStatus(status, "saved");
   } catch (error) {
+    if (error.status === 409) {
+      setStatus(status, "submitted");
+      document.dispatchEvent(new CustomEvent("report:refused"));
+      return;
+    }
     setStatus(status, "failed");
   }
 }
@@ -334,13 +345,20 @@ function mountEditor(dialog, list, status) {
     inline.style.left = screen.x + "px";
     inline.style.top = screen.y + "px";
     inline.style.width = screen.w + "px";
-    inline.style.height = screen.h + "px";
-    inline.style.fontSize = screen.h / CAP_RATIO + "px";
+    // The note's own size, not the area's height: the area is where it wraps.
+    inline.style.fontSize = screen.fontSize + "px";
+    inline.style.height = screen.fontSize * 1.25 + "px";
     inline.style.color = chip ? chip.dataset.reportColour : "inherit";
     inline.value = "";
     inline.hidden = false;
     inlineBox = box;
     inline.focus();
+  });
+
+  // The field is one line tall until the note needs more.
+  inline.addEventListener("input", () => {
+    inline.style.height = "auto";
+    inline.style.height = inline.scrollHeight + "px";
   });
 
   dialog
@@ -362,9 +380,17 @@ function mountEditor(dialog, list, status) {
       close();
       setStatus(status, "annotating");
     } catch (error) {
+      // A refusal means the report was submitted elsewhere: read the truth
+      // back instead of telling the reader to try again.
+      if (error.status === 409) {
+        document.dispatchEvent(new CustomEvent("report:refused"));
+        return;
+      }
       setStatus(status, "annotateFailed");
     }
   });
+
+  return { close };
 }
 
 function mount(dialog) {
@@ -375,15 +401,20 @@ function mount(dialog) {
   const list = dialog.querySelector("[data-report-evidence]");
   const recapture = dialog.querySelector("[data-report-recapture]");
 
-  mountEditor(dialog, list, status);
+  const editor = mountEditor(dialog, list, status);
 
+  const reproduction = dialog.querySelector("[data-report-reproduction]");
   const submit = dialog.querySelector("[data-report-submit]");
   const submitActions = dialog.querySelector("[data-report-submit-actions]");
   const ticket = dialog.querySelector("[data-report-ticket]");
 
   function renderSubmission(draft) {
-    const submitted = draft.state === "submitted";
+    submitted = draft.state === "submitted";
     submitActions.hidden = submitted;
+    recapture.hidden = submitted;
+    reproduction.hidden = submitted;
+    textarea.readOnly = submitted;
+    if (submitted) editor.close();
     ticket.hidden = !submitted && !ticket.dataset.state;
     if (!submitted) return;
     ticket.dataset.state = "submitted";
@@ -398,7 +429,9 @@ function mount(dialog) {
   submit.addEventListener("click", async () => {
     setStatus(status, "sending");
     try {
-      renderSubmission(
+      // One render of the whole draft: the captures stop offering an editor
+      // the moment the report is submitted.
+      applyDraft(
         await json(
           await fetch(`/api/reports/${draftId}/submit`, {
             method: "POST",
@@ -432,6 +465,12 @@ function mount(dialog) {
       : reproduction.stoppedAt
         ? `Registrazione fermata: ${counts}.`
         : "";
+  }
+
+  function applyDraft(draft) {
+    // Submission first: it decides whether the captures still offer an editor.
+    renderSubmission(draft);
+    renderEvidence(list, draft.evidence || []);
   }
 
   async function readReproduction() {
@@ -477,6 +516,15 @@ function mount(dialog) {
     }
   });
 
+  document.addEventListener("report:refused", async () => {
+    try {
+      applyDraft(await readDraft());
+      setStatus(status, "submitted");
+    } catch (error) {
+      setStatus(status, "failed");
+    }
+  });
+
   document.addEventListener("report:reproduction-stopped", async () => {
     if (draftId === null) return;
     try {
@@ -495,8 +543,7 @@ function mount(dialog) {
       // Only an empty field takes the saved text: reopening must not overwrite
       // what the reader has typed since the draft was last read.
       if (!textarea.value) textarea.value = draft.description || "";
-      renderEvidence(list, draft.evidence || []);
-      renderSubmission(draft);
+      applyDraft(draft);
       // A reproduction is optional: a draft that cannot report its recording
       // state still opens, writes and captures.
       try {

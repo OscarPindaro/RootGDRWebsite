@@ -77,7 +77,8 @@ def _serve_shot(page, kind: str, width: int = 800, height: int = 600) -> None:
 
 
 def _submitted(note: str | None = None) -> dict:
-    draft = _draft(evidence=[_capture("page_html")])
+    # A capture that can be annotated: a submitted report must stop offering it.
+    draft = _draft(evidence=[_capture("screenshot_viewport"), _capture("page_html")])
     draft.update(
         {
             "state": "submitted",
@@ -400,9 +401,12 @@ def test_text_is_typed_into_the_box_that_is_dragged(component):
     page.mouse.move(box["x"] + 260, box["y"] + 100)
     page.mouse.up()
     assert inline.is_visible()
-    # The text will be as tall as the box, so the field previews that size.
+    assert inline.evaluate("el => el.tagName") == "TEXTAREA"
+    # The area is where the note wraps, not how tall the text is: the size is
+    # the note's own, so a 60px-tall drag is not a 60px font.
     assert float(inline.evaluate("el => parseFloat(el.style.fontSize)")) > 0
-    assert float(inline.evaluate("el => parseFloat(el.style.height)")) == 60
+    assert float(inline.evaluate("el => parseFloat(el.style.fontSize)")) != 60
+    assert float(inline.evaluate("el => parseFloat(el.style.width)")) == 220
 
     page.fill("[data-report-inline]", "Qui non si vede il titolo")
     page.keyboard.press("Enter")
@@ -440,6 +444,55 @@ def test_a_click_without_a_box_leaves_no_text(component):
     page.mouse.click(box["x"] + 40, box["y"] + 40)
     assert page.locator("[data-report-inline]").is_hidden()
     assert canvas.evaluate("el => el.toDataURL()") == untouched
+
+
+def test_a_submitted_report_offers_nothing_to_change(component):
+    component.route_json("GET", f"/api/reports/{DRAFT_ID}", body=_submitted())
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _open(component)
+
+    page.wait_for_selector("[data-report-ticket]:not([hidden])")
+    assert page.locator("[data-report-annotate]").count() == 0
+    assert page.locator("[data-report-recapture]").is_hidden()
+    assert page.locator("[data-report-reproduction]").is_hidden()
+    assert page.locator("[data-report-submit-actions]").is_hidden()
+
+
+def test_a_refused_annotation_reads_the_submitted_report_back(component):
+    # The report was submitted elsewhere: the write is refused, and the panel
+    # shows the truth instead of asking the reader to try again.
+    component.allow_console_errors("409")
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        responses=[
+            {"body": _draft(evidence=[_capture("screenshot_viewport")])},
+            {"body": _submitted()},
+        ],
+    )
+    component.route_json(
+        "PUT",
+        f"/api/reports/{DRAFT_ID}/evidence/screenshot_viewport",
+        status=409,
+        body={"detail": "This report has already been submitted"},
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _serve_shot(page, "screenshot_viewport")
+    _open(component)
+    _wait_for_state(page, "saved")
+
+    page.click('[data-report-annotate="screenshot_viewport"]')
+    page.wait_for_selector("[data-report-editor]:not([hidden])")
+    page.click("[data-report-save]")
+
+    page.wait_for_selector("[data-report-ticket]:not([hidden])")
+    assert page.locator("[data-report-editor]").is_hidden()
+    assert page.locator("[data-report-annotate]").count() == 0
+    assert page.locator("[data-report-status]").get_attribute("data-state") == (
+        "submitted"
+    )
 
 
 def test_the_reproduction_can_be_started_and_interrupted(component):
@@ -529,6 +582,13 @@ def test_the_report_is_submitted_and_shows_its_ticket(component):
         "Segnalazione inviata: #42."
     )
     assert page.locator("[data-report-submit-actions]").is_hidden()
+    # Nothing the server would refuse is still on offer.
+    assert page.locator("[data-report-annotate]").count() == 0
+    assert page.locator("[data-report-recapture]").is_hidden()
+    assert page.locator("[data-report-reproduction]").is_hidden()
+    assert (
+        page.locator("[data-report-description]").get_attribute("readonly") is not None
+    )
     _wait_for_state(page, "submitted")
 
 

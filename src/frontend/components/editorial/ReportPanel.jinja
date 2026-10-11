@@ -45,9 +45,9 @@
     <div class="report-panel__surface" data-report-surface>
       <div class="report-panel__canvas-wrap">
         <canvas class="report-panel__canvas" data-report-canvas></canvas>
-        <input class="report-panel__inline" type="text" maxlength="120" hidden
-               data-report-inline aria-label="Testo dell’annotazione"
-               placeholder="Scrivi qui" />
+        <textarea class="report-panel__inline" rows="1" maxlength="240" hidden
+                  data-report-inline aria-label="Testo dell’annotazione"
+                  placeholder="Scrivi qui"></textarea>
       </div>
     </div>
     <div class="report-panel__actions">
@@ -59,7 +59,8 @@
       </common.Button>
     </div>
   </section>
-  <section class="report-panel__reproduction" aria-label="Riproduzione del problema">
+  <section class="report-panel__reproduction" data-report-reproduction
+           aria-label="Riproduzione del problema">
     <p class="report-panel__label">Riproduzione</p>
     <p class="report-panel__lead report-panel__lead--tight">
       Riproduci il problema e naviga come fai di solito: i passaggi e le chiamate
