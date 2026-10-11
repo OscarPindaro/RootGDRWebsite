@@ -87,8 +87,16 @@ library, skeleton, publishing or export capabilities.
   keeps **Compatta/Guidata** as an exclusive segmented choice; switching retains
   both local drafts and performs no action. Both surfaces share the editor action
   registry, availability and validated vector creation (document units, bounded
-  default size and placement in the visible canvas). Incremental shape refinements
-  and guided parameter/preview workflows are separate follow-up capabilities.
+  default size and placement in the visible canvas).
+  Compact accepts a shape on the first Enter and creates it on the second. For
+  triangles, `rect/right/left/isosceles/equilateral` (and Italian equivalents)
+  refine the accepted shape before creation; right-angle defaults to the right.
+  Suggestions, interpretation and defaults remain visible. Unknown input creates
+  nothing; Escape cancels. Default bounding size is at most 120×100 document units
+  and 70% of the visible world rectangle, centred in the current view. Presets fit
+  within that box and stay native/constrained/editable. Switching variants keeps
+  the accepted command/refinement; final creation is one undo step.
+  Guided parameter/preview workflows are a separate follow-up capability.
   Text fields, menus and dialogs retain their
   keyboard behaviour, and Ctrl/Cmd+K remains global search. Ctrl+T is not intercepted.
 - Undo/redo is in-memory and bounded to 60 completed operations. A drag or

@@ -538,3 +538,15 @@ test("visibility diagnosis preserves empty/hidden/unpainted objects without phan
   assert.equal(nodeAt(sceneWith([{...triangle("p"),opacity:0}]),[50,20]),null);
   assert.equal(scene.nodes.length,2);
 });
+
+test("compact commands parse triangle refinements without evaluating unknown input", async () => {
+  const {parseCompact} = await import("../../src/frontend/js/drawings/canvas-palette.js");
+  assert.equal(parseCompact("triangle").kind,"triangle_isosceles");
+  assert.equal(parseCompact("rect","triangle_isosceles").kind,"triangle_right_right");
+  assert.equal(parseCompact("rect left","triangle_isosceles").kind,"triangle_right_left");
+  assert.equal(parseCompact("right","triangle_right_left").kind,"triangle_right_right");
+  assert.equal(parseCompact("equilateral","triangle_isosceles").kind,"triangle_equilateral");
+  assert.equal(parseCompact("", "triangle_right_left").kind,"triangle_right_left");
+  assert.equal(parseCompact("rect invalid","triangle_isosceles"),null);
+  assert.equal(parseCompact("window.alert(1)"),null);
+});

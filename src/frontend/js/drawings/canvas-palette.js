@@ -1,10 +1,35 @@
+const SHAPES = [
+  {kind:"triangle_isosceles", label:"Triangolo · isoscele", aliases:["triangle", "triangolo", "isosceles", "isoscele"]},
+  {kind:"triangle_equilateral", label:"Triangolo · equilatero", aliases:["equilateral", "equilatero"]},
+  {kind:"triangle_right_right", label:"Triangolo rettangolo · angolo a destra", aliases:["right", "destra", "rect right", "rettangolo destra", "right triangle"]},
+  {kind:"triangle_right_left", label:"Triangolo rettangolo · angolo a sinistra", aliases:["left", "sinistra", "rect left", "rettangolo sinistra"]},
+  {kind:"rectangle", label:"Rettangolo", aliases:["rectangle", "rettangolo", "rect"]},
+  {kind:"square", label:"Quadrato", aliases:["square", "quadrato"]},
+  {kind:"circle", label:"Cerchio", aliases:["circle", "cerchio"]},
+  {kind:"ellipse", label:"Ellisse", aliases:["ellipse", "ellisse"]},
+  {kind:"regular_polygon", label:"Poligono regolare", aliases:["polygon", "poligono", "poligono regolare"]},
+];
+
+export function parseCompact(text, currentKind = null) {
+  const term = String(text).trim().toLocaleLowerCase().replace(/\s+/g, " ");
+  if (!term) return SHAPES.find(shape => shape.kind === currentKind) || null;
+  if (currentKind?.startsWith("triangle_")) {
+    const words = term.split(" ");
+    const right = ["rect", "rectangle", "rettangolo", "right", "destra", "left", "sinistra", "triangle", "triangolo"];
+    if (words.every(word => right.includes(word)) && words.some(word => ["rect", "rectangle", "rettangolo", "right", "destra", "left", "sinistra"].includes(word))) {
+      return SHAPES.find(shape => shape.kind === (words.some(word => ["left", "sinistra"].includes(word)) ? "triangle_right_left" : "triangle_right_right"));
+    }
+  }
+  return SHAPES.find(shape => shape.aliases.includes(term)) || null;
+}
+
 export function createCanvasPalette(root, editor) {
   const dialog = root.querySelector("#drawing-command-dialog");
   const input = dialog.querySelector("[data-canvas-command-input]");
   const list = dialog.querySelector("[data-canvas-command-options]");
   const guided = dialog.querySelector("[data-canvas-command-action]");
   const output = dialog.querySelector("[data-canvas-command-status]");
-  let mode = "compact", active = 0, choices = [];
+  let mode = "compact", active = 0, choices = [], acceptedKind = null;
 
   function commands() {
     return editor.actions().filter(action => !action.id.startsWith("tool-") && !action.id.startsWith("preset-") && action.id !== "ellipse-parameter");
@@ -13,14 +38,17 @@ export function createCanvasPalette(root, editor) {
   function position() {
     if (!dialog.open) return;
     const canvas = root.querySelector("[data-drawing-artboard]").getBoundingClientRect();
-    const box = dialog;
-    box.style.left = Math.max(8, Math.min(canvas.x + canvas.width / 2 - box.offsetWidth / 2, window.innerWidth - box.offsetWidth - 8)) + "px";
-    box.style.top = Math.max(8, Math.min(canvas.y + 16, window.innerHeight - box.offsetHeight - 8)) + "px";
+    dialog.style.left = Math.max(8, Math.min(canvas.x + canvas.width / 2 - dialog.offsetWidth / 2, window.innerWidth - dialog.offsetWidth - 8)) + "px";
+    dialog.style.top = Math.max(8, Math.min(canvas.y + 16, window.innerHeight - dialog.offsetHeight - 8)) + "px";
   }
 
   function render() {
     const term = input.value.trim().toLocaleLowerCase();
-    choices = commands().filter(action => action.label.toLocaleLowerCase().includes(term) || action.id.includes(term));
+    const shapes = acceptedKind?.startsWith("triangle_") ? SHAPES.filter(shape => shape.kind.startsWith("triangle_")) : SHAPES;
+    const parsed = parseCompact(input.value, acceptedKind);
+    const suggestions = shapes.filter(shape => !term || shape.label.toLocaleLowerCase().includes(term) || shape.aliases.some(alias => alias.startsWith(term)) || parsed?.kind === shape.kind);
+    choices = suggestions.map(shape => ({...shape, id:"create-preset", enabled:true}));
+    if (!acceptedKind) choices.push(...commands().filter(action => action.label.toLocaleLowerCase().includes(term) || action.id.includes(term)));
     active = Math.max(0, Math.min(active, choices.length - 1));
     list.replaceChildren(...choices.map((action, index) => {
       const option = document.createElement("li");
@@ -30,9 +58,10 @@ export function createCanvasPalette(root, editor) {
       option.setAttribute("role", "option");
       option.setAttribute("aria-selected", String(index === active));
       option.setAttribute("aria-disabled", String(!action.enabled));
-      option.addEventListener("click", () => apply(action.id));
+      option.addEventListener("click", () => choose(action));
       return option;
     }));
+    input.setAttribute("aria-expanded", String(choices.length > 0));
     if (choices.length) input.setAttribute("aria-activedescendant", `canvas-command-option-${active}`);
     else input.removeAttribute("aria-activedescendant");
     const previous = guided.value;
@@ -42,7 +71,10 @@ export function createCanvasPalette(root, editor) {
       return option;
     }));
     if ([...guided.options].some(option => option.value === previous)) guided.value = previous;
-    output.textContent = choices.length ? "Unità vettoriali della tavola. Scegli un comando." : "Nessun comando corrisponde al testo.";
+    const defaults = editor.defaults();
+    output.textContent = mode === "guided" ? "Scegli un’azione e applicala. Unità vettoriali della tavola." : acceptedKind
+      ? parsed ? `${parsed.label} · riquadro ${Math.round(defaults.width)} × ${Math.round(defaults.height)} unità, centro (${Math.round(defaults.x)}, ${Math.round(defaults.y)}). Invio crea; Escape annulla.` : "Variante sconosciuta: correggi il testo o premi Escape."
+      : choices.length ? "Invio accetta una forma; un secondo Invio la crea. Dimensioni vettoriali adattate alla vista." : "Nessun comando corrisponde al testo.";
     position();
   }
 
@@ -56,12 +88,18 @@ export function createCanvasPalette(root, editor) {
     });
     dialog.querySelector("[data-canvas-compact]").hidden = mode !== "compact";
     dialog.querySelector("[data-canvas-guided]").hidden = mode !== "guided";
-    position();
+    render();
   }
 
-  function apply(id) {
-    if (!editor.execute(id)) { output.textContent = "Comando non disponibile o parametri non validi."; return; }
+  function apply(id, parameters) {
+    if (!editor.execute(id, parameters)) { output.textContent = "Comando non disponibile o parametri non validi."; return; }
+    acceptedKind = null; input.value = ""; active = 0;
     window.rootGdrDialog.close(dialog);
+  }
+
+  function choose(action) {
+    if (action.kind) { acceptedKind = action.kind; input.value = ""; active = 0; render(); input.focus(); }
+    else apply(action.id);
   }
 
   input.addEventListener("input", () => { active = 0; render(); });
@@ -69,20 +107,29 @@ export function createCanvasPalette(root, editor) {
     if (["ArrowDown", "ArrowUp"].includes(event.key) && choices.length) {
       event.preventDefault();
       active = (active + (event.key === "ArrowDown" ? 1 : -1) + choices.length) % choices.length;
+      if (acceptedKind && choices[active].kind) {
+        acceptedKind = choices[active].kind;
+        input.value = "";
+        active = (acceptedKind.startsWith("triangle_") ? SHAPES.filter(shape => shape.kind.startsWith("triangle_")) : SHAPES).findIndex(shape => shape.kind === acceptedKind);
+      }
       render();
-    } else if (event.key === "Enter" && choices[active]) {
+    } else if (event.key === "Enter") {
       event.preventDefault();
-      apply(choices[active].id);
+      if (acceptedKind) {
+        const parsed = parseCompact(input.value, acceptedKind);
+        if (parsed) apply("create-preset", {kind:parsed.kind});
+      } else if (choices[active]) choose(choices[active]);
     }
   });
   dialog.querySelectorAll("[data-canvas-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.canvasMode)));
   dialog.querySelector("[data-canvas-command-apply]").addEventListener("click", () => apply(guided.value));
+  dialog.addEventListener("close", () => { acceptedKind = null; input.value = ""; active = 0; });
   setMode(mode);
   window.addEventListener("resize", position);
 
   return {
     open(opener) { render(); window.rootGdrDialog.open(dialog, opener); position(); (mode === "compact" ? input : guided).focus(); },
     get mode() { return mode; },
-    get draft() { return {mode, text:input.value, action:guided.value}; },
+    get draft() { return {mode, text:input.value, action:guided.value, kind:acceptedKind}; },
   };
 }

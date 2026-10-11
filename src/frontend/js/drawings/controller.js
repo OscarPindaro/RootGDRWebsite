@@ -1203,13 +1203,16 @@ export function createController(root) {
     commit(patchNode(scene, selectedId, patch));
   }
 
+  function creationDefaults() {
+    const center = apply(invert(viewport), [scene.artboard.width / 2, scene.artboard.height / 2]);
+    return {width:Math.min(120, scene.artboard.width / viewport[0] * 0.7), height:Math.min(100, scene.artboard.height / viewport[0] * 0.7), x:center[0], y:center[1], sides:6};
+  }
+
   function createCommand(parameters = {}) {
     if (!parameters || typeof parameters !== "object" || Array.isArray(parameters)) return false;
-    const center = apply(invert(viewport), [scene.artboard.width / 2, scene.artboard.height / 2]);
-    const kind = parameters.kind || "triangle_isosceles";
-    const width = parameters.width ?? Math.min(120, scene.artboard.width / viewport[0] * 0.7);
-    const height = parameters.height ?? Math.min(100, scene.artboard.height / viewport[0] * 0.7);
-    const x = parameters.x ?? center[0], y = parameters.y ?? center[1], sides = parameters.sides ?? 6;
+    const defaults = creationDefaults(), kind = parameters.kind || "triangle_isosceles";
+    const width = parameters.width ?? defaults.width, height = parameters.height ?? defaults.height;
+    const x = parameters.x ?? defaults.x, y = parameters.y ?? defaults.y, sides = parameters.sides ?? defaults.sides;
     if (!Object.keys(PRESET_LABELS).includes(kind) || ![width, height, x, y].every(Number.isFinite) || width <= 0 || height <= 0 || width > 100000 || height > 100000 || Math.abs(x) + width / 2 > 100000 || Math.abs(y) + height / 2 > 100000) {
       announce("Dimensioni o posizione non valide nelle unità della tavola.");
       return false;
@@ -1360,7 +1363,7 @@ export function createController(root) {
   }
 
   function wire() {
-    commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id)})), execute});
+    commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id)})), execute, defaults:creationDefaults});
     root.querySelector("[data-drawing-commands]").addEventListener("click", event => commandPalette.open(event.currentTarget));
     const grid = root.querySelector("[data-drawing-grid]");
     grid.addEventListener("click", () => {

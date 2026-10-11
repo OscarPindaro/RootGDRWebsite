@@ -1288,6 +1288,73 @@ def test_split_button_presets_create_persistent_constrained_geometry(
     assert len(_scene_of(page)["nodes"]) == 1
 
 
+@pytest.mark.parametrize(
+    "refinement,kind",
+    [
+        ("", "triangle_isosceles"),
+        ("rect", "triangle_right_right"),
+        ("rect left", "triangle_right_left"),
+        ("equilateral", "triangle_equilateral"),
+    ],
+)
+def test_compact_triangle_accepts_then_creates_one_constrained_vector(
+    component, refinement, kind
+):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+    assert "120" in page.locator("[data-canvas-command-status]").inner_text()
+    if refinement:
+        field.fill(refinement)
+    page.locator("[data-canvas-mode='guided']").click()
+    page.locator("[data-canvas-mode='compact']").click()
+    field.focus()
+    page.keyboard.press("Enter")
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": kind}
+    assert len(node["points"]) == 3
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"] == []
+
+
+def test_compact_default_dimensions_shrink_to_fit_the_visible_zoomed_canvas(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    x, y = _at(page, 320, 240)
+    for _ in range(30):
+        page.locator("[data-drawing-artboard]").dispatch_event(
+            "wheel", {"deltaY": -1, "clientX": x, "clientY": y}
+        )
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    page.keyboard.press("Enter")
+    points = _scene_of(page)["nodes"][0]["points"]
+    assert all(280 <= point[0] <= 360 and 210 <= point[1] <= 270 for point in points)
+
+
+def test_compact_unknown_input_and_cancellation_do_not_create_artwork(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("not-a-command")
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    field.fill("not-a-variant")
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+    page.keyboard.press("Escape")
+    assert _scene_of(page)["nodes"] == []
+
+
 def test_canvas_command_variants_are_exclusive_and_preserve_drafts_without_execution(
     component,
 ):

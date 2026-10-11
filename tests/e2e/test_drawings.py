@@ -624,6 +624,32 @@ def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
     assert session.expect_api(f"/api/drawings/{target['id']}").status == 200
 
 
+def test_compact_triangle_refinement_saves_an_editable_native_right_triangle(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    assert _local_node_scene(session)["nodes"] == []
+    field.fill("rect left")
+    page.keyboard.press("Enter")
+    page.wait_for_selector("#drawing-command-dialog[open]", state="detached")
+    local = _local_node_scene(session)
+    assert len(local["nodes"]) == 1
+    assert local["nodes"][0]["constraint"] == {"kind": "triangle_right_left"}
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == local
+
+
 def test_canvas_palette_framework_creates_vectors_with_one_undo_and_native_save(
     session: BrowserSession,
 ):
