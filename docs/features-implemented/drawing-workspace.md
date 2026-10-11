@@ -17,7 +17,13 @@ library, skeleton, publishing or export capabilities.
   The **Genitore** selector attaches an object to a group or the scene root
   while preserving its world placement; cycles and excessive nesting are refused.
   Move, scale, rotate, duplicate, delete and reorder objects. Arrow keys nudge.
-- **Vertici** edits polygon vertices or path endpoints/control handles. Click a
+- The floating bar exposes **Seleziona**, **Modifica forma** and **Trasforma**.
+  A single shape defaults to direct geometry editing after creation/selection;
+  groups and multiple selections use whole-selection controls. **T** enters
+  Transform with focus in the workspace; Ctrl+T remains the browser shortcut.
+  Ellipses expose centre/two-axis handles. A multi-object transform is one undo
+  step. Toolbar and keyboard actions share their availability checks.
+- **Modifica forma** edits polygon vertices or path endpoints/control handles. Click a
   polygon edge to insert a point; Alt-click a vertex to remove it (minimum
   three). Click a straight path segment to insert an editable polyline point.
   Both Bézier endpoints are labelled and focusable; each control is tethered to
@@ -45,7 +51,9 @@ library, skeleton, publishing or export capabilities.
 - A stale save returns 409 and retains local work. **Salva come copia** creates
   a separate document; **Ricarica** asks before discarding local edits. Edits
   made during a normal save remain dirty after its earlier snapshot succeeds.
-  Unloading a dirty editor prompts before leaving.
+  Unloading a dirty editor prompts before leaving. Editor shortcuts belong only
+  to the focused workspace; text fields retain typing/undo, dialogs own focus,
+  and Ctrl/Cmd+S still saves from workspace text fields.
 - Phone displays the complete artwork with editing controls disabled. Authoring
   targets mouse and keyboard.
 

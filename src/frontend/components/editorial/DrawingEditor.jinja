@@ -41,7 +41,10 @@
   </common.Dialog>
 
   <div class="drawing-editor__selection-bar" data-drawing-selection-bar role="toolbar" aria-label="Selezione e agganci">
-    <common.IconButton icon="spline" label="Vertici" data-drawing-mode="vertex" disabled={{ not editable }} />
+    <common.IconButton icon="mouse-pointer-2" label="Seleziona" data-tool="select" data-testid="drawing-tool-select" selected={{ True }} disabled={{ not editable }} />
+    <common.IconButton icon="spline" label="Modifica forma" data-drawing-mode="vertex" disabled={{ not editable }} />
+    <common.IconButton icon="grid-2x2" label="Trasforma (T)" data-drawing-mode="transform" disabled={{ not editable }} />
+    <span class="hint" data-drawing-mode-label aria-live="polite">Seleziona</span>
     <common.IconButton icon="grid-2x2" label="Raggruppa" data-drawing-group data-testid="drawing-group" disabled={{ not editable }} />
     <common.IconButton icon="list" label="Separa" data-drawing-ungroup data-testid="drawing-ungroup" disabled={{ not editable }} />
     <common.IconButton icon="copy" label="Duplica" data-drawing-duplicate data-testid="drawing-duplicate" disabled={{ not editable }} />
@@ -55,10 +58,6 @@
 
   <div class="drawing-editor__workspace">
     <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno" data-testid="drawing-toolbar">
-      <button type="button" class="drawing-editor__tool is-selected" aria-pressed="true" data-tool="select" data-testid="drawing-tool-select">
-        <common.Icon name="mouse-pointer-2" size=20 />
-        <span class="drawing-editor__tool-label">Seleziona</span>
-      </button>
       <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="triangle" data-testid="drawing-tool-triangle">
         <common.Icon name="triangle" size=20 />
         <span class="drawing-editor__tool-label">Triangolo</span>
@@ -91,7 +90,7 @@
 
     <div class="drawing-editor__canvas" data-testid="drawing-canvas">
       <svg class="drawing-editor__artboard" viewBox="0 0 {{ artboard.width if artboard else 640 }} {{ artboard.height if artboard else 480 }}"
-           role="img" aria-label="Tavola da disegno" data-drawing-artboard>
+           role="img" aria-label="Tavola da disegno" tabindex="0" data-drawing-artboard>
         <defs>
           <pattern id="drawing-grid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M10 0H0V10" fill="none" stroke="var(--line)" stroke-width="1" />

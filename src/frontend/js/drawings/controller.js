@@ -35,6 +35,7 @@ import {
   reorderNode,
   reparentNode,
   setTransform,
+  selectionCorners,
   transformInWorld,
   ungroupNode,
   validPolygon,
@@ -97,7 +98,7 @@ export function createController(root) {
   let selection = [];
   let selectedId = null;
   let tool = "select";
-  let mode = "transform";
+  let mode = "select";
   let pathPoint = null;
   let viewport = [1, 0, 0, 1, 0, 0];
   let drag = null;
@@ -377,13 +378,7 @@ export function createController(root) {
   }
 
   function worldCorners(node) {
-    const box = nodeBounds(node);
-    return [
-      [box.minX, box.minY],
-      [box.maxX, box.minY],
-      [box.maxX, box.maxY],
-      [box.minX, box.maxY],
-    ].map((point) => apply(nodeFrame(scene, node.id).world, point));
+    return selectionCorners(scene, [node.id]);
   }
 
   /* ---------- snapping ---------- */
@@ -578,7 +573,7 @@ export function createController(root) {
     cut = null;
     cutCursor = null;
     // Vertex handles belong to the select tool; a tool switch leaves that mode.
-    mode = "transform";
+    mode = next === "select" ? defaultMode() : "select";
     root.querySelectorAll("[data-tool]").forEach((button) => {
       button.classList.toggle("is-selected", button.dataset.tool === next);
       button.setAttribute("aria-pressed", String(button.dataset.tool === next));
@@ -586,8 +581,13 @@ export function createController(root) {
     draw();
   }
 
+  function defaultMode() {
+    if (!selection.length) return "select";
+    return selection.length === 1 && selected()?.node.kind !== "group" ? "vertex" : "transform";
+  }
+
   function setMode(next) {
-    if (next === "vertex" && tool !== "select") setTool("select");
+    if (tool !== "select") setTool("select");
     mode = next;
     draw();
   }
@@ -605,7 +605,7 @@ export function createController(root) {
     }
     selection = selection.filter(id => !(ancestorsOf(id) || []).some(parent => selection.includes(parent)));
     selectedId = selection.length ? selection[0] : null;
-    if (selection.length !== 1) mode = "transform";
+    mode = defaultMode();
     draw();
   }
 
@@ -702,7 +702,9 @@ export function createController(root) {
   /* ---------- pointer ---------- */
 
   function onPointerDown(event) {
-    if (!editable || root.dataset.copying) return;
+    if (!editable || root.dataset.copying || ![0, 1].includes(event.button)) return;
+    event.preventDefault();
+    svg.focus({ preventScroll: true });
     svg.setPointerCapture(event.pointerId);
     gestureBefore = scene;
     const target = event.target;
@@ -732,6 +734,10 @@ export function createController(root) {
     }
     if (target.dataset.edge !== undefined && mode === "vertex" && selectedId) {
       toggleEdge(Number(target.dataset.edge));
+      return;
+    }
+    if (target.dataset.ellipseAxis && mode === "vertex" && selectedId) {
+      drag = { kind: "ellipse", id: selectedId, axis: target.dataset.ellipseAxis, node: selected().node, transform: nodeFrame(scene, selectedId).world };
       return;
     }
     if (mode === "vertex" && selectedId && tool === "select") {
@@ -767,14 +773,14 @@ export function createController(root) {
     // must reach the canvas, not a handle sitting on the same corner.
     if (target.dataset.corner !== undefined && selectedId && tool === "select") {
       const node = selected().node;
-      drag = { kind: "scale", id: selectedId, corner: Number(target.dataset.corner), transform: nodeFrame(scene, selectedId).world, corners: worldCorners(node), from: scenePoint(event) };
+      drag = { kind: "scale", corner: Number(target.dataset.corner), transforms: selection.map(id => ({ id, transform: nodeFrame(scene, id).world })), corners: selectionCorners(scene, selection), from: scenePoint(event) };
       return;
     }
     if (target.classList.contains("drawing-editor__rotate-handle") && selectedId && tool === "select") {
       const node = selected().node;
-      const corners = worldCorners(node);
+      const corners = selectionCorners(scene, selection);
       const center = [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
-      drag = { kind: "rotate", id: selectedId, transform: nodeFrame(scene, selectedId).world, center, start: Math.atan2(scenePoint(event)[1] - center[1], scenePoint(event)[0] - center[0]) };
+      drag = { kind: "rotate", transforms: selection.map(id => ({ id, transform: nodeFrame(scene, id).world })), center, start: Math.atan2(scenePoint(event)[1] - center[1], scenePoint(event)[0] - center[0]) };
       return;
     }
 
@@ -852,20 +858,33 @@ export function createController(root) {
       let sy = (point[1] - fixed[1]) / (start[1] - fixed[1]);
       if (!Number.isFinite(sx)) sx = 1;
       if (!Number.isFinite(sy)) sy = 1;
-      scene = transformInWorld(scene, drag.id, scaleAbout(fixed, clampFactor(sx), clampFactor(sy)), drag.transform);
+      const delta = scaleAbout(fixed, clampFactor(sx), clampFactor(sy));
+      for (const entry of drag.transforms) scene = transformInWorld(scene, entry.id, delta, entry.transform);
       draw();
       return;
     }
     if (drag.kind === "rotate") {
       const point = scenePoint(event);
       const angle = Math.atan2(point[1] - drag.center[1], point[0] - drag.center[0]) - drag.start;
-      scene = transformInWorld(scene, drag.id, rotateAbout(drag.center, angle), drag.transform);
+      const delta = rotateAbout(drag.center, angle);
+      for (const entry of drag.transforms) scene = transformInWorld(scene, entry.id, delta, entry.transform);
       draw();
       return;
     }
     if (drag.kind === "path") {
       const local = apply(invert(drag.transform), snapWorld(scenePoint(event), null, -1, event.altKey).point);
       scene = patchNode(scene, drag.id, { d: movePathPoint(drag.d, drag.command, drag.offset, local) });
+      draw();
+      return;
+    }
+    if (drag.kind === "ellipse") {
+      const snapped = snapWorld(scenePoint(event), null, -1, event.altKey, selection);
+      snapPoint = snapped.snapped ? snapped.point : null;
+      const local = apply(invert(drag.transform), snapped.point);
+      const patch = drag.axis === "center" ? { cx: round(local[0]), cy: round(local[1]) }
+        : drag.axis === "x" ? { rx: clamp(Math.abs(local[0] - drag.node.cx), 0.1, 100000) }
+        : { ry: clamp(Math.abs(local[1] - drag.node.cy), 0.1, 100000) };
+      scene = patchNode(scene, drag.id, patch);
       draw();
       return;
     }
@@ -888,7 +907,7 @@ export function createController(root) {
     snapPoint = null;
     if (finished.kind === "create") finishShape();
     else if (finished.kind === "line") finishLine();
-    else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex" || finished.kind === "path") {
+    else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex" || finished.kind === "path" || finished.kind === "ellipse") {
       drag = null;
       commit(scene);
     } else {
@@ -932,8 +951,14 @@ export function createController(root) {
   /* ---------- keyboard ---------- */
 
   function onKeyDown(event) {
-    if (!editable || root.dataset.copying || !root.isConnected || document.querySelector("dialog[open]")) return;
-    if (event.target.closest("input, textarea, select, [contenteditable='true']")) return;
+    if (!editable || root.dataset.copying || !root.isConnected || !root.contains(document.activeElement) || document.querySelector("dialog[open]")) return;
+    const mod = event.ctrlKey || event.metaKey;
+    if (mod && event.key.toLowerCase() === "s") {
+      event.preventDefault();
+      execute("save");
+      return;
+    }
+    if (event.target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
     if (mode === "vertex" && event.target.dataset.pathCommand !== undefined && selectedId) {
       const nudges = {ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1]};
       if (nudges[event.key]) {
@@ -953,20 +978,19 @@ export function createController(root) {
         return;
       }
     }
-    const mod = event.ctrlKey || event.metaKey;
-    if (mod && event.key.toLowerCase() === "s") {
+    if (!mod && !event.altKey && event.key.toLowerCase() === "t" && canExecute("transform")) {
       event.preventDefault();
-      save();
+      execute("transform");
       return;
     }
     if (mod && event.key.toLowerCase() === "z" && !event.shiftKey) {
       event.preventDefault();
-      undo();
+      execute("undo");
       return;
     }
     if (mod && (event.key.toLowerCase() === "y" || (event.key.toLowerCase() === "z" && event.shiftKey))) {
       event.preventDefault();
-      redo();
+      execute("redo");
       return;
     }
     if (event.key === "Enter" && pendingPolygon) {
@@ -1004,12 +1028,12 @@ export function createController(root) {
     if (!selectedId) return;
     if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
-      deleteSelected();
+      execute("delete");
       return;
     }
     if (mod && event.key.toLowerCase() === "d") {
       event.preventDefault();
-      duplicateSelected();
+      execute("duplicate");
       return;
     }
     const nudge = event.shiftKey ? 10 : 1;
@@ -1093,6 +1117,35 @@ export function createController(root) {
     commit(patchNode(scene, selectedId, patch));
   }
 
+  const actions = {
+    select: { label: "Seleziona", enabled: () => true, run: () => setMode("select") },
+    edit: { label: "Modifica forma", enabled: () => selection.length === 1 && selected()?.node.kind !== "group", run: () => setMode("vertex") },
+    transform: { label: "Trasforma", enabled: () => selection.length > 0, run: () => setMode("transform") },
+    undo: { label: "Annulla", enabled: () => history.canUndo, run: undo },
+    redo: { label: "Ripeti", enabled: () => history.canRedo, run: redo },
+    save: { label: "Salva", enabled: () => Boolean(saveUrl) && !inFlight, run: save },
+    delete: { label: "Elimina", enabled: () => selection.length > 0, run: deleteSelected },
+    duplicate: { label: "Duplica", enabled: () => selection.length > 0, run: duplicateSelected },
+    group: { label: "Raggruppa", enabled: () => selection.length > 1 && Boolean(groupNodes(scene, selection)), run: groupSelected },
+    ungroup: { label: "Separa", enabled: () => selection.length === 1 && selected()?.node.kind === "group", run: ungroupSelected },
+    forward: { label: "Avanti", enabled: () => Boolean(selected()) && selected().index < selected().siblings.length - 1, run: () => commit(reorderNode(scene, selectedId, 1)) },
+    backward: { label: "Dietro", enabled: () => Boolean(selected()) && selected().index > 0, run: () => commit(reorderNode(scene, selectedId, -1)) },
+  };
+
+  for (const name of [...Object.keys(SHAPE_NAMES), "curve", "cut"]) {
+    actions[`tool-${name}`] = { label: SHAPE_NAMES[name] || (name === "curve" ? "Curva" : "Taglia"), enabled: () => name !== "cut" || (selection.length === 1 && selected()?.node.kind === "polygon"), run: () => setTool(name) };
+  }
+
+  function canExecute(id) {
+    return Boolean(editable && !root.dataset.copying && !drag && !cut && actions[id]?.enabled());
+  }
+
+  function execute(id) {
+    if (!canExecute(id)) return false;
+    actions[id].run();
+    return true;
+  }
+
   /* ---------- controls ---------- */
 
   function syncControls() {
@@ -1143,12 +1196,16 @@ export function createController(root) {
     }
     const nameInput = root.querySelector("[data-node-name]");
     if (nameInput && node && document.activeElement !== nameInput) nameInput.value = node.name;
-    const modeButton = root.querySelector("[data-drawing-mode]");
-    if (modeButton) {
-      modeButton.disabled = !editable || !node || node.kind === "group" || node.kind === "ellipse";
-      modeButton.classList.toggle("btn-selected", mode === "vertex");
-      modeButton.setAttribute("aria-pressed", String(mode === "vertex"));
-    }
+    root.querySelectorAll("[data-drawing-action]").forEach(control => { control.disabled = !canExecute(control.dataset.drawingAction); });
+    root.querySelectorAll("[data-drawing-mode]").forEach(button => {
+      const active = tool === "select" && mode === button.dataset.drawingMode;
+      button.classList.toggle("btn-selected", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+    const selectButton = root.querySelector("[data-tool='select']");
+    selectButton.classList.toggle("btn-selected", tool === "select" && mode === "select");
+    selectButton.setAttribute("aria-pressed", String(tool === "select" && mode === "select"));
+    root.querySelector("[data-drawing-mode-label]").textContent = tool === "select" ? {select:"Seleziona", vertex:"Modifica forma", transform:"Trasforma"}[mode] : SHAPE_NAMES[tool] || (tool === "curve" ? "Curva" : "Taglia");
     const hint = root.querySelector("[data-testid='drawing-inspector-hint']");
     if (hint) hint.hidden = Boolean(node);
   }
@@ -1176,22 +1233,22 @@ export function createController(root) {
     root.querySelector("[data-drawing-save-copy]").addEventListener("click", () => save(true));
     root.querySelector("[data-drawing-reload]").addEventListener("click", () => { allowLeave = true; window.location.assign(window.location.href); });
     root.querySelectorAll("[data-tool]").forEach((button) => {
-      button.addEventListener("click", () => setTool(button.dataset.tool));
+      const id = button.dataset.tool === "select" ? "select" : `tool-${button.dataset.tool}`;
+      button.dataset.drawingAction = id;
+      button.addEventListener("click", () => execute(id));
     });
-    const undoButton = root.querySelector("[data-drawing-undo]");
-    if (undoButton) undoButton.addEventListener("click", undo);
-    const redoButton = root.querySelector("[data-drawing-redo]");
-    if (redoButton) redoButton.addEventListener("click", redo);
-    const saveButton = root.querySelector("[data-testid='drawing-save']");
-    if (saveButton) saveButton.addEventListener("click", save);
-    const duplicateButton = root.querySelector("[data-drawing-duplicate]");
-    if (duplicateButton) duplicateButton.addEventListener("click", duplicateSelected);
-    const deleteButton = root.querySelector("[data-drawing-delete]");
-    if (deleteButton) deleteButton.addEventListener("click", deleteSelected);
-    const groupButton = root.querySelector("[data-drawing-group]");
-    if (groupButton) groupButton.addEventListener("click", groupSelected);
-    const ungroupButton = root.querySelector("[data-drawing-ungroup]");
-    if (ungroupButton) ungroupButton.addEventListener("click", ungroupSelected);
+    const bindings = {
+      "[data-drawing-undo]": "undo", "[data-drawing-redo]": "redo", "[data-testid='drawing-save']": "save",
+      "[data-drawing-duplicate]": "duplicate", "[data-drawing-delete]": "delete", "[data-drawing-group]": "group",
+      "[data-drawing-ungroup]": "ungroup", "[data-drawing-mode='vertex']": "edit", "[data-drawing-mode='transform']": "transform",
+      "[data-drawing-order='1']": "forward", "[data-drawing-order='-1']": "backward",
+    };
+    for (const [selector, id] of Object.entries(bindings)) {
+      root.querySelectorAll(selector).forEach(button => {
+        button.dataset.drawingAction = id;
+        button.addEventListener("click", () => execute(id));
+      });
+    }
     const parentInput = root.querySelector("[data-node-parent]");
     parentInput.addEventListener("change", () => {
       const result = reparentNode(scene, selectedId, parentInput.value || null);
@@ -1202,14 +1259,6 @@ export function createController(root) {
     if (nameInput) {
       nameInput.addEventListener("change", () => renameSelected(nameInput.value));
     }
-    root.querySelectorAll("[data-drawing-order]").forEach((button) => {
-      button.addEventListener("click", () => {
-        if (!selectedId) return;
-        commit(reorderNode(scene, selectedId, Number(button.dataset.drawingOrder)));
-      });
-    });
-    const modeButton = root.querySelector("[data-drawing-mode]");
-    if (modeButton) modeButton.addEventListener("click", () => setMode(mode === "vertex" ? "transform" : "vertex"));
 
     root.querySelectorAll("[data-palette]").forEach((chip) => {
       chip.addEventListener("click", () => applyStyle(selected().node.kind === "path" ? { stroke: chip.dataset.palette } : { fill: chip.dataset.palette }));
@@ -1290,15 +1339,16 @@ export function createController(root) {
       }
     });
     svg.addEventListener("wheel", onWheel, { passive: false });
-    // On the document: the artboard is not focusable, so a keypress after
-    // clicking a shape targets the body, not the workspace element.
+    // On the document: only the focused workspace owns editor shortcuts;
+    // clicking a shape focuses the artboard without scrolling the page.
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("keydown", (event) => {
-      if (event.code === "Space" && (event.target === document.body || event.target === root || event.target === svg)) { spaceDown = true; event.preventDefault(); }
+      if (editable && !document.querySelector("dialog[open]") && event.code === "Space" && (event.target === root || event.target === svg)) { spaceDown = true; event.preventDefault(); }
     });
     document.addEventListener("keyup", (event) => {
       if (event.code === "Space") spaceDown = false;
     });
+    window.addEventListener("blur", () => { spaceDown = false; });
     window.addEventListener("beforeunload", (event) => {
       if (allowLeave || !isDirty()) return;
       event.preventDefault();
@@ -1341,6 +1391,10 @@ export function createController(root) {
     },
     setTool,
     select,
+    execute,
+    canExecute,
+    get actions() { return Object.entries(actions).map(([id, action]) => ({ id, label: action.label, enabled: canExecute(id) })); },
+    get mode() { return mode; },
     palette: PALETTE,
   };
 }

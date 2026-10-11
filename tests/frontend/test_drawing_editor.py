@@ -85,10 +85,9 @@ def test_every_tool_has_a_visible_label(component):
     page = component.mount("editorial.DrawingEditor", props=PROPS)
 
     tools = page.locator("[data-testid='drawing-toolbar'] .drawing-editor__tool")
-    assert tools.count() == 8
+    assert tools.count() == 7
     labels = [tool.inner_text().strip() for tool in tools.all()]
     assert labels == [
-        "Seleziona",
         "Triangolo",
         "Rettangolo",
         "Cerchio",
@@ -377,7 +376,7 @@ def _select_the_triangle(page) -> None:
 
 
 def _vertex_mode(page) -> None:
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
 
 
 def test_vertex_mode_shows_a_handle_per_vertex_and_per_edge(component):
@@ -913,7 +912,7 @@ def test_both_bezier_endpoints_can_be_selected_and_edited(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
     _mounted(page)
     page.locator("[data-select-node='curve']").click()
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     end = page.get_by_role("button", name="Punto finale", exact=True)
     assert end.count() == 1
     end.focus()
@@ -984,7 +983,7 @@ def test_a_line_can_become_an_editable_polyline(component):
     _mounted(page)
     page.get_by_test_id("drawing-tool-line").click()
     _drag(page, (100, 100), (300, 100))
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     page.mouse.click(*_at(page, 200, 100))
     assert _scene_of(page)["nodes"][0]["d"].count("L") == 2
     assert page.locator("[data-path-command]").count() == 3
@@ -997,7 +996,7 @@ def test_curve_handles_edit_a_cubic_stroke_and_undo(component):
     _drag(page, (100, 100), (300, 100))
     before = _scene_of(page)["nodes"][0]["d"]
     assert "C" in before
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     assert page.locator(".drawing-editor__curve-control").count() == 2
     assert page.locator("[data-path-command]").count() == 4
     handle = page.locator(".drawing-editor__curve-control").first.bounding_box()
@@ -1045,7 +1044,7 @@ def test_child_vertex_edit_uses_transformed_parent_coordinates(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
     _mounted(page)
     page.locator("[data-select-node='child']").click()
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     _drag(page, (120, 40), (140, 60))
     points = _scene_of(page)["nodes"][0]["nodes"][0]["points"]
     assert points[0] == [20, 20]
@@ -1130,3 +1129,102 @@ def test_conflict_offers_copy_and_explicit_reload_confirmation(component):
     assert page.locator("#drawing-reload").is_visible()
     page.locator("#drawing-reload [data-dialog-close]").first.click()
     assert page.locator(".drawing-editor__shape").count() == 2
+
+
+def test_single_shape_defaults_to_edit_and_t_enters_transform(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (220, 200))
+    assert (
+        page.locator("[data-drawing-mode='vertex']").get_attribute("aria-pressed")
+        == "true"
+    )
+    assert page.locator("[data-vertex]").count() == 3
+    assert page.locator("[data-corner]").count() == 0
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("t")
+    assert (
+        page.locator("[data-drawing-mode='transform']").get_attribute("aria-pressed")
+        == "true"
+    )
+    assert page.locator("[data-corner]").count() == 4
+    page.get_by_test_id("drawing-tool-select").click()
+    assert page.locator("[data-drawing-mode-label]").inner_text() == "Seleziona"
+    assert page.locator("[data-corner]").count() == 0
+
+
+def test_editor_actions_share_enabled_states_and_reject_unavailable_edits(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    assert page.locator("[data-drawing-mode='vertex']").is_disabled()
+    assert page.locator("[data-drawing-mode='transform']").is_disabled()
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('delete')"
+        )
+        is False
+    )
+    _draw_two(page)
+    _select_two(page)
+    assert page.locator("[data-drawing-mode='vertex']").is_disabled()
+    assert page.locator("[data-drawing-mode='transform']").is_enabled()
+    assert page.locator("[data-corner]").count() == 4
+
+
+def test_editor_shortcuts_do_not_own_unrelated_controls_or_typing(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    field = page.locator("[data-node-name]")
+    field.fill("Test")
+    page.keyboard.press("Delete")
+    page.keyboard.press("Control+z")
+    assert _scene_of(page) == before
+    page.evaluate(
+        "() => { const input = document.createElement('input'); input.id = 'outside-editor'; document.body.append(input); input.focus(); }"
+    )
+    page.keyboard.press("ArrowRight")
+    page.keyboard.press("Delete")
+    assert _scene_of(page) == before
+
+
+def test_save_shortcut_works_from_the_document_title(component):
+    page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
+    page.evaluate(
+        "() => { window.fetch = async (url, options) => { window.savedPayload = JSON.parse(options.body); return new Response(JSON.stringify({version:4, title:window.savedPayload.title, scene:window.savedPayload.scene}), {status:200}); }; }"
+    )
+    page.locator("[data-drawing-title]").fill("Titolo salvato")
+    page.keyboard.press("Control+s")
+    page.wait_for_function("() => Boolean(window.savedPayload)")
+    assert page.evaluate("() => window.savedPayload.title") == "Titolo salvato"
+
+
+def test_multiple_shapes_transform_together_as_one_undo_step(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    _draw_two(page)
+    _select_two(page)
+    before = _scene_of(page)
+    _drag(page, (440, 200), (610, 300))
+    after = _scene_of(page)
+    assert all(
+        node["transform"] != old["transform"]
+        for node, old in zip(after["nodes"], before["nodes"], strict=True)
+    )
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page) == before
+
+
+def test_ellipse_defaults_to_direct_center_and_axis_controls(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (300, 200))
+    assert page.locator("[data-ellipse-axis]").count() == 3
+    _drag(page, (300, 150), (340, 150))
+    assert _scene_of(page)["nodes"][0]["rx"] == pytest.approx(140, abs=1)
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["rx"] == pytest.approx(100, abs=1)

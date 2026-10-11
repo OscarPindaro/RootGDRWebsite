@@ -76,6 +76,17 @@ export function nodeBounds(node) {
   return bounds(node.points);
 }
 
+export function selectionCorners(scene, ids) {
+  const corners = ids.flatMap(id => {
+    const frame = nodeFrame(scene, id);
+    const box = nodeBounds(frame.node);
+    return [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]].map(point => apply(frame.world, point));
+  });
+  if (ids.length === 1) return corners;
+  const box = bounds(corners);
+  return [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]];
+}
+
 export function nodeCenter(node) {
   const box = nodeBounds(node);
   return [(box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2];

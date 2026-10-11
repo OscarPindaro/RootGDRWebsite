@@ -6,7 +6,7 @@
    transform applied, so a handle stays the same size on screen. */
 
 import { apply, multiply } from "./geometry.js";
-import { nodeBounds, nodeCenter, nodeFrame, pathHandles } from "./scene.js";
+import { nodeFrame, pathHandles, selectionCorners } from "./scene.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -129,18 +129,12 @@ export function visibleRuns(node) {
 function overlayElements(scene, view) {
   const found = findById(scene.nodes, view.selectedId);
   if (!found) return [];
-  // The transform box and its handles belong to a single selection; a
-  // multi-selection is shown by the outlines alone.
-  if ((view.selection || []).length > 1) return [];
+  // A single selection keeps its oriented box; a
+  // multi-selection shares a world-space transform box.
   const node = found;
+  const ids = view.selection?.length ? view.selection : [node.id];
   const toView = multiply(view.viewport, nodeFrame(scene, node.id).world);
-  const box = nodeBounds(node);
-  const corners = [
-    [box.minX, box.minY],
-    [box.maxX, box.minY],
-    [box.maxX, box.maxY],
-    [box.minX, box.maxY],
-  ].map((point) => apply(toView, point));
+  const corners = selectionCorners(scene, ids).map(point => apply(view.viewport, point));
 
   const elements = [
     el("polygon", {
@@ -163,7 +157,7 @@ function overlayElements(scene, view) {
       );
     });
     const top = [(corners[0][0] + corners[1][0]) / 2, (corners[0][1] + corners[1][1]) / 2];
-    const center = apply(toView, nodeCenter(node));
+    const center = [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
     const outward = normalize([top[0] - center[0], top[1] - center[1]]);
     const rotate = [top[0] + outward[0] * 28, top[1] + outward[1] * 28];
     elements.push(el("line", { class: "drawing-editor__rotate-stem", x1: top[0], y1: top[1], x2: rotate[0], y2: rotate[1] }));
@@ -197,6 +191,13 @@ function overlayElements(scene, view) {
         })
       );
     });
+  }
+
+  if (view.mode === "vertex" && node.kind === "ellipse") {
+    for (const [axis, local, label] of [["center", [node.cx, node.cy], "Centro"], ["x", [node.cx + node.rx, node.cy], "Raggio orizzontale"], ["y", [node.cx, node.cy + node.ry], "Raggio verticale"]]) {
+      const point = apply(toView, local);
+      elements.push(el("circle", { class: "drawing-editor__handle", cx: point[0], cy: point[1], r: 6, "data-ellipse-axis": axis, "aria-label": label }));
+    }
   }
 
   if (view.mode === "vertex" && node.kind === "path") {

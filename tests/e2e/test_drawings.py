@@ -143,7 +143,7 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     drawn = _local_node(session)
     tip = drawn["points"][2]
 
-    session.page.locator("[data-drawing-mode]").click()
+    session.page.locator("[data-drawing-mode='vertex']").click()
 
     # Insert one point on the upper edge and one on the lower edge. A quarter
     # along, not the midpoint: the midpoint is the edge-visibility toggle.
@@ -199,7 +199,7 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
     drawn = _local_node(session)
     tip = drawn["points"][2]
 
-    session.page.locator("[data-drawing-mode]").click()
+    session.page.locator("[data-drawing-mode='vertex']").click()
     for index in (0, 1):
         start = drawn["points"][index]
         x = start[0] + (tip[0] - start[0]) * 0.25
@@ -282,7 +282,7 @@ def test_both_curve_endpoints_remain_editable_after_saving(session: BrowserSessi
     page.get_by_test_id("drawing-tool-curve").click()
     _drag(page, (100, 100), (300, 150))
     before = _local_node_scene(session)["nodes"][0]["d"]
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     page.get_by_role("button", name="Punto finale", exact=True).focus()
     page.keyboard.press("ArrowRight")
     page.get_by_role("button", name="Punto iniziale", exact=True).focus()
@@ -301,7 +301,7 @@ def test_both_curve_endpoints_remain_editable_after_saving(session: BrowserSessi
     session.goto(f"/drawings/{identifier}")
     page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
     page.locator("[data-select-node]").first.click()
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     assert page.get_by_role("button", name="Punto iniziale", exact=True).count() == 1
     assert page.get_by_role("button", name="Punto finale", exact=True).count() == 1
 
@@ -342,7 +342,7 @@ def test_grouped_artwork_and_faint_curve_reopen_editable(session: BrowserSession
     opacity.evaluate(
         "el => { el.value = 20; el.dispatchEvent(new Event('change', {bubbles:true})); }"
     )
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     assert page.locator(".drawing-editor__curve-control").count() == 2
     handle = page.locator(".drawing-editor__curve-control").first.bounding_box()
     x, y = handle["x"] + handle["width"] / 2, handle["y"] + handle["height"] / 2
@@ -363,7 +363,7 @@ def test_grouped_artwork_and_faint_curve_reopen_editable(session: BrowserSession
     page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
     assert _local_node_scene(session) == stored["scene"]
     page.locator(f"[data-select-node='{curve_id}']").click()
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     assert page.locator(".drawing-editor__curve-control").count() == 2
     assert session.errors == []
 
