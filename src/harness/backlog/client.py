@@ -73,6 +73,38 @@ class BoardTask(BoardRecord):
     done: bool = False
     hex_color: HexColour | Literal[""] = ""
     labels: list[BoardLabel] | None = None
+    # Related tasks grouped by relation kind; the only read surface Vikunja
+    # offers for relations, and the one an idempotent write checks first.
+    related_tasks: dict[str, list[BoardRecord]] | None = None
+
+
+RelationKind = Literal[
+    "subtask",
+    "parenttask",
+    "related",
+    "duplicateof",
+    "duplicates",
+    "blocking",
+    "blocked",
+    "precedes",
+    "follows",
+    "copiedfrom",
+    "copiedto",
+]
+
+
+class BoardRelation(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    task_id: int
+    other_task_id: int
+    relation_kind: str
+    created: str | None = None
+
+
+class BoardRelationCreate(BaseModel):
+    other_task_id: int = Field(gt=0)
+    relation_kind: RelationKind
 
 
 class BoardView(BoardRecord):
@@ -504,6 +536,55 @@ class BoardClient:
                 sha256=digest,
                 created=upload_error is None,
             )
+
+    def related_ids(self, task_id: int, kind: RelationKind) -> list[int]:
+        """Ids already related to this task with one kind, read from the task."""
+        task = self.task(task_id)
+        return [record.id for record in (task.related_tasks or {}).get(kind, [])]
+
+    def relate_once(
+        self, task_id: int, other_task_id: int, kind: RelationKind
+    ) -> tuple[BoardRelation, bool]:
+        """Relate two tasks once. Vikunja creates the inverse relation itself.
+
+        The current relations are read first, so a retry after an ambiguous
+        timeout never writes a second relation. The kind is validated before
+        anything is read, so a typo costs no request.
+        """
+        payload = BoardRelationCreate(other_task_id=other_task_id, relation_kind=kind)
+        if other_task_id in self.related_ids(task_id, kind):
+            return (
+                BoardRelation(
+                    task_id=task_id,
+                    other_task_id=other_task_id,
+                    relation_kind=kind,
+                ),
+                False,
+            )
+        try:
+            response = self._request(
+                "POST", f"/tasks/{task_id}/relations", json=payload.model_dump()
+            )
+        except BoardError as error:
+            if not error.ambiguous or other_task_id not in self.related_ids(
+                task_id, kind
+            ):
+                raise
+            return (
+                BoardRelation(
+                    task_id=task_id,
+                    other_task_id=other_task_id,
+                    relation_kind=kind,
+                ),
+                False,
+            )
+        relation = BoardRelation.model_validate(response.json())
+        if relation.task_id != task_id or relation.other_task_id != other_task_id:
+            raise BoardError(
+                "Board returned a different relation than the one requested",
+                ambiguous=True,
+            )
+        return relation, True
 
     def comments(self, task_id: int) -> list[BoardComment]:
         raw = self._paginate(f"/tasks/{task_id}/comments")

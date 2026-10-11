@@ -3,7 +3,7 @@ from pathlib import Path
 
 import httpx
 import pytest
-from pydantic import SecretStr
+from pydantic import SecretStr, ValidationError
 
 from harness.backlog.client import (
     BoardClient,
@@ -575,6 +575,67 @@ def test_catalogue_conflicts_do_not_overwrite_labels(records):
             board.ensure_label(BoardLabelSpec(title="type:feature", hex_color="2563EB"))
 
 
+def test_relate_once_reads_before_writing_and_never_relates_twice():
+    state = {"related": []}
+    posts = []
+
+    def handler(request):
+        if request.method == "POST":
+            posts.append(json.loads(request.content))
+            state["related"] = [{"id": 4, "title": "REQ-0014/T03"}]
+            return httpx.Response(
+                201,
+                json={"task_id": 3, "other_task_id": 4, "relation_kind": "subtask"},
+            )
+        assert request.method == "GET" and request.url.path == "/api/v2/tasks/3"
+        return httpx.Response(
+            200,
+            json={
+                "id": 3,
+                "project_id": 2,
+                "related_tasks": {"subtask": state["related"]},
+            },
+        )
+
+    with client(handler) as board:
+        first, created = board.relate_once(3, 4, "subtask")
+        second, again = board.relate_once(3, 4, "subtask")
+    assert created is True and again is False
+    assert first.relation_kind == second.relation_kind == "subtask"
+    assert posts == [{"other_task_id": 4, "relation_kind": "subtask"}]
+
+
+def test_relate_recovers_an_ambiguous_write_by_reading_again():
+    state = {"related": [], "attempted": 0}
+
+    def handler(request):
+        if request.method == "POST":
+            state["attempted"] += 1
+            state["related"] = [{"id": 4, "title": "REQ-0014/T03"}]
+            raise httpx.ReadTimeout("the write may have landed")
+        return httpx.Response(
+            200,
+            json={
+                "id": 3,
+                "project_id": 2,
+                "related_tasks": {"subtask": state["related"]},
+            },
+        )
+
+    with client(handler) as board:
+        _, created = board.relate_once(3, 4, "subtask")
+    assert created is False and state["attempted"] == 1
+
+
+def test_relate_rejects_an_unknown_kind_without_contacting_the_board():
+    def handler(request):
+        raise AssertionError("an unknown relation kind must not contact the board")
+
+    with client(handler) as board:
+        with pytest.raises(ValidationError):
+            board.relate_once(3, 4, "belongs-to")
+
+
 def test_classification_preserves_a_human_type_colour_and_unrelated_labels():
     catalogue = load_catalogue()
     available = [
@@ -668,6 +729,65 @@ def test_default_catalogue_has_the_approved_types_and_neutral_areas():
     assert {
         label.hex_color for label in catalogue.labels if label.title.startswith("area:")
     } == {"64748B"}
+    # A request label is the one family with its own colour: cool, and never the
+    # feature blue the request's own tickets would otherwise inherit.
+    request_labels = {
+        label.title: label.hex_color
+        for label in catalogue.labels
+        if label.title.startswith("req:")
+    }
+    assert request_labels == {"req:0014": "0E7490"}
+    assert "2563EB" not in request_labels.values()
+
+
+def test_a_request_label_carries_the_ticket_colour():
+    """The tickets of a request are sub-features, so they take its colour."""
+    catalogue = load_catalogue()
+    available = [
+        {"id": 1, "title": "type:feature", "hex_color": "2563EB"},
+        {"id": 2, "title": "area:backend", "hex_color": "64748B"},
+        {"id": 3, "title": "req:0014", "hex_color": "0E7490"},
+    ]
+    attached = []
+    colour = {"value": ""}
+
+    def handler(request):
+        if request.method == "POST":
+            label_id = json.loads(request.content)["label_id"]
+            attached.append(
+                next(label for label in available if label["id"] == label_id)
+            )
+            return httpx.Response(201, json={"label_id": label_id})
+        if request.method == "PATCH":
+            colour["value"] = json.loads(request.content)["hex_color"]
+            return httpx.Response(
+                200, json={"id": 7, "project_id": 2, "hex_color": colour["value"]}
+            )
+        if request.url.path == "/api/v2/tasks/7":
+            return httpx.Response(
+                200,
+                json={
+                    "id": 7,
+                    "project_id": 2,
+                    "hex_color": colour["value"],
+                    "description": "",
+                },
+            )
+        return httpx.Response(
+            200,
+            json=envelope(attached if "/tasks/" in request.url.path else available),
+        )
+
+    with client(handler) as board:
+        receipt = classify_task(
+            board, catalogue, 7, 2, "feature", ["backend"], requests=["0014"]
+        )
+    assert receipt.task.hex_color == "0E7490"
+    assert {label.title for label in receipt.task.labels} == {
+        "type:feature",
+        "area:backend",
+        "req:0014",
+    }
 
 
 @pytest.mark.parametrize("failure", ["timeout", "server", "invalid"])

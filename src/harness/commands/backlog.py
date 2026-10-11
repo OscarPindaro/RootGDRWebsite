@@ -59,6 +59,17 @@ def _board_keys(tasks: list[BoardTask]) -> dict[str, int]:
     return keys
 
 
+def _request_suffixes(values: list[str] | None) -> list[str]:
+    """Turn ``REQ-0014`` (or ``0014``) into the catalogue's ``0014`` suffix."""
+    suffixes = []
+    for value in values or []:
+        suffix = value.strip().upper().removeprefix("REQ-")
+        if not re.fullmatch(r"\d{4}", suffix):
+            raise ValueError(f"{value} is not a REQ-nnnn id")
+        suffixes.append(suffix)
+    return suffixes
+
+
 def _client(token_file: Path | None, base_url: str) -> BoardClient:
     source = (
         BoardTokenSource(token_file=token_file)
@@ -259,7 +270,7 @@ def register_commands(app: typer.Typer) -> None:
 
     @backlog_app.command(
         "classify",
-        help="Add approved type/area labels and task colour; preserves existing types and custom colours.",
+        help="Add approved type/area/request labels and task colour; preserves existing types and custom colours.",
     )
     def classify(
         task: Annotated[int, typer.Argument(help="Task id.", min=1)],
@@ -270,6 +281,13 @@ def register_commands(app: typer.Typer) -> None:
         area: Annotated[
             list[str] | None,
             typer.Option("--area", help="Confirmed affected area; repeat as needed."),
+        ] = None,
+        request: Annotated[
+            list[str] | None,
+            typer.Option(
+                "--request",
+                help="Request whose label and colour mark the ticket; repeat as needed.",
+            ),
         ] = None,
         replace_colour: Annotated[
             bool,
@@ -296,6 +314,7 @@ def register_commands(app: typer.Typer) -> None:
                     project,
                     kind,
                     area or [],
+                    requests=_request_suffixes(request),
                     replace_colour=replace_colour,
                 )
             detail = "classified"
@@ -536,6 +555,44 @@ def register_commands(app: typer.Typer) -> None:
                 {"task": task, "comment_id": record.id, "created": created},
                 as_json,
                 [(str(record.id), detail)],
+            )
+        except BoardError, ValidationError, OSError, ValueError:
+            _fail()
+
+    @backlog_app.command(
+        "relate",
+        help="Relate two tickets. The current relations are read first, so a retry after an ambiguous timeout never writes twice.",
+    )
+    def relate(
+        task: Annotated[int, typer.Argument(help="Base task id.", min=1)],
+        other: Annotated[int, typer.Argument(help="Task to relate to.", min=1)],
+        kind: Annotated[
+            str,
+            typer.Option(
+                "--kind",
+                help="Relation kind from the base task: subtask, parenttask, related, blocking, blocked, precedes, follows, duplicateof, duplicates, copiedfrom, copiedto.",
+            ),
+        ] = "related",
+        token_file: Annotated[
+            Path | None, typer.Option(help="Private token file.")
+        ] = None,
+        base_url: Annotated[
+            str, typer.Option(help="Loopback tunnel base URL.")
+        ] = "http://127.0.0.1:3458",
+        as_json: Annotated[bool, typer.Option("--json")] = False,
+    ) -> None:
+        try:
+            with _client(token_file, base_url) as client:
+                relation, created = client.relate_once(task, other, kind)
+            _emit(
+                {
+                    "task": task,
+                    "other_task": other,
+                    "kind": relation.relation_kind,
+                    "created": created,
+                },
+                as_json,
+                [(f"{task} → {other}", relation.relation_kind)],
             )
         except BoardError, ValidationError, OSError, ValueError:
             _fail()

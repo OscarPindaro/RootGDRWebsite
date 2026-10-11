@@ -9,6 +9,12 @@ from .requests import REPO_ROOT
 
 CATALOGUE = REPO_ROOT / ".devin/backlog-labels.yaml"
 
+# A request label marks the implementation tickets of one request. It is the one
+# family that carries its own colour: sub-features are told apart from the
+# feature itself, and from another request's tickets.
+_TYPE_OR_AREA = re.compile(r"(?:type|area):[a-z]+(?:-[a-z]+)*")
+_REQUEST = re.compile(r"req:\d{4}")
+
 
 class LabelCatalogue(BaseModel):
     model_config = ConfigDict(extra="forbid")
@@ -19,10 +25,12 @@ class LabelCatalogue(BaseModel):
     def valid_names(self) -> "LabelCatalogue":
         titles = [label.title for label in self.labels]
         if len(set(titles)) != len(titles) or any(
-            not re.fullmatch(r"(?:type|area):[a-z]+(?:-[a-z]+)*", title)
+            not (_TYPE_OR_AREA.fullmatch(title) or _REQUEST.fullmatch(title))
             for title in titles
         ):
-            raise ValueError("Catalogue labels require unique type:/area: names")
+            raise ValueError(
+                "Catalogue labels require unique type:/area: names or req:NNNN"
+            )
         return self
 
     def resolve(self, title: str) -> BoardLabelSpec:
@@ -58,10 +66,12 @@ def classify_task(
     kind: str,
     areas: list[str],
     *,
+    requests: list[str] = (),
     replace_colour: bool = False,
 ) -> ClassificationReceipt:
     requested = catalogue.resolve("type:" + kind)
     area_specs = [catalogue.resolve("area:" + area) for area in areas]
+    request_specs = [catalogue.resolve("req:" + request) for request in requests]
     task = board.task(task_id)
     if task.project_id != project:
         raise BoardError(
@@ -72,7 +82,10 @@ def classify_task(
     if len(types) > 1:
         raise BoardError("Multiple primary type labels require owner review")
     primary = catalogue.resolve(types[0].title) if types else requested
-    selected = {spec.title: spec for spec in [primary, *area_specs]}
+    selected = {spec.title: spec for spec in [primary, *area_specs, *request_specs]}
+    # The request label carries the ticket's colour when one is named: the
+    # tickets of a request are sub-features of it, not another feature.
+    colour_spec = request_specs[0] if request_specs else primary
     available = board.labels()
     resolved: list[BoardLabel] = []
     for spec in selected.values():
@@ -87,15 +100,17 @@ def classify_task(
         type_preserved=bool(types and primary.title != requested.title),
         colour_preserved=bool(
             task.hex_color
-            and task.hex_color != primary.hex_color
+            and task.hex_color != colour_spec.hex_color
             and not replace_colour
         ),
     )
     for label in resolved:
         if board.add_label_once(task_id, label.id):
             receipt.added_labels.append(label.title)
-    if (not task.hex_color or replace_colour) and task.hex_color != primary.hex_color:
-        board.set_task_colour(task_id, primary.hex_color)
+    if (
+        not task.hex_color or replace_colour
+    ) and task.hex_color != colour_spec.hex_color:
+        board.set_task_colour(task_id, colour_spec.hex_color)
     receipt.task = board.task(task_id)
     receipt.task.labels = board.task_labels(task_id)
     final_types = [
@@ -107,7 +122,7 @@ def classify_task(
             "Classification read-back differs; review concurrent changes before retrying",
             ambiguous=True,
         )
-    if not receipt.colour_preserved and receipt.task.hex_color != primary.hex_color:
+    if not receipt.colour_preserved and receipt.task.hex_color != colour_spec.hex_color:
         raise BoardError(
             "Classification colour read-back differs; inspect before retrying",
             ambiguous=True,

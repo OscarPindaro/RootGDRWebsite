@@ -613,6 +613,35 @@ older provisioning profiles may lack label scopes.
 Vikunja's v1 route registry reports PUT for creation, but the verified v2 endpoints
 use POST for labels and task-label associations.
 
+### Request labels and related tickets
+
+The implementation tickets of a request are sub-features of it, so they carry a
+`req:NNNN` label rather than the feature blue. It is the one catalogue family
+with its own colour: `classify --request REQ-0014` attaches it and lets it carry
+the task colour, while the type's colour is used when no request is named.
+`req:0014` is cool cyan (`#0E7490`), deliberately distinct from `type:feature`.
+
+```console
+uv run harness backlog classify 3 --project 2 --type feature --area backend \
+  --request REQ-0014 --json
+```
+
+`relate` creates a real Vikunja task relation, so a sub-ticket is a related task
+and not a comment. Vikunja creates the inverse relation itself, and the current
+relations are read first, so a retry after an ambiguous timeout never writes a
+second one.
+
+```console
+uv run harness backlog relate 1 3 --kind subtask --json
+```
+
+Relations need `tasks_relations.create`, which the consolidated credential did
+not have. Token **4** belongs to the same tooling bot, preserves token 3's scopes
+and expiry (`2027-10-04T23:03:07Z`) and adds only that scope. It is the private
+controller file `~/.config/devin/rootgdr/board-unified-token`; token 3 is kept
+beside it as `board-unified-token-3.backup`. Nothing was revoked, and the new
+token still cannot administer tokens or create/delete projects.
+
 `BoardClient` is a typed httpx boundary: project, view, bucket, task, comment,
 attachment, upload response and receipt models; `BoardPage` for the v2 envelope;
 and full pagination up to a reviewed bound. Status codes map to bounded messages:

@@ -29,3 +29,6 @@ labels:
   - title: area:docs
     hex_color: '#64748B'
     description: Manuals, specifications and technical guidance.
+  - title: req:0014
+    hex_color: '#0E7490'
+    description: Implementation tickets of one request; cool cyan, distinct from the feature blue.
