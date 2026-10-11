@@ -270,7 +270,7 @@ def register_commands(app: typer.Typer) -> None:
 
     @backlog_app.command(
         "classify",
-        help="Add approved type/area/request labels and task colour; preserves existing types and custom colours.",
+        help="Add approved type/area/request/flag labels and task colour; preserves existing types and custom colours.",
     )
     def classify(
         task: Annotated[int, typer.Argument(help="Task id.", min=1)],
@@ -287,6 +287,13 @@ def register_commands(app: typer.Typer) -> None:
             typer.Option(
                 "--request",
                 help="Request whose label and colour mark the ticket; repeat as needed.",
+            ),
+        ] = None,
+        flag: Annotated[
+            list[str] | None,
+            typer.Option(
+                "--flag",
+                help="Catalogue flag to attach, e.g. open-questions; repeat as needed.",
             ),
         ] = None,
         replace_colour: Annotated[
@@ -315,6 +322,7 @@ def register_commands(app: typer.Typer) -> None:
                     kind,
                     area or [],
                     requests=_request_suffixes(request),
+                    flags=flag or [],
                     replace_colour=replace_colour,
                 )
             detail = "classified"

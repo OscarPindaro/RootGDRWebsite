@@ -11,8 +11,9 @@ CATALOGUE = REPO_ROOT / ".devin/backlog-labels.yaml"
 
 # A request label marks the implementation tickets of one request. It is the one
 # family that carries its own colour: sub-features are told apart from the
-# feature itself, and from another request's tickets.
-_TYPE_OR_AREA = re.compile(r"(?:type|area):[a-z]+(?:-[a-z]+)*")
+# feature itself, and from another request's tickets. A flag label marks a
+# condition of the ticket itself, such as an unfinished specification.
+_NAMED_FAMILY = re.compile(r"(?:type|area|flag):[a-z]+(?:-[a-z]+)*")
 _REQUEST = re.compile(r"req:\d{4}")
 
 
@@ -25,11 +26,11 @@ class LabelCatalogue(BaseModel):
     def valid_names(self) -> "LabelCatalogue":
         titles = [label.title for label in self.labels]
         if len(set(titles)) != len(titles) or any(
-            not (_TYPE_OR_AREA.fullmatch(title) or _REQUEST.fullmatch(title))
+            not (_NAMED_FAMILY.fullmatch(title) or _REQUEST.fullmatch(title))
             for title in titles
         ):
             raise ValueError(
-                "Catalogue labels require unique type:/area: names or req:NNNN"
+                "Catalogue labels require unique type:/area:/flag: names or req:NNNN"
             )
         return self
 
@@ -37,7 +38,7 @@ class LabelCatalogue(BaseModel):
         for label in self.labels:
             if label.title == title:
                 return label
-        raise BoardError("Type or area is not in the approved label catalogue")
+        raise BoardError("Label is not in the approved label catalogue")
 
 
 def load_catalogue(path: Path = CATALOGUE) -> LabelCatalogue:
@@ -67,11 +68,13 @@ def classify_task(
     areas: list[str],
     *,
     requests: list[str] = (),
+    flags: list[str] = (),
     replace_colour: bool = False,
 ) -> ClassificationReceipt:
     requested = catalogue.resolve("type:" + kind)
     area_specs = [catalogue.resolve("area:" + area) for area in areas]
     request_specs = [catalogue.resolve("req:" + request) for request in requests]
+    flag_specs = [catalogue.resolve("flag:" + flag) for flag in flags]
     task = board.task(task_id)
     if task.project_id != project:
         raise BoardError(
@@ -82,7 +85,9 @@ def classify_task(
     if len(types) > 1:
         raise BoardError("Multiple primary type labels require owner review")
     primary = catalogue.resolve(types[0].title) if types else requested
-    selected = {spec.title: spec for spec in [primary, *area_specs, *request_specs]}
+    selected = {
+        spec.title: spec for spec in [primary, *area_specs, *request_specs, *flag_specs]
+    }
     # The request label carries the ticket's colour when one is named: the
     # tickets of a request are sub-features of it, not another feature.
     colour_spec = request_specs[0] if request_specs else primary

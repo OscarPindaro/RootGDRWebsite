@@ -32,3 +32,6 @@ labels:
   - title: req:0014
     hex_color: '#0E7490'
     description: Implementation tickets of one request; cool cyan, distinct from the feature blue.
+  - title: flag:open-questions
+    hex_color: '#DB2777'
+    description: The ticket still carries unresolved open questions; decide them before or during implementation.

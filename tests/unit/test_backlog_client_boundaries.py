@@ -738,6 +738,73 @@ def test_default_catalogue_has_the_approved_types_and_neutral_areas():
     }
     assert request_labels == {"req:0014": "0E7490"}
     assert "2563EB" not in request_labels.values()
+    # A flag marks a condition of the ticket itself, not a type or an area.
+    assert {
+        label.title: label.hex_color
+        for label in catalogue.labels
+        if label.title.startswith("flag:")
+    } == {"flag:open-questions": "DB2777"}
+
+
+def test_a_flag_marks_a_ticket_that_still_has_open_questions():
+    catalogue = load_catalogue()
+    available = [
+        {"id": 1, "title": "type:feature", "hex_color": "2563EB"},
+        {"id": 2, "title": "area:backend", "hex_color": "64748B"},
+        {"id": 3, "title": "flag:open-questions", "hex_color": "DB2777"},
+    ]
+    attached = []
+    colour = {"value": ""}
+
+    def handler(request):
+        if request.method == "POST":
+            label_id = json.loads(request.content)["label_id"]
+            attached.append(
+                next(label for label in available if label["id"] == label_id)
+            )
+            return httpx.Response(201, json={"label_id": label_id})
+        if request.method == "PATCH":
+            colour["value"] = json.loads(request.content)["hex_color"]
+            return httpx.Response(
+                200, json={"id": 7, "project_id": 2, "hex_color": colour["value"]}
+            )
+        if request.url.path == "/api/v2/tasks/7":
+            return httpx.Response(
+                200,
+                json={
+                    "id": 7,
+                    "project_id": 2,
+                    "hex_color": colour["value"],
+                    "description": "",
+                },
+            )
+        return httpx.Response(
+            200,
+            json=envelope(attached if "/tasks/" in request.url.path else available),
+        )
+
+    with client(handler) as board:
+        receipt = classify_task(
+            board, catalogue, 7, 2, "feature", ["backend"], flags=["open-questions"]
+        )
+    assert {label.title for label in receipt.task.labels} == {
+        "type:feature",
+        "area:backend",
+        "flag:open-questions",
+    }
+    # A flag does not decide the colour: the primary type still does.
+    assert receipt.task.hex_color == "2563EB"
+
+
+def test_an_unknown_flag_is_refused_without_touching_the_task():
+    catalogue = load_catalogue()
+
+    def handler(request):
+        raise AssertionError("an unknown flag must not contact the board")
+
+    with client(handler) as board:
+        with pytest.raises(BoardError, match="approved"):
+            classify_task(board, catalogue, 7, 2, "feature", [], flags=["guessing"])
 
 
 def test_a_request_label_carries_the_ticket_colour():

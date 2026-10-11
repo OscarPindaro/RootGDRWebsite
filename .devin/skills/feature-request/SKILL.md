@@ -130,27 +130,36 @@ require an explicit user choice. Select area labels only from confirmed affected
 responsibilities, not speculative implementation dependencies. Classification
 is not implementation approval, verification, severity or priority.
 
+Attach `flag:open-questions` (`--flag open-questions`) whenever the recorded
+request still has unresolved open questions, and omit it when the specification
+is complete. The flag says the ticket's specification is unfinished; it is not a
+priority, a severity or a blocker. A flag never changes the task colour: the
+primary type still decides it.
+
 After ticket creation and successful read-back, check `classify --help` and run
 `classify <task-id> --project <verified-id> --type feature --area <confirmed-area>
---token-file <tooling-token-file> --json`, repeating `--area` as needed
-or omitting it when the area is unknown. Use the same consolidated token selected
-for registration and attachments; no separate classification credential is required.
-Never print token values or mint/rotate tokens.
+--flag open-questions --token-file <tooling-token-file> --json`, repeating
+`--area`/`--flag` as needed, omitting `--area` when the area is unknown and
+`--flag` when there are no open questions. Use the same consolidated token
+selected for registration and attachments; no separate classification credential
+is required. Never print token values or mint/rotate tokens.
 The owner provisions the catalogue with `labels --ensure`; intake must not change
 label definitions or permissions to work around a failure.
 
 Read the classification receipt and task back. Confirm one primary type, selected
-areas and the resulting colour. Preserve human types and custom colours; never
-use `--replace-colour` without explicit approval. Existing matching tickets keep
-their labels and colour unless the user requests classification. If classification
-fails or is partial, keep the confirmed ticket ID, inspect its current state and
-report the limitation; never recreate the ticket to retry classification. Include
-confirmed labels/colour or the classification blocker in the intake receipt.
+areas, any flag and the resulting colour. Preserve human types and custom colours;
+never use `--replace-colour` without explicit approval. Existing matching tickets
+keep their labels and colour unless the user requests classification. If
+classification fails or is partial, keep the confirmed ticket ID, inspect its
+current state and report the limitation; never recreate the ticket to retry
+classification. Include confirmed labels/colour/flag or the classification
+blocker in the intake receipt.
 
 ## 4. Return a receipt and stop
 
 Give a concise summary, request/evidence paths and the confirmed Vikunja task ID,
-or explain that only a local request was saved. Mention important open questions
-and any unconfirmed registration outcome. Do not claim approval or implementation.
+or explain that only a local request was saved. State whether
+`flag:open-questions` was attached, and mention the important open questions and
+any unconfirmed registration outcome. Do not claim approval or implementation.
 Leave prioritization, design, ticket decomposition and implementation for a later
 user decision.

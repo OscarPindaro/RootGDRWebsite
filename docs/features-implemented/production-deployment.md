@@ -582,11 +582,16 @@ purple (research); frontend/backend/database/deployment/tooling/docs area labels
 use neutral grey. The type's label and the task colour are separate Vikunja fields.
 These classifications do not set workflow state, priority, severity or approval.
 
+The `flag:` family marks a condition of the ticket itself rather than a type or an
+area. `flag:open-questions` (rose `#DB2777`) marks an intake whose specification
+still has unresolved questions; it is not a priority, a severity or a blocker, and
+it never carries the task colour — the primary type still does.
+
 ```console
 uv run harness backlog labels --json
 uv run harness backlog labels --ensure --json
 uv run harness backlog classify 17 --project 2 --type feature --area frontend \
-  --area backend --json
+  --area backend --flag open-questions --json
 ```
 
 `labels --ensure` creates only missing catalogue entries and confirms them by
