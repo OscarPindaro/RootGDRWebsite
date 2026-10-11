@@ -35,6 +35,7 @@ import {
   nodeFrame,
   movePathPoint,
   pathCommands,
+  pathPoints,
   patchNode,
   removeNode,
   reorderNode,
@@ -105,6 +106,8 @@ export function createController(root) {
   const svg = root.querySelector("[data-drawing-artboard]");
   const sceneScript = root.querySelector("[data-drawing-scene]");
   const saveUrl = root.dataset.saveUrl || null;
+  const contextMenu = root.querySelector("#drawing-context-menu");
+  let contextPosition = null, contextOpener = svg;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
   let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 2, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
@@ -759,13 +762,6 @@ export function createController(root) {
     svg.setPointerCapture(event.pointerId);
     gestureBefore = scene;
     const target = event.target;
-    if (target.dataset.pathCommand !== undefined && mode === "vertex" && selectedId) {
-      pathPoint = `${target.dataset.pathCommand}:${target.dataset.pathOffset}`;
-      const node = selected().node;
-      drag = { kind: "path", id: selectedId, command: Number(target.dataset.pathCommand), offset: Number(target.dataset.pathOffset), d: node.d, transform: nodeFrame(scene, selectedId).world };
-      return;
-    }
-
     // Pan with the middle button or with Space held: Shift belongs to
     // multi-selection, not to panning.
     if (event.button === 1 || (event.button === 0 && spaceDown)) {
@@ -773,6 +769,12 @@ export function createController(root) {
       return;
     }
     if (event.button !== 0) return;
+    if (target.dataset.pathCommand !== undefined && mode === "vertex" && selectedId) {
+      pathPoint = `${target.dataset.pathCommand}:${target.dataset.pathOffset}`;
+      const node = selected().node;
+      drag = { kind: "path", id: selectedId, command: Number(target.dataset.pathCommand), offset: Number(target.dataset.pathOffset), d: node.d, transform: nodeFrame(scene, selectedId).world };
+      return;
+    }
 
     if (target.dataset.vertex !== undefined && mode === "vertex" && selectedId) {
       const node = selected().node;
@@ -793,34 +795,11 @@ export function createController(root) {
     }
     if (mode === "vertex" && selectedId && tool === "select") {
       const node = selected().node;
+      const local = apply(invert(nodeFrame(scene, selectedId).world), scenePoint(event));
+      if (node.kind === "polygon" && closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0])) return;
       if (node.kind === "path") {
-        const local = apply(invert(nodeFrame(scene, selectedId).world), scenePoint(event));
-        const commands = pathCommands(node.d);
-        let previous = commands[0].numbers.slice(0, 2);
-        for (let index = 1; index < commands.length; index += 1) {
-          const command = commands[index];
-          const end = command.numbers.slice(-2);
-          if (command.name === "L" && distanceToSegment(local, previous, end) < SNAP_TOLERANCE_PX / viewport[0]) {
-            const pointIds = [...node.pointIds];
-            const position = commands.slice(0, index).reduce((count, entry) => count + entry.numbers.length / 2, 0);
-            pointIds.splice(position, 0, newId("h"));
-            commands.splice(index, 0, { name: "L", numbers: local.map(round) });
-            commit(patchNode(scene, selectedId, { d: commands.map(c => c.name + c.numbers.join(" ")).join(" "), pointIds }));
-            return;
-          }
-          previous = end;
-        }
-      }
-      if (node.kind === "polygon") {
-        const inverse = invert(nodeFrame(scene, node.id).world);
-        if (inverse) {
-          const local = apply(inverse, scenePoint(event));
-          const hit = closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0]);
-          if (hit) {
-            insertVertex(hit.edge, hit.point);
-            return;
-          }
-        }
+        const points = pathPoints(node.d);
+        if (points.slice(1).some((point, index) => distanceToSegment(local, points[index], point) < SNAP_TOLERANCE_PX / viewport[0])) return;
       }
     }
     // The transform handles belong to the select tool; another tool's clicks
@@ -1023,6 +1002,23 @@ export function createController(root) {
 
   /* ---------- keyboard ---------- */
 
+  function positionContext() {
+    if (!contextPosition || !contextMenu.matches(":popover-open")) return;
+    const [x, y] = contextPosition;
+    contextMenu.style.left = Math.max(8, Math.min(x, window.innerWidth - contextMenu.offsetWidth - 8)) + "px";
+    contextMenu.style.top = Math.max(8, Math.min(y, window.innerHeight - contextMenu.offsetHeight - 8)) + "px";
+  }
+
+  function openContext(position = null) {
+    if (!editable || root.dataset.copying || drag || cut) return false;
+    contextOpener = root.contains(document.activeElement) ? document.activeElement : svg;
+    contextPosition = position;
+    syncControls();
+    contextMenu.showPopover();
+    positionContext();
+    return true;
+  }
+
   function onKeyDown(event) {
     if (!editable || event.defaultPrevented || root.dataset.copying || !root.isConnected || !root.contains(document.activeElement) || document.querySelector("dialog[open]") || root.querySelector("[data-menu]:popover-open")) return;
     const mod = event.ctrlKey || event.metaKey;
@@ -1059,6 +1055,10 @@ export function createController(root) {
         svg.querySelector(`[data-path-command='${command}'][data-path-offset='${offset}']`)?.focus();
         return;
       }
+    }
+    if (!mod && !event.altKey && event.key === "/") {
+      if (openContext()) event.preventDefault();
+      return;
     }
     if (!mod && !event.altKey && event.key.toLowerCase() === "t" && canExecute("transform")) {
       event.preventDefault();
@@ -1121,7 +1121,7 @@ export function createController(root) {
     }
     const nudge = event.shiftKey ? 10 : 1;
     const steps = { ArrowLeft: [-nudge, 0], ArrowRight: [nudge, 0], ArrowUp: [0, -nudge], ArrowDown: [0, nudge] };
-    if (steps[event.key]) {
+    if (steps[event.key] && (event.target === svg || event.target === root)) {
       event.preventDefault();
       const [dx, dy] = steps[event.key];
       let next = scene;
@@ -1374,6 +1374,34 @@ export function createController(root) {
       if (Number.isInteger(value) && value >= 3 && value <= 32) regularSides = value;
       else { event.target.value = regularSides; announce("Scegli da 3 a 32 lati."); }
     });
+    root.querySelectorAll("[data-drawing-command]").forEach(button => {
+      button.dataset.drawingAction = button.dataset.drawingCommand;
+      button.addEventListener("click", () => {
+        contextMenu.hidePopover();
+        execute(button.dataset.drawingCommand);
+        svg.focus({preventScroll:true});
+      });
+    });
+    const contextTrigger = root.querySelector("[data-drawing-context]");
+    contextTrigger.addEventListener("click", () => { contextPosition = null; contextOpener = contextTrigger; });
+    contextMenu.addEventListener("toggle", positionContext);
+    contextMenu.addEventListener("keydown", event => {
+      if (event.key !== "Escape") return;
+      event.preventDefault(); event.stopPropagation();
+      contextMenu.hidePopover();
+      (contextOpener?.isConnected ? contextOpener : svg).focus({preventScroll:true});
+    });
+    window.addEventListener("resize", positionContext);
+    window.addEventListener("scroll", positionContext, true);
+    root.addEventListener("contextmenu", event => {
+      if (!editable || root.dataset.copying || event.shiftKey || event.target.closest("input, textarea, select, [contenteditable]") || !event.target.closest("[data-drawing-artboard], [data-testid='drawing-layers']")) return;
+      event.preventDefault();
+      if (drag || cut) return;
+      const row = event.target.closest("[data-node-id]");
+      const id = row?.dataset.nodeId || (svg.contains(event.target) ? nodeAt(scene, scenePoint(event))?.id : null);
+      if (id && !selection.includes(id) && !selectedAncestorOf(id)) select(id);
+      openContext([event.clientX, event.clientY]);
+    });
     const bindings = {
       "[data-drawing-undo]": "undo", "[data-drawing-redo]": "redo", "[data-testid='drawing-save']": "save",
       "[data-drawing-duplicate]": "duplicate", "[data-drawing-delete]": "delete", "[data-drawing-group]": "group",
@@ -1471,9 +1499,34 @@ export function createController(root) {
       if (tool === "polygon" && event.detail === 1 && event.button === 0 && !spaceDown) addPolygonPoint(event);
     });
     svg.addEventListener("dblclick", (event) => {
+      if (!editable || spaceDown) return;
       if (tool === "polygon" && pendingPolygon) {
         event.preventDefault();
         finishPolygon();
+        return;
+      }
+      if (tool !== "select" || mode !== "vertex" || selection.length !== 1 || event.target.closest("[data-edge], [data-vertex], [data-path-command], [data-ellipse-axis]")) return;
+      const node = selected().node, local = apply(invert(nodeFrame(scene, selectedId).world), scenePoint(event));
+      if (node.kind === "polygon") {
+        const hit = closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0]);
+        if (hit) { event.preventDefault(); insertVertex(hit.edge, hit.point); }
+      } else if (node.kind === "path") {
+        const commands = pathCommands(node.d);
+        let previous = commands[0].numbers.slice(0, 2);
+        for (let index = 1; index < commands.length; index += 1) {
+          const command = commands[index], end = command.numbers.slice(-2);
+          if (command.name === "L" && distanceToSegment(local, previous, end) < SNAP_TOLERANCE_PX / viewport[0]) {
+            event.preventDefault();
+            const dx = end[0] - previous[0], dy = end[1] - previous[1];
+            const t = clamp(((local[0] - previous[0]) * dx + (local[1] - previous[1]) * dy) / (dx * dx + dy * dy || 1), 0, 1);
+            const pointIds = [...node.pointIds], position = commands.slice(0, index).reduce((count, entry) => count + entry.numbers.length / 2, 0);
+            pointIds.splice(position, 0, newId("h"));
+            commands.splice(index, 0, {name:"L", numbers:[previous[0] + t * dx, previous[1] + t * dy].map(round)});
+            commit(patchNode(scene, selectedId, {d:commands.map(c => c.name + c.numbers.join(" ")).join(" "), pointIds}));
+            return;
+          }
+          previous = end;
+        }
       }
     });
     svg.addEventListener("wheel", onWheel, { passive: false });

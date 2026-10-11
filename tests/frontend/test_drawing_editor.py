@@ -391,7 +391,7 @@ def test_vertex_mode_shows_a_handle_per_vertex_and_per_edge(component):
     assert page.locator(".drawing-editor__edge-handle").count() == 3
 
 
-def test_clicking_an_edge_inserts_a_vertex(component):
+def test_double_clicking_an_edge_inserts_a_vertex(component):
     page = component.mount(
         "editorial.DrawingEditor", props=_live_props(_one_triangle())
     )
@@ -402,6 +402,8 @@ def test_clicking_an_edge_inserts_a_vertex(component):
     # A quarter along the top edge, away from its midpoint toggle.
     point = _at(page, 150, 100)
     page.mouse.click(point[0], point[1])
+    assert len(_scene_of(page)["nodes"][0]["points"]) == 3
+    page.mouse.dblclick(point[0], point[1])
 
     points = _scene_of(page)["nodes"][0]["points"]
     assert len(points) == 4
@@ -439,7 +441,7 @@ def test_alt_clicking_a_vertex_removes_it(component):
 
     # A fourth vertex first: a triangle cannot lose one and stay a polygon.
     inserted = _at(page, 150, 100)
-    page.mouse.click(inserted[0], inserted[1])
+    page.mouse.dblclick(inserted[0], inserted[1])
     assert len(_scene_of(page)["nodes"][0]["points"]) == 4
 
     page.keyboard.down("Alt")
@@ -984,7 +986,7 @@ def test_a_line_can_become_an_editable_polyline(component):
     page.get_by_test_id("drawing-tool-line").click()
     _drag(page, (100, 100), (300, 100))
     page.locator("[data-drawing-mode='vertex']").click()
-    page.mouse.click(*_at(page, 200, 100))
+    page.mouse.dblclick(*_at(page, 200, 100))
     assert _scene_of(page)["nodes"][0]["d"].count("L") == 2
     assert page.locator("[data-path-command]").count() == 3
 
@@ -1286,6 +1288,69 @@ def test_split_button_presets_create_persistent_constrained_geometry(
     assert len(_scene_of(page)["nodes"]) == 1
 
 
+def test_canvas_context_commands_and_shift_bypass_are_focus_owned(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.mouse.click(*_at(page, 250, 250), button="right")
+    menu = page.locator("#drawing-context-menu")
+    menu.wait_for(state="visible", timeout=2000)
+    menu.locator("[data-drawing-command='duplicate']").click()
+    assert len(_scene_of(page)["nodes"]) == 2
+    page.evaluate(
+        "() => document.addEventListener('contextmenu', event => { window.contextPrevented = event.defaultPrevented; })"
+    )
+    page.keyboard.down("Shift")
+    page.mouse.click(*_at(page, 250, 250), button="right")
+    page.keyboard.up("Shift")
+    assert page.evaluate("() => window.contextPrevented") is False
+    assert not menu.is_visible()
+
+
+def test_slash_commands_and_shortcut_help_leave_text_and_dialogs_in_control(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("/")
+    page.locator("#drawing-context-menu").wait_for(state="visible", timeout=2000)
+    page.keyboard.press("Escape")
+    before = _scene_of(page)
+    page.locator("[data-node-name]").focus()
+    page.keyboard.press("/")
+    assert not page.locator("#drawing-context-menu").is_visible()
+    page.locator("[data-drawing-help]").click()
+    page.locator("#drawing-help").wait_for(state="visible", timeout=2000)
+    before = _scene_of(page)
+    page.keyboard.press("Delete")
+    page.keyboard.press("t")
+    assert _scene_of(page) == before
+    assert "Ctrl" in page.locator("#drawing-help").inner_text()
+    page.keyboard.press("Escape")
+
+
+def test_middle_drag_over_a_curve_handle_pans_without_editing_the_curve(component):
+    scene = SceneDocument(
+        nodes=[
+            PathNode(id="curve", name="Curve", d="M100 100 C150 150 250 150 300 100")
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='curve']").click()
+    before = _scene_of(page)
+    handle = page.get_by_role("button", name="Controllo 1").bounding_box()
+    x, y = handle["x"] + handle["width"] / 2, handle["y"] + handle["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down(button="middle")
+    page.mouse.move(x + 50, y + 30, steps=4)
+    page.mouse.up(button="middle")
+    assert _scene_of(page) == before
+    assert (
+        page.locator("[data-drawing-scene-layer]").get_attribute("transform")
+        != "matrix(1 0 0 1 0 0)"
+    )
+
+
 def test_visibility_diagnostics_distinguish_hidden_empty_and_disabled_paint(component):
     square = _square().nodes[0]
     square.fill = None
@@ -1519,7 +1584,7 @@ def test_insert_remove_and_cut_keep_surviving_vertex_identities(component):
     _mounted(page)
     page.locator("[data-select-node='box']").click()
     before = _scene_of(page)["nodes"][0]["pointIds"]
-    page.mouse.click(*_at(page, 150, 100))
+    page.mouse.dblclick(*_at(page, 150, 100))
     inserted = _scene_of(page)["nodes"][0]["pointIds"]
     assert inserted[0] == before[0] and inserted[2:] == before[1:]
     page.keyboard.down("Alt")

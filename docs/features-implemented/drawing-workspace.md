@@ -45,9 +45,9 @@ library, skeleton, publishing or export capabilities.
   Transform with focus in the workspace; Ctrl+T remains the browser shortcut.
   Ellipses expose centre/two-axis handles; locked circles have centre/radius handles. A multi-object transform is one undo
   step. Toolbar and keyboard actions share their availability checks.
-- **Modifica forma** edits polygon vertices or path endpoints/control handles. Click a
-  polygon edge to insert a point; Alt-click a vertex to remove it (minimum
-  three). Click a straight path segment to insert an editable polyline point.
+- **Modifica forma** edits polygon vertices or path endpoints/control handles. Double-click a
+  polygon edge (away from its outline controls) to insert a point; Alt-click a vertex to remove it (minimum
+  three). Double-click a straight path segment to insert a projected polyline point.
   Both Bézier endpoints are labelled and focusable; each control is tethered to
   its own endpoint. Select either endpoint/control with the mouse or Tab and
   nudge it with arrow keys (Shift for larger steps).
@@ -73,7 +73,11 @@ library, skeleton, publishing or export capabilities.
   Shift preserves proportions; square/equilateral/regular/circle locks require
   proportional scaling even without Shift. Alt bypasses snap only, never locks.
   Hiding the grid does not change snap preferences. Wheel zooms;
-  Space-drag or the middle mouse button pans.
+  Space-left-drag or the middle mouse button pans, including over geometry handles.
+  Right-click on the canvas/tree opens shared contextual actions; Shift-right-click
+  preserves the browser menu. Slash and a visible header button open local commands;
+  **Scorciatoie** opens focus-owned help. Text fields, menus and dialogs retain their
+  keyboard behaviour, and Ctrl/Cmd+K remains global search. Ctrl+T is not intercepted.
 - Undo/redo is in-memory and bounded to 60 completed operations. A drag or
   property change is one step; view changes and selection are excluded.
 - A stale save returns 409 and retains local work. **Salva come copia** creates

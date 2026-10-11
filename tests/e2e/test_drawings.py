@@ -162,7 +162,7 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     for index in (0, 1):
         x, y = along(index)
         point = _at(session.page, x, y)
-        session.page.mouse.click(point[0], point[1])
+        session.page.mouse.dblclick(point[0], point[1])
     assert len(_local_node(session)["points"]) == 5
 
     # Drag the original tip downward. It is the topmost vertex, wherever the
@@ -211,7 +211,7 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
         x = start[0] + (tip[0] - start[0]) * 0.25
         y = start[1] + (tip[1] - start[1]) * 0.25
         point = _at(session.page, x, y)
-        session.page.mouse.click(point[0], point[1])
+        session.page.mouse.dblclick(point[0], point[1])
     assert len(_local_node(session)["points"]) == 5
 
     # Cut between the two inserted vertices: the two points nearest the tip.
@@ -533,3 +533,29 @@ def test_subscene_delete_keeps_the_saved_drawing_and_undo_restores_children(
     assert saved.value.status == 200
     persisted = session.expect_api(f"/api/drawings/{identifier}").json()
     assert persisted["id"] == identifier and persisted["scene"]["nodes"] == []
+
+
+def test_context_duplicate_saves_native_artwork_and_global_search_stays_separate(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (250, 220))
+    node = _local_node_scene(session)["nodes"][0]
+    center = [sum(point[axis] for point in node["points"]) / 3 for axis in (0, 1)]
+    page.mouse.click(*_at(page, *center), button="right")
+    page.locator("#drawing-context-menu [data-drawing-command='duplicate']").click()
+    local = _local_node_scene(session)
+    assert len(local["nodes"]) == 2
+    assert local["nodes"][0]["id"] != local["nodes"][1]["id"]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Control+k")
+    page.locator("#palette").wait_for(state="visible")
+    assert not page.locator("#drawing-context-menu").is_visible()
+    page.keyboard.press("Escape")

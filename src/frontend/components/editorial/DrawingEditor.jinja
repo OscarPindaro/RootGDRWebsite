@@ -18,6 +18,8 @@
       <common.Button variant="secondary" size="sm" icon="undo-2" disabled={{ not editable }} data-drawing-undo data-testid="drawing-undo">Annulla</common.Button>
       <common.Button variant="secondary" size="sm" icon="redo-2" disabled={{ not editable }} data-drawing-redo data-testid="drawing-redo">Ripeti</common.Button>
       <common.Button variant="primary" size="sm" icon="save" disabled={{ not editable }} data-testid="drawing-save">Salva</common.Button>
+      <common.IconButton icon="ellipsis-vertical" label="Comandi canvas (/)" id="drawing-context-trigger" popovertarget="drawing-context-menu" aria-haspopup="menu" aria-expanded="false" data-drawing-context disabled={{ not editable }} />
+      <common.IconButton icon="file-text" label="Scorciatoie" data-dialog-open="drawing-help" data-drawing-help disabled={{ not editable }} />
     </div>
   </header>
 
@@ -38,6 +40,28 @@
     <p>La versione salvata sostituirà le modifiche non salvate.</p>
     <common.Button variant="secondary" size="sm" data-dialog-close>Annulla</common.Button>
     <common.Button variant="danger" size="sm" data-drawing-reload>Scarta e ricarica</common.Button>
+  </common.Dialog>
+
+  <common.Menu id="drawing-context-menu" labelledby="drawing-context-trigger" class="drawing-editor__context-menu">
+    {% for action, label, icon in [('select', 'Seleziona', 'mouse-pointer-2'), ('edit', 'Modifica forma', 'spline'), ('transform', 'Trasforma (T)', 'grid-2x2'), ('duplicate', 'Duplica', 'copy'), ('delete', 'Elimina sottoscena', 'trash-2'), ('group', 'Raggruppa', 'grid-2x2'), ('ungroup', 'Separa', 'list'), ('forward', 'Porta avanti', 'chevron-up'), ('backward', 'Porta indietro', 'chevron-down'), ('front', 'Primo piano', 'chevron-up'), ('back', 'Sfondo', 'chevron-down'), ('unlock', 'Sblocca geometria', 'lock-open'), ('undo', 'Annulla', 'undo-2'), ('redo', 'Ripeti', 'redo-2'), ('save', 'Salva', 'save')] %}
+    <common.MenuItem label={{ label }} icon={{ icon }} data-drawing-command={{ action }} disabled={{ not editable }} />
+    {% endfor %}
+  </common.Menu>
+  <common.Dialog title="Scorciatoie del disegno" id="drawing-help" manual={{ True }}>
+    <ul class="prose">
+      <li><kbd>T</kbd>: Trasforma la selezione.</li>
+      <li><kbd>/</kbd>: Comandi canvas. <kbd>Ctrl/⌘ + K</kbd>: ricerca nel sito.</li>
+      <li><kbd>Ctrl/⌘ + S</kbd>: Salva, anche dai campi di testo.</li>
+      <li><kbd>Ctrl/⌘ + Z</kbd>: Annulla; <kbd>Ctrl/⌘ + Shift + Z</kbd> o <kbd>Ctrl + Y</kbd>: Ripeti.</li>
+      <li><kbd>Delete</kbd> o <kbd>Backspace</kbd>: elimina la sottoscena selezionata; <kbd>Ctrl/⌘ + D</kbd>: Duplica.</li>
+      <li>Frecce sulla tavola: sposta la selezione. Sui controlli modifica il punto/raggio; nella scena naviga l’albero. <kbd>Shift</kbd>: passo più grande.</li>
+      <li>Trascinamento centrale o <kbd>Spazio</kbd> + trascinamento sinistro: sposta la vista.</li>
+      <li>Doppio clic sul bordo in Modifica forma: inserisce un punto. I controlli sul bordo cambiano il contorno con un clic.</li>
+      <li>Poligono in creazione: <kbd>Enter</kbd> o doppio clic chiude; <kbd>Escape</kbd> annulla.</li>
+      <li><kbd>Shift</kbd> conserva le proporzioni in Trasforma; <kbd>Alt</kbd> esclude gli agganci, non i vincoli.</li>
+      <li><kbd>Shift</kbd> + clic destro conserva il menu del browser. Testi e dialoghi mantengono le proprie scorciatoie.</li>
+      <li><kbd>Ctrl + T</kbd> resta Nuova scheda del browser; <kbd>Alt + Spazio</kbd> può essere riservato dal sistema operativo.</li>
+    </ul>
   </common.Dialog>
 
   <div class="drawing-editor__selection-bar" data-drawing-selection-bar role="toolbar" aria-label="Selezione e agganci">

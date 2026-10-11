@@ -29,6 +29,13 @@
   line-height: var(--leading-tight);
 }
 
+.drawing-editor__context-menu {
+  max-height: calc(100dvh - var(--sp-4));
+  max-width: calc(100dvw - var(--sp-4));
+  overflow-y: auto;
+}
+.drawing-editor__context-menu [disabled] { color: var(--muted); }
+
 .drawing-editor__commands {
   display: flex;
   flex-wrap: wrap;
