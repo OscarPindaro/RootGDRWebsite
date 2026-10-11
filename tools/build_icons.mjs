@@ -35,6 +35,7 @@ const NAMES = [
   "chevron-up",
   "circle",
   "circle-dot",
+  "copy",
   "download",
   "ellipsis-vertical",
   "file-text",

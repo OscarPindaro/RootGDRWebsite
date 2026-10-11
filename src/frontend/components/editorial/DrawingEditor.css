@@ -112,6 +112,8 @@
   width: 100%;
   height: auto;
   aspect-ratio: var(--drawing-artboard-ratio);
+  /* Pointer drags draw; they must not scroll or zoom the page. */
+  touch-action: none;
 }
 
 .drawing-editor__plate { fill: var(--surface); }
@@ -121,9 +123,14 @@
   vector-effect: non-scaling-stroke;
 }
 
+/* A node hidden from the layer list is not drawn, but stays selectable there. */
+.drawing-editor__node[data-hidden="true"] { display: none; }
+
 .drawing-editor__shape.is-selected {
   outline: none;
 }
+
+.drawing-editor__layer-name[aria-pressed="true"] { font-weight: var(--weight-bold); }
 
 .drawing-editor__handle {
   fill: var(--surface);
@@ -197,6 +204,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--sp-2);
+  flex-wrap: wrap;
 }
 
 .drawing-editor__field-label {
@@ -210,10 +218,90 @@
   inline-size: var(--drawing-swatch);
   block-size: var(--drawing-swatch);
   border: var(--rule-ink);
-  background: var(--swatch, var(--ochre));
+  background: var(--swatch, transparent);
 }
 
-.drawing-editor__swatch--stroke { background: var(--ink); }
+.drawing-editor__swatch--stroke { background: var(--swatch, var(--ink)); }
+
+/* ---------- palette and style controls ---------- */
+
+.drawing-editor__palette {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--sp-1);
+}
+
+.drawing-editor__chip {
+  block-size: var(--drawing-chip);
+  border: var(--rule-ink);
+  background: var(--swatch);
+  cursor: pointer;
+}
+
+.drawing-editor__chip:disabled { cursor: default; opacity: 0.45; }
+
+.drawing-editor__color {
+  inline-size: var(--drawing-chip);
+  block-size: var(--drawing-chip);
+  padding: 0;
+  border: var(--rule-ink);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.drawing-editor__range { flex: 1 1 4rem; min-width: 0; }
+
+.drawing-editor__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+.drawing-editor__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+}
+
+/* ---------- selection overlay ---------- */
+
+.drawing-editor__selection {
+  fill: none;
+  stroke: var(--cobalt);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.drawing-editor__scale-handle {
+  fill: var(--surface);
+  stroke: var(--cobalt);
+  stroke-width: 1;
+  cursor: nwse-resize;
+}
+
+.drawing-editor__rotate-handle {
+  fill: var(--surface);
+  stroke: var(--cobalt);
+  stroke-width: 1;
+  cursor: grab;
+}
+
+.drawing-editor__rotate-stem {
+  stroke: var(--cobalt);
+  stroke-width: 1;
+}
+
+.drawing-editor__preview {
+  fill: none;
+  stroke: var(--vermilion);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+
+.drawing-editor__overlay > * { pointer-events: auto; }
 
 /* ---------- phone: preview, not a drawing surface ---------- */
 

@@ -14,8 +14,8 @@
   <header class="drawing-editor__bar">
     <h2 class="drawing-editor__title">{{ title }}</h2>
     <div class="drawing-editor__commands">
-      <common.Button variant="secondary" size="sm" icon="undo-2" disabled={{ not editable }}>Annulla</common.Button>
-      <common.Button variant="secondary" size="sm" icon="redo-2" disabled={{ not editable }}>Ripeti</common.Button>
+      <common.Button variant="secondary" size="sm" icon="undo-2" disabled={{ not editable }} data-drawing-undo data-testid="drawing-undo">Annulla</common.Button>
+      <common.Button variant="secondary" size="sm" icon="redo-2" disabled={{ not editable }} data-drawing-redo data-testid="drawing-redo">Ripeti</common.Button>
       <common.Button variant="primary" size="sm" icon="save" disabled={{ not editable }} data-testid="drawing-save">Salva</common.Button>
     </div>
   </header>
@@ -64,7 +64,7 @@
 
     <div class="drawing-editor__canvas" data-testid="drawing-canvas">
       <svg class="drawing-editor__artboard" viewBox="0 0 {{ artboard.width if artboard else 640 }} {{ artboard.height if artboard else 480 }}"
-           role="img" aria-label="Tavola da disegno">
+           role="img" aria-label="Tavola da disegno" data-drawing-artboard>
         <defs>
           <pattern id="drawing-grid" width="20" height="20" patternUnits="userSpaceOnUse">
             <path d="M20 0H0V20" fill="none" stroke="var(--line)" stroke-width="1" />
@@ -72,23 +72,29 @@
         </defs>
         <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%" />
         <rect class="drawing-editor__grid" x="0" y="0" width="100%" height="100%" fill="url(#drawing-grid)" />
-        {% for node in objects %}
-        {% if node.kind == "polygon" %}
-        <polygon class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
-                 points="{{ node.points | map('join', ',') | join(' ') }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
-        {% elif node.kind == "ellipse" %}
-        <ellipse class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
-                 cx="{{ node.cx }}" cy="{{ node.cy }}" rx="{{ node.rx }}" ry="{{ node.ry }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" />
-        {% elif node.kind == "path" %}
-        <path class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
-              d="{{ node.d }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
-        {% endif %}
-        {% endfor %}
-        {% if selected and selected.kind == "polygon" %}
-        {% for point in selected.points %}
-        <circle class="drawing-editor__handle" cx="{{ point[0] }}" cy="{{ point[1] }}" r="6" />
-        {% endfor %}
-        {% endif %}
+        {# The scene layer is rebuilt by the client from the document; the
+           server-rendered shapes here are the no-JS first paint. #}
+        <g class="drawing-editor__scene" data-drawing-scene-layer>
+          {% for node in objects %}
+          {% if node.kind == "polygon" %}
+          <polygon class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
+                   points="{{ node.points | map('join', ',') | join(' ') }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
+          {% elif node.kind == "ellipse" %}
+          <ellipse class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
+                   cx="{{ node.cx }}" cy="{{ node.cy }}" rx="{{ node.rx }}" ry="{{ node.ry }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" />
+          {% elif node.kind == "path" %}
+          <path class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
+                d="{{ node.d }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
+          {% endif %}
+          {% endfor %}
+        </g>
+        <g class="drawing-editor__overlay" data-drawing-overlay>
+          {% if selected and selected.kind == "polygon" %}
+          {% for point in selected.points %}
+          <circle class="drawing-editor__handle" cx="{{ point[0] }}" cy="{{ point[1] }}" r="6" />
+          {% endfor %}
+          {% endif %}
+        </g>
       </svg>
     </div>
 
@@ -111,25 +117,64 @@
 
       <section class="drawing-editor__panel" aria-label="Proprietà" data-testid="drawing-inspector">
         <h3 class="drawing-editor__panel-title">Proprietà</h3>
+        <div class="drawing-editor__palette" role="group" aria-label="Tavolozza">
+          <button type="button" class="drawing-editor__chip" data-palette="#d1402a" style="--swatch: #d1402a" aria-label="Vermiglio"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#d97a26" style="--swatch: #d97a26" aria-label="Arancio"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#e0a327" style="--swatch: #e0a327" aria-label="Ocra"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#8a9a2b" style="--swatch: #8a9a2b" aria-label="Oliva"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#3c7a52" style="--swatch: #3c7a52" aria-label="Bosco"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#1f7a7a" style="--swatch: #1f7a7a" aria-label="Turchese"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#3f7fb0" style="--swatch: #3f7fb0" aria-label="Cielo"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#2c46a8" style="--swatch: #2c46a8" aria-label="Cobalto"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#4a3f8f" style="--swatch: #4a3f8f" aria-label="Indaco"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#7b3f8f" style="--swatch: #7b3f8f" aria-label="Prugna"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#c2506f" style="--swatch: #c2506f" aria-label="Rosa"></button>
+          <button type="button" class="drawing-editor__chip" data-palette="#8a5a3c" style="--swatch: #8a5a3c" aria-label="Argilla"></button>
+        </div>
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Riempimento</span>
           <span class="drawing-editor__swatch" data-testid="drawing-fill-swatch"
                 {% if selected and selected.fill %}style="--swatch: {{ selected.fill }}"{% endif %}></span>
+          <input class="drawing-editor__color" type="color" data-style="fill"
+                 value="{{ selected.fill if selected and selected.fill else '#e0a327' }}"
+                 aria-label="Colore di riempimento" disabled={{ not editable }} />
+          <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-fill"
+                 {% if not (selected and selected.fill) %}checked{% endif %}
+                 aria-label="Nessun riempimento" disabled={{ not editable }} /> Nessuno</label>
         </div>
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Contorno</span>
           <span class="drawing-editor__swatch drawing-editor__swatch--stroke" data-testid="drawing-stroke-swatch"
                 {% if selected and selected.stroke %}style="--swatch: {{ selected.stroke }}"{% endif %}></span>
+          <input class="drawing-editor__color" type="color" data-style="stroke"
+                 value="{{ selected.stroke if selected and selected.stroke else '#17150f' }}"
+                 aria-label="Colore del contorno" disabled={{ not editable }} />
+          <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-stroke"
+                 {% if not (selected and selected.stroke) %}checked{% endif %}
+                 aria-label="Nessun contorno" disabled={{ not editable }} /> Nessuno</label>
         </div>
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Spessore</span>
-          <span class="drawing-editor__value mono">{{ selected.stroke_width if selected else 0 }}</span>
+          <input class="drawing-editor__range" type="range" min="0" max="20" step="0.5" data-style="strokeWidth"
+                 value="{{ selected.stroke_width if selected else 4 }}" aria-label="Spessore del contorno"
+                 disabled={{ not editable }} />
+          <span class="drawing-editor__value mono" data-style-value="strokeWidth">{{ selected.stroke_width if selected else 4 }}</span>
         </div>
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Opacità</span>
-          <span class="drawing-editor__value mono">{{ (selected.opacity * 100) | round | int if selected else 100 }}%</span>
+          <input class="drawing-editor__range" type="range" min="0" max="100" step="1" data-style="opacity"
+                 value="{{ (selected.opacity * 100) | round | int if selected else 100 }}" aria-label="Opacità"
+                 disabled={{ not editable }} />
+          <span class="drawing-editor__value mono" data-style-value="opacity">{{ (selected.opacity * 100) | round | int if selected else 100 }}%</span>
         </div>
-        <p class="hint">Modifica di forme, colori e livelli: in arrivo.</p>
+        <div class="drawing-editor__actions">
+          <common.Button variant="secondary" size="sm" icon="spline" data-drawing-mode="vertex" disabled={{ not editable }}>Vertici</common.Button>
+          <common.Button variant="secondary" size="sm" icon="copy" data-drawing-duplicate data-testid="drawing-duplicate" disabled={{ not editable }}>Duplica</common.Button>
+          <common.Button variant="secondary" size="sm" icon="trash-2" data-drawing-delete data-testid="drawing-delete" disabled={{ not editable }}>Elimina</common.Button>
+          <common.Button variant="secondary" size="sm" icon="arrow-right" data-drawing-order="1" disabled={{ not editable }}>Avanti</common.Button>
+          <common.Button variant="secondary" size="sm" icon="arrow-left" data-drawing-order="-1" disabled={{ not editable }}>Dietro</common.Button>
+        </div>
+        <p class="hint" data-testid="drawing-inspector-hint">Seleziona un oggetto per modificarne colore, spessore e opacità.</p>
       </section>
     </div>
   </div>

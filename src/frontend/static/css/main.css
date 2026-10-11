@@ -556,6 +556,7 @@ html[data-accent="gradiente"] .prose a:hover {
   --drawing-side-rail: 15rem;
   --drawing-artboard-ratio: 4 / 3;
   --drawing-swatch: 1.5rem;
+  --drawing-chip: 1.5rem;
   --drawing-layer-check: 1.1rem;
   /* Field geometry, transcribed from the M3 text-field spec (see
      design-tokens/material3/text-fields.yaml). The corner is the atlas

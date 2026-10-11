@@ -85,3 +85,44 @@ def test_a_save_from_another_writer_becomes_a_conflict(
     assert session.expect_api(f"/api/drawings/{drawing_id}").json()["title"] == (
         "Da un'altra scheda"
     )
+
+
+def _drag(page, start: tuple[int, int], end: tuple[int, int]) -> None:
+    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
+    page.mouse.move(box["x"] + start[0], box["y"] + start[1])
+    page.mouse.down()
+    page.mouse.move(box["x"] + end[0], box["y"] + end[1], steps=4)
+    page.mouse.up()
+
+
+def test_an_admin_draws_undoes_and_reopens_artwork(session: BrowserSession) -> None:
+    drawing_id = _create(session)
+    session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+
+    session.page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(session.page, (120, 120), (280, 260))
+    session.page.get_by_test_id("drawing-tool-square").click()
+    _drag(session.page, (320, 120), (440, 240))
+
+    assert session.page.locator(".drawing-editor__shape").count() == 2
+
+    # One gesture is one undo step.
+    session.page.get_by_test_id("drawing-undo").click()
+    assert session.page.locator(".drawing-editor__shape").count() == 1
+    session.page.get_by_test_id("drawing-redo").click()
+    assert session.page.locator(".drawing-editor__shape").count() == 2
+
+    with session.page.expect_response(_is_patch_to(drawing_id)) as saved:
+        session.page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+
+    stored = session.expect_api(f"/api/drawings/{drawing_id}").json()
+    assert stored["nodeCount"] == 2
+    assert [node["kind"] for node in stored["scene"]["nodes"]] == ["polygon", "polygon"]
+    assert len(stored["scene"]["nodes"][0]["points"]) == 3
+
+    # Reopening renders the stored geometry, not a blank artboard.
+    session.goto(f"/drawings/{drawing_id}")
+    session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert session.page.locator(".drawing-editor__shape").count() == 2
+    assert session.errors == []

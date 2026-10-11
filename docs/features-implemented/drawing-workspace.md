@@ -11,12 +11,20 @@ document; the drawing tools themselves arrive in later tickets.
   and the editor that reopens a stored document.
 - `editorial.DrawingEditor` composes the whole workspace: a tool rail on the
   left, the artboard in the middle, layers and properties on the right.
-- The tool rail names every tool the editor will offer (select, triangle,
-  rectangle, circle, polygon, line, cut) and shows the active one with a pressed
-  state, not only a colour.
-- The artboard is a real SVG: a faint grid, the scene's shapes and the vertex
-  handles of the selected object. Shapes render from typed scene data, not from
-  raw SVG strings.
+- **Drawing.** Triangles, rectangles, circles and point-placed polygons are
+  created by dragging (or, for a polygon, clicking each vertex and pressing
+  Enter); the line tool creates a straight open path. A shape is selected by
+  clicking it or its layer, moved by dragging, scaled by a corner handle and
+  rotated by the handle above the selection. `Ctrl`/`Cmd`+`D` duplicates,
+  `Del` deletes, the arrow keys nudge, and the inspector reorders the object.
+- **Styling.** A twelve-colour palette plus a custom fill and stroke colour,
+  stroke width, opacity, and independent "no fill"/"no stroke" switches.
+- **Undo/redo.** `Ctrl`/`Cmd`+`Z` and `Ctrl`/`Cmd`+`Shift`+`Z`, or the toolbar
+  buttons. One completed drag is one step; panning, zooming and selection are
+  not steps.
+- **Layers.** The object list is rebuilt from the document on every change; a
+  layer can be hidden (it disappears from the artboard but stays in the list)
+  and selecting a row selects the shape.
 - **Explicit save.** The Save button and `Ctrl`/`Cmd`+`S` send the whole
   document with the version it was read at. The page's save indicator reports
   dirty, saving and saved; a failed save says so and never claims success; a
@@ -45,19 +53,30 @@ document; the drawing tools themselves arrive in later tickets.
   unrelated to the document's own `schema_version`.
 - Authoring is admin-only in the dependency *and* in the service, so a guessed
   drawing id cannot bypass it.
+- **The client is a small module set** in `src/frontend/js/drawings/`:
+  `geometry.js` (affine matrices, polygon tests, bounds), `scene.js` (document
+  operations and the undo history), `render.js` (the SVG projection of the
+  document plus the selection overlay), `controller.js` (tools, pointer and
+  keyboard interaction, styles, the save lifecycle) and `index.js` (the entry).
+  It is bundled by esbuild into `static/js/drawings.js` and loaded on demand by
+  `editorial/DrawingEditor.js`, so a reading page never downloads it.
+- The renderer is a pure projection: the scene layer carries the viewport
+  transform, and the overlay is drawn in artboard coordinates with the transform
+  applied, so a handle keeps its size while zooming. A hidden polygon edge is
+  rendered as contiguous outline runs, so the fill stays closed.
 - `editorial/DrawingEditor.jinja` renders the workspace from a `SceneDocument`
-  and embeds it as JSON for the client. `editorial/DrawingEditor.js` keeps the
-  last acknowledged value and version, sends the document on an explicit save,
-  and reports dirty/failed/conflict states through the page's save indicator.
+  and embeds it as JSON; the server-rendered shapes are the no-JS first paint
+  and the controller replaces them on mount.
 - `editorial/DrawingEditor.css` owns the three-column composition. The two fixed
-  rails and the artboard proportion are role tokens in `main.css`
-  (`--drawing-tool-rail`, `--drawing-side-rail`, `--drawing-artboard-ratio`,
-  `--drawing-swatch`, `--drawing-layer-check`).
+  rails, the artboard proportion, the swatch and the layer checkbox are role
+  tokens in `main.css`.
 - `prototypes/devin-prototype/drawings.html` and `drawing-editor.html` are the
   static visual reference, with `drawing.css` mirroring the component's classes.
   `seed/prototype_map.yaml` maps `/drawings` and `/drawings/<id>` to them.
 - The tool icons are server-rendered from the registry; the new names were added
   to `tools/build_icons.mjs` and generated with `npm run icons`.
+- The algorithms are covered by pure tests under `tests/js/`, run with Node's
+  built-in test runner (`npm run test:drawings`).
 
 ## Used by
 
@@ -66,13 +85,12 @@ document; the drawing tools themselves arrive in later tickets.
 
 ## Limits
 
-- **No drawing interaction yet.** The component renders a stored scene and saves
-  it; the tool buttons and commands are inert until the next tickets. A save
-  with no edits is a no-op.
-- The scene value is validated but not yet exercised by real editing: the tool
-  tests, vertex editing, splitting, grouping and curves arrive in later tickets.
-- Only the first object is the selection; there is no selection UI beyond the
-  layer list yet.
-- The prototype's tool glyphs are text characters; the application renders the
-  Lucide registry icons instead.
+- **Vertex editing, straight cuts, groups and Bézier curves are not here yet**
+  (`T05`–`T08`). The tools are present in the rail; `Taglia` does nothing.
+- Scaling keeps the dragged corner proportional-ish but does not snap to a
+  ratio; rotation has no angle snapping.
+- Pan/zoom exists (wheel to zoom, `Shift`+drag or the middle button to pan) but
+  there is no "fit" control and no zoom readout.
+- The layer list shows a flat outline of groups; nesting arrives with grouping.
+- Only one selection at a time.
 - Phone is a preview, not a drawing surface.

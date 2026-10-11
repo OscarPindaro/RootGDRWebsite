@@ -33,6 +33,7 @@ SHELL_SCRIPTS = tuple(
 )
 FONTS = tuple(sorted((STATIC / "fonts").glob("*.woff2")))
 EDITOR = (STATIC / "js" / "editor.js",)
+DRAWINGS = (STATIC / "js" / "drawings.js",)
 
 # How common.Icon renders one icon; the icon budget measures the whole registry.
 _ICON_MARKUP = (
@@ -97,6 +98,11 @@ BUDGETS = {
         620_000,
         210_000,
     ),
+    "lazy drawing editor (drawings.js, only on the drawing workspace)": (
+        _measure(DRAWINGS),
+        120_000,
+        40_000,
+    ),
 }
 
 
@@ -147,6 +153,16 @@ def test_the_editor_is_the_largest_asset_by_far() -> None:
     shell = BUDGETS["shell JavaScript (htmx, json-enc, feedback, format-times)"][0][0]
 
     assert editor > 5 * shell
+
+
+def test_the_drawing_bundle_is_loaded_only_through_its_loader() -> None:
+    """A page fetches the drawing editor through the component, never directly."""
+    loader = (
+        REPO / "src" / "frontend" / "components" / "editorial" / "DrawingEditor.js"
+    ).read_text(encoding="utf-8")
+    assert "/static/js/drawings.js" in loader
+    for path in (REPO / "src" / "frontend" / "components").rglob("*.jinja"):
+        assert "/static/js/drawings.js" not in path.read_text(encoding="utf-8"), path
 
 
 def test_a_read_only_page_does_not_load_the_editor_eagerly() -> None:

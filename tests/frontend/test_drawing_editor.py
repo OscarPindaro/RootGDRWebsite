@@ -38,7 +38,17 @@ def _scene() -> SceneDocument:
     )
 
 
-PROPS = {"title": "Altus Fanfaron", "drawing_id": None, "scene": _scene()}
+PROPS = {
+    "title": "Altus Fanfaron",
+    "drawing_id": None,
+    "scene": _scene(),
+    "editable": False,
+}
+
+
+def _mounted(page) -> None:
+    """Wait for the drawing bundle to mount the interactive controller."""
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
 
 
 def _box(page, selector: str) -> dict:
@@ -162,6 +172,154 @@ def test_the_read_only_specimen_hides_its_commands(component):
     )
 
 
+# --- drawing: tools, history, styles ---------------------------------------
+
+
+def _live_props(scene=None) -> dict:
+    return {
+        "title": "Nuova tavola",
+        "drawing_id": None,
+        "scene": scene if scene is not None else SceneDocument(),
+        "editable": True,
+    }
+
+
+def _drag(page, start, end) -> None:
+    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
+    page.mouse.move(box["x"] + start[0], box["y"] + start[1])
+    page.mouse.down()
+    page.mouse.move(box["x"] + end[0], box["y"] + end[1], steps=4)
+    page.mouse.up()
+
+
+def _scene_of(page) -> dict:
+    return page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene"
+    )
+
+
+def test_drawing_a_triangle_creates_a_shape_and_marks_the_page_dirty(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (120, 120), (260, 240))
+
+    assert page.locator(".drawing-editor__shape").count() == 1
+    assert page.locator("[data-drawing-editor]").get_attribute("data-dirty") == "true"
+    node = _scene_of(page)["nodes"][0]
+    assert node["kind"] == "polygon"
+    assert len(node["points"]) == 3
+
+
+def test_undo_and_redo_cover_a_completed_gesture(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (120, 120), (260, 240))
+    assert page.locator(".drawing-editor__shape").count() == 1
+
+    page.get_by_test_id("drawing-undo").click()
+    assert page.locator(".drawing-editor__shape").count() == 0
+    assert page.locator("[data-drawing-editor]").get_attribute("data-dirty") == "false"
+
+    page.get_by_test_id("drawing-redo").click()
+    assert page.locator(".drawing-editor__shape").count() == 1
+
+
+def test_moving_a_selected_shape_is_one_history_step(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (120, 120), (260, 240))
+    before = _scene_of(page)["nodes"][0]["transform"]
+
+    _drag(page, (190, 180), (250, 180))
+    after = _scene_of(page)["nodes"][0]["transform"]
+    assert after != before
+    assert after[4] != 0
+
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["transform"] == before
+
+
+def test_the_palette_recolours_the_selected_shape(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (120, 120), (260, 240))
+
+    page.locator("[data-palette='#2c46a8']").click()
+
+    assert _scene_of(page)["nodes"][0]["fill"] == "#2c46a8"
+
+
+def test_deleting_the_selection_removes_the_shape(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (120, 120), (260, 240))
+
+    page.get_by_test_id("drawing-delete").click()
+
+    assert page.locator(".drawing-editor__shape").count() == 0
+    assert _scene_of(page)["nodes"] == []
+
+
+def test_the_polygon_tool_places_vertices_until_it_is_closed(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+
+    page.get_by_test_id("drawing-tool-polygon").click()
+    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
+    for offset in ((120, 260), (200, 120), (300, 260)):
+        page.mouse.click(box["x"] + offset[0], box["y"] + offset[1])
+    page.keyboard.press("Enter")
+
+    assert page.locator(".drawing-editor__shape").count() == 1
+    assert len(_scene_of(page)["nodes"][0]["points"]) == 3
+
+
+def test_the_layer_list_is_rebuilt_from_the_document(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    assert (
+        "Nessun oggetto" in page.locator("[data-testid='drawing-layers']").inner_text()
+    )
+
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (120, 120), (260, 240))
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (300, 120), (400, 220))
+
+    names = [
+        row.inner_text().strip()
+        for row in page.locator("[data-testid='drawing-layer']").all()
+    ]
+    assert names == ["Triangolo", "Cerchio"]
+    # The new shape is selected, so its layer row is pressed.
+    assert (
+        page.locator("[data-testid='drawing-layer']")
+        .nth(1)
+        .get_attribute("aria-pressed")
+        == "true"
+    )
+
+
+def test_hiding_a_layer_removes_it_from_the_artboard(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (120, 120), (260, 240))
+
+    page.locator("[data-node-visible]").first.uncheck()
+
+    assert page.locator("[data-drawing-editor]").get_attribute("data-dirty") == "true"
+    assert _scene_of(page)["nodes"][0]["visible"] is False
+    assert page.locator("[data-testid='drawing-layer']").count() == 1
+
+
 # --- the editor page: explicit save ----------------------------------------
 
 
@@ -185,6 +343,7 @@ def _status(page) -> str:
 
 def test_the_editor_page_mounts_and_reports_the_saved_state(component):
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
 
     assert page.locator("[data-testid='drawing-save']").is_enabled()
     assert _status(page) == "Salvato"
@@ -201,7 +360,8 @@ def test_saving_sends_the_document_and_the_version_it_was_read_at(component):
         },
     )
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
-    sent = page.evaluate(
+    _mounted(page)
+    page.evaluate(
         """() => {
             const real = window.fetch;
             window.__sent = null;
@@ -211,7 +371,6 @@ def test_saving_sends_the_document_and_the_version_it_was_read_at(component):
             };
         }"""
     )
-    del sent
 
     page.get_by_test_id("drawing-save").click()
     page.wait_for_function("() => window.__sent !== null")
@@ -220,6 +379,9 @@ def test_saving_sends_the_document_and_the_version_it_was_read_at(component):
     assert page.evaluate("() => window.__sent.url") == f"/api/drawings/{DRAWING_ID}"
     assert payload["expectedVersion"] == 3
     assert [node["id"] for node in payload["scene"]["nodes"]] == ["head", "beak"]
+    page.wait_for_function(
+        "() => document.querySelector('[data-autosave-status]').textContent.trim() === 'Salvato'"
+    )
     assert _status(page) == "Salvato"
 
 
@@ -227,6 +389,7 @@ def test_a_conflicting_save_is_reported_and_keeps_the_local_scene(component):
     component.allow_console_errors("409")
     component.route_json("PATCH", f"/api/drawings/{DRAWING_ID}", status=409)
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
 
     page.get_by_test_id("drawing-save").click()
     error = page.locator("[data-drawing-error]")
@@ -240,6 +403,7 @@ def test_a_failed_save_never_claims_success(component):
     component.allow_console_errors("500")
     component.route_json("PATCH", f"/api/drawings/{DRAWING_ID}", status=500)
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
 
     page.get_by_test_id("drawing-save").click()
     page.locator("[data-drawing-error]").wait_for(state="visible")

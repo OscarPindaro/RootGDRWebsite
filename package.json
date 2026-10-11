@@ -2,9 +2,12 @@
   "name": "rootgdr-frontend",
   "private": true,
   "type": "module",
-  "description": "Editor bundle and generated assets for the campaign archive (CodeMirror 6, Lucide icon registry).",
+  "description": "Editor bundle and generated assets for the campaign archive (CodeMirror 6, the drawing editor, Lucide icon registry).",
   "scripts": {
-    "build": "esbuild src/frontend/js/editor/index.js --bundle --minify --format=iife --target=es2020 --outfile=src/frontend/static/js/editor.js",
+    "build": "npm run build:editor && npm run build:drawings",
+    "build:editor": "esbuild src/frontend/js/editor/index.js --bundle --minify --format=iife --target=es2020 --outfile=src/frontend/static/js/editor.js",
+    "build:drawings": "esbuild src/frontend/js/drawings/index.js --bundle --minify --format=iife --target=es2020 --outfile=src/frontend/static/js/drawings.js",
+    "test:drawings": "node --test tests/js/*.test.js",
     "icons": "node tools/build_icons.mjs"
   },
   "devDependencies": {
