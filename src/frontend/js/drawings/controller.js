@@ -33,6 +33,7 @@ import {
   patchNode,
   removeNode,
   reorderNode,
+  reparentNode,
   setTransform,
   transformInWorld,
   ungroupNode,
@@ -104,6 +105,7 @@ export function createController(root) {
   let cut = null;
   let cutCursor = null;
   let spaceDown = false;
+  const collapsed = new Set();
   let snapGrid = true;
   let snapShapes = true;
   let cutBefore = null;
@@ -142,36 +144,62 @@ export function createController(root) {
   function renderLayers() {
     const list = root.querySelector("[data-testid='drawing-layers'] .drawing-editor__layers");
     if (!list) return;
-    const rows = [];
-    const flatten = (nodes, depth) => {
-      for (const node of nodes) {
-        const row = document.createElement("li");
-        row.className = "drawing-editor__layer" + (selection.includes(node.id) ? " is-selected" : "");
-        row.dataset.nodeId = node.id;
-        if (depth) row.style.setProperty("--drawing-depth", String(depth));
-
-        const check = document.createElement("input");
-        check.type = "checkbox";
-        check.className = "drawing-editor__layer-check";
-        check.checked = node.visible !== false;
-        check.disabled = !editable;
-        check.setAttribute("aria-label", `Mostra ${node.name}`);
-        check.dataset.nodeVisible = node.id;
-        row.appendChild(check);
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "drawing-editor__layer-name";
-        button.textContent = node.name;
-        button.dataset.selectNode = node.id;
-        button.dataset.testid = "drawing-layer";
-        button.setAttribute("aria-pressed", String(selection.includes(node.id)));
-        row.appendChild(button);
-        rows.push(row);
-        if (node.kind === "group") flatten(node.nodes, depth + 1);
+    const focused = document.activeElement;
+    const focusKey = focused && ["selectNode", "nodeCollapse", "nodeVisible"].find(key => focused.dataset?.[key]);
+    const focusId = focusKey ? focused.dataset[focusKey] : null;
+    const scroll = list.scrollTop;
+    const build = (nodes, depth, inheritedHidden = false) => nodes.map(node => {
+      const item = document.createElement("li");
+      item.className = "drawing-editor__tree-node";
+      item.setAttribute("role", "none");
+      const row = document.createElement("div");
+      row.className = "drawing-editor__layer" + (selection.includes(node.id) ? " is-selected" : "");
+      row.dataset.nodeId = node.id;
+      row.setAttribute("role", "treeitem");
+      row.setAttribute("aria-level", String(depth + 1));
+      row.setAttribute("aria-selected", String(selection.includes(node.id)));
+      row.setAttribute("aria-label", node.name);
+      if (inheritedHidden || !node.visible) row.classList.add("is-muted");
+      if (node.kind === "group") {
+        const branch = document.createElement("button");
+        branch.type = "button";
+        branch.className = "drawing-editor__branch";
+        branch.dataset.nodeCollapse = node.id;
+        branch.setAttribute("aria-label", `${collapsed.has(node.id) ? "Espandi" : "Comprimi"} ${node.name}`);
+        row.setAttribute("aria-expanded", String(!collapsed.has(node.id)));
+        branch.appendChild(root.querySelector("[data-scene-arrow]").content.cloneNode(true));
+        if (collapsed.has(node.id)) branch.classList.add("is-collapsed");
+        row.appendChild(branch);
       }
-    };
-    flatten(scene.nodes, 0);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "drawing-editor__layer-name";
+      button.textContent = node.name;
+      button.dataset.selectNode = node.id;
+      button.dataset.testid = "drawing-layer";
+      button.setAttribute("aria-pressed", String(selection.includes(node.id)));
+      row.appendChild(button);
+      const eye = document.createElement("button");
+      eye.type = "button";
+      eye.className = "drawing-editor__visibility";
+      eye.dataset.nodeVisible = node.id;
+      eye.disabled = !editable;
+      eye.setAttribute("aria-pressed", String(node.visible));
+      eye.setAttribute("aria-label", `${node.visible ? "Nascondi" : "Mostra"} ${node.name}`);
+      eye.appendChild(root.querySelector(node.visible ? "[data-scene-eye]" : "[data-scene-eye-off]").content.cloneNode(true));
+      row.appendChild(eye);
+      item.appendChild(row);
+      if (node.kind === "group") {
+        const children = document.createElement("ul");
+        children.className = "drawing-editor__children";
+        children.setAttribute("role", "group");
+        children.hidden = collapsed.has(node.id);
+        children.append(...build(node.nodes, depth + 1, inheritedHidden || !node.visible));
+        item.appendChild(children);
+      }
+      return item;
+    });
+    const rows = build(scene.nodes, 0);
     if (!rows.length) {
       const empty = document.createElement("li");
       empty.className = "drawing-editor__empty hint";
@@ -179,6 +207,8 @@ export function createController(root) {
       rows.push(empty);
     }
     list.replaceChildren(...rows);
+    if (focusKey) [...list.querySelectorAll("button")].find(button => button.dataset[focusKey] === focusId)?.focus({preventScroll:true});
+    list.scrollTop = scroll;
   }
 
   /** The in-progress polygon: vertices already placed, still open. */
@@ -1078,6 +1108,16 @@ export function createController(root) {
     if (groupButton) groupButton.disabled = !editable || selection.length < 2;
     const ungroupButton = root.querySelector("[data-drawing-ungroup]");
     if (ungroupButton) ungroupButton.disabled = !editable || !node || node.kind !== "group";
+    const parentInput = root.querySelector("[data-node-parent]");
+    if (parentInput) {
+      const options = [new Option("Scena", "")];
+      walk(scene.nodes, candidate => {
+        if (candidate.kind === "group" && node && candidate.id !== node.id && !(ancestorsOf(candidate.id) || []).includes(node.id)) options.push(new Option(candidate.name, candidate.id));
+      });
+      parentInput.replaceChildren(...options);
+      parentInput.value = found?.parent?.id || "";
+      parentInput.disabled = !editable || !node || selection.length !== 1;
+    }
     const nameInput = root.querySelector("[data-node-name]");
     if (nameInput && node && document.activeElement !== nameInput) nameInput.value = node.name;
     const modeButton = root.querySelector("[data-drawing-mode]");
@@ -1129,6 +1169,12 @@ export function createController(root) {
     if (groupButton) groupButton.addEventListener("click", groupSelected);
     const ungroupButton = root.querySelector("[data-drawing-ungroup]");
     if (ungroupButton) ungroupButton.addEventListener("click", ungroupSelected);
+    const parentInput = root.querySelector("[data-node-parent]");
+    parentInput.addEventListener("change", () => {
+      const result = reparentNode(scene, selectedId, parentInput.value || null);
+      if (result) commit(result.scene);
+      else { announce("Il genitore non è valido: controlla la gerarchia e la profondità."); syncControls(); }
+    });
     const nameInput = root.querySelector("[data-node-name]");
     if (nameInput) {
       nameInput.addEventListener("change", () => renameSelected(nameInput.value));
@@ -1167,10 +1213,38 @@ export function createController(root) {
       layers.addEventListener("click", (event) => {
         const button = event.target.closest("[data-select-node]");
         if (button) select(button.dataset.selectNode, event.shiftKey);
+        const eye = event.target.closest("[data-node-visible]");
+        if (eye) {
+          const node = findNode(scene, eye.dataset.nodeVisible).node;
+          commit(patchNode(scene, node.id, {visible: !node.visible}));
+        }
+        const branch = event.target.closest("[data-node-collapse]");
+        if (branch) {
+          const id = branch.dataset.nodeCollapse;
+          if (collapsed.has(id)) collapsed.delete(id);
+          else collapsed.add(id);
+          renderLayers();
+        }
       });
-      layers.addEventListener("change", (event) => {
-        const check = event.target.closest("[data-node-visible]");
-        if (check) commit(patchNode(scene, check.dataset.nodeVisible, { visible: check.checked }));
+      layers.addEventListener("keydown", event => {
+        if (!event.target.matches("[data-select-node]")) return;
+        const buttons = [...layers.querySelectorAll("[data-select-node]")].filter(button => button.getClientRects().length);
+        const index = buttons.indexOf(event.target);
+        if (["ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) {
+          event.stopPropagation(); event.preventDefault();
+          const id = event.target.dataset.selectNode;
+          const found = findNode(scene, id);
+          if (event.key === "ArrowLeft") {
+            if (found.node.kind === "group" && !collapsed.has(id)) { collapsed.add(id); renderLayers(); }
+            else if (found.parent) [...buttons].find(button => button.dataset.selectNode === found.parent.id)?.focus();
+          } else if (event.key === "ArrowRight") {
+            if (found.node.kind === "group" && collapsed.has(id)) { collapsed.delete(id); renderLayers(); }
+            else buttons[Math.min(buttons.length - 1, index + 1)].focus();
+          } else {
+            const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 : index + (event.key === "ArrowDown" ? 1 : -1);
+            buttons[Math.max(0, Math.min(buttons.length - 1, next))].focus();
+          }
+        }
       });
     }
 

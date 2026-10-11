@@ -11,7 +11,11 @@ library, skeleton, publishing or export capabilities.
 - Drag triangles, rectangles and ellipses onto the artboard. Click polygon
   vertices and double-click or press Enter to finish. Drag open lines or cubic
   Bézier curves.
-- Select through the canvas or object list; Shift selects multiple objects.
+- Select through the canvas or connected scene tree; Shift selects multiple
+  objects. Groups expand/collapse, eye controls on the right toggle visibility,
+  and arrow/Home/End keys navigate the tree without nudging artwork.
+  The **Genitore** selector attaches an object to a group or the scene root
+  while preserving its world placement; cycles and excessive nesting are refused.
   Move, scale, rotate, duplicate, delete and reorder objects. Arrow keys nudge.
 - **Vertici** edits polygon vertices or path endpoints/control handles. Click a
   polygon edge to insert a point; Alt-click a vertex to remove it (minimum
@@ -87,7 +91,7 @@ specimen in the component showcase.
 - Ellipses remain ellipses, cuts are straight, boundaries are not welded, and
   polyline/cubic editing does not offer a full path-boolean toolset.
 - Groups must be consecutive siblings to preserve overlap order. The layer list
-  is an indented outline, not a collapsible tree. Group styling is not exposed.
+  is a connected, collapsible scene tree. Group styling is not exposed.
 - No angle/aspect-ratio snapping or zoom readout/fit control. Numeric coordinate
   authoring and stable vertex IDs for future linked-asset overrides are deferred.
 - JavaScript is required for complete interactive rendering, including groups;

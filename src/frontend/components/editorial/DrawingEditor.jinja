@@ -126,15 +126,17 @@
     </div>
 
     <div class="drawing-editor__side">
-      <section class="drawing-editor__panel" aria-label="Livelli" data-testid="drawing-layers">
-        <h3 class="drawing-editor__panel-title">Livelli</h3>
-        <ul class="drawing-editor__layers">
+      <section class="drawing-editor__panel" aria-label="Scena" data-testid="drawing-layers">
+        <h3 class="drawing-editor__panel-title">Scena</h3>
+        <template data-scene-eye><common.Icon name="eye" size=20 /></template>
+        <template data-scene-eye-off><common.Icon name="eye-off" size=20 /></template>
+        <template data-scene-arrow><common.Icon name="chevron-down" size=20 /></template>
+        <ul class="drawing-editor__layers" role="tree" aria-label="Oggetti della scena">
           {% for node in objects %}
           <li class="drawing-editor__layer{{ ' is-selected' if node.id == (selected.id if selected else None) }}" data-node-id="{{ node.id }}">
-            <input class="drawing-editor__layer-check" type="checkbox" {% if node.visible %}checked{% endif %}
-                   aria-label="Mostra {{ node.name | e }}" disabled={{ not editable }} />
             <button type="button" class="drawing-editor__layer-name" aria-pressed="{{ 'true' if node.id == (selected.id if selected else None) else 'false' }}"
                     data-select-node="{{ node.id }}" data-testid="drawing-layer">{{ node.name | e }}</button>
+            <button type="button" class="drawing-editor__visibility" data-node-visible="{{ node.id }}" aria-pressed="{{ 'true' if node.visible else 'false' }}" aria-label="{{ 'Nascondi' if node.visible else 'Mostra' }} {{ node.name | e }}" {% if not editable %}disabled{% endif %}><common.Icon :name="'eye' if node.visible else 'eye-off'" size=20 /></button>
           </li>
           {% else %}
           <li class="drawing-editor__empty hint">Nessun oggetto</li>
@@ -165,6 +167,10 @@
           <input class="drawing-editor__name" type="text" data-node-name maxlength="120"
                  value="{{ (selected.name if selected else '') | e }}" aria-label="Nome dell’oggetto"
                  disabled={{ not editable }} />
+        </div>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-parent">Genitore</label>
+          <select class="drawing-editor__name" id="drawing-parent" data-node-parent disabled><option value="">Scena</option></select>
         </div>
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Riempimento</span>

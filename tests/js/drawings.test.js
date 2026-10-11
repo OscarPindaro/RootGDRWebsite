@@ -397,6 +397,18 @@ test("depthOf reports the nesting level", () => {
   assert.equal(depthOf(scene.nodes, "missing"), 0);
 });
 
+test("reparenting keeps world transforms and rejects cycles", async () => {
+  const {reparentNode, nodeFrame} = await import("../../src/frontend/js/drawings/scene.js");
+  const scene = sceneWith([triangle("a"), {kind:"group", id:"g", name:"Group", visible:true, opacity:1, transform:translation(100, 20), nodes:[]}]);
+  const before = nodeFrame(scene, "a").world;
+  const moved = reparentNode(scene, "a", "g").scene;
+  assert.deepEqual(nodeFrame(moved, "a").world, before);
+  assert.equal(moved.nodes[0].nodes[0].id, "a");
+  assert.equal(reparentNode(moved, "g", "g"), null);
+  const nested = reparentNode(sceneWith([{kind:"group", id:"outer", name:"Outer", visible:true, opacity:1, transform:IDENTITY, nodes:[moved.nodes[0]]}]), "outer", "g");
+  assert.equal(nested, null);
+});
+
 test("curve controls retain commands when edited", async () => {
   const { pathHandles, movePathPoint } = await import("../../src/frontend/js/drawings/scene.js");
   const d = "M0 0 C10 20 30 20 40 0";

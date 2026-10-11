@@ -431,6 +431,27 @@ export function ungroupNode(scene, id) {
   return { scene: next, ids: children.map((child) => child.id) };
 }
 
+export function reparentNode(scene, id, parentId = null) {
+  const source = findNode(scene, id);
+  const target = parentId ? findNode(scene, parentId) : null;
+  if (!source || (parentId && (!target || target.node.kind !== "group"))) return null;
+  const descendants = [];
+  if (source.node.kind === "group") walk(source.node.nodes, node => descendants.push(node.id));
+  if (parentId === id || descendants.includes(parentId)) return null;
+  if ((source.parent?.id || null) === parentId) return {scene: cloneScene(scene), id};
+  const world = nodeFrame(scene, id).world;
+  const parentWorld = parentId ? nodeFrame(scene, parentId).world : [1, 0, 0, 1, 0, 0];
+  const next = cloneScene(scene);
+  const found = findNode(next, id);
+  const [node] = found.siblings.splice(found.index, 1);
+  node.transform = multiply(invert(parentWorld), world);
+  const destination = parentId ? findNode(next, parentId).node.nodes : next.nodes;
+  destination.push(node);
+  const height = nodes => Math.max(0, ...nodes.map(n => n.kind === "group" ? 1 + height(n.nodes) : 0));
+  if (height(next.nodes) > MAX_DEPTH) return null;
+  return {scene: next, id};
+}
+
 /* ---------- straight cut ---------- */
 
 /** Do two segments cross, other than at a shared endpoint? */

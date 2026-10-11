@@ -38,6 +38,8 @@ const NAMES = [
   "copy",
   "download",
   "ellipsis-vertical",
+  "eye",
+  "eye-off",
   "file-text",
   "grid-2x2",
   "history",

@@ -186,19 +186,55 @@
 }
 
 .drawing-editor__layers {
-  display: grid;
-  gap: var(--sp-1);
+  display: block;
   list-style: none;
   max-block-size: var(--drawing-layers-height);
   overflow-y: auto;
 }
 
+.drawing-editor__tree-node { list-style: none; }
+
+.drawing-editor__children {
+  list-style: none;
+  margin-left: var(--sp-2);
+  padding-left: var(--sp-3);
+  border-left: var(--rule);
+}
+
+.drawing-editor__children .drawing-editor__layer::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--sp-3));
+  width: var(--sp-3);
+  border-top: var(--rule);
+}
+
+.drawing-editor__branch,
+.drawing-editor__visibility {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 0;
+  background: none;
+  min-height: var(--touch-target);
+  padding: var(--sp-1);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.drawing-editor__branch.is-collapsed .icon { transform: rotate(-90deg); }
+.drawing-editor__visibility { margin-left: auto; }
+.drawing-editor__layer.is-muted { color: var(--muted); }
+
 .drawing-editor__layer {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--sp-2);
   min-height: var(--touch-target);
-  border: var(--rule);
+  border: 0;
   padding: 0 var(--sp-2);
   /* A nested row indents by its depth in the tree. */
   padding-left: calc(var(--sp-2) + var(--drawing-depth, 0) * var(--sp-3));
@@ -207,12 +243,6 @@
 .drawing-editor__layer.is-selected {
   border-color: var(--ink);
   background: var(--paper-deep);
-}
-
-.drawing-editor__layer-check {
-  inline-size: var(--drawing-layer-check);
-  block-size: var(--drawing-layer-check);
-  accent-color: var(--cobalt);
 }
 
 .drawing-editor__layer-name {

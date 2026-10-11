@@ -316,7 +316,7 @@ def test_hiding_a_layer_removes_it_from_the_artboard(component):
     page.get_by_test_id("drawing-tool-triangle").click()
     _drag(page, (120, 120), (260, 240))
 
-    page.locator("[data-node-visible]").first.uncheck()
+    page.locator("[data-node-visible]").first.click()
 
     assert page.locator("[data-drawing-editor]").get_attribute("data-dirty") == "true"
     assert _scene_of(page)["nodes"][0]["visible"] is False
@@ -831,6 +831,71 @@ def test_grid_visibility_and_snap_modes_are_independent(component):
         [13, 17], abs=1
     )
     assert page.locator("[data-drawing-selection-bar]").is_visible()
+
+
+def test_scene_tree_collapses_groups_and_places_visibility_on_the_right(component):
+    scene = SceneDocument(
+        nodes=[
+            GroupNode(
+                id="g",
+                name="Head",
+                nodes=[
+                    PolygonNode(id="p", name="Beak", points=[(0, 0), (10, 0), (5, 10)])
+                ],
+            )
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    assert page.get_by_role("tree", name="Oggetti della scena").count() == 1
+    parent = page.locator("[data-testid='drawing-layers'] [data-node-id='g']")
+    eye = parent.locator("[data-node-visible]")
+    label = parent.locator("[data-select-node]")
+    assert eye.bounding_box()["x"] > label.bounding_box()["x"]
+    page.locator("[data-node-collapse='g']").click()
+    assert not page.locator("[data-select-node='p']").is_visible()
+    page.locator("[data-node-collapse='g']").click()
+    assert page.locator("[data-select-node='p']").is_visible()
+    eye.click()
+    assert _scene_of(page)["nodes"][0]["visible"] is False
+
+
+def test_parent_selector_preserves_placement_and_is_undoable(component):
+    scene = _square()
+    scene.nodes.append(GroupNode(id="g", name="Head", transform=(2, 0, 0, 2, 100, 20)))
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-node-parent]").select_option("g")
+    group = _scene_of(page)["nodes"][0]
+    assert group["id"] == "g"
+    assert group["nodes"][0]["id"] == "box"
+    assert group["nodes"][0]["transform"] == [0.5, 0, 0, 0.5, -50, -10]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["id"] == "box"
+
+
+def test_scene_tree_arrow_keys_collapse_without_moving_artwork(component):
+    scene = SceneDocument(
+        nodes=[
+            GroupNode(
+                id="g",
+                name="Head",
+                nodes=[
+                    PolygonNode(id="p", name="Beak", points=[(0, 0), (10, 0), (5, 10)])
+                ],
+            )
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='g']").click()
+    before = _scene_of(page)
+    page.keyboard.press("ArrowLeft")
+    assert not page.locator("[data-select-node='p']").is_visible()
+    page.keyboard.press("ArrowRight")
+    assert page.locator("[data-select-node='p']").is_visible()
+    assert _scene_of(page) == before
 
 
 def test_space_activates_a_focused_tool_button(component):

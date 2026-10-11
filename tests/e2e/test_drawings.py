@@ -246,6 +246,35 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
     assert session.errors == []
 
 
+def test_scene_parent_and_eye_state_survive_reopening(session: BrowserSession):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (200, 200))
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (250, 200), (350, 300))
+    page.locator("[data-select-node]").first.click()
+    page.locator("[data-select-node]").nth(1).click(modifiers=["Shift"])
+    page.get_by_test_id("drawing-group").click()
+    group = _local_node_scene(session)["nodes"][0]
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (400, 150), (450, 200))
+    page.locator("[data-node-parent]").select_option(group["id"])
+    child = _local_node_scene(session)["nodes"][0]["nodes"][-1]
+    page.locator(f"[data-node-visible='{child['id']}']").click()
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    stored = session.expect_api(f"/api/drawings/{identifier}").json()["scene"]
+    assert len(stored["nodes"][0]["nodes"]) == 3
+    assert stored["nodes"][0]["nodes"][-1]["visible"] is False
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == stored
+    assert page.get_by_role("tree", name="Oggetti della scena").count() == 1
+
+
 def _local_node(session: BrowserSession) -> dict:
     """The in-progress document in the page, before it is saved."""
     return session.page.evaluate(
