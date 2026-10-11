@@ -55,6 +55,7 @@ const NAMES = [
   "panel-left-close",
   "pen-tool",
   "pencil",
+  "pentagon",
   "plus",
   "redo-2",
   "save",

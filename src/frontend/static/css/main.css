@@ -558,6 +558,7 @@ html[data-accent="gradiente"] .prose a:hover {
   --drawing-swatch: 1.5rem;
   --drawing-chip: 1.5rem;
   --drawing-layer-check: 1.1rem;
+  --drawing-layers-height: 20rem;
   /* Field geometry, transcribed from the M3 text-field spec (see
      design-tokens/material3/text-fields.yaml). The corner is the atlas
      --radius, recorded as a web adaptation in the inventory. */

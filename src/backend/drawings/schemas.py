@@ -44,11 +44,11 @@ Coordinate = Annotated[float, Field(ge=-MAX_COORDINATE, le=MAX_COORDINATE)]
 Opacity = Annotated[float, Field(ge=0.0, le=1.0)]
 StrokeWidth = Annotated[float, Field(ge=0.0, le=100.0)]
 Point = tuple[Coordinate, Coordinate]
-Matrix = tuple[float, float, float, float, float, float]
+Matrix = tuple[Coordinate, Coordinate, Coordinate, Coordinate, Coordinate, Coordinate]
 
 # Domain data, not a transport envelope: an unknown field is a client bug or a
 # future format, and neither should be stored silently.
-DOMAIN = ConfigDict(extra="forbid")
+DOMAIN = ConfigDict(extra="forbid", allow_inf_nan=False)
 
 
 class Artboard(AppBaseModel):
@@ -99,6 +99,8 @@ class PolygonNode(ShapeNode):
             raise ValueError("edge_visible must have one entry per point")
         if _area(self.points) < MIN_POLYGON_AREA:
             raise ValueError("polygon has no area")
+        if not simple_polygon(self.points):
+            raise ValueError("polygon must be simple")
         return self
 
 
@@ -155,10 +157,14 @@ class SceneDocument(AppBaseModel):
         total = _walk(self.nodes, ids, depth=0)
         if total > MAX_NODES:
             raise ValueError("drawing has too many nodes")
+        if len(self.model_dump_json().encode()) > 1_048_576:
+            raise ValueError("drawing exceeds the native document size limit")
         return self
 
 
 class DrawingCreate(AppBaseModel):
+    model_config = AppBaseModel.model_config | DOMAIN
+
     title: Annotated[str, Field(min_length=1, max_length=255)]
     scene: SceneDocument | None = None
 
@@ -170,6 +176,8 @@ class DrawingUpdate(VersionedUpdate):
     drawing is written as one value, so a missing precondition would silently
     overwrite another session's work.
     """
+
+    model_config = AppBaseModel.model_config | DOMAIN
 
     expected_version: Annotated[int, Field(ge=1)]
     title: Annotated[str | None, Field(default=None, min_length=1, max_length=255)]
@@ -218,6 +226,36 @@ def _area(points: list[Point]) -> float:
     return abs(total) / 2.0
 
 
+def simple_polygon(points: list[Point]) -> bool:
+    def cross(a: Point, b: Point, c: Point) -> float:
+        return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0])
+
+    def on(a: Point, b: Point, p: Point) -> bool:
+        return (
+            abs(cross(a, b, p)) < 1e-9
+            and min(a[0], b[0]) <= p[0] <= max(a[0], b[0])
+            and min(a[1], b[1]) <= p[1] <= max(a[1], b[1])
+        )
+
+    size = len(points)
+    if len(set(points)) != size:
+        return False
+    for i, a in enumerate(points):
+        b = points[(i + 1) % size]
+        for j in range(i + 1, size):
+            if j == i + 1 or (i == 0 and j == size - 1):
+                continue
+            c, d = points[j], points[(j + 1) % size]
+            if (
+                cross(a, b, c) * cross(a, b, d) < 0
+                and cross(c, d, a) * cross(c, d, b) < 0
+            ):
+                return False
+            if on(a, b, c) or on(a, b, d) or on(c, d, a) or on(c, d, b):
+                return False
+    return True
+
+
 _PATH_COMMAND = re.compile(r"([MLCZ])([^MLCZ]*)")
 
 
@@ -227,8 +265,10 @@ def parse_path(d: str) -> list[tuple[str, list[float]]]:
     Raises on an unsupported command, a bad argument count or a non-finite
     number, so the stored path is always something the renderer can draw.
     """
+    if not re.fullmatch(r"M[0-9 ,.\-MLCZ]+", d) or re.search(r"[a-z]", d):
+        raise ValueError("path must contain absolute supported commands")
     commands: list[tuple[str, list[float]]] = []
-    for name, raw in _PATH_COMMAND.findall(d.upper()):
+    for name, raw in _PATH_COMMAND.findall(d):
         numbers: list[float] = []
         for token in raw.replace(",", " ").split():
             try:
@@ -236,7 +276,9 @@ def parse_path(d: str) -> list[tuple[str, list[float]]]:
             except ValueError:
                 raise ValueError("path has a non-numeric argument") from None
         expected = {"M": 2, "L": 2, "C": 6, "Z": 0}[name]
-        if expected and len(numbers) % expected != 0:
+        if (expected and (not numbers or len(numbers) % expected)) or (
+            not expected and numbers
+        ):
             raise ValueError(f"path command {name} has the wrong argument count")
         if any(abs(value) > MAX_COORDINATE for value in numbers):
             raise ValueError("path has a coordinate out of range")

@@ -183,7 +183,9 @@
     overflow-x: auto;
   }
 
-  .drawing-editor__hint { display: none; }
+  .drawing-editor__hint,
+  .drawing-editor__bar,
+  .drawing-editor__tools { display: none; }
 
   .drawing-editor__phone-note {
     display: block;

@@ -19,6 +19,7 @@ from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.backend.auth.dependencies import get_current_admin_user
+from src.backend.auth.tokens import create_access_token
 from src.backend.concurrency import VersionConflictException
 from src.backend.config import AppConfig
 from src.backend.db.db import DatabaseManager
@@ -381,3 +382,97 @@ async def test_creating_a_drawing_is_a_post_that_redirects(
     async with db_manager.async_session_maker() as session:
         listed = await list_drawings(session, users["admin"])
     assert [model.title for model in listed] == ["Nuovo disegno"]
+
+
+async def test_native_group_curve_and_summary_pagination(app_config, db_manager, users):
+    app = _app(app_config, db_manager, users["admin"])
+    scene = {
+        "nodes": [
+            {
+                "kind": "group",
+                "id": "g",
+                "name": "Group",
+                "transform": [2, 0, 0, 2, 100, 20],
+                "nodes": [
+                    {
+                        "kind": "path",
+                        "id": "p",
+                        "name": "Detail",
+                        "d": "M0 0 C10 20 30 20 40 0",
+                        "opacity": 0.2,
+                    }
+                ],
+            }
+        ]
+    }
+    async with await _client(app) as client:
+        first = await client.post(
+            "/api/drawings/", json={"title": "First", "scene": scene}
+        )
+        assert first.status_code == 201
+        identifier = first.json()["id"]
+        await client.post("/api/drawings/", json={"title": "Second"})
+        one = (await client.get("/api/drawings/?page_size=1")).json()["data"]
+        two = (await client.get("/api/drawings/?page_size=1&page=2")).json()["data"]
+        assert len(one) == len(two) == 1 and one[0]["id"] != two[0]["id"]
+        assert "scene" not in two[0]
+        stored = (await client.get(f"/api/drawings/{identifier}")).json()["scene"]
+        assert stored["nodes"][0]["transform"] == [2, 0, 0, 2, 100, 20]
+        assert stored["nodes"][0]["nodes"][0]["opacity"] == 0.2
+
+
+async def test_real_member_auth_cannot_access_drawing_routes(
+    app_config, db_manager, users
+):
+    app = _app(app_config, db_manager, users["admin"])
+    app.dependency_overrides.pop(get_current_admin_user)
+    member = users["member"]
+    token = create_access_token(member.id, member.email, member.role)
+    identifier = await _seed(db_manager, users["admin"], _scene())
+    async with await _client(app) as client:
+        client.headers["Authorization"] = "Bearer " + token
+        for method, path, payload in [
+            ("GET", "/drawings", None),
+            ("GET", f"/drawings/{identifier}", None),
+            ("POST", "/drawings/new", None),
+            ("GET", "/api/drawings/", None),
+            ("GET", f"/api/drawings/{identifier}", None),
+            ("POST", "/api/drawings/", {"title": "Forbidden"}),
+            (
+                "PATCH",
+                f"/api/drawings/{identifier}",
+                {"expectedVersion": 1, "title": "Forbidden"},
+            ),
+        ]:
+            response = await client.request(method, path, json=payload)
+            assert response.status_code == 403, (method, path)
+
+
+async def test_a_true_two_session_race_keeps_the_first_save(db_manager, users):
+    identifier = await _seed(db_manager, users["admin"], _scene())
+    first = db_manager.async_session_maker()
+    scope = get_db_session(db_manager)
+    second = await anext(scope)
+    async with first.begin():
+        one = await first.get(DrawingModel, identifier)
+        two = await second.get(DrawingModel, identifier)
+        one.title = "First writer"
+        two.title = "Second writer"
+    with pytest.raises(VersionConflictException) as conflict:
+        await anext(scope)
+    assert conflict.value.status_code == 409
+    await first.close()
+    async with db_manager.async_session_maker() as session:
+        actual = await get_drawing(session, identifier, users["admin"])
+        assert actual.title == "First writer"
+
+
+async def test_drawing_title_is_text_in_html(app_config, db_manager, users):
+    app = _app(app_config, db_manager, users["admin"])
+    async with await _client(app) as client:
+        created = await client.post(
+            "/api/drawings/", json={"title": "<script>window.injected=true</script>"}
+        )
+        page = await client.get("/drawings/" + created.json()["id"])
+        assert "<script>window.injected=true</script>" not in page.text
+        assert "&lt;script&gt;" in page.text

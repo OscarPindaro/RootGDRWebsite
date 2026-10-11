@@ -59,6 +59,7 @@ export function nodeBounds(node) {
       ].map((point) => apply(child.transform, point));
       return bounds(corners);
     });
+    if (!boxes.length) return { minX: 0, minY: 0, maxX: 0, maxY: 0 };
     return boxes.reduce((acc, box) => ({
       minX: Math.min(acc.minX, box.minX),
       minY: Math.min(acc.minY, box.minY),
@@ -81,6 +82,22 @@ export function nodeCenter(node) {
 }
 
 /* ---------- path parsing (absolute M/L/C/Z) ---------- */
+
+export function pathHandles(d) {
+  const handles = [];
+  pathCommands(d).forEach((command, index) => {
+    for (let offset = 0; offset < command.numbers.length; offset += 2) {
+      handles.push({ command: index, offset, point: command.numbers.slice(offset, offset + 2), control: command.name === "C" && offset % 6 !== 4 });
+    }
+  });
+  return handles;
+}
+
+export function movePathPoint(d, commandIndex, offset, point) {
+  const commands = pathCommands(d);
+  commands[commandIndex].numbers.splice(offset, 2, ...point);
+  return commands.map(c => c.name + c.numbers.map(n => Math.round(n * 1000) / 1000).join(" ")).join(" ");
+}
 
 export function pathCommands(d) {
   const commands = [];
@@ -130,15 +147,39 @@ export function pathPoints(d) {
 /* ---------- hit testing ---------- */
 
 /** The topmost node under a world point, or null. */
+export function nodeFrame(scene, id) {
+  function visit(nodes, parent) {
+    for (const node of nodes) {
+      const world = multiply(parent, node.transform);
+      if (node.id === id) return { node, parent, world };
+      if (node.kind === "group") {
+        const found = visit(node.nodes, world);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  return visit(scene.nodes, [1, 0, 0, 1, 0, 0]);
+}
+
 export function nodeAt(scene, worldPoint, tolerance = 6) {
   let hit = null;
-  walk(scene.nodes, (node) => {
-    if (node.visible === false) return;
-    const inverse = invert(node.transform);
-    if (!inverse) return;
-    const local = apply(inverse, worldPoint);
-    if (localHit(node, local, tolerance)) hit = node;
-  });
+  function visit(nodes, parent) {
+    for (const node of nodes) {
+      if (node.visible === false) continue;
+      const world = multiply(parent, node.transform);
+      if (node.kind === "group") {
+        visit(node.nodes, world);
+        continue;
+      }
+      const inverse = invert(world);
+      if (!inverse) continue;
+      const local = apply(inverse, worldPoint);
+      const scale = Math.max(Math.hypot(world[0], world[1]), Math.hypot(world[2], world[3]));
+      if (localHit(node, local, tolerance / scale)) hit = node;
+    }
+  }
+  visit(scene.nodes, [1, 0, 0, 1, 0, 0]);
   return hit;
 }
 
@@ -274,7 +315,7 @@ export function duplicateNode(scene, id) {
 
 function renameIds(node, name) {
   node.id = newId(node.kind);
-  node.name = `${name} copia`;
+  node.name = `${name.slice(0, 113)} copia`;
   if (node.kind === "group") node.nodes.forEach((child) => renameIds(child, child.name));
   return node;
 }
@@ -303,8 +344,13 @@ export function setTransform(scene, id, matrix) {
   return patchNode(scene, id, { transform: matrix });
 }
 
+export function transformInWorld(scene, id, delta, original = nodeFrame(scene, id).world) {
+  const frame = nodeFrame(scene, id);
+  return setTransform(scene, id, multiply(invert(frame.parent), multiply(delta, original)));
+}
+
 export function validPolygon(points) {
-  return points.length >= 3 && polygonArea(points) > 1e-6;
+  return points.length >= 3 && points.length <= 256 && points.every(p => p.every(Number.isFinite)) && polygonArea(points) > 1e-6 && isSimplePolygon(points);
 }
 
 /* ---------- grouping ---------- */
@@ -339,7 +385,10 @@ export function groupNodes(scene, ids) {
   const siblings = found[0].siblings;
   if (!found.every((entry) => entry.siblings === siblings)) return null;
   const deepest = Math.max(...ids.map((id) => depthOf(next.nodes, id)));
-  if (deepest + 1 > MAX_DEPTH) return null;
+  const height = node => node.kind === "group" ? 1 + Math.max(0, ...node.nodes.map(height)) : 0;
+  if (deepest + Math.max(...found.map(entry => height(entry.node))) > MAX_DEPTH) return null;
+  const positions = found.map(entry => entry.index).sort((a, b) => a - b);
+  if (positions.some((position, i) => position !== positions[0] + i)) return null;
 
   const index = Math.min(...found.map((entry) => entry.index));
   const members = [...found]
@@ -375,6 +424,8 @@ export function ungroupNode(scene, id) {
   const children = group.nodes.map((child) => ({
     ...cloneScene(child),
     transform: multiply(group.transform, child.transform),
+    opacity: group.opacity * child.opacity,
+    visible: group.visible && child.visible,
   }));
   found.siblings.splice(found.index, 1, ...children);
   return { scene: next, ids: children.map((child) => child.id) };
@@ -403,6 +454,7 @@ function crosses(a1, a2, b1, b2) {
 /** A simple polygon: no two non-adjacent edges cross. */
 export function isSimplePolygon(points) {
   const n = points.length;
+  if (new Set(points.map(p => p.join(","))).size !== n) return false;
   for (let i = 0; i < n; i += 1) {
     for (let j = i + 1; j < n; j += 1) {
       const adjacent = j === i + 1 || (i === 0 && j === n - 1);
@@ -423,7 +475,8 @@ export function isSimplePolygon(points) {
  */
 export function splitPolygonAt(points, i, j) {
   const n = points.length;
-  if (n < 4) return null;
+  if (!Number.isInteger(i) || !Number.isInteger(j) || i < 0 || j < 0 || i >= n || j >= n) return null;
+  if (!validPolygon(points) || n < 4) return null;
   if (i === j) return null;
   const adjacent = (i + 1) % n === j || (j + 1) % n === i;
   if (adjacent) return null;
@@ -459,9 +512,8 @@ export function splitPolygonAt(points, i, j) {
 
 /** The cut edges are hidden: the two pieces still read as one silhouette. */
 function cutVisibility(sourceVisible, indices) {
-  const visible = sourceVisible || indices.map(() => true);
   return indices.map((index, position) =>
-    position === indices.length - 1 ? false : visible[index] !== false
+    position === indices.length - 1 ? false : !sourceVisible || sourceVisible[index] !== false
   );
 }
 
@@ -478,13 +530,13 @@ export function cutNode(scene, id, i, j) {
 
   const next = cloneScene(scene);
   const target = findNode(next, id);
-  target.node.points = split.aPoints;
+  target.node.points = split.aPoints.map(p => [...p]);
   target.node.edgeVisible = cutVisibility(node.edgeVisible, split.aIndices);
   const piece = {
     ...cloneScene(node),
     id: newId("poly"),
-    name: `${node.name} tagliata`,
-    points: split.bPoints,
+    name: `${node.name.slice(0, 111)} tagliata`,
+    points: split.bPoints.map(p => [...p]),
     edgeVisible: cutVisibility(node.edgeVisible, split.bIndices),
   };
   target.siblings.splice(target.index + 1, 0, piece);

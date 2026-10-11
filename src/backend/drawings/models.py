@@ -3,10 +3,23 @@ import uuid
 from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from ..db.db import Base
 from ..db.mixins import OptimisticLockMixin, TimestampMixin, UUIDv7PrimaryKeyMixin
 from ..users.models import UserModel
+from .schemas import SceneDocument
+
+
+class SceneJSON(TypeDecorator[SceneDocument]):
+    impl = JSONB
+    cache_ok = True
+
+    def process_bind_param(self, value: SceneDocument, dialect):
+        return SceneDocument.model_validate(value).model_dump(mode="json")
+
+    def process_result_value(self, value, dialect) -> SceneDocument:
+        return SceneDocument.model_validate(value)
 
 
 class DrawingModel(
@@ -26,8 +39,8 @@ class DrawingModel(
     __tablename__ = "drawings"
 
     title: Mapped[str] = mapped_column(String(255), nullable=False)
-    created_by_id: Mapped[uuid.UUID] = mapped_column(
+    created_by_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     created_by: Mapped[UserModel | None] = relationship(lazy="joined")
-    document: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    document: Mapped[SceneDocument] = mapped_column(SceneJSON, nullable=False)

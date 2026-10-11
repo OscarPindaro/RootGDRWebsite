@@ -261,3 +261,75 @@ def _local_node_scene(session: BrowserSession) -> dict:
 
 def _node(session: BrowserSession, drawing_id: str) -> dict:
     return session.expect_api(f"/api/drawings/{drawing_id}").json()["scene"]["nodes"][0]
+
+
+def test_grouped_artwork_and_faint_curve_reopen_editable(session: BrowserSession):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-drawing-title]").fill("Altus — prova completa")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (230, 200))
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (260, 230), (350, 330))
+    page.locator("[data-select-node]").first.click()
+    page.locator("[data-select-node]").nth(1).click(modifiers=["Shift"])
+    page.get_by_test_id("drawing-group").click()
+    assert _local_node_scene(session)["nodes"][0]["kind"] == "group"
+    page.get_by_test_id("drawing-tool-curve").click()
+    _drag(page, (120, 250), (220, 250))
+    opacity = page.locator("[data-style='opacity']")
+    opacity.evaluate(
+        "el => { el.value = 20; el.dispatchEvent(new Event('change', {bubbles:true})); }"
+    )
+    page.locator("[data-drawing-mode]").click()
+    assert page.locator(".drawing-editor__curve-control").count() == 2
+    handle = page.locator(".drawing-editor__curve-control").first.bounding_box()
+    x, y = handle["x"] + handle["width"] / 2, handle["y"] + handle["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down()
+    page.mouse.move(x, y + 25)
+    page.mouse.up()
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    stored = session.expect_api(f"/api/drawings/{identifier}").json()
+    assert stored["title"] == "Altus — prova completa"
+    assert stored["scene"]["nodes"][0]["kind"] == "group"
+    assert len(stored["scene"]["nodes"][0]["nodes"]) == 2
+    assert stored["scene"]["nodes"][1]["opacity"] == 0.2
+    curve_id = stored["scene"]["nodes"][1]["id"]
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == stored["scene"]
+    page.locator(f"[data-select-node='{curve_id}']").click()
+    page.locator("[data-drawing-mode]").click()
+    assert page.locator(".drawing-editor__curve-control").count() == 2
+    assert session.errors == []
+
+
+def test_conflicted_work_is_persisted_as_a_separate_copy(session: BrowserSession):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (120, 120), (250, 230))
+    current = session.expect_api(f"/api/drawings/{identifier}").json()
+    session.expect_api(
+        f"/api/drawings/{identifier}",
+        method="PATCH",
+        data={"expectedVersion": current["version"], "title": "Server wins"},
+    )
+    page.get_by_test_id("drawing-save").click()
+    page.locator("[data-drawing-conflict-actions]").wait_for(state="visible")
+    page.locator("[data-drawing-save-copy]").click()
+    page.wait_for_url(
+        lambda url: "/drawings/" in str(url) and not str(url).endswith(identifier)
+    )
+    copied_id = _drawing_id(page.url)
+    copied = session.expect_api(f"/api/drawings/{copied_id}").json()
+    assert copied["title"].endswith("(copia)")
+    assert len(copied["scene"]["nodes"]) == 1
+    original = session.expect_api(f"/api/drawings/{identifier}").json()
+    assert original["title"] == "Server wins"
+    assert not original["scene"]["nodes"]

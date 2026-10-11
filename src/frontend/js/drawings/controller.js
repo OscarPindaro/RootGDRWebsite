@@ -27,13 +27,19 @@ import {
   groupNodes,
   nodeAt,
   nodeBounds,
+  nodeFrame,
+  movePathPoint,
+  pathCommands,
   patchNode,
   removeNode,
   reorderNode,
   setTransform,
+  transformInWorld,
   ungroupNode,
   validPolygon,
   worldPoints,
+  walk,
+  pathHandles,
 } from "./scene.js";
 import { render } from "./render.js";
 
@@ -82,7 +88,7 @@ export function createController(root) {
   const svg = root.querySelector("[data-drawing-artboard]");
   const sceneScript = root.querySelector("[data-drawing-scene]");
   const saveUrl = root.dataset.saveUrl || null;
-  const editable = root.dataset.readonly !== "true";
+  const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
   let scene = sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 1, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] };
   const history = new History(scene);
@@ -97,6 +103,11 @@ export function createController(root) {
   let cut = null;
   let cutCursor = null;
   let spaceDown = false;
+  let cutBefore = null;
+  let gestureBefore = null;
+  let title = root.dataset.title || "Nuovo disegno";
+  let savedTitle = title;
+  let allowLeave = false;
 
   let savedScene = canonical(scene);
   let savedVersion = Number(root.dataset.version || 0) || null;
@@ -112,7 +123,7 @@ export function createController(root) {
       mode,
       tool,
       snap: snapPoint,
-      cut: cut && cutCursor ? { from: worldPoints(findNode(scene, cut.id).node)[cut.index], to: cutCursor } : null,
+      cut: cut && cutCursor ? { from: apply(nodeFrame(scene, cut.id).world, findNode(scene, cut.id).node.points[cut.index]), to: cutCursor } : null,
     };
   }
 
@@ -258,7 +269,7 @@ export function createController(root) {
   }
 
   function isDirty() {
-    return canonical(scene) !== savedScene;
+    return canonical(scene) !== savedScene || title !== savedTitle;
   }
 
   function refresh() {
@@ -267,32 +278,50 @@ export function createController(root) {
     status(isDirty() ? "Modifiche non salvate" : "Salvato", isDirty() ? "dirty" : "saved");
   }
 
-  async function save() {
+  async function save(asCopy = false) {
     if (!saveUrl || inFlight) return;
+    asCopy = asCopy === true;
+    if (drag || cut) {
+      announce("Completa o annulla l’operazione prima di salvare.");
+      return;
+    }
     inFlight = true;
+    const lockedControls = asCopy ? [...root.querySelectorAll("input, button")].map(control => [control, control.disabled]) : [];
+    root.dataset.copying = asCopy ? "true" : "";
+    lockedControls.forEach(([control]) => { control.disabled = true; });
     root.dataset.saving = "true";
     status("Salvataggio…", "saving");
     announce("");
     let saved = false;
     try {
-      const response = await fetch(saveUrl, {
-        method: "PATCH",
+      const response = await fetch(asCopy ? "/api/drawings/" : saveUrl, {
+        method: asCopy ? "POST" : "PATCH",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ expectedVersion: savedVersion, scene }),
+        body: JSON.stringify(asCopy ? { title: (title + " (copia)").slice(0, 255), scene } : { expectedVersion: savedVersion, title, scene }),
       });
       if (!response.ok) {
+        root.querySelector("[data-drawing-conflict-actions]").hidden = response.status !== 409;
         announce(errorMessage(response.status));
         return;
       }
       const updated = await response.json();
+      if (asCopy) {
+        allowLeave = true;
+        window.location.assign("/drawings/" + updated.id);
+        return;
+      }
       savedScene = canonical(updated.scene);
+      savedTitle = updated.title || title;
       savedVersion = updated.version;
+      root.querySelector("[data-drawing-conflict-actions]").hidden = true;
       saved = true;
     } catch (error) {
       announce("Rete non raggiungibile. Il disegno non è stato salvato.");
     } finally {
       inFlight = false;
+      delete root.dataset.copying;
+      lockedControls.forEach(([control, disabled]) => { control.disabled = disabled; });
       delete root.dataset.saving;
       if (saved) refresh();
       else status("Non salvato", "error");
@@ -319,7 +348,7 @@ export function createController(root) {
       [box.maxX, box.minY],
       [box.maxX, box.maxY],
       [box.minX, box.maxY],
-    ].map((point) => apply(node.transform, point));
+    ].map((point) => apply(nodeFrame(scene, node.id).world, point));
   }
 
   /* ---------- snapping ---------- */
@@ -330,22 +359,24 @@ export function createController(root) {
   /** Snap a world point to the grid or a sibling vertex; Alt bypasses it. */
   function snapWorld(point, node, excludeIndex, bypass) {
     if (bypass) return { point, snapped: false };
-    const tolerance = SNAP_TOLERANCE_PX / viewport[0];
+    const tolerance = SNAP_TOLERANCE_PX / (viewport[0] * Math.abs(svg.getScreenCTM().a));
     let best = null;
     let bestDistance = tolerance;
-    if (node && node.kind === "polygon") {
-      worldPoints(node).forEach((vertex, index) => {
-        if (index === excludeIndex) return;
+    walk(scene.nodes, candidate => {
+      if (candidate.visible === false || (ancestorsOf(candidate.id) || []).some(id => !findNode(scene, id).node.visible)) return;
+      const points = candidate.kind === "polygon" ? candidate.points : candidate.kind === "path" ? pathHandles(candidate.d).filter(h => !h.control).map(h => h.point) : [];
+      const world = nodeFrame(scene, candidate.id).world;
+      const targets = points.filter((p, i) => candidate.id !== node?.id || i !== excludeIndex);
+      if (candidate.kind === "polygon") targets.push(...points.map((p, i) => [(p[0] + points[(i + 1) % points.length][0]) / 2, (p[1] + points[(i + 1) % points.length][1]) / 2]));
+      targets.forEach(local => {
+        const vertex = apply(world, local);
         const distance = Math.hypot(vertex[0] - point[0], vertex[1] - point[1]);
-        if (distance < bestDistance) {
-          bestDistance = distance;
-          best = [vertex[0], vertex[1]];
-        }
+        if (distance < bestDistance) { bestDistance = distance; best = vertex; }
       });
-    }
+    });
     const gridX = Math.round(point[0] / SNAP_GRID) * SNAP_GRID;
     const gridY = Math.round(point[1] / SNAP_GRID) * SNAP_GRID;
-    if (Math.hypot(gridX - point[0], gridY - point[1]) < bestDistance) {
+    if (!root.querySelector("[data-drawing-grid]")?.dataset.off && Math.hypot(gridX - point[0], gridY - point[1]) < bestDistance) {
       best = [gridX, gridY];
     }
     return best ? { point: best, snapped: true } : { point, snapped: false };
@@ -425,7 +456,7 @@ export function createController(root) {
 
   /** Where on the polygon boundary a click landed: a vertex, or a new point. */
   function boundaryAt(node, world) {
-    const inverse = invert(node.transform);
+    const inverse = invert(nodeFrame(scene, node.id).world);
     if (!inverse) return null;
     const local = apply(inverse, world);
     const vertexTolerance = VERTEX_TOLERANCE_PX / viewport[0];
@@ -473,7 +504,9 @@ export function createController(root) {
       announce("Clicca sul bordo del poligono per scegliere i due punti.");
       return;
     }
+    if (!cutBefore) cutBefore = scene;
     const index = ensureVertex(hit.id, boundary);
+    if (cut && boundary.insert && index <= cut.index) cut.index += 1;
     if (!cut) {
       cut = { id: hit.id, index };
       cutCursor = world;
@@ -484,11 +517,14 @@ export function createController(root) {
     cut = null;
     cutCursor = null;
     if (!result) {
+      scene = cutBefore;
+      cutBefore = null;
       announce("Il taglio non è valido: serve una corda interna fra due vertici non adiacenti.");
       draw();
       return;
     }
     announce("");
+    cutBefore = null;
     commit(result.scene);
     // The selection stays on the piece that kept the original id, so the cut
     // does not move the user's selection: the tip they were editing is still
@@ -500,6 +536,8 @@ export function createController(root) {
   /* ---------- tools ---------- */
 
   function setTool(next) {
+    if (cutBefore) scene = cutBefore;
+    cutBefore = null;
     tool = next;
     pendingPolygon = null;
     cut = null;
@@ -514,8 +552,8 @@ export function createController(root) {
   }
 
   function setMode(next) {
-    mode = next;
     if (next === "vertex" && tool !== "select") setTool("select");
+    mode = next;
     draw();
   }
 
@@ -529,6 +567,7 @@ export function createController(root) {
     } else {
       selection = [id];
     }
+    selection = selection.filter(id => !(ancestorsOf(id) || []).some(parent => selection.includes(parent)));
     selectedId = selection.length ? selection[0] : null;
     if (selection.length !== 1) mode = "transform";
     draw();
@@ -571,15 +610,27 @@ export function createController(root) {
   }
 
   function beginLine(event) {
-    drag = { kind: "line", from: scenePoint(event), to: scenePoint(event) };
+    drag = { kind: "line", curve: tool === "curve", from: scenePoint(event), to: scenePoint(event) };
   }
 
   function finishLine() {
     if (!drag) return;
-    const { from, to } = drag;
+    const { from, to, curve } = drag;
     drag = null;
-    if (Math.hypot(to[0] - from[0], to[1] - from[1]) < 4) return;
-    const node = createPath("Linea", `M${round(from[0])} ${round(from[1])} L${round(to[0])} ${round(to[1])}`);
+    const length = Math.hypot(to[0] - from[0], to[1] - from[1]);
+    if (length < 4) return;
+    // A curve bulges to one side of the drag: control points at a quarter and
+    // three quarters, offset perpendicular by a third of the length.
+    const normal = [-(to[1] - from[1]) / length, (to[0] - from[0]) / length];
+    const bulge = length / 3;
+    const d = curve
+      ? `M${round(from[0])} ${round(from[1])} ` +
+        `C${round(from[0] + (to[0] - from[0]) * 0.25 + normal[0] * bulge)} ${round(from[1] + (to[1] - from[1]) * 0.25 + normal[1] * bulge)} ` +
+        `${round(from[0] + (to[0] - from[0]) * 0.75 + normal[0] * bulge)} ${round(from[1] + (to[1] - from[1]) * 0.75 + normal[1] * bulge)} ` +
+        `${round(to[0])} ${round(to[1])}`
+      : `M${round(from[0])} ${round(from[1])} L${round(to[0])} ${round(to[1])}`;
+    const node = createPath(curve ? "Curva" : "Linea", d);
+    node.fill = null;
     commit(addNode(scene, node));
     setSelection([node.id]);
     setTool("select");
@@ -615,9 +666,15 @@ export function createController(root) {
   /* ---------- pointer ---------- */
 
   function onPointerDown(event) {
-    if (!editable) return;
+    if (!editable || root.dataset.copying) return;
     svg.setPointerCapture(event.pointerId);
+    gestureBefore = scene;
     const target = event.target;
+    if (target.dataset.pathCommand !== undefined && mode === "vertex" && selectedId) {
+      const node = selected().node;
+      drag = { kind: "path", id: selectedId, command: Number(target.dataset.pathCommand), offset: Number(target.dataset.pathOffset), d: node.d, transform: nodeFrame(scene, selectedId).world };
+      return;
+    }
 
     // Pan with the middle button or with Space held: Shift belongs to
     // multi-selection, not to panning.
@@ -633,7 +690,7 @@ export function createController(root) {
         removeVertex(Number(target.dataset.vertex));
         return;
       }
-      drag = { kind: "vertex", id: selectedId, index: Number(target.dataset.vertex), node, transform: node.transform, points: node.points.map((point) => [...point]) };
+      drag = { kind: "vertex", id: selectedId, index: Number(target.dataset.vertex), node, transform: nodeFrame(scene, selectedId).world, points: node.points.map((point) => [...point]) };
       return;
     }
     if (target.dataset.edge !== undefined && mode === "vertex" && selectedId) {
@@ -642,8 +699,23 @@ export function createController(root) {
     }
     if (mode === "vertex" && selectedId && tool === "select") {
       const node = selected().node;
+      if (node.kind === "path") {
+        const local = apply(invert(nodeFrame(scene, selectedId).world), scenePoint(event));
+        const commands = pathCommands(node.d);
+        let previous = commands[0].numbers.slice(0, 2);
+        for (let index = 1; index < commands.length; index += 1) {
+          const command = commands[index];
+          const end = command.numbers.slice(-2);
+          if (command.name === "L" && distanceToSegment(local, previous, end) < SNAP_TOLERANCE_PX / viewport[0]) {
+            commands.splice(index, 0, { name: "L", numbers: local.map(round) });
+            commit(patchNode(scene, selectedId, { d: commands.map(c => c.name + c.numbers.join(" ")).join(" ") }));
+            return;
+          }
+          previous = end;
+        }
+      }
       if (node.kind === "polygon") {
-        const inverse = invert(node.transform);
+        const inverse = invert(nodeFrame(scene, node.id).world);
         if (inverse) {
           const local = apply(inverse, scenePoint(event));
           const hit = closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0]);
@@ -658,14 +730,14 @@ export function createController(root) {
     // must reach the canvas, not a handle sitting on the same corner.
     if (target.dataset.corner !== undefined && selectedId && tool === "select") {
       const node = selected().node;
-      drag = { kind: "scale", id: selectedId, corner: Number(target.dataset.corner), transform: node.transform, corners: worldCorners(node), from: scenePoint(event) };
+      drag = { kind: "scale", id: selectedId, corner: Number(target.dataset.corner), transform: nodeFrame(scene, selectedId).world, corners: worldCorners(node), from: scenePoint(event) };
       return;
     }
     if (target.classList.contains("drawing-editor__rotate-handle") && selectedId && tool === "select") {
       const node = selected().node;
       const corners = worldCorners(node);
       const center = [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
-      drag = { kind: "rotate", id: selectedId, transform: node.transform, center, start: Math.atan2(scenePoint(event)[1] - center[1], scenePoint(event)[0] - center[0]) };
+      drag = { kind: "rotate", id: selectedId, transform: nodeFrame(scene, selectedId).world, center, start: Math.atan2(scenePoint(event)[1] - center[1], scenePoint(event)[0] - center[0]) };
       return;
     }
 
@@ -677,7 +749,7 @@ export function createController(root) {
       cutClick(event);
       return;
     }
-    if (tool === "line") {
+    if (tool === "line" || tool === "curve") {
       beginLine(event);
       return;
     }
@@ -701,7 +773,7 @@ export function createController(root) {
     drag = {
       kind: "move",
       from: scenePoint(event),
-      transforms: selection.map((id) => ({ id, transform: findNode(scene, id).node.transform })),
+      transforms: selection.map((id) => ({ id, transform: nodeFrame(scene, id).world })),
     };
   }
 
@@ -728,7 +800,7 @@ export function createController(root) {
       const delta = translation(point[0] - drag.from[0], point[1] - drag.from[1]);
       let next = scene;
       for (const entry of drag.transforms) {
-        next = setTransform(next, entry.id, multiply(delta, entry.transform));
+        next = transformInWorld(next, entry.id, delta, entry.transform);
       }
       scene = next;
       draw();
@@ -742,14 +814,20 @@ export function createController(root) {
       let sy = (point[1] - fixed[1]) / (start[1] - fixed[1]);
       if (!Number.isFinite(sx)) sx = 1;
       if (!Number.isFinite(sy)) sy = 1;
-      scene = setTransform(scene, drag.id, multiply(scaleAbout(fixed, clampFactor(sx), clampFactor(sy)), drag.transform));
+      scene = transformInWorld(scene, drag.id, scaleAbout(fixed, clampFactor(sx), clampFactor(sy)), drag.transform);
       draw();
       return;
     }
     if (drag.kind === "rotate") {
       const point = scenePoint(event);
       const angle = Math.atan2(point[1] - drag.center[1], point[0] - drag.center[0]) - drag.start;
-      scene = setTransform(scene, drag.id, multiply(rotateAbout(drag.center, angle), drag.transform));
+      scene = transformInWorld(scene, drag.id, rotateAbout(drag.center, angle), drag.transform);
+      draw();
+      return;
+    }
+    if (drag.kind === "path") {
+      const local = apply(invert(drag.transform), snapWorld(scenePoint(event), null, -1, event.altKey).point);
+      scene = patchNode(scene, drag.id, { d: movePathPoint(drag.d, drag.command, drag.offset, local) });
       draw();
       return;
     }
@@ -772,7 +850,7 @@ export function createController(root) {
     snapPoint = null;
     if (finished.kind === "create") finishShape();
     else if (finished.kind === "line") finishLine();
-    else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex") {
+    else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex" || finished.kind === "path") {
       drag = null;
       commit(scene);
     } else {
@@ -816,8 +894,8 @@ export function createController(root) {
   /* ---------- keyboard ---------- */
 
   function onKeyDown(event) {
-    if (!editable) return;
-    if (event.target instanceof HTMLInputElement) return;
+    if (!editable || root.dataset.copying || !root.isConnected || document.querySelector("dialog[open]")) return;
+    if (event.target.closest("input, textarea, select, [contenteditable='true']")) return;
     const mod = event.ctrlKey || event.metaKey;
     if (mod && event.key.toLowerCase() === "s") {
       event.preventDefault();
@@ -844,8 +922,18 @@ export function createController(root) {
       cancelPolygon();
       return;
     }
+    if (event.key === "Escape" && drag) {
+      event.preventDefault();
+      scene = gestureBefore;
+      drag = null;
+      snapPoint = null;
+      draw();
+      return;
+    }
     if (event.key === "Escape" && cut) {
       event.preventDefault();
+      if (cutBefore) scene = cutBefore;
+      cutBefore = null;
       cut = null;
       cutCursor = null;
       announce("");
@@ -872,8 +960,9 @@ export function createController(root) {
     if (steps[event.key]) {
       event.preventDefault();
       const [dx, dy] = steps[event.key];
-      const node = selected().node;
-      commit(setTransform(scene, selectedId, multiply(translation(dx, dy), node.transform)));
+      let next = scene;
+      for (const id of selection) next = transformInWorld(next, id, translation(dx, dy));
+      commit(next);
     }
   }
 
@@ -960,19 +1049,19 @@ export function createController(root) {
       const name = input.dataset.style;
       if (name === "fill") input.value = (node && node.fill) || "#e0a327";
       if (name === "stroke") input.value = (node && node.stroke) || "#17150f";
-      if (name === "strokeWidth") input.value = node ? node.strokeWidth : 4;
+      if (name === "strokeWidth") input.value = node?.strokeWidth ?? 4;
       if (name === "opacity") input.value = node ? Math.round(node.opacity * 100) : 100;
       if (name === "no-fill") input.checked = !(node && node.fill);
       if (name === "no-stroke") input.checked = !(node && node.stroke);
-      input.disabled = !editable || !node;
+      input.disabled = !editable || !node || node.kind === "group";
     });
     root.querySelectorAll("[data-style-value]").forEach((output) => {
       const name = output.dataset.styleValue;
-      if (name === "strokeWidth") output.textContent = node ? node.strokeWidth : 4;
+      if (name === "strokeWidth") output.textContent = node?.strokeWidth ?? 4;
       if (name === "opacity") output.textContent = `${node ? Math.round(node.opacity * 100) : 100}%`;
     });
     root.querySelectorAll("[data-palette]").forEach((chip) => {
-      chip.disabled = !editable || !node;
+      chip.disabled = !editable || !node || node.kind === "group";
     });
     const fillSwatch = root.querySelector("[data-testid='drawing-fill-swatch']");
     if (fillSwatch) fillSwatch.style.setProperty("--swatch", (node && node.fill) || "transparent");
@@ -986,9 +1075,10 @@ export function createController(root) {
     const ungroupButton = root.querySelector("[data-drawing-ungroup]");
     if (ungroupButton) ungroupButton.disabled = !editable || !node || node.kind !== "group";
     const nameInput = root.querySelector("[data-node-name]");
-    if (nameInput && node) nameInput.value = node.name;
+    if (nameInput && node && document.activeElement !== nameInput) nameInput.value = node.name;
     const modeButton = root.querySelector("[data-drawing-mode]");
     if (modeButton) {
+      modeButton.disabled = !editable || !node || node.kind === "group" || node.kind === "ellipse";
       modeButton.classList.toggle("btn-selected", mode === "vertex");
       modeButton.setAttribute("aria-pressed", String(mode === "vertex"));
     }
@@ -997,6 +1087,17 @@ export function createController(root) {
   }
 
   function wire() {
+    const grid = root.querySelector("[data-drawing-grid]");
+    grid.addEventListener("click", () => {
+      const on = grid.getAttribute("aria-pressed") !== "true";
+      grid.setAttribute("aria-pressed", String(on));
+      grid.dataset.off = on ? "" : "true";
+      svg.querySelector(".drawing-editor__grid").style.display = on ? "" : "none";
+    });
+    const titleInput = root.querySelector("[data-drawing-title]");
+    if (titleInput) titleInput.addEventListener("input", () => { title = titleInput.value.trim(); refresh(); });
+    root.querySelector("[data-drawing-save-copy]").addEventListener("click", () => save(true));
+    root.querySelector("[data-drawing-reload]").addEventListener("click", () => { allowLeave = true; window.location.assign(window.location.href); });
     root.querySelectorAll("[data-tool]").forEach((button) => {
       button.addEventListener("click", () => setTool(button.dataset.tool));
     });
@@ -1028,16 +1129,16 @@ export function createController(root) {
     if (modeButton) modeButton.addEventListener("click", () => setMode(mode === "vertex" ? "transform" : "vertex"));
 
     root.querySelectorAll("[data-palette]").forEach((chip) => {
-      chip.addEventListener("click", () => applyStyle({ fill: chip.dataset.palette }));
+      chip.addEventListener("click", () => applyStyle(selected().node.kind === "path" ? { stroke: chip.dataset.palette } : { fill: chip.dataset.palette }));
     });
     const fillInput = root.querySelector("[data-style='fill']");
-    if (fillInput) fillInput.addEventListener("input", () => applyStyle({ fill: fillInput.value }));
+    if (fillInput) fillInput.addEventListener("change", () => applyStyle({ fill: fillInput.value }));
     const strokeInput = root.querySelector("[data-style='stroke']");
-    if (strokeInput) strokeInput.addEventListener("input", () => applyStyle({ stroke: strokeInput.value }));
+    if (strokeInput) strokeInput.addEventListener("change", () => applyStyle({ stroke: strokeInput.value }));
     const widthInput = root.querySelector("[data-style='strokeWidth']");
-    if (widthInput) widthInput.addEventListener("input", () => applyStyle({ strokeWidth: Number(widthInput.value) }));
+    if (widthInput) widthInput.addEventListener("change", () => applyStyle({ strokeWidth: Number(widthInput.value) }));
     const opacityInput = root.querySelector("[data-style='opacity']");
-    if (opacityInput) opacityInput.addEventListener("input", () => applyStyle({ opacity: Number(opacityInput.value) / 100 }));
+    if (opacityInput) opacityInput.addEventListener("change", () => applyStyle({ opacity: Number(opacityInput.value) / 100 }));
     const noFill = root.querySelector("[data-style='no-fill']");
     if (noFill) noFill.addEventListener("change", () => applyStyle({ fill: noFill.checked ? null : "#e0a327" }));
     const noStroke = root.querySelector("[data-style='no-stroke']");
@@ -1062,7 +1163,12 @@ export function createController(root) {
     svg.addEventListener("pointerdown", onPointerDown);
     svg.addEventListener("pointermove", onPointerMove);
     svg.addEventListener("pointerup", onPointerUp);
-    svg.addEventListener("pointercancel", onPointerUp);
+    svg.addEventListener("pointercancel", () => {
+      if (gestureBefore) scene = gestureBefore;
+      drag = null;
+      snapPoint = null;
+      draw();
+    });
     svg.addEventListener("dblclick", (event) => {
       if (tool === "polygon" && pendingPolygon) {
         event.preventDefault();
@@ -1074,13 +1180,13 @@ export function createController(root) {
     // clicking a shape targets the body, not the workspace element.
     document.addEventListener("keydown", onKeyDown);
     document.addEventListener("keydown", (event) => {
-      if (event.code === "Space") spaceDown = true;
+      if (event.code === "Space" && (event.target === document.body || event.target === root || event.target === svg)) { spaceDown = true; event.preventDefault(); }
     });
     document.addEventListener("keyup", (event) => {
       if (event.code === "Space") spaceDown = false;
     });
     window.addEventListener("beforeunload", (event) => {
-      if (!isDirty()) return;
+      if (allowLeave || !isDirty()) return;
       event.preventDefault();
       event.returnValue = "";
     });
@@ -1089,7 +1195,13 @@ export function createController(root) {
   return {
     mount() {
       // A read-only specimen keeps the server-rendered markup untouched.
-      if (!editable) return;
+      if (!editable) {
+        if (root.dataset.readonly !== "true") {
+          draw();
+          root.querySelectorAll("button, input").forEach(control => { control.disabled = true; });
+        }
+        return;
+      }
       wire();
       draw();
       refresh();

@@ -6,7 +6,7 @@
    transform applied, so a handle stays the same size on screen. */
 
 import { apply, multiply } from "./geometry.js";
-import { nodeBounds, nodeCenter } from "./scene.js";
+import { nodeBounds, nodeCenter, nodeFrame, pathHandles } from "./scene.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -133,7 +133,7 @@ function overlayElements(scene, view) {
   // multi-selection is shown by the outlines alone.
   if ((view.selection || []).length > 1) return [];
   const node = found;
-  const toView = multiply(view.viewport, node.transform);
+  const toView = multiply(view.viewport, nodeFrame(scene, node.id).world);
   const box = nodeBounds(node);
   const corners = [
     [box.minX, box.minY],
@@ -199,6 +199,20 @@ function overlayElements(scene, view) {
     });
   }
 
+  if (view.mode === "vertex" && node.kind === "path") {
+    const handles = pathHandles(node.d);
+    let anchor = handles[0]?.point;
+    for (const handle of handles) {
+      const point = apply(toView, handle.point);
+      if (handle.control && anchor) {
+        const origin = apply(toView, anchor);
+        elements.push(el("line", { class: "drawing-editor__rotate-stem", x1: origin[0], y1: origin[1], x2: point[0], y2: point[1] }));
+      }
+      elements.push(el("circle", { class: handle.control ? "drawing-editor__curve-control" : "drawing-editor__handle", cx: point[0], cy: point[1], r: 6, "data-path-command": handle.command, "data-path-offset": handle.offset }));
+      if (!handle.control) anchor = handle.point;
+    }
+  }
+
   if (view.cut) {
     const from = apply(view.viewport, view.cut.from);
     const to = apply(view.viewport, view.cut.to);
@@ -248,6 +262,9 @@ export function render(svg, scene, view) {
   const sceneLayer = svg.querySelector("[data-drawing-scene-layer]");
   const overlay = svg.querySelector("[data-drawing-overlay]");
   sceneLayer.setAttribute("transform", matrixAttr(view.viewport));
+  svg.querySelector(".drawing-editor__grid").setAttribute("transform", matrixAttr(view.viewport));
+  svg.querySelector(".drawing-editor__plate").setAttribute("fill", scene.artboard.background);
+  svg.querySelector(".drawing-editor__plate").style.fill = scene.artboard.background;
   sceneLayer.replaceChildren(...scene.nodes.map((node) => shapeElement(node, view)));
   overlay.replaceChildren(...overlayElements(scene, view));
 }

@@ -1,21 +1,23 @@
 {#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True #}
-{#css editorial/DrawingEditor.css, common/Button.css, common/Field.css, common/Icon.css, common/Tooltip.css #}
-{#js editorial/DrawingEditor.js #}
+{#css editorial/DrawingEditor.css, common/Button.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css #}
+{#js common/Dialog.js, editorial/DrawingEditor.js #}
 {% set artboard = scene.artboard if scene else None %}
 {% set objects = scene.nodes if scene else [] %}
-{% set selected = objects[0] if objects else None %}
+{% set selected = objects[0] if objects and objects[0].kind != 'group' else None %}
 <div class="drawing-editor"
      data-drawing-editor
+     data-title="{{ title | e }}"
      {% if drawing_id %}data-drawing-id="{{ drawing_id }}"{% endif %}
      {% if save_url %}data-save-url="{{ save_url }}"{% endif %}
      {% if version %}data-version="{{ version }}"{% endif %}
      {% if not editable %}data-readonly="true"{% endif %}>
-  {% if scene %}<script type="application/json" data-drawing-scene>{{ scene.model_dump_json(by_alias=True) }}</script>{% endif %}
+  {% if scene %}<script type="application/json" data-drawing-scene>{{ scene.model_dump(mode='json', by_alias=True) | tojson }}</script>{% endif %}
   <header class="drawing-editor__bar">
-    <h2 class="drawing-editor__title">{{ title }}</h2>
+    {% if editable %}<input class="drawing-editor__name" data-drawing-title aria-label="Nome del disegno" maxlength="255" value="{{ title | e }}" />{% else %}<h2 class="drawing-editor__title">{{ title | e }}</h2>{% endif %}
     <div class="drawing-editor__commands">
       <common.Button variant="secondary" size="sm" icon="undo-2" disabled={{ not editable }} data-drawing-undo data-testid="drawing-undo">Annulla</common.Button>
       <common.Button variant="secondary" size="sm" icon="redo-2" disabled={{ not editable }} data-drawing-redo data-testid="drawing-redo">Ripeti</common.Button>
+      <common.Button variant="secondary" size="sm" icon="grid-2x2" data-drawing-grid aria-pressed="true">Griglia</common.Button>
       <common.Button variant="primary" size="sm" icon="save" disabled={{ not editable }} data-testid="drawing-save">Salva</common.Button>
     </div>
   </header>
@@ -29,6 +31,15 @@
     per modificarla.
   </p>
   <p class="drawing-editor__error" data-drawing-error role="alert" hidden></p>
+  <div class="drawing-editor__actions" data-drawing-conflict-actions hidden>
+    <common.Button size="sm" variant="secondary" data-drawing-save-copy>Salva come copia</common.Button>
+    <common.Button size="sm" variant="secondary" data-dialog-open="drawing-reload">Ricarica</common.Button>
+  </div>
+  <common.Dialog title="Scarta le modifiche locali?" id="drawing-reload">
+    <p>La versione salvata sostituirà le modifiche non salvate.</p>
+    <common.Button variant="secondary" size="sm" data-dialog-close>Annulla</common.Button>
+    <common.Button variant="danger" size="sm" data-drawing-reload>Scarta e ricarica</common.Button>
+  </common.Dialog>
 
   <div class="drawing-editor__workspace">
     <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno" data-testid="drawing-toolbar">
@@ -49,12 +60,16 @@
         <span class="drawing-editor__tool-label">Cerchio</span>
       </button>
       <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="polygon" data-testid="drawing-tool-polygon">
-        <common.Icon name="spline" size=20 />
+        <common.Icon name="pentagon" size=20 />
         <span class="drawing-editor__tool-label">Poligono</span>
       </button>
       <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="line" data-testid="drawing-tool-line">
         <common.Icon name="pen-tool" size=20 />
         <span class="drawing-editor__tool-label">Linea</span>
+      </button>
+      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="curve" data-testid="drawing-tool-curve">
+        <common.Icon name="spline" size=20 />
+        <span class="drawing-editor__tool-label">Curva</span>
       </button>
       <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="cut" data-testid="drawing-tool-cut">
         <common.Icon name="scissors" size=20 />
@@ -66,12 +81,12 @@
       <svg class="drawing-editor__artboard" viewBox="0 0 {{ artboard.width if artboard else 640 }} {{ artboard.height if artboard else 480 }}"
            role="img" aria-label="Tavola da disegno" data-drawing-artboard>
         <defs>
-          <pattern id="drawing-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-            <path d="M20 0H0V20" fill="none" stroke="var(--line)" stroke-width="1" />
+          <pattern id="drawing-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+            <path d="M10 0H0V10" fill="none" stroke="var(--line)" stroke-width="1" />
           </pattern>
         </defs>
         <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%" />
-        <rect class="drawing-editor__grid" x="0" y="0" width="100%" height="100%" fill="url(#drawing-grid)" />
+        <rect class="drawing-editor__grid" x="-100000" y="-100000" width="200000" height="200000" fill="url(#drawing-grid)" />
         {# The scene layer is rebuilt by the client from the document; the
            server-rendered shapes here are the no-JS first paint. #}
         <g class="drawing-editor__scene" data-drawing-scene-layer>
@@ -105,9 +120,9 @@
           {% for node in objects %}
           <li class="drawing-editor__layer{{ ' is-selected' if node.id == (selected.id if selected else None) }}" data-node-id="{{ node.id }}">
             <input class="drawing-editor__layer-check" type="checkbox" {% if node.visible %}checked{% endif %}
-                   aria-label="Mostra {{ node.name }}" disabled={{ not editable }} />
+                   aria-label="Mostra {{ node.name | e }}" disabled={{ not editable }} />
             <button type="button" class="drawing-editor__layer-name" aria-pressed="{{ 'true' if node.id == (selected.id if selected else None) else 'false' }}"
-                    data-select-node="{{ node.id }}" data-testid="drawing-layer">{{ node.name }}</button>
+                    data-select-node="{{ node.id }}" data-testid="drawing-layer">{{ node.name | e }}</button>
           </li>
           {% else %}
           <li class="drawing-editor__empty hint">Nessun oggetto</li>
@@ -134,7 +149,7 @@
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Nome</span>
           <input class="drawing-editor__name" type="text" data-node-name maxlength="120"
-                 value="{{ selected.name if selected else '' }}" aria-label="Nome dell’oggetto"
+                 value="{{ (selected.name if selected else '') | e }}" aria-label="Nome dell’oggetto"
                  disabled={{ not editable }} />
         </div>
         <div class="drawing-editor__field">

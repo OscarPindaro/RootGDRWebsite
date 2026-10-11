@@ -74,6 +74,9 @@
               <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="line">
                 <span class="drawing-editor__tool-glyph">✎</span><span class="drawing-editor__tool-label">Linea</span>
               </button>
+              <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="curve">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 18 C3 3 21 3 21 18"/></svg><span class="drawing-editor__tool-label">Curva</span>
+              </button>
               <button class="drawing-editor__tool" type="button" aria-pressed="false" data-tool="cut">
                 <span class="drawing-editor__tool-glyph">✂</span><span class="drawing-editor__tool-label">Taglia</span>
               </button>
@@ -82,8 +85,8 @@
             <div class="drawing-editor__canvas">
               <svg class="drawing-editor__artboard" viewBox="0 0 640 480" role="img" aria-label="Tavola da disegno">
                 <defs>
-                  <pattern id="drawing-grid" width="20" height="20" patternUnits="userSpaceOnUse">
-                    <path d="M20 0H0V20" fill="none" stroke="var(--line)" stroke-width="1"/>
+                  <pattern id="drawing-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                    <path d="M10 0H0V10" fill="none" stroke="var(--line)" stroke-width="1"/>
                   </pattern>
                 </defs>
                 <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%"/>

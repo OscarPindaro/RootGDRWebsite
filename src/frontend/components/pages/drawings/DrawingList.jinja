@@ -1,6 +1,6 @@
-{#def drawings, current_user=None #}
+{#def drawings, current_user=None, total=None, page=1 #}
 {#css common/Button.css, common/EmptyState.css, common/Icon.css, common/Tooltip.css, editorial/Crumbs.css, editorial/Ledger.css, editorial/Masthead.css, editorial/Row.css, layout/Page.css, common/Alert.css, common/Avatar.css, common/Mark.css, common/Menu.css, common/RequestFallback.css, common/SaveIndicator.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css #}
-{% set count = drawings | length %}
+{% set count = total if total is not none else drawings | length %}
 {% set eyebrow_text = "Archivio · " ~ count ~ (" disegno" if count == 1 else " disegni") %}
 <layout.Page title="Disegni" current_user={{ current_user }} active="disegni" wide={{ True }}>
   <editorial.Masthead
@@ -12,13 +12,13 @@
   </editorial.Masthead>
 
   {% if drawings %}
-  <editorial.Ledger :columns="['Pos.', 'Nome', 'Forme', 'Aggiornato']">
+  <editorial.Ledger :columns="['Pos.', 'Oggetti', 'Nome', 'Aggiornato']">
     {% for drawing in drawings %}
     <editorial.LedgerRow
       :href="'/drawings/' ~ drawing.id"
       :number="'%02d' | format(loop.index)"
-      :title="drawing.title"
-      :summary="drawing.node_count ~ (' forma' if drawing.node_count == 1 else ' forme')"
+      :title="drawing.title | e"
+      :meta="drawing.node_count ~ (' oggetto' if drawing.node_count == 1 else ' oggetti')"
       :tag="drawing.updated_at | time" />
     {% endfor %}
   </editorial.Ledger>
@@ -26,4 +26,8 @@
   <common.EmptyState icon="spline" title="Nessun disegno"
                      description="Crea un disegno per cominciare a comporre una tavola geometrica." />
   {% endif %}
+  <nav aria-label="Pagine dei disegni">
+    {% if page > 1 %}<a href="/drawings?page={{ page - 1 }}">Precedente</a>{% endif %}
+    {% if total is not none and page * 24 < total %}<a href="/drawings?page={{ page + 1 }}">Successiva</a>{% endif %}
+  </nav>
 </layout.Page>

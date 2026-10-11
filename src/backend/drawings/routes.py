@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..auth.dependencies import get_current_admin_user
@@ -27,17 +27,6 @@ from .service import (
 router = APIRouter(prefix="/api/drawings", tags=["drawings"])
 
 
-def _summary(model: DrawingModel) -> DrawingSummary:
-    return DrawingSummary(
-        id=model.id,
-        title=model.title,
-        node_count=node_count_of(model),
-        version=model.version,
-        created_at=model.created_at,
-        updated_at=model.updated_at,
-    )
-
-
 def _response(model: DrawingModel) -> DrawingResponse:
     return DrawingResponse(
         id=model.id,
@@ -62,13 +51,13 @@ async def create_drawing_route(
 
 @router.get("/", response_model=ListResponse[DrawingSummary])
 async def list_drawings_route(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(24, ge=1, le=100),
     user: User = Depends(get_current_admin_user),
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> ListResponse[DrawingSummary]:
     """List every drawing (admin only)."""
-    return ListResponse(
-        data=[_summary(model) for model in await list_drawings(db, user)]
-    )
+    return ListResponse(data=await list_drawings(db, user, page, page_size))
 
 
 @router.get("/{drawing_id}", response_model=DrawingResponse)

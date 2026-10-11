@@ -1,15 +1,15 @@
 {#def drawing, scene, current_user=None, crumbs #}
-{#css common/Button.css, common/Icon.css, common/Tooltip.css, editorial/Crumbs.css, editorial/DrawingEditor.css, editorial/Masthead.css, layout/Page.css, common/Alert.css, common/Avatar.css, common/Mark.css, common/Menu.css, common/RequestFallback.css, common/SaveIndicator.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css #}
-<layout.Page title={{ drawing.title }} current_user={{ current_user }} active="disegni" wide={{ True }}>
+{#css common/Button.css, common/Icon.css, common/Tooltip.css, editorial/Crumbs.css, editorial/DrawingEditor.css, editorial/Masthead.css, layout/Page.css, common/Alert.css, common/Avatar.css, common/Mark.css, common/Menu.css, common/RequestFallback.css, common/SaveIndicator.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css, common/Dialog.css #}
+<layout.Page title={{ drawing.title | e }} current_user={{ current_user }} active="disegni" wide={{ True }}>
   <editorial.Masthead
-    title={{ drawing.title }}
+    title={{ drawing.title | e }}
     :eyebrow="'Tavola ' ~ (scene.artboard.width | int) ~ ' × ' ~ (scene.artboard.height | int)"
     :crumbs="crumbs">
     <common.Button variant="secondary" size="sm" icon="arrow-left" href="/drawings">Elenco</common.Button>
   </editorial.Masthead>
 
   <editorial.DrawingEditor
-    title={{ drawing.title }}
+    title={{ drawing.title | e }}
     :drawing_id="drawing.id"
     :version="drawing.version"
     :scene="scene"

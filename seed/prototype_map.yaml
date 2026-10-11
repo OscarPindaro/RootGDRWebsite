@@ -89,6 +89,7 @@ entries:
       toolbar:
         app: ".drawing-editor__tools"
         prototype: ".drawing-editor__tools"
+        hidden_on: [phone]
       artboard:
         app: ".drawing-editor__artboard"
         prototype: ".drawing-editor__artboard"

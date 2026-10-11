@@ -396,3 +396,32 @@ test("depthOf reports the nesting level", () => {
   assert.equal(depthOf(scene.nodes, "a"), 2);
   assert.equal(depthOf(scene.nodes, "missing"), 0);
 });
+
+test("curve controls retain commands when edited", async () => {
+  const { pathHandles, movePathPoint } = await import("../../src/frontend/js/drawings/scene.js");
+  const d = "M0 0 C10 20 30 20 40 0";
+  assert.equal(pathHandles(d).length, 4);
+  assert.equal(pathHandles(d).filter(h => h.control).length, 2);
+  assert.equal(movePathPoint(d, 1, 0, [10, 30]), "M0 0 C10 30 30 20 40 0");
+});
+
+test("nested frames, hit tests and world translation agree", async () => {
+  const { nodeFrame, transformInWorld } = await import("../../src/frontend/js/drawings/scene.js");
+  const scene = sceneWith([{ kind: "group", id: "g", name: "Group", transform: [2, 0, 0, 2, 100, 20], opacity: 1, visible: true, nodes: [triangle("a")] }]);
+  assert.deepEqual(nodeFrame(scene, "a").world, [2, 0, 0, 2, 100, 20]);
+  assert.equal(nodeAt(scene, [200, 60]).id, "a");
+  const moved = transformInWorld(scene, "a", translation(20, 0));
+  assert.deepEqual(moved.nodes[0].nodes[0].transform, [1, 0, 0, 1, 10, 0]);
+  assert.equal(nodeAt(patchNode(scene, "g", {visible: false}), [200, 60]), null);
+});
+
+test("nonconsecutive grouping preserves stacking by refusing", () => {
+  assert.equal(groupNodes(sceneWith([triangle("a"), triangle("b"), triangle("c")]), ["a", "c"]), null);
+});
+
+test("all original cut edges keep their visibility", () => {
+  const node = {...triangle("a"), points: SQUARE, edgeVisible: null};
+  const result = cutNode(sceneWith([node]), "a", 0, 2);
+  assert.deepEqual(result.scene.nodes[1].edgeVisible, [true, true, false]);
+  assert.equal(cutNode(sceneWith([node]), "a", 0, 20), null);
+});

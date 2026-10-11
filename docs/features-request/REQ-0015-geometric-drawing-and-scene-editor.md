@@ -214,9 +214,34 @@ need editable name/title text; font and layout choices remain open.
   explicitly published snapshots; export dimensions and card print dimensions,
   margins, typography and printing workflow.
 
+## First workspace milestone
+
+The approved first milestone is a standalone, admin-only **Disegni** area at
+`/drawings`, independent of worlds. It uses native SVG and plain JavaScript in
+the existing JinjaX shell, and a typed, versioned JSON document in PostgreSQL.
+
+Saving is explicit: a Save button and Ctrl/Cmd+S, with stale-write rejection,
+local work retained on failure, and an explicit Save as copy after a conflict.
+Undo history is session-local. Desktop authoring includes polygon vertices,
+individual outlines, straight chord cuts, local groups, lines/polylines and
+cubic Bézier handles. Grid, vertex, midpoint and path-endpoint snapping are
+placement aids, not persistent attachments. Cut pieces edit independently.
+Circles remain ellipses; there is no circle-to-path conversion.
+
+Phone support is viewing the artwork, not authoring it. The initial palette is
+a curated starting point with custom colours and per-object opacity.
+
+Linked libraries, world-local assets/promotion, anchors, skeletons/IK, publishing
+into portraits/documents, downloads, printable cards, autosave and crash recovery
+remain outside this milestone. They remain part of the parent request.
+See the [drawing workspace manual](../features-implemented/drawing-workspace.md)
+for the native format, interaction contract and limits.
+
 ## Tracking
 
 Initial intake key: `REQ-0015/T01`. Registered in Vikunja project **Root GDR**
 (project ID **2**), task ID **2**; title, project and description confirmed by
-read-back on 2026-10-10. No implementation-ticket decomposition, assignment,
-priority or release is selected. Current ticket state belongs in Vikunja.
+read-back on 2026-10-10. The approved workspace plan uses local implementation
+keys `REQ-0015/T02` through `REQ-0015/T08`; these do not represent newly registered
+Vikunja task IDs. No assignment, priority or release is selected here. Current
+ticket state belongs in Vikunja.

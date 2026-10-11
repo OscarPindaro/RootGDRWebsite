@@ -1,123 +1,89 @@
 # Drawing workspace
 
-The drawing editor's workspace and its persistence, opened by
-`REQ-0015/T01`. An admin-only area stores geometric artwork as a native, typed
-document; the drawing tools themselves arrive in later tickets.
+An admin-only **Disegni** area for authoring editable geometric illustrations.
+It delivers the first workspace milestone of REQ-0015, not the later asset
+library, skeleton, publishing or export capabilities.
 
 ## What it does
 
-- **Disegni** is an admin-only area in the global navigation: a ledger of saved
-  drawings (name, object count, last update), a command to create a blank one,
-  and the editor that reopens a stored document.
-- `editorial.DrawingEditor` composes the whole workspace: a tool rail on the
-  left, the artboard in the middle, layers and properties on the right.
-- **Drawing.** Triangles, rectangles, circles and point-placed polygons are
-  created by dragging (or, for a polygon, clicking each vertex and pressing
-  Enter); the line tool creates a straight open path. A shape is selected by
-  clicking it or its layer, moved by dragging, scaled by a corner handle and
-  rotated by the handle above the selection. `Ctrl`/`Cmd`+`D` duplicates,
-  `Del` deletes, the arrow keys nudge, and the inspector reorders the object.
-- **Styling.** A twelve-colour palette plus a custom fill and stroke colour,
-  stroke width, opacity, and independent "no fill"/"no stroke" switches.
-- **Vertex editing.** The `Vertici` mode shows a handle per vertex and a toggle
-  per edge. Clicking an edge inserts a vertex on it; dragging a handle moves the
-  vertex; `Alt`+click removes one (never below three); the midpoint toggle hides
-  that edge's outline while the fill stays closed, which is how adjoining body
-  parts avoid a black seam. A move snaps to the grid and to the polygon's other
-  vertices within a screen-space tolerance, with a visible marker; `Alt`
-  bypasses the snap.
-- **Undo/redo.** `Ctrl`/`Cmd`+`Z` and `Ctrl`/`Cmd`+`Shift`+`Z`, or the toolbar
-  buttons. One completed drag is one step; panning, zooming and selection are
-  not steps.
-- **Layers.** The object list is rebuilt from the document on every change; a
-  layer can be hidden (it disappears from the artboard but stays in the list)
-  and selecting a row selects the shape.
-- **Straight cut.** The `Taglia` tool takes two points on the polygon's
-  boundary (clicking an edge inserts the vertex there), previews the chord and
-  splits the shape. The chord must stay inside and yield two valid polygons, so
-  adjacent vertices, coincident points and chords that leave the shape are
-  refused with a message. The piece that kept the original id stays selected,
-  the new piece sits right after it, and the shared cut edge starts hidden so
-  the silhouette is unchanged. The whole cut is one undo step.
-- **Grouping.** `Shift`+click selects several shapes; `Raggruppa` nests them
-  into one group, which the layer list shows indented. The group takes an
-  identity transform, so grouping never moves anything, and moving, scaling or
-  rotating the group moves its children with it (a click inside a selected
-  group drags the group, not the child under it). `Separa` dissolves the group,
-  composing each child's transform with the group's so nothing moves. The
-  format's nesting limit is enforced with a message. Objects can be renamed.
-- **Explicit save.** The Save button and `Ctrl`/`Cmd`+`S` send the whole
-  document with the version it was read at. The page's save indicator reports
-  dirty, saving and saved; a failed save says so and never claims success; a
-  conflicting save (HTTP 409) is reported and the local document is kept.
-  Unsaved changes warn on unload.
-- Below the phone breakpoint the workspace stacks, the tools scroll
-  horizontally, and the canvas becomes a preview with a note that drawing needs
-  a computer.
+- `/drawings` lists saved drawings in pages of 24; create a blank drawing,
+  rename it in the workspace and save explicitly with **Salva** or Ctrl/Cmd+S.
+- Drag triangles, rectangles and ellipses onto the artboard. Click polygon
+  vertices and press Enter to finish. Drag open lines or cubic Bézier curves.
+- Select through the canvas or object list; Shift selects multiple objects.
+  Move, scale, rotate, duplicate, delete and reorder objects. Arrow keys nudge.
+- **Vertici** edits polygon vertices or path endpoints/control handles. Click a
+  polygon edge to insert a point; Alt-click a vertex to remove it (minimum
+  three). Click a straight path segment to insert an editable polyline point.
+- Polygon edge-midpoint controls hide individual outlines without losing fill.
+  **Taglia** selects two boundary points and splits along an internal straight
+  chord. Pieces edit independently; their new shared outlines start hidden.
+  Escape cancels a pending cut, including temporary inserted boundary points.
+- **Raggruppa** combines consecutive sibling objects; **Separa** composes the
+  parent transform into the children. Nested child edits use the complete
+  parent transform. Hidden groups are excluded from canvas selection.
+- A curated twelve-colour palette, custom fill/stroke colours, width and opacity
+  support angular silhouettes and faint details. For paths, palette choices
+  change the stroke colour.
+- Grid, visible vertices, polygon midpoints and path endpoints provide snapping;
+  Alt bypasses it. **Griglia** toggles the grid and its snapping. Wheel zooms;
+  Space-drag or the middle mouse button pans.
+- Undo/redo is in-memory and bounded to 60 completed operations. A drag or
+  property change is one step; view changes and selection are excluded.
+- A stale save returns 409 and retains local work. **Salva come copia** creates
+  a separate document; **Ricarica** asks before discarding local edits. Edits
+  made during a normal save remain dirty after its earlier snapshot succeeds.
+  Unloading a dirty editor prompts before leaving.
+- Phone displays the complete artwork with editing controls disabled. Authoring
+  targets mouse and keyboard.
 
 ## How it is built
 
-- `src/backend/drawings/` is a self-contained feature: `models.py` (one
-  `drawings` table with a JSONB `document`), `schemas.py` (the native document
-  and the transport schemas), `service.py`, `routes.py` (JSON API under
-  `/api/drawings`) and `views.py` (the HTML pages under `/drawings`).
-- The native document is an ordered tree of `polygon`, `ellipse`, `path` and
-  `group` nodes with stable ids, local affine transforms and styles, plus the
-  artboard. Every value is validated on the way in: format version, shape tags,
-  numbers, matrices, colours and geometry. Unknown fields and unknown versions
-  are rejected rather than dropped, so a document written by a future version
-  cannot silently lose data.
-- The whole document is replaced on save, because a nested mutation is invisible
-  to SQLAlchemy. `expected_version` is **required** on an update: a drawing is
-  written as one value, so a missing precondition would silently overwrite
-  another session's work. The row's `version` is the optimistic lock and is
-  unrelated to the document's own `schema_version`.
-- Authoring is admin-only in the dependency *and* in the service, so a guessed
-  drawing id cannot bypass it.
-- **The client is a small module set** in `src/frontend/js/drawings/`:
-  `geometry.js` (affine matrices, polygon tests, bounds), `scene.js` (document
-  operations and the undo history), `render.js` (the SVG projection of the
-  document plus the selection overlay), `controller.js` (tools, pointer and
-  keyboard interaction, styles, the save lifecycle) and `index.js` (the entry).
-  It is bundled by esbuild into `static/js/drawings.js` and loaded on demand by
-  `editorial/DrawingEditor.js`, so a reading page never downloads it.
-- The renderer is a pure projection: the scene layer carries the viewport
-  transform, and the overlay is drawn in artboard coordinates with the transform
-  applied, so a handle keeps its size while zooming. A hidden polygon edge is
-  rendered as contiguous outline runs, so the fill stays closed.
-- `editorial/DrawingEditor.jinja` renders the workspace from a `SceneDocument`
-  and embeds it as JSON; the server-rendered shapes are the no-JS first paint
-  and the controller replaces them on mount.
-- `editorial/DrawingEditor.css` owns the three-column composition. The two fixed
-  rails, the artboard proportion, the swatch and the layer checkbox are role
-  tokens in `main.css`.
-- `prototypes/devin-prototype/drawings.html` and `drawing-editor.html` are the
-  static visual reference, with `drawing.css` mirroring the component's classes.
-  `seed/prototype_map.yaml` maps `/drawings` and `/drawings/<id>` to them.
-- The tool icons are server-rendered from the registry; the new names were added
-  to `tools/build_icons.mjs` and generated with `npm run icons`.
-- The algorithms are covered by pure tests under `tests/js/`, run with Node's
-  built-in test runner (`npm run test:drawings`).
+- `src/backend/drawings/` owns models, validation, services, JSON routes and HTML
+  views. The JSON API is `/api/drawings/`; every route and service enforces the
+  site-admin boundary. Summaries select metadata and a database object count,
+  without loading every scene into the list.
+- Alembic creates a `drawings` table with creator, timestamps, optimistic version
+  and a JSONB native document. A feature-local `SceneJSON` adapter keeps the
+  model attribute typed as `SceneDocument`; a save replaces the complete value.
+- Format version 1 stores an artboard and ordered polygon/ellipse/path/group
+  nodes with stable node IDs, names, affine transforms, styles and visibility.
+  Polygon vertices are ordered coordinate pairs; edge visibility follows each
+  outgoing edge. Paths use absolute M/L/C/Z commands. UI selection, viewport,
+  handles and guides are not saved as artwork.
+- Validation rejects unknown fields/versions, duplicate IDs, malformed paths,
+  non-finite/singular transforms and self-intersecting/zero-area polygons.
+  Limits are 2,000 nodes, eight nested group levels, 256 points per polygon,
+  512 commands/8,000 characters per path, and a 1 MiB native document.
+- Native format version and database update version are distinct. Updates
+  require the version read by the client; SQLAlchemy and the transaction
+  dependency detect simultaneous writers and return 409.
+- JinjaX supplies the shell, controls and safely escaped scene JSON. The lazy
+  esbuild bundle has geometry, scene/history, SVG rendering and controller
+  modules under `src/frontend/js/drawings/`. SVG elements are created through
+  namespaced DOM APIs. The renderer composes parent matrices for child handles
+  and renders partial polygon outlines as contiguous runs.
+- UI styling belongs to `editorial/DrawingEditor.css`; role tokens live in
+  `main.css`. `drawing-editor.html` and `drawings.html` are the static visual
+  references mapped by `seed/prototype_map.yaml`.
 
 ## Used by
 
-- `pages.drawings.DrawingList` and `pages.drawings.DrawingDetail`.
-- `pages.showcase.Showcase` — a read-only specimen.
+`pages.drawings.DrawingList`, `pages.drawings.DrawingDetail`, and a read-only
+specimen in the component showcase.
 
 ## Limits
 
-- **Bézier curves are not here yet** (`T08`); the `Linea` tool draws a straight
-  open path.
-- A cut splits along a straight chord only; a curved cut is not offered. The
-  two pieces are independent afterwards — the shared boundary is not welded.
-- A group is only as deep as the format allows, and only siblings can be
-  grouped; nodes at different levels are refused with a message.
-- Snapping covers the grid and a polygon's own vertices; edge midpoints,
-  attachment points and other objects are not snap targets yet.
-- Scaling keeps the dragged corner proportional-ish but does not snap to a
-  ratio; rotation has no angle snapping.
-- Pan/zoom exists (wheel to zoom, `Space`+drag or the middle button to pan) but
-  there is no "fit" control and no zoom readout.
-- The layer list is a flat outline of the tree (one indented row per node); it
-  is not a collapsible tree yet.
-- Phone is a preview, not a drawing surface.
+- No linked scenes/libraries, anchors, skeletons, portrait/document publishing,
+  PNG/SVG downloads, card printing, animation, imports or clipping.
+- Explicit saving only: no autosave, offline/crash recovery or persisted undo.
+  A failed/ambiguous response does not claim successful persistence; inspect or
+  reload server state before treating local work as durable.
+- Ellipses remain ellipses, cuts are straight, boundaries are not welded, and
+  polyline/cubic editing does not offer a full path-boolean toolset.
+- Groups must be consecutive siblings to preserve overlap order. The layer list
+  is an indented outline, not a collapsible tree. Group styling is not exposed.
+- No angle/aspect-ratio snapping or zoom readout/fit control. Numeric coordinate
+  authoring and stable vertex IDs for future linked-asset overrides are deferred.
+- JavaScript is required for complete interactive rendering, including groups;
+  the server-rendered first paint is not a complete no-JavaScript renderer.
