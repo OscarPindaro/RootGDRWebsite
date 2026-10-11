@@ -8,7 +8,15 @@ library, skeleton, publishing or export capabilities.
 
 - `/drawings` lists saved drawings in pages of 24; create a blank drawing,
   rename it in the workspace and save explicitly with **Salva** or Ctrl/Cmd+S.
-- Drag triangles, rectangles and ellipses onto the artboard. Click polygon
+- Drag locked triangles/rectangles onto the artboard. The triangle split button
+  keeps isosceles as its primary action; its menu offers equilateral and right
+  triangles with the right angle on either side. Rectangle offers square; polygon
+  offers a locked regular preset with 3–32 sides (default six). Submenu choices
+  select a tool, not an object; creation remains a bounding-rectangle drag.
+  Direct preset edits retain the invariant; equilateral/regular vertices scale
+  radially, isosceles retains its centred apex, rectangles keep right angles.
+  Topology edits/cuts require explicit unlocking. Existing free artwork stays free.
+  Drag ellipses onto the artboard. Click polygon
   vertices and double-click or press Enter to finish. Drag open lines or cubic
   Bézier curves.
 - Select through the canvas or connected scene tree; Shift selects multiple

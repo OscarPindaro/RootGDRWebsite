@@ -23,6 +23,8 @@ import {
   createPath,
   createPolygon,
   createRect,
+  createPreset,
+  editPresetVertex,
   cutNode,
   duplicateNode,
   findNode,
@@ -58,7 +60,14 @@ const SHAPE_NAMES = {
   square: "Rettangolo",
   circle: "Cerchio",
   polygon: "Poligono",
+  regular: "Poligono regolare",
   line: "Linea",
+};
+
+const PRESET_LABELS = {
+  triangle_isosceles: "Isoscele", triangle_equilateral: "Equilatero",
+  triangle_right_right: "Rettangolo · angolo a destra", triangle_right_left: "Rettangolo · angolo a sinistra",
+  rectangle: "Rettangolo", square: "Quadrato", regular_polygon: "Poligono regolare",
 };
 
 function clamp(value, low, high) {
@@ -101,6 +110,8 @@ export function createController(root) {
   let selectedId = null;
   let tool = "select";
   let mode = "select";
+  let creationPreset = null;
+  let regularSides = 6;
   let pathPoint = null;
   let viewport = [1, 0, 0, 1, 0, 0];
   let drag = null;
@@ -583,8 +594,9 @@ export function createController(root) {
     // Vertex handles belong to the select tool; a tool switch leaves that mode.
     mode = next === "select" ? defaultMode() : "select";
     root.querySelectorAll("[data-tool]").forEach((button) => {
-      button.classList.toggle("is-selected", button.dataset.tool === next);
-      button.setAttribute("aria-pressed", String(button.dataset.tool === next));
+      const active = button.dataset.tool === next || (next === "regular" && button.dataset.tool === "polygon");
+      button.classList.toggle("is-selected", active);
+      button.setAttribute("aria-pressed", String(active));
     });
     draw();
   }
@@ -624,12 +636,12 @@ export function createController(root) {
   }
 
   function beginShape(event) {
-    drag = { kind: "create", tool, from: scenePoint(event), to: scenePoint(event) };
+    drag = { kind: "create", tool, preset: creationPreset, sides: regularSides, from: scenePoint(event), to: scenePoint(event) };
   }
 
   function finishShape() {
     if (!drag) return;
-    const { tool: shape } = drag;
+    const { tool: shape, preset, sides } = drag;
     const from = snapWorld(drag.from, null, -1, false).point;
     const to = snapWorld(drag.to, null, -1, false).point;
     drag = null;
@@ -640,10 +652,8 @@ export function createController(root) {
     if (maxX - minX < 4 || maxY - minY < 4) return;
     const name = SHAPE_NAMES[shape] || "Forma";
     let node = null;
-    if (shape === "triangle") {
-      node = createPolygon(name, [[minX, maxY], [maxX, maxY], [(minX + maxX) / 2, minY]]);
-    } else if (shape === "square") {
-      node = createRect(name, [minX, minY], [maxX, maxY]);
+    if (preset) {
+      node = createPreset(preset, [minX, minY], [maxX, maxY], sides);
     } else if (shape === "circle") {
       node = createEllipse(name, [(minX + maxX) / 2, (minY + maxY) / 2], (maxX - minX) / 2, (maxY - minY) / 2);
     }
@@ -905,7 +915,7 @@ export function createController(root) {
       const snapped = snapWorld(scenePoint(event), drag.node, drag.index, event.altKey);
       snapPoint = snapped.snapped ? snapped.point : null;
       const local = apply(inverse, snapped.point);
-      const points = drag.points.map((point, index) => (index === drag.index ? [round(local[0]), round(local[1])] : point));
+      const points = editPresetVertex(drag.node, drag.index, [round(local[0]), round(local[1])]);
       if (!validPolygon(points)) return;
       scene = patchNode(scene, drag.id, { points });
       draw();
@@ -962,7 +972,7 @@ export function createController(root) {
   /* ---------- keyboard ---------- */
 
   function onKeyDown(event) {
-    if (!editable || root.dataset.copying || !root.isConnected || !root.contains(document.activeElement) || document.querySelector("dialog[open]")) return;
+    if (!editable || event.defaultPrevented || root.dataset.copying || !root.isConnected || !root.contains(document.activeElement) || document.querySelector("dialog[open]") || root.querySelector("[data-menu]:popover-open")) return;
     const mod = event.ctrlKey || event.metaKey;
     if (mod && event.key.toLowerCase() === "s") {
       event.preventDefault();
@@ -1145,7 +1155,16 @@ export function createController(root) {
   };
 
   for (const name of [...Object.keys(SHAPE_NAMES), "curve", "cut"]) {
-    actions[`tool-${name}`] = { label: SHAPE_NAMES[name] || (name === "curve" ? "Curva" : "Taglia"), enabled: () => name !== "cut" || (selection.length === 1 && selected()?.node.kind === "polygon" && !selected().node.constraint), run: () => setTool(name) };
+    actions[`tool-${name}`] = { label: SHAPE_NAMES[name] || (name === "curve" ? "Curva" : "Taglia"), enabled: () => name !== "cut" || (selection.length === 1 && selected()?.node.kind === "polygon" && !selected().node.constraint), run: () => {
+      creationPreset = {triangle:"triangle_isosceles", square:"rectangle", regular:"regular_polygon"}[name] || null;
+      setTool(name);
+    } };
+  }
+  for (const [kind, label] of Object.entries(PRESET_LABELS)) {
+    actions[`preset-${kind}`] = { label, enabled: () => true, run: () => {
+      creationPreset = kind;
+      setTool(kind.startsWith("triangle_") ? "triangle" : ["square", "rectangle"].includes(kind) ? "square" : "regular");
+    } };
   }
 
   function canExecute(id) {
@@ -1217,9 +1236,11 @@ export function createController(root) {
     const selectButton = root.querySelector("[data-tool='select']");
     selectButton.classList.toggle("btn-selected", tool === "select" && mode === "select");
     selectButton.setAttribute("aria-pressed", String(tool === "select" && mode === "select"));
-    root.querySelector("[data-drawing-mode-label]").textContent = tool === "select" ? {select:"Seleziona", vertex:"Modifica forma", transform:"Trasforma"}[mode] : SHAPE_NAMES[tool] || (tool === "curve" ? "Curva" : "Taglia");
+    root.querySelector("[data-drawing-mode-label]").textContent = tool === "select" ? {select:"Seleziona", vertex:"Modifica forma", transform:"Trasforma"}[mode] : PRESET_LABELS[creationPreset] || SHAPE_NAMES[tool] || (tool === "curve" ? "Curva" : "Taglia");
+    root.querySelector("[data-regular-options]").hidden = tool !== "regular";
+    root.querySelectorAll("[data-drawing-preset]").forEach(button => { button.disabled = !canExecute(`preset-${button.dataset.drawingPreset}`); });
     const constraint = root.querySelector("[data-drawing-constraint]");
-    constraint.textContent = node?.constraint ? "Geometria vincolata" : "Geometria libera";
+    constraint.textContent = node?.constraint ? `Geometria vincolata · ${PRESET_LABELS[node.constraint.kind] || "Cerchio"}` : "Geometria libera";
     root.querySelector("[data-drawing-unlock]").hidden = !node?.constraint;
     const hint = root.querySelector("[data-testid='drawing-inspector-hint']");
     if (hint) hint.hidden = Boolean(node);
@@ -1251,6 +1272,15 @@ export function createController(root) {
       const id = button.dataset.tool === "select" ? "select" : `tool-${button.dataset.tool}`;
       button.dataset.drawingAction = id;
       button.addEventListener("click", () => execute(id));
+    });
+    root.querySelectorAll("[data-drawing-preset]").forEach(button => {
+      button.dataset.drawingAction = `preset-${button.dataset.drawingPreset}`;
+      button.addEventListener("click", () => execute(button.dataset.drawingAction));
+    });
+    root.querySelector("[data-regular-sides]").addEventListener("change", event => {
+      const value = Number(event.target.value);
+      if (Number.isInteger(value) && value >= 3 && value <= 32) regularSides = value;
+      else { event.target.value = regularSides; announce("Scegli da 3 a 32 lati."); }
     });
     const bindings = {
       "[data-drawing-undo]": "undo", "[data-drawing-redo]": "redo", "[data-testid='drawing-save']": "save",

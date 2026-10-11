@@ -363,6 +363,68 @@ export function createRect(name, from, to, fill = "#e0a327") {
   );
 }
 
+export function createPreset(kind, from, to, sides = 6) {
+  let width = Math.abs(to[0] - from[0]), height = Math.abs(to[1] - from[1]);
+  const x = Math.min(from[0], to[0]), y = Math.min(from[1], to[1]);
+  if (![x, y, width, height].every(Number.isFinite) || width < 0.1 || height < 0.1) return null;
+  let node;
+  if (kind === "rectangle" || kind === "square") {
+    if (kind === "square") width = height = Math.min(width, height);
+    node = createRect(kind === "square" ? "Quadrato" : "Rettangolo", [x, y], [x + width, y + height]);
+  } else if (kind.startsWith("triangle_")) {
+    if (kind === "triangle_equilateral") {
+      width = Math.min(width, 2 * height / Math.sqrt(3));
+      height = width * Math.sqrt(3) / 2;
+    }
+    const tip = kind === "triangle_right_right" ? x + width : kind === "triangle_right_left" ? x : x + width / 2;
+    node = createPolygon("Triangolo", [[x, y + height], [x + width, y + height], [tip, y]]);
+  } else if (kind === "regular_polygon") {
+    if (!Number.isInteger(sides) || sides < 3 || sides > 32) return null;
+    const radius = Math.min(width, height) / 2;
+    node = createPolygon("Poligono regolare", Array.from({length:sides}, (_, index) => {
+      const angle = -Math.PI / 2 + 2 * Math.PI * index / sides;
+      return [x + width / 2 + radius * Math.cos(angle), y + height / 2 + radius * Math.sin(angle)];
+    }));
+  } else return null;
+  node.constraint = {kind};
+  return node;
+}
+
+export function editPresetVertex(node, index, point) {
+  const kind = node.constraint?.kind;
+  if (!kind) return node.points.map((entry, i) => i === index ? point : entry);
+  const points = node.points.map(entry => [...entry]);
+  if (kind === "triangle_isosceles") {
+    if (index === 2) points[2] = [(points[0][0] + points[1][0]) / 2, point[1]];
+    else {
+      const center = points[2][0], half = Math.abs(point[0] - center);
+      points[0] = [center - half, point[1]];
+      points[1] = [center + half, point[1]];
+    }
+    return validPolygon(points) ? points : node.points;
+  }
+  if (kind === "rectangle" || kind === "square") {
+    const opposite = points[(index + 2) % 4];
+    const regenerated = createPreset(kind, opposite, point);
+    return regenerated?.points || node.points;
+  }
+  if (kind === "triangle_right_right" || kind === "triangle_right_left") {
+    if (index === 2) points[2][1] = point[1];
+    else {
+      const delta = point[0] - points[index][0];
+      points[index][0] += delta;
+      if ((kind === "triangle_right_right" && index === 1) || (kind === "triangle_right_left" && index === 0)) points[2][0] += delta;
+      points[0][1] = points[1][1] = point[1];
+    }
+    return validPolygon(points) && lockedPolygon(points, kind) ? points : node.points;
+  }
+  const center = nodeCenter(node), original = points[index];
+  const before = Math.hypot(original[0] - center[0], original[1] - center[1]);
+  const after = Math.hypot(point[0] - center[0], point[1] - center[1]);
+  if (after < 0.1 || !before) return node.points;
+  return points.map(entry => [center[0] + (entry[0] - center[0]) * after / before, center[1] + (entry[1] - center[1]) * after / before]);
+}
+
 /* ---------- mutation ---------- */
 
 export function addNode(scene, node, parentId = null) {

@@ -92,6 +92,9 @@
   align-content: start;
 }
 
+.drawing-editor__split { display: flex; }
+.drawing-editor__split .drawing-editor__tool { flex: 1; min-width: 0; }
+
 .drawing-editor__tool {
   display: flex;
   align-items: center;

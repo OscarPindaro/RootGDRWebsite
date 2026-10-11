@@ -1250,6 +1250,73 @@ def test_unlocking_a_native_preset_is_explicit_appearance_preserving_and_undoabl
     assert _scene_of(page) == before
 
 
+@pytest.mark.parametrize(
+    "preset,count",
+    [
+        ("triangle_equilateral", 3),
+        ("triangle_right_right", 3),
+        ("triangle_right_left", 3),
+        ("square", 4),
+        ("regular_polygon", 6),
+    ],
+)
+def test_split_button_presets_create_persistent_constrained_geometry(
+    component, preset, count
+):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    family = (
+        "triangle"
+        if preset.startswith("triangle_")
+        else "rectangle"
+        if preset == "square"
+        else "polygon"
+    )
+    page.locator(f"[data-preset-menu='{family}']").click()
+    page.locator(f"[data-drawing-preset='{preset}']").click()
+    _drag(page, (100, 100), (260, 220))
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": preset}
+    assert len(node["points"]) == len(node["pointIds"]) == count
+    assert page.locator("[data-drawing-unlock]").is_visible()
+    page.get_by_test_id("drawing-duplicate").click()
+    assert _scene_of(page)["nodes"][1]["constraint"] == node["constraint"]
+    page.get_by_test_id("drawing-undo").click()
+    assert len(_scene_of(page)["nodes"]) == 1
+
+
+def test_preset_menu_keyboard_navigation_does_not_move_the_selection(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.locator("[data-preset-menu='triangle']").click()
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("Escape")
+    assert _scene_of(page) == before
+    assert (
+        page.locator("[data-preset-menu='triangle']").get_attribute("aria-expanded")
+        == "false"
+    )
+
+
+def test_primary_triangle_remains_isosceles_and_unlock_allows_free_beak_edit(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (300, 300))
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "triangle_isosceles"}
+    _drag(page, (200, 100), (250, 140))
+    edited = _scene_of(page)["nodes"][0]
+    assert edited["points"][2][0] == pytest.approx(200, abs=1)
+    assert edited["points"][2][1] == pytest.approx(140, abs=1)
+    page.locator("[data-drawing-unlock]").click()
+    _drag(page, (200, 140), (250, 180))
+    assert _scene_of(page)["nodes"][0]["points"][2] == pytest.approx([250, 180], abs=1)
+
+
 def test_insert_remove_and_cut_keep_surviving_vertex_identities(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)

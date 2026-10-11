@@ -473,3 +473,18 @@ test("constraints reject incompatible edits and parent transforms without changi
   assert.deepEqual(copy.pointIds,square.pointIds);
   assert.deepEqual(copy.constraint,square.constraint);
 });
+
+test("all polygon presets retain their invariant through constrained editing", async () => {
+  const {createPreset, editPresetVertex, constraintsValid} = await import("../../src/frontend/js/drawings/scene.js");
+  for (const kind of ["triangle_isosceles","triangle_equilateral","triangle_right_right","triangle_right_left","rectangle","square","regular_polygon"]) {
+    const node = createPreset(kind,[100,100],[260,220],6);
+    assert.ok(node,kind);
+    assert.equal(constraintsValid(sceneWith([node])),true,kind);
+    const identities = [...node.pointIds];
+    const next = patchNode(sceneWith([node]), node.id, {points:editPresetVertex(node,0,[80,140])});
+    assert.equal(constraintsValid(next),true,kind);
+    assert.deepEqual(next.nodes[0].pointIds,identities,kind);
+  }
+  assert.equal(createPreset("regular_polygon",[0,0],[100,100],2),null);
+  assert.equal(createPreset("rectangle",[0,0],[0,100]),null);
+});

@@ -143,6 +143,7 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     drawn = _local_node(session)
     tip = drawn["points"][2]
 
+    session.page.locator("[data-drawing-unlock]").click()
     session.page.locator("[data-drawing-mode='vertex']").click()
 
     # Insert one point on the upper edge and one on the lower edge. A quarter
@@ -199,6 +200,7 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
     drawn = _local_node(session)
     tip = drawn["points"][2]
 
+    session.page.locator("[data-drawing-unlock]").click()
     session.page.locator("[data-drawing-mode='vertex']").click()
     for index in (0, 1):
         start = drawn["points"][index]
@@ -393,3 +395,43 @@ def test_conflicted_work_is_persisted_as_a_separate_copy(session: BrowserSession
     original = session.expect_api(f"/api/drawings/{identifier}").json()
     assert original["title"] == "Server wins"
     assert not original["scene"]["nodes"]
+
+
+def test_locked_presets_and_explicit_unlock_survive_native_save(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    for family, preset, start, end in [
+        ("triangle", "triangle_equilateral", (80, 80), (200, 200)),
+        ("triangle", "triangle_right_left", (250, 80), (370, 200)),
+        ("rectangle", "square", (80, 250), (200, 370)),
+        ("polygon", "regular_polygon", (250, 250), (370, 370)),
+    ]:
+        page.locator(f"[data-preset-menu='{family}']").click()
+        page.locator(f"[data-drawing-preset='{preset}']").click()
+        _drag(page, start, end)
+    local = _local_node_scene(session)
+    assert [node["constraint"]["kind"] for node in local["nodes"]] == [
+        "triangle_equilateral",
+        "triangle_right_left",
+        "square",
+        "regular_polygon",
+    ]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-select-node]").first.click()
+    page.locator("[data-drawing-unlock]").click()
+    unlocked = _local_node_scene(session)
+    assert unlocked["nodes"][0]["constraint"] is None
+    assert unlocked["nodes"][0]["points"] == local["nodes"][0]["points"]
+    assert unlocked["nodes"][0]["pointIds"] == local["nodes"][0]["pointIds"]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == unlocked

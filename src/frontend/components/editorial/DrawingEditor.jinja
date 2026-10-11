@@ -1,6 +1,6 @@
 {#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True #}
-{#css editorial/DrawingEditor.css, common/Button.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css #}
-{#js common/Dialog.js, editorial/DrawingEditor.js #}
+{#css editorial/DrawingEditor.css, common/Button.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css, common/Menu.css #}
+{#js common/Dialog.js, common/Menu.js, editorial/DrawingEditor.js #}
 {% set artboard = scene.artboard if scene else None %}
 {% set objects = scene.nodes if scene else [] %}
 {% set selected = objects[0] if objects and objects[0].kind != 'group' else None %}
@@ -58,22 +58,43 @@
 
   <div class="drawing-editor__workspace">
     <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno" data-testid="drawing-toolbar">
-      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="triangle" data-testid="drawing-tool-triangle">
-        <common.Icon name="triangle" size=20 />
-        <span class="drawing-editor__tool-label">Triangolo</span>
-      </button>
-      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="square" data-testid="drawing-tool-square">
-        <common.Icon name="square" size=20 />
-        <span class="drawing-editor__tool-label">Rettangolo</span>
-      </button>
+      <div class="drawing-editor__split">
+        <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="triangle" data-testid="drawing-tool-triangle">
+          <common.Icon name="triangle" size=20 />
+          <span class="drawing-editor__tool-label">Triangolo</span>
+        </button>
+        <common.IconButton icon="chevron-down" label="Varianti del triangolo" id="drawing-triangle-trigger" popovertarget="drawing-triangle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="triangle" disabled={{ not editable }} />
+      </div>
+      <common.Menu id="drawing-triangle-menu" labelledby="drawing-triangle-trigger">
+        <common.MenuItem label="Isoscele" data-drawing-preset="triangle_isosceles" />
+        <common.MenuItem label="Equilatero" data-drawing-preset="triangle_equilateral" />
+        <common.MenuItem label="Rettangolo · angolo a destra" data-drawing-preset="triangle_right_right" />
+        <common.MenuItem label="Rettangolo · angolo a sinistra" data-drawing-preset="triangle_right_left" />
+      </common.Menu>
+      <div class="drawing-editor__split">
+        <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="square" data-testid="drawing-tool-square">
+          <common.Icon name="square" size=20 />
+          <span class="drawing-editor__tool-label">Rettangolo</span>
+        </button>
+        <common.IconButton icon="chevron-down" label="Varianti del rettangolo" id="drawing-rectangle-trigger" popovertarget="drawing-rectangle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="rectangle" disabled={{ not editable }} />
+      </div>
+      <common.Menu id="drawing-rectangle-menu" labelledby="drawing-rectangle-trigger">
+        <common.MenuItem label="Quadrato" data-drawing-preset="square" />
+      </common.Menu>
       <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="circle" data-testid="drawing-tool-circle">
         <common.Icon name="circle" size=20 />
         <span class="drawing-editor__tool-label">Cerchio</span>
       </button>
-      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="polygon" data-testid="drawing-tool-polygon">
-        <common.Icon name="pentagon" size=20 />
-        <span class="drawing-editor__tool-label">Poligono</span>
-      </button>
+      <div class="drawing-editor__split">
+        <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="polygon" data-testid="drawing-tool-polygon">
+          <common.Icon name="pentagon" size=20 />
+          <span class="drawing-editor__tool-label">Poligono</span>
+        </button>
+        <common.IconButton icon="chevron-down" label="Varianti del poligono" id="drawing-polygon-trigger" popovertarget="drawing-polygon-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="polygon" disabled={{ not editable }} />
+      </div>
+      <common.Menu id="drawing-polygon-menu" labelledby="drawing-polygon-trigger">
+        <common.MenuItem label="Poligono regolare" data-drawing-preset="regular_polygon" />
+      </common.Menu>
       <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="line" data-testid="drawing-tool-line">
         <common.Icon name="pen-tool" size=20 />
         <span class="drawing-editor__tool-label">Linea</span>
@@ -145,6 +166,10 @@
 
       <section class="drawing-editor__panel" aria-label="Proprietà" data-testid="drawing-inspector">
         <h3 class="drawing-editor__panel-title">Proprietà</h3>
+        <div class="drawing-editor__field" data-regular-options hidden>
+          <label class="drawing-editor__field-label" for="drawing-regular-sides">Lati del poligono</label>
+          <input class="drawing-editor__name" type="number" id="drawing-regular-sides" data-regular-sides min="3" max="32" value="6" />
+        </div>
         <p class="hint" data-drawing-constraint>Geometria libera</p>
         <common.Button size="xs" variant="secondary" icon="lock-open" data-drawing-unlock disabled={{ not editable }}>Sblocca geometria</common.Button>
         <div class="drawing-editor__palette" role="group" aria-label="Tavolozza">
