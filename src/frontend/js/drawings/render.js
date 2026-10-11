@@ -229,18 +229,6 @@ function overlayElements(scene, view) {
     );
   }
 
-  if (view.snap) {
-    const point = apply(view.viewport, view.snap);
-    elements.push(
-      el("rect", {
-        class: "drawing-editor__snap",
-        x: point[0] - 7,
-        y: point[1] - 7,
-        width: 14,
-        height: 14,
-      })
-    );
-  }
   return elements;
 }
 
@@ -269,4 +257,13 @@ export function render(svg, scene, view) {
   svg.querySelector(".drawing-editor__plate").style.fill = scene.artboard.background;
   sceneLayer.replaceChildren(...scene.nodes.map((node) => shapeElement(node, view)));
   overlay.replaceChildren(...overlayElements(scene, view));
+  if (view.snap) {
+    const point = apply(view.viewport, view.snap);
+    overlay.appendChild(el("rect", {class:"drawing-editor__snap", x:point[0] - 7, y:point[1] - 7, width:14, height:14}));
+  }
+  for (const {axis, value} of view.guides || []) {
+    const from = apply(view.viewport, axis === 0 ? [value, -100000] : [-100000, value]);
+    const to = apply(view.viewport, axis === 0 ? [value, 100000] : [100000, value]);
+    overlay.appendChild(el("line", {class:"drawing-editor__snap", "data-snap-guide":axis, x1:from[0], y1:from[1], x2:to[0], y2:to[1]}));
+  }
 }

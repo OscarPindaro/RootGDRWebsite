@@ -17,6 +17,7 @@ import {
   pointInPolygon,
   polygonArea,
   rotateAbout,
+  resizeFrame,
   scaleAbout,
   translation,
 } from "../../src/frontend/js/drawings/geometry.js";
@@ -502,4 +503,23 @@ test("circle presets and atomic selection transforms cannot introduce oval disto
   const entries = scene.nodes.map(node => ({id:node.id,transform:nodeFrame(scene,node.id).world}));
   assert.deepEqual(transformNodesInWorld(scene,entries,scaleAbout([0,0],2,3)),scene);
   assert.equal(constraintsValid(transformNodesInWorld(scene,entries,scaleAbout([0,0],-2,2))),true);
+});
+
+test("oriented resize keeps every opposite anchor fixed under nested and reflected matrices", () => {
+  const local = [[0,0],[100,0],[100,80],[0,80]];
+  for (const matrix of [[1,0,0,1,20,30],[-2,0.3,0.2,3,60,70],multiply(translation(100,20),rotateAbout([0,0],Math.PI / 3))]) {
+    const corners = local.map(point => apply(matrix,point));
+    for (let corner = 0; corner < 4; corner += 1) {
+      const wanted = apply(matrix,[local[corner][0] === 0 ? -40 : 140, local[corner][1] === 0 ? -16 : 96]);
+      const frame = resizeFrame(corners,corner,wanted);
+      const delta = multiply(frame.basis,multiply([frame.sx,0,0,frame.sy,0,0],frame.inverse));
+      const fixed = corners[(corner + 2) % 4];
+      const unchanged = apply(delta,fixed), resized = apply(delta,corners[corner]);
+      assert.ok(Math.hypot(unchanged[0]-fixed[0],unchanged[1]-fixed[1]) < 1e-8);
+      assert.ok(Math.hypot(resized[0]-wanted[0],resized[1]-wanted[1]) < 1e-8);
+    }
+  }
+  assert.equal(resizeFrame(local,0,[NaN,0]),null);
+  assert.equal(resizeFrame([[0,0],[0,0],[0,0],[0,0]],0,[10,10]),null);
+  assert.ok(resizeFrame([[0,0],[100,0],[100,0],[0,0]],1,[150,0]));
 });

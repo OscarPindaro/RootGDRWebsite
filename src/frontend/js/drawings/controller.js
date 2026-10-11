@@ -12,6 +12,7 @@ import {
   multiply,
   rotateAbout,
   scaleAbout,
+  resizeFrame,
   translation,
 } from "./geometry.js";
 import {
@@ -118,6 +119,7 @@ export function createController(root) {
   let drag = null;
   let pendingPolygon = null;
   let snapPoint = null;
+  let snapGuides = [];
   let cut = null;
   let cutCursor = null;
   let spaceDown = false;
@@ -145,6 +147,7 @@ export function createController(root) {
       pathPoint,
       tool,
       snap: snapPoint,
+      guides: snapGuides,
       cut: cut && cutCursor ? { from: apply(nodeFrame(scene, cut.id).world, findNode(scene, cut.id).node.points[cut.index]), to: cutCursor } : null,
     };
   }
@@ -402,28 +405,48 @@ export function createController(root) {
 
   /** Snap a world point to the grid or a sibling vertex; Alt bypasses it. */
   function snapWorld(point, node, excludeIndex, bypass, excluded = []) {
-    if (bypass) return { point, snapped: false };
-    const tolerance = SNAP_TOLERANCE_PX / (viewport[0] * Math.abs(svg.getScreenCTM().a));
-    let best = null;
-    let bestDistance = tolerance;
+    if (bypass) return { point, snapped: false, guides: [] };
+    const tolerance = SNAP_TOLERANCE_PX / (viewport[0] * Math.hypot(svg.getScreenCTM().a, svg.getScreenCTM().b));
+    let best = null, bestDistance = tolerance;
+    const alignments = [null, null], distances = [tolerance, tolerance];
     walk(scene.nodes, candidate => {
-      if (!snapShapes || excluded.includes(candidate.id) || candidate.visible === false || (ancestorsOf(candidate.id) || []).some(id => excluded.includes(id) || !findNode(scene, id).node.visible)) return;
-      const points = candidate.kind === "polygon" ? candidate.points : candidate.kind === "path" ? pathHandles(candidate.d).filter(h => !h.control).map(h => h.point) : [];
+      if (!snapShapes || excluded.includes(candidate.id) || candidate.visible === false || candidate.opacity === 0 || (ancestorsOf(candidate.id) || []).some(id => excluded.includes(id) || !findNode(scene, id).node.visible)) return;
+      const points = candidate.kind === "polygon" ? candidate.points : candidate.kind === "path" ? pathHandles(candidate.d).filter(h => !h.control).map(h => h.point) : candidate.kind === "ellipse" ? [[candidate.cx, candidate.cy], [candidate.cx + candidate.rx, candidate.cy], [candidate.cx - candidate.rx, candidate.cy], [candidate.cx, candidate.cy + candidate.ry], [candidate.cx, candidate.cy - candidate.ry]] : [];
       const world = nodeFrame(scene, candidate.id).world;
       const targets = points.filter((p, i) => candidate.id !== node?.id || i !== excludeIndex);
       if (candidate.kind === "polygon") targets.push(...points.map((p, i) => [(p[0] + points[(i + 1) % points.length][0]) / 2, (p[1] + points[(i + 1) % points.length][1]) / 2]));
       targets.forEach(local => {
-        const vertex = apply(world, local);
-        const distance = Math.hypot(vertex[0] - point[0], vertex[1] - point[1]);
+        const vertex = apply(world, local), distance = Math.hypot(vertex[0] - point[0], vertex[1] - point[1]);
         if (distance < bestDistance) { bestDistance = distance; best = vertex; }
       });
+      if (candidate.id === node?.id || (candidate.kind === "group" && !candidate.nodes.length)) return;
+      const corners = worldCorners(candidate);
+      for (let axis = 0; axis < 2; axis += 1) {
+        const low = Math.min(...corners.map(corner => corner[axis])), high = Math.max(...corners.map(corner => corner[axis]));
+        for (const value of [low, (low + high) / 2, high]) {
+          const distance = Math.abs(value - point[axis]);
+          if (distance < distances[axis]) { distances[axis] = distance; alignments[axis] = value; }
+        }
+      }
     });
-    const gridX = Math.round(point[0] / SNAP_GRID) * SNAP_GRID;
-    const gridY = Math.round(point[1] / SNAP_GRID) * SNAP_GRID;
-    if (snapGrid && Math.hypot(gridX - point[0], gridY - point[1]) < bestDistance) {
-      best = [gridX, gridY];
+    const grid = point.map(value => Math.round(value / SNAP_GRID) * SNAP_GRID);
+    if (snapGrid && Math.hypot(grid[0] - point[0], grid[1] - point[1]) < bestDistance) best = grid;
+    const result = best ? [...best] : [...point];
+    const guides = best ? [{axis:0, value:best[0]}, {axis:1, value:best[1]}] : [];
+    for (let axis = 0; axis < 2; axis += 1) {
+      if (alignments[axis] !== null && (!best || distances[axis] < Math.abs(result[axis] - point[axis]))) {
+        result[axis] = alignments[axis];
+        const previous = guides.find(guide => guide.axis === axis);
+        if (previous) previous.value = result[axis];
+        else guides.push({axis, value:result[axis]});
+      }
     }
-    return best ? { point: best, snapped: true } : { point, snapped: false };
+    return { point:result, snapped:guides.length > 0, guides };
+  }
+
+  function snapFeedback(snapped, actual = snapped.point) {
+    snapPoint = snapped.snapped && Math.hypot(actual[0] - snapped.point[0], actual[1] - snapped.point[1]) < 0.001 ? actual : null;
+    snapGuides = snapped.guides.filter(guide => Math.abs(actual[guide.axis] - guide.value) < 0.001);
   }
 
   /* ---------- vertex editing ---------- */
@@ -592,6 +615,8 @@ export function createController(root) {
     pendingPolygon = null;
     cut = null;
     cutCursor = null;
+    snapPoint = null;
+    snapGuides = [];
     // Vertex handles belong to the select tool; a tool switch leaves that mode.
     mode = next === "select" ? defaultMode() : "select";
     root.querySelectorAll("[data-tool]").forEach((button) => {
@@ -637,14 +662,15 @@ export function createController(root) {
   }
 
   function beginShape(event) {
-    drag = { kind: "create", tool, preset: creationPreset, sides: regularSides, from: scenePoint(event), to: scenePoint(event) };
+    const snapped = snapWorld(scenePoint(event), null, -1, event.altKey);
+    snapFeedback(snapped);
+    drag = { kind: "create", tool, preset: creationPreset, sides: regularSides, from: snapped.point, to: snapped.point };
+    previewDrag();
   }
 
   function finishShape() {
     if (!drag) return;
-    const { tool: shape, preset, sides } = drag;
-    const from = snapWorld(drag.from, null, -1, false).point;
-    const to = snapWorld(drag.to, null, -1, false).point;
+    const { tool: shape, preset, sides, from, to } = drag;
     drag = null;
     const minX = Math.min(from[0], to[0]);
     const maxX = Math.max(from[0], to[0]);
@@ -665,7 +691,10 @@ export function createController(root) {
   }
 
   function beginLine(event) {
-    drag = { kind: "line", curve: tool === "curve", from: scenePoint(event), to: scenePoint(event) };
+    const snapped = snapWorld(scenePoint(event), null, -1, event.altKey);
+    snapFeedback(snapped);
+    drag = { kind: "line", curve: tool === "curve", from: snapped.point, to: snapped.point };
+    previewDrag();
   }
 
   function finishLine() {
@@ -692,7 +721,9 @@ export function createController(root) {
   }
 
   function addPolygonPoint(event) {
-    const point = scenePoint(event);
+    const snapped = snapWorld(scenePoint(event), null, -1, event.altKey);
+    snapFeedback(snapped);
+    const point = snapped.point;
     if (!pendingPolygon) pendingPolygon = [];
     pendingPolygon.push([round(point[0]), round(point[1])]);
     draw();
@@ -854,7 +885,9 @@ export function createController(root) {
       return;
     }
     if (drag.kind === "create" || drag.kind === "line") {
-      drag.to = scenePoint(event);
+      const snapped = snapWorld(scenePoint(event), null, -1, event.altKey);
+      snapFeedback(snapped);
+      drag.to = snapped.point;
       previewDrag();
       return;
     }
@@ -862,7 +895,7 @@ export function createController(root) {
       const point = scenePoint(event);
       const wanted = [drag.anchor[0] + point[0] - drag.from[0], drag.anchor[1] + point[1] - drag.from[1]];
       const snapped = snapWorld(wanted, null, -1, event.altKey, selection);
-      snapPoint = snapped.snapped ? snapped.point : null;
+      snapFeedback(snapped);
       const delta = translation(snapped.point[0] - drag.anchor[0], snapped.point[1] - drag.anchor[1]);
       let next = scene;
       for (const entry of drag.transforms) {
@@ -873,17 +906,23 @@ export function createController(root) {
       return;
     }
     if (drag.kind === "scale") {
-      const point = scenePoint(event);
-      const fixed = drag.corners[(drag.corner + 2) % 4];
-      const start = drag.corners[drag.corner];
-      let sx = (point[0] - fixed[0]) / (start[0] - fixed[0]);
-      let sy = (point[1] - fixed[1]) / (start[1] - fixed[1]);
-      if (!Number.isFinite(sx)) sx = 1;
-      if (!Number.isFinite(sy)) sy = 1;
-      const delta = scaleAbout(fixed, clampFactor(sx), clampFactor(sy));
-      const next = transformNodesInWorld(scene, drag.transforms, delta);
-      if (next === scene) announce("Trasformazione incompatibile con i vincoli: sblocca la geometria per deformarla.");
+      const snapped = snapWorld(scenePoint(event), null, -1, event.altKey, selection);
+      const frame = resizeFrame(drag.corners, drag.corner, snapped.point);
+      if (!frame) return;
+      let {sx, sy} = frame, uniform = event.shiftKey;
+      walk(scene.nodes, node => {
+        if (["circle", "square", "triangle_equilateral", "regular_polygon"].includes(node.constraint?.kind) && (selection.includes(node.id) || (ancestorsOf(node.id) || []).some(id => selection.includes(id)))) uniform = true;
+      });
+      if (uniform) {
+        const magnitude = Math.max(Math.abs(sx), Math.abs(sy));
+        sx = (sx < 0 ? -1 : 1) * magnitude;
+        sy = (sy < 0 ? -1 : 1) * magnitude;
+      }
+      const delta = multiply(frame.basis, multiply([clampFactor(sx), 0, 0, clampFactor(sy), 0, 0], frame.inverse));
+      const next = transformNodesInWorld(scene, drag.transforms, delta), rejected = next === scene;
+      if (rejected) announce("Trasformazione incompatibile con i vincoli: sblocca la geometria per deformarla.");
       else { announce(""); scene = next; }
+      snapFeedback(rejected ? {...snapped, snapped:false, guides:[]} : snapped, apply(delta, drag.corners[drag.corner]));
       draw();
       return;
     }
@@ -898,14 +937,16 @@ export function createController(root) {
       return;
     }
     if (drag.kind === "path") {
-      const local = apply(invert(drag.transform), snapWorld(scenePoint(event), null, -1, event.altKey).point);
+      const snapped = snapWorld(scenePoint(event), null, -1, event.altKey, selection);
+      const local = apply(invert(drag.transform), snapped.point);
+      snapFeedback(snapped);
       scene = patchNode(scene, drag.id, { d: movePathPoint(drag.d, drag.command, drag.offset, local) });
       draw();
       return;
     }
     if (drag.kind === "ellipse") {
       const snapped = snapWorld(scenePoint(event), null, -1, event.altKey, selection);
-      snapPoint = snapped.snapped ? snapped.point : null;
+      snapFeedback(snapped);
       const local = apply(invert(drag.transform), snapped.point);
       const radius = clamp(Math.hypot(local[0] - drag.node.cx, local[1] - drag.node.cy), 0.1, 100000);
       const patch = drag.axis === "center" ? { cx: round(local[0]), cy: round(local[1]) }
@@ -920,11 +961,12 @@ export function createController(root) {
       const inverse = invert(drag.transform);
       if (!inverse) return;
       const snapped = snapWorld(scenePoint(event), drag.node, drag.index, event.altKey);
-      snapPoint = snapped.snapped ? snapped.point : null;
+      snapFeedback(snapped);
       const local = apply(inverse, snapped.point);
       const points = editPresetVertex(drag.node, drag.index, [round(local[0]), round(local[1])]);
       if (!validPolygon(points)) return;
       scene = patchNode(scene, drag.id, { points });
+      snapFeedback(snapped, apply(drag.transform, findNode(scene, drag.id).node.points[drag.index]));
       draw();
     }
   }
@@ -933,6 +975,7 @@ export function createController(root) {
     if (!drag) return;
     const finished = drag;
     snapPoint = null;
+    snapGuides = [];
     if (finished.kind === "create") finishShape();
     else if (finished.kind === "line") finishLine();
     else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex" || finished.kind === "path" || finished.kind === "ellipse") {
@@ -941,6 +984,7 @@ export function createController(root) {
     } else {
       drag = null;
     }
+    draw();
   }
 
   /** A live outline while a shape or line is being dragged. */
@@ -1045,6 +1089,7 @@ export function createController(root) {
       scene = gestureBefore;
       drag = null;
       snapPoint = null;
+      snapGuides = [];
       draw();
       return;
     }
@@ -1413,6 +1458,7 @@ export function createController(root) {
       if (gestureBefore) scene = gestureBefore;
       drag = null;
       snapPoint = null;
+      snapGuides = [];
       draw();
     });
     svg.addEventListener("click", event => {

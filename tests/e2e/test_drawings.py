@@ -129,8 +129,12 @@ def test_an_admin_draws_undoes_and_reopens_artwork(session: BrowserSession) -> N
 
 
 def _at(page, x: float, y: float) -> tuple[float, float]:
-    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
-    return (box["x"] + (x / 640) * box["width"], box["y"] + (y / 480) * box["height"])
+    return tuple(
+        page.evaluate(
+            "([x,y]) => { const m = document.querySelector('[data-drawing-artboard]').getScreenCTM(); return [m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f]; }",
+            [x, y],
+        )
+    )
 
 
 def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> None:
@@ -465,3 +469,34 @@ def test_circle_parameters_stay_locked_after_save_and_reopen(session: BrowserSes
         == _local_node_scene(session)["nodes"][0]["ry"]
         == 66
     )
+
+
+def test_snapped_resize_is_persisted_without_editor_guides(session: BrowserSession):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (100, 100), (300, 250))
+    original = _local_node_scene(session)["nodes"][0]
+    corner = original["points"][2]
+    page.locator("[data-drawing-mode='transform']").click()
+    page.mouse.move(*_at(page, *corner))
+    page.mouse.down()
+    page.mouse.move(*_at(page, corner[0] + 53, corner[1] + 47), steps=4)
+    assert page.locator("[data-snap-guide]").count() > 0
+    page.mouse.up()
+    local = _local_node_scene(session)
+    node = local["nodes"][0]
+    a, b, c, d, e, f = node["transform"]
+    fixed = original["points"][0]
+    assert a * fixed[0] + c * fixed[1] + e == pytest.approx(fixed[0])
+    assert b * fixed[0] + d * fixed[1] + f == pytest.approx(fixed[1])
+    assert node["pointIds"] == original["pointIds"]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    assert "guides" not in local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == local

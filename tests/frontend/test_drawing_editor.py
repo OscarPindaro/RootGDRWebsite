@@ -1286,6 +1286,93 @@ def test_split_button_presets_create_persistent_constrained_geometry(
     assert len(_scene_of(page)["nodes"]) == 1
 
 
+def test_creation_feedback_and_rejected_short_gestures_leave_tools_usable(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-square").click()
+    page.mouse.move(*_at(page, 113, 117))
+    page.mouse.down()
+    assert page.locator("[data-snap-guide]").count() == 2
+    page.mouse.up()
+    assert _scene_of(page)["nodes"] == []
+    assert page.get_by_test_id("drawing-tool-triangle").is_enabled()
+    assert page.locator("[data-snap-guide]").count() == 0
+
+
+def test_alt_resize_cannot_override_a_circle_geometry_lock(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (200, 200))
+    page.locator("[data-drawing-mode='transform']").click()
+    page.keyboard.down("Alt")
+    _drag(page, (200, 200), (257, 223))
+    page.keyboard.up("Alt")
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "circle"}
+    assert node["rx"] == node["ry"]
+    assert abs(node["transform"][0]) == pytest.approx(abs(node["transform"][3]))
+    assert node["transform"][0] == pytest.approx(1.57, abs=0.01)
+
+
+def test_resize_snaps_the_dragged_corner_and_keeps_the_opposite_fixed(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-mode='transform']").click()
+    _drag(page, (400, 400), (447, 453))
+    transform = _scene_of(page)["nodes"][0]["transform"]
+    assert transform[0] == transform[3] == pytest.approx(350 / 300)
+    assert transform[0] * 100 + transform[4] == pytest.approx(100)
+    assert transform[3] * 100 + transform[5] == pytest.approx(100)
+    assert transform[0] * 400 + transform[4] == pytest.approx(450)
+
+
+def test_shift_resize_is_proportional_and_alt_creation_bypasses_only_snap(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-mode='transform']").click()
+    page.keyboard.down("Shift")
+    _drag(page, (400, 400), (510, 450))
+    page.keyboard.up("Shift")
+    node = _scene_of(page)["nodes"][0]
+    assert abs(node["transform"][0]) == pytest.approx(abs(node["transform"][3]))
+    page.get_by_test_id("drawing-tool-square").click()
+    page.keyboard.down("Alt")
+    _drag(page, (113, 117), (253, 247))
+    page.keyboard.up("Alt")
+    rect = _scene_of(page)["nodes"][1]
+    assert rect["points"][0] == pytest.approx([113, 117], abs=0.1)
+    assert rect["points"][2] == pytest.approx([253, 247], abs=0.1)
+    assert rect["constraint"] == {"kind": "rectangle"}
+
+
+def test_geometry_edge_alignment_has_a_visible_guide_without_grid_snap(component):
+    scene = _square()
+    scene.nodes.append(
+        PolygonNode(
+            id="target",
+            name="Target",
+            points=[(450, 80), (500, 80), (500, 130), (450, 130)],
+            fill="#000000",
+        )
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-snap-grid]").click()
+    page.mouse.move(*_at(page, 250, 250))
+    page.mouse.down()
+    page.mouse.move(*_at(page, 597, 380), steps=4)
+    assert _scene_of(page)["nodes"][0]["transform"][4:] == pytest.approx(
+        [350, 130], abs=1
+    )
+    assert page.locator("[data-snap-guide]").count() >= 1
+    page.mouse.up()
+    assert page.locator("[data-snap-guide]").count() == 0
+
+
 def test_circle_creation_and_radius_controls_keep_equal_radii(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props())
     _mounted(page)

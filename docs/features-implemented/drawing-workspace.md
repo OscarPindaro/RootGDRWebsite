@@ -57,8 +57,14 @@ library, skeleton, publishing or export capabilities.
 - A floating selection bar keeps vertex/group/order actions and independent
   grid visibility, grid snap and geometry snap controls together. Moving an
   object or group snaps its anchor, excluding the selected objects themselves.
-  Vertices, polygon midpoints and path endpoints are geometry targets;
-  Alt bypasses snapping. Hiding the grid does not change snap preferences. Wheel zooms;
+  Creation, object movement, oriented resize, vertices, path points and ellipse
+  parameters share snapping. Targets include polygon vertices/midpoints, path
+  endpoints, ellipse centres/axes, and object edge/centre alignments. Guides and
+  target marks are transient editor UI, including before the first object exists.
+  Resize fixes the opposite anchor under rotated/nested/reflected transforms.
+  Shift preserves proportions; square/equilateral/regular/circle locks require
+  proportional scaling even without Shift. Alt bypasses snap only, never locks.
+  Hiding the grid does not change snap preferences. Wheel zooms;
   Space-drag or the middle mouse button pans.
 - Undo/redo is in-memory and bounded to 60 completed operations. A drag or
   property change is one step; view changes and selection are excluded.
@@ -129,7 +135,7 @@ specimen in the component showcase.
   polyline/cubic editing does not offer a full path-boolean toolset.
 - Groups must be consecutive siblings to preserve overlap order. The layer list
   is a connected, collapsible scene tree. Group styling is not exposed.
-- No angle/aspect-ratio snapping or zoom readout/fit control. Numeric coordinate
+- No angle snapping or zoom readout/fit control. Numeric coordinate
   authoring and linked-asset overrides are deferred; stable native IDs are present.
 - JavaScript is required for complete interactive rendering, including groups;
   the server-rendered first paint is not a complete no-JavaScript renderer.
