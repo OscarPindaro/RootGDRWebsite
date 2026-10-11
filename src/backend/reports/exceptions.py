@@ -33,6 +33,20 @@ class ReportAlreadySubmittedException(HTTPException):
         )
 
 
+class ReportSubmissionFailedError(HTTPException):
+    """The board could not be reached, or refused the report.
+
+    A 503, not a 500: nothing in this application is broken, and the reader
+    keeps a draft they can submit again.
+    """
+
+    def __init__(self, detail: str):
+        super().__init__(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=detail,
+        )
+
+
 class ReportRecordingMismatchException(HTTPException):
     def __init__(self):
         super().__init__(

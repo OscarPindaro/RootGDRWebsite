@@ -61,3 +61,7 @@ class ReportResponse(AppBaseModel, TimestampMixin):
     viewport_width: int | None = None
     viewport_height: int | None = None
     evidence: list[ReportEvidenceResponse] = Field(default_factory=list)
+    board_task_id: int | None = None
+    board_task_identifier: str | None = None
+    submitted_at: datetime | None = None
+    submission_note: str | None = None

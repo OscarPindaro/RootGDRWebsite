@@ -232,6 +232,26 @@ class StorageConfig(BaseModel):
     )
 
 
+class BoardConfig(BaseModel):
+    """The board the runtime submits reports to.
+
+    The application talks to Vikunja itself, on the same host, so a submitted
+    report becomes a real ticket with its evidence attached. Disabled by
+    default: an instance that cannot reach a board still collects reports, it
+    just refuses to submit them with a clear message.
+    """
+
+    enabled: bool = False
+    base_url: str = Field(
+        default="http://127.0.0.1:3458",
+        description="Board API base URL, reached from the application host.",
+    )
+    project_id: int = Field(default=2, ge=1)
+    token: SecretStr | None = Field(
+        default=None, description="Scoped board token, from BOARD__TOKEN."
+    )
+
+
 class AppConfig(BaseConfig):
     app_name: str = Field(default="fastapi-template", min_length=1)
     env: str = Field(default="dev")
@@ -242,6 +262,7 @@ class AppConfig(BaseConfig):
     replay: ReplayConfig = Field(default_factory=ReplayConfig)
     auth: Optional[AuthConfig] = Field(default=None)
     storage: StorageConfig = Field(default_factory=StorageConfig)
+    board: BoardConfig = Field(default_factory=BoardConfig)
 
     # Server configuration
     backend_host: str = Field(

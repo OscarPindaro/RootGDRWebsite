@@ -184,6 +184,22 @@
   color: var(--muted);
 }
 
+.report-panel__submit {
+  margin: 0 0 var(--sp-4);
+  padding-top: var(--sp-3);
+  border-top: var(--rule-ink);
+}
+
+.report-panel__ticket {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--forest);
+}
+
+.report-panel__ticket[data-state="failed"] {
+  color: var(--vermilion);
+}
+
 .report-panel__status {
   min-height: var(--text-sm);
   margin: 0 0 var(--sp-3);

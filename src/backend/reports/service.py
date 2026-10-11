@@ -7,6 +7,7 @@ the previous file is removed once the replacement is committed.
 """
 
 import hashlib
+import json
 import uuid
 from datetime import UTC, datetime
 
@@ -14,12 +15,14 @@ from fastapi import UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from ..correlation import current
 from ..db.enums import UserRole
 from ..filesystem.base import FileSystem
 from ..log import get_logger
 from ..replay.schemas import ReplayBatch
 from ..users.schemas import User
-from . import recording
+from . import diagnostics, recording
+from .board import BoardSubmitter
 from .exceptions import (
     ReportAccessDeniedException,
     ReportAlreadySubmittedException,
@@ -27,6 +30,7 @@ from .exceptions import (
     ReportEvidenceValidationError,
     ReportNotFoundException,
     ReportRecordingMismatchException,
+    ReportSubmissionFailedError,
 )
 from .models import EvidenceKind, ReportEvidenceModel, ReportModel, ReportState
 from .schemas import (
@@ -284,6 +288,83 @@ async def record_steps(
         recording.FRONTEND,
         [step.model_dump(exclude_none=True) for step in batch.steps],
     )
+
+
+async def submit_report(
+    db: AsyncSession,
+    filesystem: FileSystem,
+    board: BoardSubmitter,
+    report_id: uuid.UUID,
+    user: User | None,
+) -> ReportModel:
+    """Create the board ticket, once, with the captures and one diagnostics file.
+
+    The ticket id is written onto the report as soon as it exists, so a second
+    submission returns the same ticket instead of creating another one. An
+    attachment the board refuses is reported in the note rather than failing the
+    whole submission: the reader's work is already on the board.
+    """
+    model = await get_report(db, report_id, user)
+    if model.state is ReportState.SUBMITTED and model.board_task_id is not None:
+        return model
+
+    status = await reproduction_status(db, filesystem, report_id, user)
+    reproduction = status.model_dump()
+    steps = {
+        side: await recording.load_steps(filesystem, report_id, side)
+        for side in (recording.FRONTEND, recording.BACKEND)
+    }
+    correlation = current()
+    snapshot = diagnostics.build(
+        model,
+        reproduction=reproduction,
+        steps=steps,
+        request_id=correlation.request_id,
+        trace_id=correlation.trace_id,
+    )
+
+    ticket = await board.create_task(
+        diagnostics.ticket_title(model),
+        diagnostics.ticket_description(model, reproduction=reproduction),
+    )
+    model.board_task_id = ticket.id
+    model.board_task_identifier = ticket.identifier or None
+
+    failed: list[str] = []
+    for item in model.evidence:
+        try:
+            await board.attach(
+                ticket.id,
+                item.filename,
+                await filesystem.read_async(item.location),
+                item.content_type,
+            )
+        except ReportSubmissionFailedError, OSError:
+            failed.append(item.filename)
+            logger.warning(
+                "A capture was not attached",
+                report_id=str(report_id),
+                name=item.filename,
+            )
+    try:
+        await board.attach(
+            ticket.id,
+            "diagnostics.json",
+            json.dumps(snapshot, ensure_ascii=False, default=str).encode(),
+            "application/json",
+        )
+    except ReportSubmissionFailedError, OSError:
+        failed.append("diagnostics.json")
+
+    model.state = ReportState.SUBMITTED
+    model.submitted_at = datetime.now(UTC)
+    model.submission_note = (
+        f"Allegati non caricati: {', '.join(failed)}" if failed else None
+    )
+    await db.flush()
+    await db.refresh(model)
+    logger.info("Report submitted", report_id=str(report_id), board_task_id=ticket.id)
+    return model
 
 
 async def read_evidence(

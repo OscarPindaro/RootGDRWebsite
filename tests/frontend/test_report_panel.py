@@ -76,6 +76,20 @@ def _serve_shot(page, kind: str, width: int = 800, height: int = 600) -> None:
     page.route(f"**/api/reports/{DRAFT_ID}/evidence/{kind}", handler)
 
 
+def _submitted(note: str | None = None) -> dict:
+    draft = _draft(evidence=[_capture("page_html")])
+    draft.update(
+        {
+            "state": "submitted",
+            "boardTaskId": 42,
+            "boardTaskIdentifier": "#42",
+            "submittedAt": "2026-10-11T19:00:00+0000",
+            "submissionNote": note,
+        }
+    )
+    return draft
+
+
 def _reproduction(
     *,
     active: bool = False,
@@ -366,6 +380,76 @@ def test_the_reproduction_can_be_started_and_interrupted(component):
     )
     assert (
         page.evaluate("() => sessionStorage.getItem('rootgdr.report.session')") is None
+    )
+
+
+def test_the_report_is_submitted_and_shows_its_ticket(component):
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("page_html")]),
+    )
+    component.route_json("POST", f"/api/reports/{DRAFT_ID}/submit", body=_submitted())
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _open(component)
+    _wait_for_state(page, "saved")
+
+    assert page.locator("[data-report-submit-actions]").is_visible()
+    page.click("[data-report-submit]")
+    page.wait_for_selector("[data-report-ticket]:not([hidden])")
+
+    assert page.locator("[data-report-ticket]").inner_text() == (
+        "Segnalazione inviata: #42."
+    )
+    assert page.locator("[data-report-submit-actions]").is_hidden()
+    _wait_for_state(page, "submitted")
+
+
+def test_a_refused_submission_keeps_the_draft_and_explains(component):
+    # The refusal is the point of the test, so the browser's own line about it
+    # is expected rather than a failure.
+    component.allow_console_errors("503")
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("page_html")]),
+    )
+    component.route_json(
+        "POST",
+        f"/api/reports/{DRAFT_ID}/submit",
+        status=503,
+        body={"detail": "This instance is not connected to a board"},
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _open(component)
+    _wait_for_state(page, "saved")
+
+    page.click("[data-report-submit]")
+    page.wait_for_selector("[data-report-ticket]:not([hidden])")
+
+    assert (
+        page.locator("[data-report-ticket]").inner_text()
+        == "This instance is not connected to a board"
+    )
+    # The reader keeps everything: the button stays, nothing was submitted.
+    assert page.locator("[data-report-submit-actions]").is_visible()
+    _wait_for_state(page, "submitFailed")
+
+
+def test_a_submitted_report_opens_read_only(component):
+    component.route_json("GET", f"/api/reports/{DRAFT_ID}", body=_submitted())
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _open(component)
+
+    page.wait_for_selector("[data-report-ticket]:not([hidden])")
+    assert page.locator("[data-report-submit-actions]").is_hidden()
+    assert (
+        page.locator("[data-report-ticket]")
+        .inner_text()
+        .startswith("Segnalazione inviata")
     )
 
 

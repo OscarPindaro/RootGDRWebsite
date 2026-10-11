@@ -18,6 +18,9 @@ A reader can report a problem from the page they are on, without leaving it.
 - **Riproduci il problema** records the reproduction: the reader navigates
   normally and both the browser steps and the backend calls stay attached to
   this report. **Interrompi la registrazione** keeps what was collected.
+- **Invia la segnalazione** creates the board ticket: the description, the
+  captures and one `diagnostics.json`. The ticket id is shown, the draft
+  becomes read-only, and a second press returns the same ticket.
 - A draft is not a board ticket. Saving or reopening one creates nothing on the
   board; submission is a later step (REQ-0014/T05).
 
@@ -53,6 +56,21 @@ A reader can report a problem from the page they are on, without leaving it.
   `ReportRecorderMiddleware` writes a step only for a request that carries the
   cookie of an active reproduction. The report's own API is never recorded: an
   evidence upload would put a screenshot in the recording.
+- `src/backend/reports/board.py` is the runtime's own Vikunja client — create
+  one task, attach its files — configured with `board.enabled`,
+  `board.base_url`, `board.project_id` and `board.token` (`BOARD__TOKEN`). It is
+  the only place the application talks to the board, and it is off by default:
+  an instance without a board still collects reports and refuses to submit them
+  with a sentence the panel shows.
+- The ticket id is written onto the report as soon as the task exists, so a
+  retry can never create a second ticket. An attachment the board refuses is
+  reported in `submission_note` instead of failing the whole submission.
+- `src/backend/reports/diagnostics.py` builds the one document the ticket
+  carries: the context the browser reported, the correlation ids of the
+  submission, both sides of the reproduction, and the log records the server
+  wrote between the report being opened and being submitted. `log.py` keeps
+  those records in a bounded in-memory buffer, because the console handler
+  rotates and a ticket has to stay readable afterwards.
 - `src/frontend/js/report/annotate.js` owns the annotation surface. Marks are
   kept in the image's own pixel space, so the canvas can be scaled to the dialog
   without moving a mark, and a blur is painted by re-drawing the image inside
@@ -73,9 +91,14 @@ A reader can report a problem from the page they are on, without leaving it.
   handle, not the row, and there is no draft list in the UI to find it again.
 - Retention is not implemented: drafts and their files stay until a cleanup step
   exists.
-- The panel captures the page as it stands when it opens. The ticket submission
-  is REQ-0014/T05: nothing here creates a board ticket, and the collected
-  recording is not attached to one yet.
+- The application container has to be able to reach the board. The deployed
+  board listens on the server's loopback only, so submitting from the deployed
+  application needs a networking decision (host networking for the app, or a
+  board listener the application network can reach) before it can work there.
+  The panel says so plainly rather than failing silently.
+- The diagnostics log window is the in-memory buffer (500 records), not the
+  container's own log. A report submitted long after the incident carries what
+  is still in the buffer, and the correlation ids are what lead to the rest.
 - A reproduction stops only when the reader stops it; the recording is bounded
   at 2 000 steps per side, and starting again replaces the previous attempt
   rather than adding to it.

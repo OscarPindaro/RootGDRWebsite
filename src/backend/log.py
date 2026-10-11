@@ -20,6 +20,8 @@ from __future__ import annotations
 import json
 import logging
 import re
+from collections import deque
+from datetime import UTC, datetime
 from typing import Any, ClassVar
 
 from fastapi.encoders import jsonable_encoder
@@ -171,14 +173,59 @@ class AppStreamHandler(logging.StreamHandler):
     pass
 
 
+class RecentRecords(logging.Handler):
+    """Keep the last records in memory so a report can carry them to the board.
+
+    The console handler is the only durable output and it rotates, so a report
+    submitted later would otherwise point at logs that are already gone. The
+    buffer is bounded and process-local, and it is read once, at submission,
+    where the snapshot is attached to the ticket and outlives the process.
+    """
+
+    capacity = 500
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.records: deque[dict[str, Any]] = deque(maxlen=self.capacity)
+
+    def emit(self, record: logging.LogRecord) -> None:
+        try:
+            self.records.append(
+                {
+                    "created": record.created,
+                    "at": datetime.fromtimestamp(record.created, UTC).isoformat(),
+                    "level": record.levelname,
+                    "logger": record.name,
+                    "message": record.getMessage(),
+                    **correlation.current().as_dict(),
+                    "context": record.__dict__.get(_CONTEXT_ATTR, {}),
+                }
+            )
+        except Exception:  # noqa: BLE001 — a log handler never breaks the app
+            self.handleError(record)
+
+    def snapshot(self, since: float, until: float) -> list[dict[str, Any]]:
+        """The records inside a window, oldest first."""
+        return [item for item in self.records if since <= item["created"] <= until]
+
+
+_RECENT: RecentRecords | None = None
+
+
+def recent_records() -> RecentRecords | None:
+    """The installed buffer, or ``None`` before logging is configured."""
+    return _RECENT
+
+
 def setup_logging(config: LoggingConfig) -> None:
-    """Configure the root logger's single console handler."""
+    """Configure the root logger's console handler and the report buffer."""
+    global _RECENT
     level = logging.getLevelNamesMapping().get(config.level.upper(), logging.INFO)
     root = logging.getLogger()
     root.setLevel(level)
 
     for handler in list(root.handlers):
-        if isinstance(handler, AppStreamHandler):
+        if isinstance(handler, (AppStreamHandler, RecentRecords)):
             root.removeHandler(handler)
 
     formatter: logging.Formatter
@@ -191,6 +238,10 @@ def setup_logging(config: LoggingConfig) -> None:
     console.setLevel(level)
     console.setFormatter(formatter)
     root.addHandler(console)
+
+    _RECENT = RecentRecords()
+    _RECENT.setLevel(level)
+    root.addHandler(_RECENT)
 
     for noisy in ("httpx", "httpcore", "watchfiles"):
         logging.getLogger(noisy).setLevel(logging.WARNING)

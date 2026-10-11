@@ -30,6 +30,8 @@ from src.backend.db.enums import UserRole
 from src.backend.dependencies import get_db_session
 from src.backend.filesystem.dependencies import get_filesystem
 from src.backend.filesystem.local import LocalFileSystem
+from src.backend.reports.board import BoardTicket, get_board
+from src.backend.reports.exceptions import ReportSubmissionFailedError
 from src.backend.reports.models import ReportEvidenceModel, ReportModel, ReportState
 from src.backend.server import create_app
 from src.backend.users.models import UserModel
@@ -111,11 +113,33 @@ async def opened(
         shutil.rmtree(root / str(report_id), ignore_errors=True)
 
 
+class FakeBoard:
+    """A board that records what it was asked to do, and can refuse a file."""
+
+    def __init__(self, ticket_id: int = 4242) -> None:
+        self.ticket_id = ticket_id
+        self.created: list[tuple[str, str]] = []
+        self.attachments: list[tuple[int, str, bytes]] = []
+        self.refuse: set[str] = set()
+
+    async def create_task(self, title: str, description: str) -> BoardTicket:
+        self.created.append((title, description))
+        return BoardTicket(id=self.ticket_id, identifier=f"#{self.ticket_id}")
+
+    async def attach(
+        self, task: int, name: str, content: bytes, content_type: str
+    ) -> None:
+        if name in self.refuse:
+            raise ReportSubmissionFailedError("the board refused this file")
+        self.attachments.append((task, name, content))
+
+
 def _app(
     app_config: AppConfig,
     db_manager: DatabaseManager,
     user: User | None,
     storage=None,
+    board: FakeBoard | None = None,
 ) -> FastAPI:
     app = create_app(app_config)
 
@@ -131,6 +155,8 @@ def _app(
     app.dependency_overrides[get_optional_user] = lambda: user
     if storage is not None:
         app.dependency_overrides[get_filesystem] = lambda: LocalFileSystem(storage)
+    if board is not None:
+        app.dependency_overrides[get_board] = lambda: board
     return app
 
 
@@ -436,6 +462,114 @@ async def test_each_report_has_its_own_recording(
     assert one_status["frontendSteps"] == 1
     assert other_status["frontendSteps"] == 0
     assert one_status["frontendSession"] != other_status["frontendSession"]
+
+
+async def _with_evidence(app: FastAPI, report_id: str) -> None:
+    async with _client(app) as client:
+        for kind, payload in (
+            ("screenshot_viewport", PNG),
+            ("page_html", b"<html><body>com'era</body></html>"),
+        ):
+            response = await client.put(
+                f"/api/reports/{report_id}/evidence/{kind}",
+                files={"file": (f"{kind}.bin", payload, "application/octet-stream")},
+            )
+            assert response.status_code == 200
+
+
+async def test_submitting_creates_one_ticket_with_evidence_and_diagnostics(
+    app_config, db_manager, users, opened
+) -> None:
+    board = FakeBoard()
+    app = _app(app_config, db_manager, users["admin"], board=board)
+    report_id = await _open(app, track=opened)
+    await _with_evidence(app, report_id)
+
+    async with _client(app) as client:
+        await client.patch(
+            f"/api/reports/{report_id}",
+            json={"description": "Il salvataggio non risponde"},
+        )
+        submitted = await client.post(f"/api/reports/{report_id}/submit")
+
+    assert submitted.status_code == 200
+    body = submitted.json()
+    assert body["state"] == "submitted"
+    assert body["boardTaskId"] == board.ticket_id
+    assert body["boardTaskIdentifier"] == "#4242"
+    assert body["submittedAt"] is not None
+    assert body["submissionNote"] is None
+
+    assert len(board.created) == 1
+    title, description = board.created[0]
+    assert title.startswith("Segnalazione — Il salvataggio")
+    assert "Il salvataggio non risponde" in description
+    assert "/mondi" in description
+
+    names = {name for _, name, _ in board.attachments}
+    assert names == {
+        "screenshot_viewport.bin",
+        "page_html.bin",
+        "diagnostics.json",
+    }
+    snapshot = json.loads(
+        next(
+            content
+            for _, name, content in board.attachments
+            if name == "diagnostics.json"
+        )
+    )
+    assert snapshot["report"]["id"] == report_id
+    assert snapshot["report"]["page_url"] == "/mondi"
+    assert snapshot["correlation"]["request_id"]
+    assert snapshot["recordings"]["frontend"] == []
+    assert snapshot["logs"]
+
+
+async def test_submitting_twice_creates_one_ticket(
+    app_config, db_manager, users, opened
+) -> None:
+    board = FakeBoard()
+    app = _app(app_config, db_manager, users["admin"], board=board)
+    report_id = await _open(app, track=opened)
+
+    async with _client(app) as client:
+        first = await client.post(f"/api/reports/{report_id}/submit")
+        second = await client.post(f"/api/reports/{report_id}/submit")
+
+    assert first.status_code == second.status_code == 200
+    assert len(board.created) == 1
+    assert first.json()["boardTaskId"] == second.json()["boardTaskId"]
+
+
+async def test_a_refused_attachment_is_noted_without_losing_the_ticket(
+    app_config, db_manager, users, opened
+) -> None:
+    board = FakeBoard()
+    board.refuse = {"page_html.bin"}
+    app = _app(app_config, db_manager, users["admin"], board=board)
+    report_id = await _open(app, track=opened)
+    await _with_evidence(app, report_id)
+
+    async with _client(app) as client:
+        submitted = await client.post(f"/api/reports/{report_id}/submit")
+
+    assert submitted.status_code == 200
+    assert submitted.json()["submissionNote"] == "Allegati non caricati: page_html.bin"
+    assert len(board.created) == 1
+
+
+async def test_a_submission_without_a_configured_board_is_refused(
+    app_config, db_manager, users, opened
+) -> None:
+    # No override: the real dependency refuses when no board is configured.
+    app = _app(app_config, db_manager, users["admin"])
+    report_id = await _open(app, track=opened)
+
+    async with _client(app) as client:
+        refused = await client.post(f"/api/reports/{report_id}/submit")
+    assert refused.status_code == 503
+    assert "board" in refused.json()["detail"]
 
 
 async def test_a_submitted_report_accepts_no_more_edits(

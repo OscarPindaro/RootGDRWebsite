@@ -19,6 +19,7 @@ from ..filesystem.dependencies import get_filesystem
 from ..replay.schemas import ReplayBatch
 from ..users.schemas import User
 from . import recording
+from .board import BoardSubmitter, get_board
 from .models import EvidenceKind
 from .schemas import (
     ReportCreate,
@@ -37,6 +38,7 @@ from .service import (
     start_reproduction,
     stop_reproduction,
     store_evidence,
+    submit_report,
     update_description,
 )
 
@@ -163,6 +165,19 @@ async def upload_evidence_route(
     """Store or replace one capture of an open draft."""
     evidence = await store_evidence(db, filesystem, report_id, kind, file, user)
     return ReportEvidenceResponse.model_validate(evidence)
+
+
+@router.post("/{report_id}/submit", response_model=ReportResponse)
+async def submit_report_route(
+    report_id: uuid.UUID,
+    user: User | None = Depends(get_optional_user),
+    filesystem: FileSystem = Depends(get_filesystem),
+    board: BoardSubmitter = Depends(get_board),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
+) -> ReportResponse:
+    """Create the board ticket with the captures and one diagnostics file."""
+    model = await submit_report(db, filesystem, board, report_id, user)
+    return ReportResponse.model_validate(model)
 
 
 @router.get("/{report_id}/evidence/{kind}", response_class=Response)

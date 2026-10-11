@@ -41,6 +41,9 @@ const MESSAGES = {
   captureFailed: "Schermate non raccolte. Riprova con «Riprendi schermata».",
   annotating: "Annotazione salvata",
   annotateFailed: "Annotazione non salvata. Riprova.",
+  sending: "Invio la segnalazione…",
+  submitted: "Segnalazione inviata",
+  submitFailed: "Invio non riuscito. Riprova.",
 };
 
 let draftId = null;
@@ -108,7 +111,17 @@ function blobOf(canvas) {
 }
 
 async function json(response) {
-  if (!response.ok) throw new Error("request failed");
+  if (!response.ok) {
+    // The server's own sentence is the useful one: "not connected to a board"
+    // is something the reader can act on, "request failed" is not.
+    let detail = "";
+    try {
+      detail = (await response.json()).detail || "";
+    } catch (error) {
+      detail = "";
+    }
+    throw new Error(detail || "request failed");
+  }
   return response.json();
 }
 
@@ -298,6 +311,44 @@ function mount(dialog) {
 
   mountEditor(dialog, list, status);
 
+  const submit = dialog.querySelector("[data-report-submit]");
+  const submitActions = dialog.querySelector("[data-report-submit-actions]");
+  const ticket = dialog.querySelector("[data-report-ticket]");
+
+  function renderSubmission(draft) {
+    const submitted = draft.state === "submitted";
+    submitActions.hidden = submitted;
+    ticket.hidden = !submitted && !ticket.dataset.state;
+    if (!submitted) return;
+    ticket.dataset.state = "submitted";
+    ticket.textContent = draft.boardTaskIdentifier
+      ? `Segnalazione inviata: ${draft.boardTaskIdentifier}.`
+      : "Segnalazione inviata.";
+    if (draft.submissionNote) {
+      ticket.textContent += ` ${draft.submissionNote}.`;
+    }
+  }
+
+  submit.addEventListener("click", async () => {
+    setStatus(status, "sending");
+    try {
+      renderSubmission(
+        await json(
+          await fetch(`/api/reports/${draftId}/submit`, {
+            method: "POST",
+            headers: { Accept: "application/json" },
+          })
+        )
+      );
+      setStatus(status, "submitted");
+    } catch (error) {
+      setStatus(status, "submitFailed");
+      ticket.hidden = false;
+      ticket.dataset.state = "failed";
+      ticket.textContent = error.message || MESSAGES.submitFailed;
+    }
+  });
+
   const reproduce = dialog.querySelector("[data-report-reproduce]");
   const interrupt = dialog.querySelector("[data-report-stop]");
   const reproduceActions = dialog.querySelector("[data-report-reproduce-actions]");
@@ -379,6 +430,7 @@ function mount(dialog) {
       // what the reader has typed since the draft was last read.
       if (!textarea.value) textarea.value = draft.description || "";
       renderEvidence(list, draft.evidence || []);
+      renderSubmission(draft);
       // A reproduction is optional: a draft that cannot report its recording
       // state still opens, writes and captures.
       try {

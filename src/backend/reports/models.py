@@ -70,6 +70,14 @@ class ReportModel(Base, UUIDv4PrimaryKeyMixin, TimestampMixin):
     reproduction_stopped_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # The board ticket, written as soon as it exists so a retry can never create
+    # a second one for the same report.
+    board_task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    board_task_identifier: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    submitted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    submission_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     reporter: Mapped[UserModel | None] = relationship(lazy="joined")
     evidence: Mapped[list["ReportEvidenceModel"]] = relationship(
         back_populates="report",
