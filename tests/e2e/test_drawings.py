@@ -126,3 +126,68 @@ def test_an_admin_draws_undoes_and_reopens_artwork(session: BrowserSession) -> N
     session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
     assert session.page.locator(".drawing-editor__shape").count() == 2
     assert session.errors == []
+
+
+def _at(page, x: float, y: float) -> tuple[float, float]:
+    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
+    return (box["x"] + (x / 640) * box["width"], box["y"] + (y / 480) * box["height"])
+
+
+def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> None:
+    """The concrete editing example: a triangle becomes a five-vertex beak."""
+    drawing_id = _create(session)
+    session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+
+    session.page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(session.page, (180, 90), (360, 200))
+    drawn = _local_node(session)
+    tip = drawn["points"][2]
+
+    session.page.locator("[data-drawing-mode]").click()
+
+    # Insert one point on the upper edge and one on the lower edge. A quarter
+    # along, not the midpoint: the midpoint is the edge-visibility toggle.
+    def along(index: int) -> tuple[float, float]:
+        start = drawn["points"][index]
+        return (
+            start[0] + (tip[0] - start[0]) * 0.25,
+            start[1] + (tip[1] - start[1]) * 0.25,
+        )
+
+    for index in (0, 1):
+        x, y = along(index)
+        point = _at(session.page, x, y)
+        session.page.mouse.click(point[0], point[1])
+    assert len(_local_node(session)["points"]) == 5
+
+    # Drag the original tip downward.
+    tip_at = _at(session.page, tip[0], tip[1])
+    lower_at = _at(session.page, tip[0], tip[1] + 90)
+    session.page.mouse.move(tip_at[0], tip_at[1])
+    session.page.mouse.down()
+    session.page.mouse.move(lower_at[0], lower_at[1], steps=4)
+    session.page.mouse.up()
+
+    with session.page.expect_response(_is_patch_to(drawing_id)) as saved:
+        session.page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+
+    bent = _node(session, drawing_id)
+    assert len(bent["points"]) == 5
+    assert bent["points"][2][1] > tip[1]
+
+    session.goto(f"/drawings/{drawing_id}")
+    session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert len(_node(session, drawing_id)["points"]) == 5
+    assert session.errors == []
+
+
+def _local_node(session: BrowserSession) -> dict:
+    """The in-progress document in the page, before it is saved."""
+    return session.page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes[0]"
+    )
+
+
+def _node(session: BrowserSession, drawing_id: str) -> dict:
+    return session.expect_api(f"/api/drawings/{drawing_id}").json()["scene"]["nodes"][0]

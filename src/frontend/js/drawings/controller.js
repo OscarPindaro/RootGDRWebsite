@@ -7,6 +7,7 @@
 
 import {
   apply,
+  distanceToSegment,
   invert,
   multiply,
   rotateAbout,
@@ -29,6 +30,7 @@ import {
   reorderNode,
   setTransform,
   validPolygon,
+  worldPoints,
 } from "./scene.js";
 import { render } from "./render.js";
 
@@ -87,6 +89,7 @@ export function createController(root) {
   let viewport = [1, 0, 0, 1, 0, 0];
   let drag = null;
   let pendingPolygon = null;
+  let snapPoint = null;
 
   let savedScene = canonical(scene);
   let savedVersion = Number(root.dataset.version || 0) || null;
@@ -95,7 +98,7 @@ export function createController(root) {
   /* ---------- rendering ---------- */
 
   function view() {
-    return { selectedId, viewport, mode, tool };
+    return { selectedId, viewport, mode, tool, snap: snapPoint };
   }
 
   function draw() {
@@ -281,6 +284,103 @@ export function createController(root) {
     ].map((point) => apply(node.transform, point));
   }
 
+  /* ---------- snapping ---------- */
+
+  const SNAP_TOLERANCE_PX = 8;
+  const SNAP_GRID = 10;
+
+  /** Snap a world point to the grid or a sibling vertex; Alt bypasses it. */
+  function snapWorld(point, node, excludeIndex, bypass) {
+    if (bypass) return { point, snapped: false };
+    const tolerance = SNAP_TOLERANCE_PX / viewport[0];
+    let best = null;
+    let bestDistance = tolerance;
+    if (node && node.kind === "polygon") {
+      worldPoints(node).forEach((vertex, index) => {
+        if (index === excludeIndex) return;
+        const distance = Math.hypot(vertex[0] - point[0], vertex[1] - point[1]);
+        if (distance < bestDistance) {
+          bestDistance = distance;
+          best = [vertex[0], vertex[1]];
+        }
+      });
+    }
+    const gridX = Math.round(point[0] / SNAP_GRID) * SNAP_GRID;
+    const gridY = Math.round(point[1] / SNAP_GRID) * SNAP_GRID;
+    if (Math.hypot(gridX - point[0], gridY - point[1]) < bestDistance) {
+      best = [gridX, gridY];
+    }
+    return best ? { point: best, snapped: true } : { point, snapped: false };
+  }
+
+  /* ---------- vertex editing ---------- */
+
+  function edgeVisibility(node) {
+    return node.edgeVisible ? [...node.edgeVisible] : node.points.map(() => true);
+  }
+
+  function insertVertex(edgeIndex, localPoint) {
+    const node = selected().node;
+    const points = node.points.map((point) => [...point]);
+    points.splice(edgeIndex + 1, 0, [round(localPoint[0]), round(localPoint[1])]);
+    if (!validPolygon(points)) return;
+    const patch = { points };
+    if (node.edgeVisible) {
+      const visible = edgeVisibility(node);
+      // The split edge keeps its own visibility on both halves.
+      visible.splice(edgeIndex + 1, 0, visible[edgeIndex]);
+      patch.edgeVisible = visible;
+    }
+    commit(patchNode(scene, selectedId, patch));
+  }
+
+  function removeVertex(index) {
+    const node = selected().node;
+    if (node.points.length <= 3) {
+      announce("Un poligono ha almeno tre vertici.");
+      return;
+    }
+    const points = node.points.filter((_, position) => position !== index);
+    if (!validPolygon(points)) {
+      announce("Il poligono perderebbe la sua area.");
+      return;
+    }
+    const patch = { points };
+    if (node.edgeVisible) {
+      patch.edgeVisible = edgeVisibility(node).filter((_, position) => position !== index);
+    }
+    announce("");
+    commit(patchNode(scene, selectedId, patch));
+  }
+
+  /** The nearest polygon edge to a local point, with the projection onto it. */
+  function closestEdge(node, localPoint, tolerance) {
+    let best = null;
+    let bestDistance = tolerance;
+    for (let index = 0; index < node.points.length; index += 1) {
+      const a = node.points[index];
+      const b = node.points[(index + 1) % node.points.length];
+      const distance = distanceToSegment(localPoint, a, b);
+      if (distance <= bestDistance) {
+        bestDistance = distance;
+        const dx = b[0] - a[0];
+        const dy = b[1] - a[1];
+        const lengthSquared = dx * dx + dy * dy || 1;
+        let t = ((localPoint[0] - a[0]) * dx + (localPoint[1] - a[1]) * dy) / lengthSquared;
+        t = Math.max(0, Math.min(1, t));
+        best = { edge: index, point: [a[0] + t * dx, a[1] + t * dy] };
+      }
+    }
+    return best;
+  }
+
+  function toggleEdge(index) {
+    const node = selected().node;
+    const visible = edgeVisibility(node);
+    visible[index] = !visible[index];
+    commit(patchNode(scene, selectedId, { edgeVisible: visible }));
+  }
+
   /* ---------- tools ---------- */
 
   function setTool(next) {
@@ -312,7 +412,9 @@ export function createController(root) {
 
   function finishShape() {
     if (!drag) return;
-    const { from, to, tool: shape } = drag;
+    const { tool: shape } = drag;
+    const from = snapWorld(drag.from, null, -1, false).point;
+    const to = snapWorld(drag.to, null, -1, false).point;
     drag = null;
     const minX = Math.min(from[0], to[0]);
     const maxX = Math.max(from[0], to[0]);
@@ -391,8 +493,30 @@ export function createController(root) {
 
     if (target.dataset.vertex !== undefined && mode === "vertex" && selectedId) {
       const node = selected().node;
-      drag = { kind: "vertex", id: selectedId, index: Number(target.dataset.vertex), transform: node.transform, points: node.points.map((point) => [...point]) };
+      if (event.altKey) {
+        removeVertex(Number(target.dataset.vertex));
+        return;
+      }
+      drag = { kind: "vertex", id: selectedId, index: Number(target.dataset.vertex), node, transform: node.transform, points: node.points.map((point) => [...point]) };
       return;
+    }
+    if (target.dataset.edge !== undefined && mode === "vertex" && selectedId) {
+      toggleEdge(Number(target.dataset.edge));
+      return;
+    }
+    if (mode === "vertex" && selectedId && tool === "select") {
+      const node = selected().node;
+      if (node.kind === "polygon") {
+        const inverse = invert(node.transform);
+        if (inverse) {
+          const local = apply(inverse, scenePoint(event));
+          const hit = closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0]);
+          if (hit) {
+            insertVertex(hit.edge, hit.point);
+            return;
+          }
+        }
+      }
     }
     if (target.dataset.corner !== undefined && selectedId) {
       const node = selected().node;
@@ -471,7 +595,9 @@ export function createController(root) {
     if (drag.kind === "vertex") {
       const inverse = invert(drag.transform);
       if (!inverse) return;
-      const local = apply(inverse, scenePoint(event));
+      const snapped = snapWorld(scenePoint(event), drag.node, drag.index, event.altKey);
+      snapPoint = snapped.snapped ? snapped.point : null;
+      const local = apply(inverse, snapped.point);
       const points = drag.points.map((point, index) => (index === drag.index ? [round(local[0]), round(local[1])] : point));
       if (!validPolygon(points)) return;
       scene = patchNode(scene, drag.id, { points });
@@ -482,6 +608,7 @@ export function createController(root) {
   function onPointerUp() {
     if (!drag) return;
     const finished = drag;
+    snapPoint = null;
     if (finished.kind === "create") finishShape();
     else if (finished.kind === "line") finishLine();
     else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex") {

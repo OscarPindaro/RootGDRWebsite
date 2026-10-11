@@ -179,7 +179,34 @@ function overlayElements(scene, view) {
           "data-vertex": index,
         })
       );
+      // One toggle per edge, at its midpoint: hide the outline without losing
+      // the fill, which is how adjoining body parts avoid a black seam.
+      const next = apply(toView, node.points[(index + 1) % node.points.length]);
+      const hidden = Boolean(node.edgeVisible) && node.edgeVisible[index] === false;
+      elements.push(
+        el("rect", {
+          class: "drawing-editor__edge-handle" + (hidden ? " is-hidden" : ""),
+          x: (viewPoint[0] + next[0]) / 2 - 4,
+          y: (viewPoint[1] + next[1]) / 2 - 4,
+          width: 8,
+          height: 8,
+          "data-edge": index,
+        })
+      );
     });
+  }
+
+  if (view.snap) {
+    const point = apply(view.viewport, view.snap);
+    elements.push(
+      el("rect", {
+        class: "drawing-editor__snap",
+        x: point[0] - 7,
+        y: point[1] - 7,
+        width: 14,
+        height: 14,
+      })
+    );
   }
   return elements;
 }

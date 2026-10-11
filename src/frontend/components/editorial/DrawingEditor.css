@@ -301,6 +301,27 @@
   pointer-events: none;
 }
 
+/* The edge toggle in vertex mode: filled when the outline is drawn, dashed
+   when it is hidden. */
+.drawing-editor__edge-handle {
+  fill: var(--surface);
+  stroke: var(--muted);
+  stroke-width: 1;
+  cursor: pointer;
+}
+
+.drawing-editor__edge-handle.is-hidden {
+  fill: var(--paper-deep);
+  stroke-dasharray: 2 2;
+}
+
+.drawing-editor__snap {
+  fill: none;
+  stroke: var(--vermilion);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
 .drawing-editor__overlay > * { pointer-events: auto; }
 
 /* ---------- phone: preview, not a drawing surface ---------- */

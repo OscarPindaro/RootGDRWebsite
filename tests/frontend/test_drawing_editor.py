@@ -320,6 +320,151 @@ def test_hiding_a_layer_removes_it_from_the_artboard(component):
     assert page.locator("[data-testid='drawing-layer']").count() == 1
 
 
+# --- vertex editing, edge visibility, snapping -----------------------------
+
+
+def _one_triangle() -> SceneDocument:
+    return SceneDocument(
+        nodes=[
+            PolygonNode(
+                id="beak",
+                name="Becco",
+                points=[(100, 100), (300, 100), (200, 300)],
+                fill="#d97a26",
+            )
+        ]
+    )
+
+
+def _at(page, x: float, y: float) -> tuple[float, float]:
+    """Artboard coordinates to page coordinates, so a click lands where meant."""
+    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
+    return (box["x"] + (x / 640) * box["width"], box["y"] + (y / 480) * box["height"])
+
+
+def _select_the_triangle(page) -> None:
+    point = _at(page, 200, 200)
+    page.mouse.click(point[0], point[1])
+    assert _scene_of(page)["nodes"][0]["id"] == "beak"
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selectedId"
+        )
+        == "beak"
+    )
+
+
+def _vertex_mode(page) -> None:
+    page.locator("[data-drawing-mode]").click()
+
+
+def test_vertex_mode_shows_a_handle_per_vertex_and_per_edge(component):
+    page = component.mount(
+        "editorial.DrawingEditor", props=_live_props(_one_triangle())
+    )
+    _mounted(page)
+    _select_the_triangle(page)
+    _vertex_mode(page)
+
+    assert page.locator(".drawing-editor__handle").count() == 3
+    assert page.locator(".drawing-editor__edge-handle").count() == 3
+
+
+def test_clicking_an_edge_inserts_a_vertex(component):
+    page = component.mount(
+        "editorial.DrawingEditor", props=_live_props(_one_triangle())
+    )
+    _mounted(page)
+    _select_the_triangle(page)
+    _vertex_mode(page)
+
+    # A quarter along the top edge, away from its midpoint toggle.
+    point = _at(page, 150, 100)
+    page.mouse.click(point[0], point[1])
+
+    points = _scene_of(page)["nodes"][0]["points"]
+    assert len(points) == 4
+    assert points[1][0] == pytest.approx(150, abs=1)
+    assert points[1][1] == pytest.approx(100, abs=1)
+    assert page.locator(".drawing-editor__handle").count() == 4
+
+
+def test_dragging_a_vertex_snaps_to_the_grid(component):
+    page = component.mount(
+        "editorial.DrawingEditor", props=_live_props(_one_triangle())
+    )
+    _mounted(page)
+    _select_the_triangle(page)
+    _vertex_mode(page)
+
+    start = _at(page, 100, 100)
+    near = _at(page, 127, 133)
+    page.mouse.move(start[0], start[1])
+    page.mouse.down()
+    page.mouse.move(near[0], near[1], steps=4)
+    page.mouse.up()
+
+    moved = _scene_of(page)["nodes"][0]["points"][0]
+    assert moved == [130, 130]
+
+
+def test_alt_clicking_a_vertex_removes_it(component):
+    page = component.mount(
+        "editorial.DrawingEditor", props=_live_props(_one_triangle())
+    )
+    _mounted(page)
+    _select_the_triangle(page)
+    _vertex_mode(page)
+
+    # A fourth vertex first: a triangle cannot lose one and stay a polygon.
+    inserted = _at(page, 150, 100)
+    page.mouse.click(inserted[0], inserted[1])
+    assert len(_scene_of(page)["nodes"][0]["points"]) == 4
+
+    page.keyboard.down("Alt")
+    page.mouse.click(inserted[0], inserted[1])
+    page.keyboard.up("Alt")
+
+    assert _scene_of(page)["nodes"][0]["points"] == [[100, 100], [300, 100], [200, 300]]
+
+
+def test_a_triangle_cannot_lose_a_vertex(component):
+    page = component.mount(
+        "editorial.DrawingEditor", props=_live_props(_one_triangle())
+    )
+    _mounted(page)
+    _select_the_triangle(page)
+    _vertex_mode(page)
+
+    point = _at(page, 200, 300)
+    page.keyboard.down("Alt")
+    page.mouse.click(point[0], point[1])
+    page.keyboard.up("Alt")
+
+    assert len(_scene_of(page)["nodes"][0]["points"]) == 3
+    assert "almeno tre vertici" in page.locator("[data-drawing-error]").inner_text()
+
+
+def test_an_edge_toggle_hides_the_outline_but_keeps_the_fill(component):
+    page = component.mount(
+        "editorial.DrawingEditor", props=_live_props(_one_triangle())
+    )
+    _mounted(page)
+    _select_the_triangle(page)
+    _vertex_mode(page)
+
+    # The edge toggle sits at the midpoint of the top edge.
+    point = _at(page, 200, 100)
+    page.mouse.click(point[0], point[1])
+
+    node = _scene_of(page)["nodes"][0]
+    assert node["edgeVisible"] == [False, True, True]
+    assert node["fill"] == "#d97a26"
+    # The fill is still drawn; the outline became two runs instead of a closed
+    # polygon stroke.
+    assert page.locator(".drawing-editor__shape").count() >= 2
+
+
 # --- the editor page: explicit save ----------------------------------------
 
 

@@ -19,6 +19,13 @@ document; the drawing tools themselves arrive in later tickets.
   `Del` deletes, the arrow keys nudge, and the inspector reorders the object.
 - **Styling.** A twelve-colour palette plus a custom fill and stroke colour,
   stroke width, opacity, and independent "no fill"/"no stroke" switches.
+- **Vertex editing.** The `Vertici` mode shows a handle per vertex and a toggle
+  per edge. Clicking an edge inserts a vertex on it; dragging a handle moves the
+  vertex; `Alt`+click removes one (never below three); the midpoint toggle hides
+  that edge's outline while the fill stays closed, which is how adjoining body
+  parts avoid a black seam. A move snaps to the grid and to the polygon's other
+  vertices within a screen-space tolerance, with a visible marker; `Alt`
+  bypasses the snap.
 - **Undo/redo.** `Ctrl`/`Cmd`+`Z` and `Ctrl`/`Cmd`+`Shift`+`Z`, or the toolbar
   buttons. One completed drag is one step; panning, zooming and selection are
   not steps.
@@ -85,8 +92,10 @@ document; the drawing tools themselves arrive in later tickets.
 
 ## Limits
 
-- **Vertex editing, straight cuts, groups and Bézier curves are not here yet**
-  (`T05`–`T08`). The tools are present in the rail; `Taglia` does nothing.
+- **Straight cuts, groups and Bézier curves are not here yet** (`T06`–`T08`).
+  The tools are present in the rail; `Taglia` does nothing.
+- Snapping covers the grid and a polygon's own vertices; edge midpoints,
+  attachment points and other objects are not snap targets yet.
 - Scaling keeps the dragged corner proportional-ish but does not snap to a
   ratio; rotation has no angle snapping.
 - Pan/zoom exists (wheel to zoom, `Shift`+drag or the middle button to pan) but
