@@ -7,7 +7,9 @@ recovers, the save it makes, the captures it collects — rather than the captur
 library's rendering.
 """
 
+import struct
 import time
+import zlib
 
 import pytest
 
@@ -39,6 +41,39 @@ def _draft(description: str = "", evidence: list[dict] | None = None) -> dict:
         "userAgent": "playwright",
         "evidence": evidence or [],
     }
+
+
+def _png(width: int, height: int, rgb: tuple[int, int, int] = (200, 60, 40)) -> bytes:
+    """A real PNG, so the annotation surface loads an image and not JSON."""
+
+    def chunk(kind: bytes, data: bytes) -> bytes:
+        return (
+            struct.pack(">I", len(data))
+            + kind
+            + data
+            + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+        )
+
+    raw = b"".join(b"\x00" + bytes(rgb) * width for _ in range(height))
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(raw, 9))
+        + chunk(b"IEND", b"")
+    )
+
+
+def _serve_shot(page, kind: str, width: int = 800, height: int = 600) -> None:
+    """Answer the evidence GET with a PNG; every other method keeps its stub."""
+    shot = _png(width, height)
+
+    def handler(route):
+        if route.request.method == "GET":
+            route.fulfill(status=200, content_type="image/png", body=shot)
+        else:
+            route.continue_()
+
+    page.route(f"**/api/reports/{DRAFT_ID}/evidence/{kind}", handler)
 
 
 def _open(page) -> None:
@@ -85,7 +120,9 @@ def test_the_panel_opens_over_the_page_with_italian_copy(component):
     _open(page)
 
     assert page.locator("#report-panel").evaluate("dialog => dialog.open")
-    assert page.locator(".report-panel__label").inner_text() == "Cosa non funziona"
+    assert (
+        page.locator(".report-panel__label").first.inner_text() == "Cosa non funziona"
+    )
     assert (
         page.locator("[data-report-recapture]").inner_text().strip()
         == "Riprendi schermata"
@@ -149,6 +186,95 @@ def test_typing_saves_the_description_on_the_draft(component):
     page.fill("[data-report-description]", "Non salva più")
     _wait_for_request(component, "PATCH", f"/api/reports/{DRAFT_ID}")
     _wait_for_state(page, "saved")
+
+
+def test_a_screenshot_is_annotated_and_saved_back(component):
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("screenshot_viewport"), _capture("page_html")]),
+    )
+    component.route_json(
+        "PUT",
+        f"/api/reports/{DRAFT_ID}/evidence/screenshot_viewport",
+        body=_capture("screenshot_viewport"),
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _serve_shot(page, "screenshot_viewport")
+    _open(page)
+    _wait_for_state(page, "saved")
+
+    # The editor opens on the screenshot the reader chose.
+    page.click('[data-report-annotate="screenshot_viewport"]')
+    page.wait_for_selector("[data-report-editor]:not([hidden])")
+    page.wait_for_function(
+        "() => document.querySelector('[data-report-canvas]').width > 0"
+    )
+
+    # A drag with the arrow tool leaves a mark, and the export is not the
+    # untouched capture.
+    before = page.evaluate(
+        "() => document.querySelector('[data-report-canvas]').toDataURL()"
+    )
+    box = page.locator("[data-report-canvas]").bounding_box()
+    page.mouse.move(box["x"] + 10, box["y"] + 10)
+    page.mouse.down()
+    page.mouse.move(box["x"] + 60, box["y"] + 40)
+    page.mouse.up()
+    after = page.evaluate(
+        "() => document.querySelector('[data-report-canvas]').toDataURL()"
+    )
+    assert after != before
+
+    page.click("[data-report-save]")
+    _wait_for_request(
+        component, "PUT", f"/api/reports/{DRAFT_ID}/evidence/screenshot_viewport"
+    )
+    _wait_for_state(page, "annotating")
+
+
+def test_the_annotation_tools_and_colours_are_choices(component):
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("screenshot_full_page"), _capture("page_html")]),
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _serve_shot(page, "screenshot_full_page")
+    _open(page)
+    _wait_for_state(page, "saved")
+
+    page.click('[data-report-annotate="screenshot_full_page"]')
+    page.wait_for_selector("[data-report-editor]:not([hidden])")
+
+    tools = page.locator("[data-report-tool]")
+    assert [tools.nth(index).inner_text() for index in range(tools.count())] == [
+        "Freccia",
+        "Riquadro",
+        "Testo",
+        "Sfoca",
+    ]
+    assert page.locator("[data-report-tool][aria-pressed='true']").inner_text() == (
+        "Freccia"
+    )
+
+    page.click("[data-report-tool='blur']")
+    assert page.locator("[data-report-tool='blur']").get_attribute("aria-pressed") == (
+        "true"
+    )
+    assert page.locator("[data-report-tool='arrow']").get_attribute("aria-pressed") == (
+        "false"
+    )
+
+    chips = page.locator("[data-report-colour]")
+    assert chips.count() == 6
+    page.click("[data-report-colour]:nth-child(3)")
+    assert (
+        page.locator("[data-report-colour]:nth-child(3)").get_attribute("aria-pressed")
+        == "true"
+    )
 
 
 def test_the_captures_are_collected_for_a_new_draft(component):

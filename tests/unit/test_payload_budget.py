@@ -106,8 +106,8 @@ BUDGETS = {
     ),
     "lazy report panel (report.js, only when the panel is opened)": (
         _measure(REPORT),
-        22_000,
-        9_000,
+        28_000,
+        11_000,
     ),
 }
 

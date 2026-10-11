@@ -12,6 +12,9 @@ A reader can report a problem from the page they are on, without leaving it.
 - The first open captures the rendered page HTML and two screenshots — the
   visible viewport and the whole page — and attaches them to the draft.
   **Riprendi schermata** captures them again.
+- Each screenshot can be annotated before submission: **Annota** opens the
+  capture on a canvas with a coloured arrow, a box, text and an optional blur.
+  **Salva annotazione** replaces that capture with the marked image.
 - A draft is not a board ticket. Saving or reopening one creates nothing on the
   board; submission is a later step (REQ-0014/T05).
 
@@ -36,13 +39,22 @@ A reader can report a problem from the page they are on, without leaving it.
 - A screenshot's type comes from its leading bytes, never from the declared
   name; the page HTML is stored as `text/html`. Limits are 5 MB per screenshot
   and 2 MB of HTML.
+- `src/frontend/js/report/annotate.js` owns the annotation surface. Marks are
+  kept in the image's own pixel space, so the canvas can be scaled to the dialog
+  without moving a mark, and a blur is painted by re-drawing the image inside
+  the clip — the export is the canvas itself, so nothing has to be flattened
+  twice. The colour palette is the six cold/ink chips the drawing editor uses.
 
 ## Limits
 
 - The panel is on shelled pages only. The standalone error pages, including the
   500 page that shows its request id, cannot open it yet.
 - One capture per kind: capturing again replaces the previous file, so there is
-  no before/after pair.
+  no before/after pair, and **Riprendi schermata** discards the annotations on
+  the capture it replaces.
+- Annotation is destructive on save: there is no undo after the fact, only
+  **Annulla ultima** before it. A mark can be drawn but not moved or deleted
+  individually.
 - `localStorage` holds the draft id and nothing else. Clearing storage loses the
   handle, not the row, and there is no draft list in the UI to find it again.
 - Retention is not implemented: drafts and their files stay until a cleanup step

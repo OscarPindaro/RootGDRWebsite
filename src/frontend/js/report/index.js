@@ -1,4 +1,4 @@
-/* The report panel: capture the affected page and keep a draft on the backend.
+/* The report panel: capture the affected page, annotate it and keep a draft.
 
    Loaded on demand by `editorial/ReportPanel.js`, which the component declares.
    The capture is why this is a bundle rather than plain shell script: turning
@@ -11,10 +11,13 @@
 
 import { toCanvas } from "html-to-image";
 
+import { COLOURS, createAnnotator } from "./annotate.js";
+
 const DRAFT_KEY = "rootgdr.report.draft";
 const SAVE_DELAY = 1000;
 const CAPTURE_LIMIT = 20_000;
 const PANEL = "#report-panel";
+const SCREENSHOTS = ["screenshot_viewport", "screenshot_full_page"];
 
 const LABELS = {
   screenshot_viewport: "Schermata visibile",
@@ -29,6 +32,8 @@ const MESSAGES = {
   saved: "Bozza salvata",
   failed: "Bozza non salvata. Riprova.",
   captureFailed: "Schermate non raccolte. Riprova con «Riprendi schermata».",
+  annotating: "Annotazione salvata",
+  annotateFailed: "Annotazione non salvata. Riprova.",
 };
 
 let draftId = null;
@@ -62,11 +67,21 @@ function renderEvidence(list, evidence) {
   evidence.forEach((item) => {
     const entry = document.createElement("li");
     entry.className = "report-panel__attachment";
-    entry.textContent = LABELS[item.kind] || item.kind;
+    const name = document.createElement("span");
+    name.textContent = LABELS[item.kind] || item.kind;
+    entry.append(name);
     const size = document.createElement("span");
     size.className = "report-panel__size mono muted";
     size.textContent = Math.max(1, Math.round(item.byteSize / 1024)) + " kB";
     entry.append(size);
+    if (SCREENSHOTS.includes(item.kind)) {
+      const annotate = document.createElement("button");
+      annotate.type = "button";
+      annotate.className = "report-panel__annotate";
+      annotate.dataset.reportAnnotate = item.kind;
+      annotate.textContent = "Annota";
+      entry.append(annotate);
+    }
     list.append(entry);
   });
   list.hidden = evidence.length === 0;
@@ -189,6 +204,83 @@ async function capture(status, list) {
   }
 }
 
+function mountEditor(dialog, list, status) {
+  const editor = dialog.querySelector("[data-report-editor]");
+  const canvas = dialog.querySelector("[data-report-canvas]");
+  const textInput = dialog.querySelector("[data-report-text]");
+  const colours = dialog.querySelector("[data-report-colours]");
+  const tools = Array.from(dialog.querySelectorAll("[data-report-tool]"));
+  const annotator = createAnnotator(canvas);
+  let editing = null;
+
+  COLOURS.forEach((value, index) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "report-panel__chip";
+    button.dataset.reportColour = value;
+    button.style.setProperty("--swatch", value);
+    button.setAttribute("aria-label", "Colore " + (index + 1));
+    button.setAttribute("aria-pressed", String(index === 0));
+    colours.append(button);
+  });
+  const chips = Array.from(colours.querySelectorAll("[data-report-colour]"));
+
+  function select(buttons, chosen) {
+    buttons.forEach((button) =>
+      button.setAttribute("aria-pressed", String(button === chosen))
+    );
+  }
+
+  function close() {
+    editing = null;
+    editor.hidden = true;
+  }
+
+  list.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-report-annotate]");
+    if (button === null) return;
+    editing = button.dataset.reportAnnotate;
+    editor.hidden = false;
+    annotator.load(`/api/reports/${draftId}/evidence/${editing}`);
+  });
+
+  tools.forEach((button) =>
+    button.addEventListener("click", () => {
+      annotator.setTool(button.dataset.reportTool);
+      select(tools, button);
+    })
+  );
+  chips.forEach((button) =>
+    button.addEventListener("click", () => {
+      annotator.setColour(button.dataset.reportColour);
+      select(chips, button);
+    })
+  );
+  textInput.addEventListener("input", () => annotator.setText(textInput.value));
+  dialog
+    .querySelector("[data-report-undo]")
+    .addEventListener("click", () => annotator.undo());
+  dialog
+    .querySelector("[data-report-editor-close]")
+    .addEventListener("click", close);
+  dialog.querySelector("[data-report-save]").addEventListener("click", async () => {
+    if (editing === null) return;
+    const blob = await annotator.toBlob();
+    if (!blob) {
+      setStatus(status, "annotateFailed");
+      return;
+    }
+    try {
+      await upload(editing, blob, `${editing}.png`);
+      renderEvidence(list, (await readDraft()).evidence || []);
+      close();
+      setStatus(status, "annotating");
+    } catch (error) {
+      setStatus(status, "annotateFailed");
+    }
+  });
+}
+
 function mount(dialog) {
   if (dialog.dataset.reportBound === "true") return;
   dialog.dataset.reportBound = "true";
@@ -196,6 +288,8 @@ function mount(dialog) {
   const status = dialog.querySelector("[data-report-status]");
   const list = dialog.querySelector("[data-report-evidence]");
   const recapture = dialog.querySelector("[data-report-recapture]");
+
+  mountEditor(dialog, list, status);
 
   async function openPanel() {
     setStatus(status, "opening");
