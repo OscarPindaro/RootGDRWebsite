@@ -1,7 +1,8 @@
 {#def #}
 {#css editorial/ReportPanel.css, common/Button.css, common/Dialog.css, common/Icon.css, common/Tooltip.css #}
 {#js common/Dialog.js, editorial/ReportPanel.js #}
-<common.Dialog title="Segnala un problema" id="report-panel" manual={{ True }}>
+<common.Dialog title="Segnala un problema" id="report-panel" manual={{ True }}
+               class="report-panel-dialog">
   <p class="report-panel__lead">
     Racconta cosa non funziona. La schermata visibile, la pagina intera e l’HTML
     di questa pagina vengono allegati da soli alla bozza.
@@ -33,7 +34,15 @@
       <input class="report-panel__input" type="text" maxlength="120"
              data-report-text placeholder="Nota sulla schermata" />
     </label>
-    <div class="report-panel__surface">
+    <div class="report-panel__zoom" role="group" aria-label="Ingrandimento della schermata">
+      <button type="button" class="report-panel__tool" data-report-zoom="out"
+              aria-label="Riduci">−</button>
+      <span class="report-panel__zoom-value mono" data-report-zoom-value>100%</span>
+      <button type="button" class="report-panel__tool" data-report-zoom="in"
+              aria-label="Ingrandisci">+</button>
+      <button type="button" class="report-panel__tool" data-report-zoom="fit">Adatta</button>
+    </div>
+    <div class="report-panel__surface" data-report-surface>
       <canvas class="report-panel__canvas" data-report-canvas></canvas>
     </div>
     <div class="report-panel__actions">

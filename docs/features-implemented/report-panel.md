@@ -15,6 +15,9 @@ A reader can report a problem from the page they are on, without leaving it.
 - Each screenshot can be annotated before submission: **Annota** opens the
   capture on a canvas with a coloured arrow, a box, text and an optional blur.
   **Salva annotazione** replaces that capture with the marked image.
+- The capture opens fitted to the panel and can be zoomed with **−** / **+** /
+  **Adatta**, or with Ctrl and the wheel, between 20% and 400%. A capture is
+  worth reading whole before it is worth zooming into.
 - **Riproduci il problema** records the reproduction: the reader navigates
   normally and both the browser steps and the backend calls stay attached to
   this report. **Interrompi la registrazione** keeps what was collected.
@@ -76,6 +79,12 @@ A reader can report a problem from the page they are on, without leaving it.
   without moving a mark, and a blur is painted by re-drawing the image inside
   the clip — the export is the canvas itself, so nothing has to be flattened
   twice. The colour palette is the six cold/ink chips the drawing editor uses.
+  The zoom is the canvas's CSS size: the intrinsic size stays the image's, so
+  the pointer mapping keeps dividing by the rect and the export is unaffected.
+- The panel is wider than a confirmation dialog on purpose — the captures are
+  the point of it, and a 480px column makes them unreadable. `.dialog-body`
+  scrolls, so the panel can be taller than the viewport without pushing its
+  actions away.
 
 ## Limits
 

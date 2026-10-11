@@ -17,6 +17,9 @@ export const COLOURS = [
 const FONT = "600 %dpx system-ui, -apple-system, Segoe UI, sans-serif";
 const MIN_DRAG = 4;
 
+const MIN_ZOOM = 0.2;
+const MAX_ZOOM = 4;
+
 export function createAnnotator(canvas) {
   let image = null;
   let shapes = [];
@@ -24,6 +27,16 @@ export function createAnnotator(canvas) {
   let tool = "arrow";
   let colour = COLOURS[0];
   let text = "";
+  let zoom = 1;
+
+  /* The canvas keeps the image's own pixel size; the zoom is its CSS size, so
+     the marks never move and the pointer mapping keeps dividing by the rect. */
+  function applyZoom(next) {
+    zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
+    canvas.style.width = canvas.width * zoom + "px";
+    canvas.style.height = canvas.height * zoom + "px";
+    return zoom;
+  }
 
   function strokeWidth() {
     return Math.max(2, canvas.width / 360);
@@ -118,6 +131,17 @@ export function createAnnotator(canvas) {
     render();
   });
 
+  canvas.addEventListener(
+    "wheel",
+    (event) => {
+      if (!event.ctrlKey || image === null) return;
+      event.preventDefault();
+      applyZoom(zoom * (event.deltaY < 0 ? 1.1 : 0.9));
+      canvas.dispatchEvent(new CustomEvent("report:zoom", { detail: zoom }));
+    },
+    { passive: false }
+  );
+
   return {
     async load(url) {
       const blob = await (await fetch(url, { headers: { Accept: "image/png" } })).blob();
@@ -127,7 +151,17 @@ export function createAnnotator(canvas) {
       canvas.height = bitmap.height;
       shapes = [];
       draft = null;
+      applyZoom(1);
       render();
+      // A canvas is 300×150 until something sets it, so "loaded" needs saying.
+      canvas.dataset.reportLoaded = "true";
+    },
+    fit(available) {
+      if (image === null || !available) return applyZoom(1);
+      return applyZoom(Math.min(1, available / canvas.width));
+    },
+    zoomBy(factor) {
+      return applyZoom(zoom * factor);
     },
     setTool(next) {
       tool = next;

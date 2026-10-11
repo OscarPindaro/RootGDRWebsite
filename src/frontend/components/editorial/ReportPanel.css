@@ -2,7 +2,22 @@
 
    It lives in `layout.Page`, so every shelled page can open it. The status line
    belongs to the draft save only; the page's own autosave is
-   `common.SaveIndicator`, and the two never write to the same element. */
+   `common.SaveIndicator`, and the two never write to the same element.
+
+   It is wider than a confirmation dialog on purpose: the captures are the point
+   of the panel, and a confirmation-width column makes them unreadable. The body
+   scrolls, so the panel can be taller than the viewport without pushing its
+   actions away. */
+/* The element qualifier is what beats `.dialog`'s own width; naming a second
+   class root would put two owners on `common.Dialog`'s. */
+dialog.report-panel-dialog {
+  max-width: min(var(--content-max-wide), calc(100vw - var(--sp-8)));
+}
+
+.report-panel-dialog .dialog-body {
+  max-height: calc(100dvh - var(--sp-16));
+  overflow-y: auto;
+}
 .report-panel__lead {
   margin: 0 0 var(--sp-4);
   color: var(--muted);
@@ -146,17 +161,32 @@
   font-size: var(--text-sm);
 }
 
+.report-panel__zoom {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-2);
+}
+
+.report-panel__zoom-value {
+  min-width: 4ch;
+  font-size: var(--text-sm);
+  text-align: right;
+  color: var(--muted);
+}
+
 .report-panel__surface {
-  max-height: 45vh;
+  max-height: 58vh;
   margin-bottom: var(--sp-3);
   overflow: auto;
   border: var(--rule-ink);
   background: var(--surface-sunk);
 }
 
+/* The width is the zoom: the script sets it, so a reading-size capture can be
+   scaled up instead of being pinned to the dialog. */
 .report-panel__canvas {
   display: block;
-  max-width: 100%;
   touch-action: none;
   cursor: crosshair;
 }

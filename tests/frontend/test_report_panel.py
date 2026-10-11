@@ -248,7 +248,7 @@ def test_a_screenshot_is_annotated_and_saved_back(component):
     page.click('[data-report-annotate="screenshot_viewport"]')
     page.wait_for_selector("[data-report-editor]:not([hidden])")
     page.wait_for_function(
-        "() => document.querySelector('[data-report-canvas]').width > 0"
+        "() => document.querySelector('[data-report-canvas]').dataset.reportLoaded === 'true'"
     )
 
     # A drag with the arrow tool leaves a mark, and the export is not the
@@ -271,6 +271,38 @@ def test_a_screenshot_is_annotated_and_saved_back(component):
         component, "PUT", f"/api/reports/{DRAFT_ID}/evidence/screenshot_viewport"
     )
     _wait_for_state(page, "annotating")
+
+
+def test_the_screenshot_can_be_zoomed(component):
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("screenshot_viewport"), _capture("page_html")]),
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _serve_shot(page, "screenshot_viewport")
+    _open(component)
+    _wait_for_state(page, "saved")
+
+    page.click('[data-report-annotate="screenshot_viewport"]')
+    page.wait_for_selector("[data-report-editor]:not([hidden])")
+    page.wait_for_function(
+        "() => document.querySelector('[data-report-canvas]').dataset.reportLoaded === 'true'"
+    )
+    assert page.locator("[data-report-zoom-value]").inner_text() == "100%"
+
+    width = "el => el.getBoundingClientRect().width"
+    canvas = page.locator("[data-report-canvas]")
+    before = canvas.evaluate(width)
+
+    page.click("[data-report-zoom='in']")
+    assert page.locator("[data-report-zoom-value]").inner_text() == "125%"
+    assert canvas.evaluate(width) > before
+
+    page.click("[data-report-zoom='out']")
+    assert page.locator("[data-report-zoom-value]").inner_text() == "100%"
+    assert canvas.evaluate(width) == before
 
 
 def test_the_annotation_tools_and_colours_are_choices(component):

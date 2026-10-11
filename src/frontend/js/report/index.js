@@ -256,13 +256,34 @@ function mountEditor(dialog, list, status) {
     editor.hidden = true;
   }
 
-  list.addEventListener("click", (event) => {
+  const surface = dialog.querySelector("[data-report-surface]");
+  const zoomValue = dialog.querySelector("[data-report-zoom-value]");
+
+  function renderZoom(level) {
+    zoomValue.textContent = Math.round(level * 100) + "%";
+  }
+
+  list.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-report-annotate]");
     if (button === null) return;
     editing = button.dataset.reportAnnotate;
     editor.hidden = false;
-    annotator.load(`/api/reports/${draftId}/evidence/${editing}`);
+    await annotator.load(`/api/reports/${draftId}/evidence/${editing}`);
+    // Open at the widest the surface allows: a capture is worth reading whole
+    // before it is worth zooming into.
+    renderZoom(annotator.fit(surface.clientWidth));
   });
+
+  canvas.addEventListener("report:zoom", (event) => renderZoom(event.detail));
+
+  dialog.querySelectorAll("[data-report-zoom]").forEach((button) =>
+    button.addEventListener("click", () => {
+      const action = button.dataset.reportZoom;
+      if (action === "in") renderZoom(annotator.zoomBy(1.25));
+      else if (action === "out") renderZoom(annotator.zoomBy(0.8));
+      else renderZoom(annotator.fit(surface.clientWidth));
+    })
+  );
 
   tools.forEach((button) =>
     button.addEventListener("click", () => {
