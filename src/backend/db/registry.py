@@ -16,6 +16,7 @@ from ..auth.models import (  # noqa: F401
 )
 from ..characters.models import CharacterModel  # noqa: F401
 from ..content.models import ReferenceModel  # noqa: F401
+from ..drawings.models import DrawingModel  # noqa: F401
 from ..files.models import FileModel  # noqa: F401
 from ..images.models import ImageRevisionModel  # noqa: F401
 from ..npcs.models import NpcModel  # noqa: F401
@@ -33,6 +34,7 @@ from ..worlds.models import (  # noqa: F401
 
 __all__ = [
     "CharacterModel",
+    "DrawingModel",
     "FileModel",
     "ImageRevisionModel",
     "InvitationModel",

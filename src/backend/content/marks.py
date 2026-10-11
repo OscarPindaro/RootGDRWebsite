@@ -98,6 +98,7 @@ BY_ROLE: dict[str, tuple[str, str]] = {
     "storia": ("libro", "esagono"),
     "pagine": ("documento", "pentagono"),
     "pagina": ("documento", "anello"),
+    "disegni": ("documento", "triangolo"),
 }
 
 KIND_ICON: dict[ContentKind, str] = {

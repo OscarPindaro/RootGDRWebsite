@@ -26,6 +26,7 @@ const { version } = require("lucide/package.json");
 
 // Sorted so the generated file and its diff are stable.
 const NAMES = [
+  "arrow-left",
   "arrow-right",
   "book-open",
   "calendar",
@@ -57,10 +58,10 @@ const NAMES = [
   "redo-2",
   "save",
   "scissors",
-  "spline",
-  "square",
   "settings",
   "shield",
+  "spline",
+  "square",
   "star",
   "trash-2",
   "triangle",

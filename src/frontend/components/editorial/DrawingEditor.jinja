@@ -1,12 +1,16 @@
-{#def title, drawing_id=None, scene=None, editable=True #}
+{#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True #}
 {#css editorial/DrawingEditor.css, common/Button.css, common/Field.css, common/Icon.css, common/Tooltip.css #}
+{#js editorial/DrawingEditor.js #}
 {% set artboard = scene.artboard if scene else None %}
-{% set objects = scene.objects if scene else [] %}
-{% set selected_id = scene.selected if scene else None %}
+{% set objects = scene.nodes if scene else [] %}
+{% set selected = objects[0] if objects else None %}
 <div class="drawing-editor"
      data-drawing-editor
      {% if drawing_id %}data-drawing-id="{{ drawing_id }}"{% endif %}
+     {% if save_url %}data-save-url="{{ save_url }}"{% endif %}
+     {% if version %}data-version="{{ version }}"{% endif %}
      {% if not editable %}data-readonly="true"{% endif %}>
+  {% if scene %}<script type="application/json" data-drawing-scene>{{ scene.model_dump_json(by_alias=True) }}</script>{% endif %}
   <header class="drawing-editor__bar">
     <h2 class="drawing-editor__title">{{ title }}</h2>
     <div class="drawing-editor__commands">
@@ -24,6 +28,7 @@
     Da telefono il disegno è solo un’anteprima. Apri questa tavola da un computer
     per modificarla.
   </p>
+  <p class="drawing-editor__error" data-drawing-error role="alert" hidden></p>
 
   <div class="drawing-editor__workspace">
     <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno" data-testid="drawing-toolbar">
@@ -68,20 +73,20 @@
         <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%" />
         <rect class="drawing-editor__grid" x="0" y="0" width="100%" height="100%" fill="url(#drawing-grid)" />
         {% for node in objects %}
-        {% if node.shape == "triangle" %}
-        <polygon class="drawing-editor__shape{{ ' is-selected' if node.id == selected_id }}"
-                 points="{{ node.points }}" fill="{{ node.fill }}" stroke="{{ node.stroke }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
-        {% elif node.shape == "rect" %}
-        <rect class="drawing-editor__shape{{ ' is-selected' if node.id == selected_id }}"
-              x="{{ node.x }}" y="{{ node.y }}" width="{{ node.width }}" height="{{ node.height }}" fill="{{ node.fill }}" stroke="{{ node.stroke }}" stroke-width="{{ node.stroke_width }}" />
-        {% elif node.shape == "path" %}
-        <path class="drawing-editor__shape{{ ' is-selected' if node.id == selected_id }}"
-              d="{{ node.d }}" fill="{{ node.fill }}" stroke="{{ node.stroke }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
+        {% if node.kind == "polygon" %}
+        <polygon class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
+                 points="{{ node.points | map('join', ',') | join(' ') }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
+        {% elif node.kind == "ellipse" %}
+        <ellipse class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
+                 cx="{{ node.cx }}" cy="{{ node.cy }}" rx="{{ node.rx }}" ry="{{ node.ry }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" />
+        {% elif node.kind == "path" %}
+        <path class="drawing-editor__shape{{ ' is-selected' if node.id == (selected.id if selected else None) }}"
+              d="{{ node.d }}" fill="{{ node.fill or 'none' }}" stroke="{{ node.stroke or 'none' }}" stroke-width="{{ node.stroke_width }}" stroke-linejoin="miter" />
         {% endif %}
         {% endfor %}
-        {% if scene and selected_id %}
-        {% for handle in scene.handles %}
-        <circle class="drawing-editor__handle" cx="{{ handle.x }}" cy="{{ handle.y }}" r="6" />
+        {% if selected and selected.kind == "polygon" %}
+        {% for point in selected.points %}
+        <circle class="drawing-editor__handle" cx="{{ point[0] }}" cy="{{ point[1] }}" r="6" />
         {% endfor %}
         {% endif %}
       </svg>
@@ -92,12 +97,14 @@
         <h3 class="drawing-editor__panel-title">Livelli</h3>
         <ul class="drawing-editor__layers">
           {% for node in objects %}
-          <li class="drawing-editor__layer{{ ' is-selected' if node.id == selected_id }}" data-node-id="{{ node.id }}">
-            <input class="drawing-editor__layer-check" type="checkbox" checked
+          <li class="drawing-editor__layer{{ ' is-selected' if node.id == (selected.id if selected else None) }}" data-node-id="{{ node.id }}">
+            <input class="drawing-editor__layer-check" type="checkbox" {% if node.visible %}checked{% endif %}
                    aria-label="Mostra {{ node.name }}" disabled={{ not editable }} />
-            <button type="button" class="drawing-editor__layer-name" aria-pressed="{{ 'true' if node.id == selected_id else 'false' }}"
+            <button type="button" class="drawing-editor__layer-name" aria-pressed="{{ 'true' if node.id == (selected.id if selected else None) else 'false' }}"
                     data-select-node="{{ node.id }}" data-testid="drawing-layer">{{ node.name }}</button>
           </li>
+          {% else %}
+          <li class="drawing-editor__empty hint">Nessun oggetto</li>
           {% endfor %}
         </ul>
       </section>
@@ -107,19 +114,20 @@
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Riempimento</span>
           <span class="drawing-editor__swatch" data-testid="drawing-fill-swatch"
-                {% if scene and scene.selected_fill %}style="--swatch: {{ scene.selected_fill }}"{% endif %}></span>
+                {% if selected and selected.fill %}style="--swatch: {{ selected.fill }}"{% endif %}></span>
         </div>
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Contorno</span>
-          <span class="drawing-editor__swatch drawing-editor__swatch--stroke" data-testid="drawing-stroke-swatch"></span>
+          <span class="drawing-editor__swatch drawing-editor__swatch--stroke" data-testid="drawing-stroke-swatch"
+                {% if selected and selected.stroke %}style="--swatch: {{ selected.stroke }}"{% endif %}></span>
         </div>
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Spessore</span>
-          <span class="drawing-editor__value mono">4</span>
+          <span class="drawing-editor__value mono">{{ selected.stroke_width if selected else 0 }}</span>
         </div>
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Opacità</span>
-          <span class="drawing-editor__value mono">100%</span>
+          <span class="drawing-editor__value mono">{{ (selected.opacity * 100) | round | int if selected else 100 }}%</span>
         </div>
         <p class="hint">Modifica di forme, colori e livelli: in arrivo.</p>
       </section>

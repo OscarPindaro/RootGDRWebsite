@@ -5,11 +5,52 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..auth.dependencies import get_optional_user
 from ..content.view_helpers import animal_options, shape_options, tint_options
 from ..dependencies import get_catalog_dep, get_db_session
+from ..drawings.schemas import PolygonNode, SceneDocument
 from ..navigation import ButtonGroupOption, CardItem
 from ..users.schemas import User
 from ..users.service import get_all_users
 
 router = APIRouter(tags=["showcase"])
+
+
+def _drawing_specimen() -> SceneDocument:
+    """The read-only drawing the showcase renders: one geometric character."""
+    return SceneDocument(
+        nodes=[
+            PolygonNode(
+                id="body",
+                name="Corpo",
+                points=[
+                    (180, 200),
+                    (300, 150),
+                    (430, 210),
+                    (470, 330),
+                    (400, 430),
+                    (250, 430),
+                    (170, 330),
+                ],
+                fill="#1f7a7a",
+            ),
+            PolygonNode(
+                id="crest",
+                name="Cresta",
+                points=[(196, 96), (236, 60), (246, 118)],
+                fill="#d1402a",
+            ),
+            PolygonNode(
+                id="head",
+                name="Testa",
+                points=[(200, 92), (360, 120), (286, 206), (196, 168)],
+                fill="#3f7fb0",
+            ),
+            PolygonNode(
+                id="beak",
+                name="Becco",
+                points=[(210, 96), (296, 120), (250, 190)],
+                fill="#d97a26",
+            ),
+        ]
+    )
 
 
 @router.get("/components", response_class=HTMLResponse)
@@ -33,6 +74,7 @@ async def showcase(
         users=users,
         current_user=user,
         showcase_card=showcase_card,
+        drawing_scene=_drawing_specimen(),
         animals=animal_options(),
         tints=tint_options(),
         shapes=shape_options(),

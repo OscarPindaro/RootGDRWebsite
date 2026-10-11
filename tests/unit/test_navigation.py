@@ -50,5 +50,12 @@ def test_global_nav_has_the_expected_targets() -> None:
     hrefs = [item.href for item in global_nav("worlds", is_admin=True, env="dev")]
 
     # There is no Home destination: the authenticated landing is /worlds, so the
-    # rail must not offer a placeholder.
-    assert hrefs == ["/worlds", "/admin/users", "/components"]
+    # rail must not offer a placeholder. Drawings are an admin authoring area,
+    # so the entry is admin-only.
+    assert hrefs == ["/worlds", "/drawings", "/admin/users", "/components"]
+
+
+def test_global_nav_hides_the_drawing_area_from_non_admins() -> None:
+    hrefs = [item.href for item in global_nav("worlds", is_admin=False, env="dev")]
+
+    assert "/drawings" not in hrefs

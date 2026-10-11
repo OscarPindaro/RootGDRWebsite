@@ -104,6 +104,9 @@ def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
     ]
     if is_admin:
         items.append(
+            NavItem(id="disegni", label="Disegni", href="/drawings", mark="disegni")
+        )
+        items.append(
             NavItem(
                 id="admin-users", label="Utenti", href="/admin/users", mark="profilo"
             )

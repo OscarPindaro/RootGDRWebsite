@@ -11,6 +11,7 @@ from .health.service import build_info
 from .auth.routes.invitations import router as invitation_router
 from .characters.routes import router as characters_router
 from .content.actions import router as content_actions_router
+from .drawings.routes import router as drawings_router
 from .images.routes import router as images_router
 from .npcs.routes import router as npcs_router
 from .palette import router as palette_router
@@ -87,6 +88,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(invitation_router)
     app.include_router(worlds_router)
     app.include_router(characters_router)
+    app.include_router(drawings_router)
     app.include_router(images_router)
     app.include_router(content_actions_router)
     app.include_router(npcs_router)
@@ -122,6 +124,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     if config.frontend and config.frontend.enabled:
         from .auth.views import router as auth_views_router  # noqa: PLC0415
         from .characters.views import router as characters_views_router  # noqa: PLC0415
+        from .drawings.views import router as drawings_views_router  # noqa: PLC0415
         from .npcs.views import router as npcs_views_router  # noqa: PLC0415
         from .pages.views import router as pages_views_router  # noqa: PLC0415
         from .places.views import router as places_views_router  # noqa: PLC0415
@@ -135,6 +138,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
         if config.env == "dev":
             app.include_router(dev_auth_views_router)
         app.include_router(characters_views_router)
+        app.include_router(drawings_views_router)
         app.include_router(npcs_views_router)
         app.include_router(places_views_router)
         app.include_router(pages_views_router)

@@ -38,6 +38,17 @@
   color: var(--muted);
 }
 
+/* A failed save keeps the local scene and says so here; the page's own save
+   indicator carries the dirty/saving state. */
+.drawing-editor__error {
+  border: var(--rule-ink);
+  border-left: 3px solid var(--danger);
+  background: var(--status-danger-bg);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: var(--text-sm);
+  color: var(--ink);
+}
+
 .drawing-editor__hint kbd {
   font-family: var(--mono);
   font-size: 0.85em;
