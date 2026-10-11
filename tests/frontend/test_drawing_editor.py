@@ -1286,6 +1286,61 @@ def test_split_button_presets_create_persistent_constrained_geometry(
     assert len(_scene_of(page)["nodes"]) == 1
 
 
+def test_visibility_diagnostics_distinguish_hidden_empty_and_disabled_paint(component):
+    square = _square().nodes[0]
+    square.fill = None
+    square.stroke = None
+    scene = SceneDocument(
+        nodes=[
+            GroupNode(id="hidden", name="Hidden", visible=False, nodes=[square]),
+            GroupNode(id="empty", name="Empty"),
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    assert (
+        "Nessuna selezione" in page.locator("[data-drawing-diagnostics]").inner_text()
+    )
+    page.locator("[data-select-node='box']").click()
+    diagnostic = page.locator("[data-drawing-diagnostics]").inner_text()
+    assert "genitore" in diagnostic and "Riempimento e contorno" in diagnostic
+    before = _scene_of(page)
+    page.locator("[data-node-visible='box']").click()
+    page.locator("[data-node-visible='box']").click()
+    assert _scene_of(page) == before
+    assert "genitore" in page.locator("[data-drawing-diagnostics]").inner_text()
+    page.locator("[data-select-node='empty']").click()
+    assert "Gruppo vuoto" in page.locator("[data-drawing-diagnostics]").inner_text()
+    assert len(_scene_of(page)["nodes"]) == 2
+
+
+def test_deleting_a_subscene_is_one_undo_and_stacking_has_vertical_extremes(component):
+    scene = SceneDocument(
+        nodes=[
+            GroupNode(id="group", name="Group", nodes=[_square().nodes[0]]),
+            PolygonNode(
+                id="front", name="Front", points=[(450, 100), (550, 100), (500, 200)]
+            ),
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='group']").click()
+    assert (
+        page.locator("[data-drawing-order='1'] [data-icon='chevron-up']").count() == 1
+    )
+    page.locator("[data-drawing-order='front']").click()
+    assert [node["id"] for node in _scene_of(page)["nodes"]] == ["front", "group"]
+    page.locator("[data-drawing-order='back']").click()
+    assert [node["id"] for node in _scene_of(page)["nodes"]] == ["group", "front"]
+    before = _scene_of(page)
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Delete")
+    assert [node["id"] for node in _scene_of(page)["nodes"]] == ["front"]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page) == before
+
+
 def test_creation_feedback_and_rejected_short_gestures_leave_tools_usable(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props())
     _mounted(page)

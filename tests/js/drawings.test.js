@@ -523,3 +523,18 @@ test("oriented resize keeps every opposite anchor fixed under nested and reflect
   assert.equal(resizeFrame([[0,0],[0,0],[0,0],[0,0]],0,[10,10]),null);
   assert.ok(resizeFrame([[0,0],[100,0],[100,0],[0,0]],1,[150,0]));
 });
+
+test("visibility diagnosis preserves empty/hidden/unpainted objects without phantom canvas hits", async () => {
+  const {visibilityIssues, createEllipse} = await import("../../src/frontend/js/drawings/scene.js");
+  const invisible = {...triangle("p"),fill:null,stroke:null};
+  const scene = sceneWith([{kind:"group",id:"g",name:"Hidden",visible:false,opacity:1,transform:IDENTITY,nodes:[invisible]},{kind:"group",id:"empty",name:"Empty",visible:true,opacity:1,transform:IDENTITY,nodes:[]}]);
+  assert.deepEqual(visibilityIssues(scene,null),["no-selection"]);
+  assert.deepEqual(visibilityIssues(scene,"p"),["hidden-parent","no-paint"]);
+  assert.deepEqual(visibilityIssues(scene,"empty"),["empty-group"]);
+  assert.equal(nodeAt(sceneWith([invisible]),[50,0]),null);
+  const ellipse = createEllipse("Ellipse",[100,100],40,20);
+  ellipse.fill = ellipse.stroke = null;
+  assert.equal(nodeAt(sceneWith([ellipse]),[100,100]),null);
+  assert.equal(nodeAt(sceneWith([{...triangle("p"),opacity:0}]),[50,20]),null);
+  assert.equal(scene.nodes.length,2);
+});

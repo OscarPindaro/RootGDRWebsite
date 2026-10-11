@@ -45,6 +45,7 @@ import {
   transformNodesInWorld,
   ungroupNode,
   validPolygon,
+  visibilityIssues,
   worldPoints,
   walk,
   pathHandles,
@@ -227,7 +228,7 @@ export function createController(root) {
       rows.push(empty);
     }
     list.replaceChildren(...rows);
-    if (focusKey) [...list.querySelectorAll("button")].find(button => button.dataset[focusKey] === focusId)?.focus({preventScroll:true});
+    if (focusKey) ([...list.querySelectorAll("button")].find(button => button.dataset[focusKey] === focusId) || svg).focus({preventScroll:true});
     list.scrollTop = scroll;
   }
 
@@ -1223,8 +1224,10 @@ export function createController(root) {
     duplicate: { label: "Duplica", enabled: () => selection.length > 0, run: duplicateSelected },
     group: { label: "Raggruppa", enabled: () => selection.length > 1 && Boolean(groupNodes(scene, selection)), run: groupSelected },
     ungroup: { label: "Separa", enabled: () => selection.length === 1 && selected()?.node.kind === "group", run: ungroupSelected },
-    forward: { label: "Avanti", enabled: () => Boolean(selected()) && selected().index < selected().siblings.length - 1, run: () => commit(reorderNode(scene, selectedId, 1)) },
-    backward: { label: "Dietro", enabled: () => Boolean(selected()) && selected().index > 0, run: () => commit(reorderNode(scene, selectedId, -1)) },
+    forward: { label: "Porta avanti", enabled: () => selection.length === 1 && selected().index < selected().siblings.length - 1, run: () => commit(reorderNode(scene, selectedId, 1)) },
+    backward: { label: "Porta indietro", enabled: () => selection.length === 1 && selected().index > 0, run: () => commit(reorderNode(scene, selectedId, -1)) },
+    front: { label: "Primo piano", enabled: () => selection.length === 1 && selected().index < selected().siblings.length - 1, run: () => commit(reorderNode(scene, selectedId, selected().siblings.length)) },
+    back: { label: "Sfondo", enabled: () => selection.length === 1 && selected().index > 0, run: () => commit(reorderNode(scene, selectedId, -selected().siblings.length)) },
     unlock: { label: "Sblocca geometria", enabled: () => selection.length === 1 && Boolean(selected()?.node.constraint), run: () => commit(patchNode(scene, selectedId, { constraint: null })) },
     "ellipse-parameter": { label: "Modifica centro e raggi", enabled: () => selection.length === 1 && selected()?.node.kind === "ellipse", run: setEllipseParameter },
   };
@@ -1300,7 +1303,9 @@ export function createController(root) {
       parentInput.disabled = !editable || !node || selection.length !== 1;
     }
     const nameInput = root.querySelector("[data-node-name]");
-    if (nameInput && node && document.activeElement !== nameInput) nameInput.value = node.name;
+    if (nameInput && document.activeElement !== nameInput) nameInput.value = node?.name || "";
+    const issues = visibilityIssues(scene, selectedId), descriptions = {"no-selection":"Nessuna selezione", hidden:"Oggetto nascosto", "hidden-parent":"Nascosto dal genitore", "zero-opacity":"Opacità zero", "empty-group":"Gruppo vuoto · conservato", "no-paint":"Riempimento e contorno disattivati"};
+    root.querySelector("[data-drawing-diagnostics]").textContent = issues.map(issue => descriptions[issue]).join(" · ") || "Visibilità attiva";
     root.querySelectorAll("[data-drawing-action]").forEach(control => { control.disabled = !canExecute(control.dataset.drawingAction); });
     root.querySelectorAll("[data-drawing-mode]").forEach(button => {
       const active = tool === "select" && mode === button.dataset.drawingMode;
@@ -1323,6 +1328,7 @@ export function createController(root) {
     root.querySelector("[data-regular-options]").hidden = tool !== "regular";
     root.querySelectorAll("[data-drawing-preset]").forEach(button => { button.disabled = !canExecute(`preset-${button.dataset.drawingPreset}`); });
     const constraint = root.querySelector("[data-drawing-constraint]");
+    constraint.hidden = !node || node.kind === "group";
     constraint.textContent = node?.constraint ? `Geometria vincolata · ${PRESET_LABELS[node.constraint.kind] || "Cerchio"}` : "Geometria libera";
     root.querySelector("[data-drawing-unlock]").hidden = !node?.constraint;
     const hint = root.querySelector("[data-testid='drawing-inspector-hint']");
@@ -1372,7 +1378,7 @@ export function createController(root) {
       "[data-drawing-undo]": "undo", "[data-drawing-redo]": "redo", "[data-testid='drawing-save']": "save",
       "[data-drawing-duplicate]": "duplicate", "[data-drawing-delete]": "delete", "[data-drawing-group]": "group",
       "[data-drawing-ungroup]": "ungroup", "[data-drawing-mode='vertex']": "edit", "[data-drawing-mode='transform']": "transform",
-      "[data-drawing-order='1']": "forward", "[data-drawing-order='-1']": "backward", "[data-drawing-unlock]": "unlock",
+      "[data-drawing-order='1']": "forward", "[data-drawing-order='-1']": "backward", "[data-drawing-order='front']": "front", "[data-drawing-order='back']": "back", "[data-drawing-unlock]": "unlock",
     };
     for (const [selector, id] of Object.entries(bindings)) {
       root.querySelectorAll(selector).forEach(button => {

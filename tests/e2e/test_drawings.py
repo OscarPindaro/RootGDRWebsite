@@ -500,3 +500,36 @@ def test_snapped_resize_is_persisted_without_editor_guides(session: BrowserSessi
     session.goto(f"/drawings/{identifier}")
     page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
     assert _local_node_scene(session) == local
+
+
+def test_subscene_delete_keeps_the_saved_drawing_and_undo_restores_children(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (200, 200))
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (300, 100), (400, 200))
+    page.locator("[data-select-node]").first.click()
+    page.locator("[data-select-node]").nth(1).click(modifiers=["Shift"])
+    page.get_by_test_id("drawing-group").click()
+    group = _local_node_scene(session)["nodes"][0]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    page.locator(f"[data-select-node='{group['id']}']").click()
+    page.keyboard.press("Delete")
+    assert _local_node_scene(session)["nodes"] == []
+    persisted = session.expect_api(f"/api/drawings/{identifier}").json()
+    assert persisted["scene"]["nodes"][0]["id"] == group["id"]
+    page.keyboard.press("Control+z")
+    assert _local_node_scene(session)["nodes"][0] == group
+    page.locator(f"[data-select-node='{group['id']}']").click()
+    page.get_by_test_id("drawing-delete").click()
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    persisted = session.expect_api(f"/api/drawings/{identifier}").json()
+    assert persisted["id"] == identifier and persisted["scene"]["nodes"] == []

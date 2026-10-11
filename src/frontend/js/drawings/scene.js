@@ -87,6 +87,25 @@ export function findNode(scene, id) {
   return found;
 }
 
+export function visibilityIssues(scene, id) {
+  const found = findNode(scene, id);
+  if (!found) return ["no-selection"];
+  const node = found.node, issues = [];
+  if (!node.visible) issues.push("hidden");
+  let parent = found.parent, hiddenParent = false, opacity = node.opacity;
+  while (parent) {
+    hiddenParent ||= !parent.visible;
+    opacity *= parent.opacity;
+    parent = findNode(scene, parent.id).parent;
+  }
+  if (hiddenParent) issues.push("hidden-parent");
+  if (!opacity) issues.push("zero-opacity");
+  if (node.kind === "group") {
+    if (!node.nodes.length) issues.push("empty-group");
+  } else if (!node.fill && (!node.stroke || !node.strokeWidth || (node.kind === "polygon" && node.edgeVisible?.every(value => !value)))) issues.push("no-paint");
+  return issues;
+}
+
 export function countNodes(scene) {
   let total = 0;
   walk(scene.nodes, () => { total += 1; });
@@ -237,7 +256,7 @@ export function nodeAt(scene, worldPoint, tolerance = 6) {
   let hit = null;
   function visit(nodes, parent) {
     for (const node of nodes) {
-      if (node.visible === false) continue;
+      if (node.visible === false || node.opacity === 0) continue;
       const world = multiply(parent, node.transform);
       if (node.kind === "group") {
         visit(node.nodes, world);
@@ -257,15 +276,18 @@ export function nodeAt(scene, worldPoint, tolerance = 6) {
 function localHit(node, point, tolerance) {
   if (node.kind === "polygon") {
     if (node.fill && pointInPolygon(point, node.points)) return true;
-    return edgesOf(node).some(([a, b]) => distanceToSegment(point, a, b) <= tolerance);
+    return Boolean(node.stroke && node.strokeWidth > 0 && edgesOf(node).some(([a, b]) => distanceToSegment(point, a, b) <= tolerance));
   }
   if (node.kind === "ellipse") {
     const dx = (point[0] - node.cx) / node.rx;
     const dy = (point[1] - node.cy) / node.ry;
-    return dx * dx + dy * dy <= 1.15;
+    const radius = Math.hypot(dx, dy);
+    return Boolean((node.fill && radius <= 1) || (node.stroke && node.strokeWidth > 0 && Math.abs(radius - 1) <= tolerance / Math.min(node.rx, node.ry)));
   }
   if (node.kind === "path") {
     const points = pathPoints(node.d);
+    if (node.fill && pointInPolygon(point, points)) return true;
+    if (!node.stroke || node.strokeWidth <= 0) return false;
     for (let i = 1; i < points.length; i += 1) {
       if (distanceToSegment(point, points[i - 1], points[i]) <= tolerance) return true;
     }

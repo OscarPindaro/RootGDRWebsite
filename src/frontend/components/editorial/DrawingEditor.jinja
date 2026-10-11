@@ -49,8 +49,10 @@
     <common.IconButton icon="list" label="Separa" data-drawing-ungroup data-testid="drawing-ungroup" disabled={{ not editable }} />
     <common.IconButton icon="copy" label="Duplica" data-drawing-duplicate data-testid="drawing-duplicate" disabled={{ not editable }} />
     <common.IconButton icon="trash-2" label="Elimina" data-drawing-delete data-testid="drawing-delete" disabled={{ not editable }} />
-    <common.IconButton icon="arrow-right" label="Avanti" data-drawing-order="1" disabled={{ not editable }} />
-    <common.IconButton icon="arrow-left" label="Dietro" data-drawing-order="-1" disabled={{ not editable }} />
+    <common.IconButton icon="chevron-up" label="Porta avanti" data-drawing-order="1" disabled={{ not editable }} />
+    <common.IconButton icon="chevron-down" label="Porta indietro" data-drawing-order="-1" disabled={{ not editable }} />
+    <common.Button icon="chevron-up" size="xs" variant="secondary" data-drawing-order="front" disabled={{ not editable }}>Primo piano</common.Button>
+    <common.Button icon="chevron-down" size="xs" variant="secondary" data-drawing-order="back" disabled={{ not editable }}>Sfondo</common.Button>
     <common.IconButton icon="grid-2x2" label="Mostra griglia" selected={{ True }} data-drawing-grid />
     <common.Button size="xs" variant="secondary" selected={{ True }} data-snap-grid>Aggancia griglia</common.Button>
     <common.Button size="xs" variant="secondary" selected={{ True }} data-snap-shapes>Aggancia oggetti</common.Button>
@@ -172,6 +174,7 @@
 
       <section class="drawing-editor__panel" aria-label="Proprietà" data-testid="drawing-inspector">
         <h3 class="drawing-editor__panel-title">Proprietà</h3>
+        <p class="hint" data-drawing-diagnostics role="status" aria-live="polite">Nessuna selezione</p>
         <div class="drawing-editor__field" data-regular-options hidden>
           <label class="drawing-editor__field-label" for="drawing-regular-sides">Lati del poligono</label>
           <input class="drawing-editor__name" type="number" id="drawing-regular-sides" data-regular-sides min="3" max="32" value="6" />

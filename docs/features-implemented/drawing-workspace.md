@@ -31,6 +31,14 @@ library, skeleton, publishing or export capabilities.
   The **Genitore** selector attaches an object to a group or the scene root
   while preserving its world placement; cycles and excessive nesting are refused.
   Move, scale, rotate, duplicate, delete and reorder objects. Arrow keys nudge.
+  Delete removes only selected subscenes and their descendants, as one undo step;
+  it does not delete the saved drawing. Removed tree-row focus returns to the
+  canvas so Ctrl/Cmd+Z still works. Vertical arrows move forward/backward and
+  **Primo piano/Sfondo** reach the sibling-order extremes.
+  Diagnostics distinguish no selection, own/parent visibility, zero opacity,
+  disabled fill/outline and intentionally empty groups. Unpainted/transparent
+  content cannot intercept canvas selection; the tree still exposes it. No
+  geometry is repaired and no empty group is automatically removed.
 - The floating bar exposes **Seleziona**, **Modifica forma** and **Trasforma**.
   A single shape defaults to direct geometry editing after creation/selection;
   groups and multiple selections use whole-selection controls. **T** enters
