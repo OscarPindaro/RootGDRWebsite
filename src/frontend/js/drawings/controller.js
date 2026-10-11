@@ -44,6 +44,7 @@ import {
 import { render } from "./render.js";
 
 const PALETTE = [
+  "#ffffff", "#000000",
   "#d1402a", "#d97a26", "#e0a327", "#8a9a2b", "#3c7a52", "#1f7a7a",
   "#3f7fb0", "#2c46a8", "#4a3f8f", "#7b3f8f", "#c2506f", "#8a5a3c",
 ];

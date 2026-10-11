@@ -770,6 +770,19 @@ def test_polygon_double_click_finishes_without_duplicate_vertices(component):
     assert not _scene_of(page)["nodes"]
 
 
+@pytest.mark.parametrize("colour", ["#ffffff", "#000000"])
+def test_palette_includes_white_and_black_for_fill_and_stroke(component, colour):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator(f"[data-palette='{colour}']").click()
+    assert _scene_of(page)["nodes"][0]["fill"] == colour
+    page.get_by_test_id("drawing-tool-line").click()
+    _drag(page, (100, 450), (300, 450))
+    page.locator(f"[data-palette='{colour}']").click()
+    assert _scene_of(page)["nodes"][-1]["stroke"] == colour
+
+
 def test_space_activates_a_focused_tool_button(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props())
     _mounted(page)

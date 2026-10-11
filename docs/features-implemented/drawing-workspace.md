@@ -23,7 +23,8 @@ library, skeleton, publishing or export capabilities.
 - **Raggruppa** combines consecutive sibling objects; **Separa** composes the
   parent transform into the children. Nested child edits use the complete
   parent transform. Hidden groups are excluded from canvas selection.
-- A curated twelve-colour palette, custom fill/stroke colours, width and opacity
+- A curated fourteen-colour palette, including pure white and black, custom
+  fill/stroke colours, width and opacity
   support angular silhouettes and faint details. For paths, palette choices
   change the stroke colour.
 - Grid, visible vertices, polygon midpoints and path endpoints provide snapping;
