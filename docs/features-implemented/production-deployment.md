@@ -441,6 +441,24 @@ every earlier snapshot and recorded the failure, and a disposable
 `rootgdr-restore-…` target restored the newest Root GDR weekly snapshot with its
 schema, grants and configuration.
 
+## Implementation-ticket skill
+
+`/implement-ticket <task URL, numeric ID or REQ-nnnn/Tnn>` is an opt-in project
+skill at `.devin/skills/implement-ticket/SKILL.md`. It resolves the real task,
+comments, native relations and declared hyperlink prerequisites, selects one
+unblocked ticket, and uses the discovered workflow for working/completion moves.
+An epic is not an instruction to execute every child; `next` permits choosing the
+next unblocked child from the recorded order. Evidence, persisted state, relevant
+tests and desktop/phone review, a scoped local commit and an idempotent outcome
+precede completion. It does not auto-push, deploy, alter workflows or credentials.
+
+The current Root GDR view uses To-Do, Doing and Done; the skill rereads names/IDs
+instead of running owner-only `workflow` setup or assuming a Review column.
+Relation creation currently requires owner-approved `tasks_relations.create`;
+reciprocal description/comment links are an explicit fallback, not native task
+relations. New skills can be checked with `devin skills list` and
+`devin skills show implement-ticket` without invoking a real ticket workflow.
+
 ## Backlog CLI
 
 `harness backlog` reads, creates and moves tickets on the isolated board over

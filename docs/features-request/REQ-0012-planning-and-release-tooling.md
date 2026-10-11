@@ -121,6 +121,40 @@ carry forward the approved scopes and original expiry, verify before switching,
 and use the same credential for all intake operations. This approval is separate
 from normal skill intake, which must never provision or rotate credentials.
 
+## Opt-in implementation-ticket workflow
+
+The user requested `/implement-ticket` to resolve the relevant real Vikunja ticket
+and prerequisites, then move only that selected ticket through the correct workflow.
+Ticket key: `REQ-0012/T11`, registered and read back as
+[Vikunja task #54](http://192.168.1.201:3458/tasks/54). The concurrently reserved
+[REQ-0012/T10, task #9](http://192.168.1.201:3458/tasks/9) owns request-family labels
+and native relation tooling; this addition does not reuse or overwrite that scope.
+The skill lives at
+`.devin/skills/implement-ticket/SKILL.md` with `triggers: [user]`.
+
+Resolve a task URL, exact stable key or numeric task ID in the verified project.
+Read scope, comments, native relations and declared dependency hyperlinks before
+starting; do not silently execute an entire epic or its incomplete prerequisites.
+Discover live bucket IDs/names and current placement, then move an unblocked task
+to the working bucket. The live Root GDR board currently uses To-Do, Doing and Done;
+there is no Review column to assume or create automatically.
+
+Implementation follows the project test/persistence/desktop-phone/local-commit
+requirements. Add and read back a factual, idempotent outcome before the verified
+completion transition. Existing review gates take precedence; never close a macro
+just because a child completed. Authentication, ambiguous writes, missing evidence
+or decision gates remain visible blockers; do not search for credentials, rotate
+or expand scopes, modify workflows, reset data, push or deploy to work around them.
+
+Acceptance: correct opt-in frontmatter/discovery; exact identity/dependency
+resolution and real workflow semantics; existing progress/unrelated work preserved;
+no example live tasks or invocation during setup that moves a real task. Reuse
+existing Backlog CLI/client rather than adding a second integration. Native
+relation creation was denied by the current tooling token during REQ-0015 planning;
+reciprocal ticket links are the confirmed fallback until the owner approves
+`tasks_relations.create`. This skill must inspect that fallback, not assume the
+absence of native relations means the absence of prerequisites.
+
 ## Tickets and acceptance
 
 | Ticket | Boundary | Acceptance |
@@ -132,6 +166,7 @@ from normal skill intake, which must never provision or rotate credentials.
 | REQ-0012/T05 | Import new cycle tickets | Dry-run is read-only; repeated imports preserve manual progress and descriptions; demo/history cards never enter the real backlog. |
 | REQ-0012/T06 | Towncrier and version authority | Draft leaves files/version unchanged; fragment validation/aggregation and runtime build metadata work, without an actual release. |
 | REQ-0012/T08 | Verified attachment uploads | Typed image upload/list, byte read-back, sequential retry protection, partial-batch receipts and scope denial on an isolated real board. |
+| REQ-0012/T11 | Opt-in implementation-ticket lifecycle | Resolve actual task/dependencies/workflow, move only selected unblocked work, verify evidence/commit/outcome before completion, and preserve scope/progress/credentials. |
 
 Deploy and recovery sequencing follow
 [REQ-0001](REQ-0001-github-ci-and-manual-deployment.md). The board is bootstrapped
