@@ -132,6 +132,12 @@
           <button type="button" class="drawing-editor__chip" data-palette="#8a5a3c" style="--swatch: #8a5a3c" aria-label="Argilla"></button>
         </div>
         <div class="drawing-editor__field">
+          <span class="drawing-editor__field-label">Nome</span>
+          <input class="drawing-editor__name" type="text" data-node-name maxlength="120"
+                 value="{{ selected.name if selected else '' }}" aria-label="Nome dell’oggetto"
+                 disabled={{ not editable }} />
+        </div>
+        <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Riempimento</span>
           <span class="drawing-editor__swatch" data-testid="drawing-fill-swatch"
                 {% if selected and selected.fill %}style="--swatch: {{ selected.fill }}"{% endif %}></span>
@@ -169,6 +175,8 @@
         </div>
         <div class="drawing-editor__actions">
           <common.Button variant="secondary" size="sm" icon="spline" data-drawing-mode="vertex" disabled={{ not editable }}>Vertici</common.Button>
+          <common.Button variant="secondary" size="sm" icon="grid-2x2" data-drawing-group data-testid="drawing-group" disabled={{ not editable }}>Raggruppa</common.Button>
+          <common.Button variant="secondary" size="sm" icon="list" data-drawing-ungroup data-testid="drawing-ungroup" disabled={{ not editable }}>Separa</common.Button>
           <common.Button variant="secondary" size="sm" icon="copy" data-drawing-duplicate data-testid="drawing-duplicate" disabled={{ not editable }}>Duplica</common.Button>
           <common.Button variant="secondary" size="sm" icon="trash-2" data-drawing-delete data-testid="drawing-delete" disabled={{ not editable }}>Elimina</common.Button>
           <common.Button variant="secondary" size="sm" icon="arrow-right" data-drawing-order="1" disabled={{ not editable }}>Avanti</common.Button>

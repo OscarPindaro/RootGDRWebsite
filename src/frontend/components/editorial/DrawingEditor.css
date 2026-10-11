@@ -176,6 +176,8 @@
   min-height: var(--touch-target);
   border: var(--rule);
   padding: 0 var(--sp-2);
+  /* A nested row indents by its depth in the tree. */
+  padding-left: calc(var(--sp-2) + var(--drawing-depth, 0) * var(--sp-3));
 }
 
 .drawing-editor__layer.is-selected {
@@ -250,6 +252,16 @@
 }
 
 .drawing-editor__range { flex: 1 1 4rem; min-width: 0; }
+
+.drawing-editor__name {
+  flex: 1 1 6rem;
+  min-width: 0;
+  border: var(--rule);
+  background: var(--surface);
+  padding: var(--sp-1) var(--sp-2);
+  font: inherit;
+  font-size: var(--text-sm);
+}
 
 .drawing-editor__toggle {
   display: inline-flex;

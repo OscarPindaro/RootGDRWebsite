@@ -26,9 +26,11 @@ import {
   createPolygon,
   createRect,
   cutNode,
+  depthOf,
   duplicateNode,
   edgesOf,
   findNode,
+  groupNodes,
   isSimplePolygon,
   newId,
   nodeAt,
@@ -38,6 +40,7 @@ import {
   removeNode,
   reorderNode,
   splitPolygonAt,
+  ungroupNode,
   validPolygon,
   walk,
   worldPoints,
@@ -285,4 +288,111 @@ test("cutNode refuses a polygon it cannot split", () => {
   const scene = sceneWith([{ ...createPolygon("Becco", SQUARE), id: "beak" }]);
   assert.equal(cutNode(scene, "beak", 0, 1), null);
   assert.equal(cutNode(scene, "missing", 0, 2), null);
+});
+
+/* ---------- grouping ---------- */
+
+test("grouping siblings keeps every child where it was", () => {
+  const scene = sceneWith([
+    { ...triangle("a"), transform: translation(10, 10) },
+    { ...triangle("b"), transform: translation(200, 40) },
+    triangle("c"),
+  ]);
+  const result = groupNodes(scene, ["a", "b"]);
+
+  assert.ok(result);
+  assert.equal(result.scene.nodes.length, 2);
+  const group = result.scene.nodes[0];
+  assert.equal(group.kind, "group");
+  assert.deepEqual(group.transform, [1, 0, 0, 1, 0, 0], "an identity group moves nothing");
+  assert.deepEqual(group.nodes.map((node) => node.id), ["a", "b"]);
+  assert.deepEqual(worldPoints(group.nodes[0]), worldPoints(scene.nodes[0]));
+  assert.deepEqual(result.scene.nodes[1].id, "c");
+});
+
+test("grouping refuses a mixed level, a single node or a group too deep", () => {
+  const scene = sceneWith([
+    triangle("a"),
+    {
+      kind: "group",
+      id: "g",
+      name: "Gruppo",
+      transform: IDENTITY,
+      opacity: 1,
+      visible: true,
+      nodes: [triangle("b")],
+    },
+  ]);
+  assert.equal(groupNodes(scene, ["a"]), null, "one node");
+  assert.equal(groupNodes(scene, ["a", "b"]), null, "not siblings");
+  assert.equal(groupNodes(scene, ["a", "missing"]), null);
+
+  // Two siblings at the deepest allowed level: grouping them would nest once
+  // too far for the document format.
+  let nodes = [triangle("deep")];
+  for (let level = 0; level < 8; level += 1) {
+    nodes = [
+      {
+        kind: "group",
+        id: `g${level}`,
+        name: "Gruppo",
+        transform: IDENTITY,
+        opacity: 1,
+        visible: true,
+        nodes,
+      },
+    ];
+  }
+  let innermost = nodes;
+  while (innermost[0].kind === "group") innermost = innermost[0].nodes;
+  innermost.push(triangle("sibling"));
+
+  assert.equal(depthOf(nodes, "deep"), 9);
+  assert.equal(groupNodes(sceneWith(nodes), ["deep", "sibling"]), null);
+});
+
+test("ungrouping composes the transforms so nothing moves", () => {
+  const scene = sceneWith([
+    {
+      kind: "group",
+      id: "g",
+      name: "Gruppo",
+      transform: translation(50, 20),
+      opacity: 1,
+      visible: true,
+      nodes: [{ ...triangle("a"), transform: translation(5, 5) }],
+    },
+  ]);
+  const result = ungroupNode(scene, "g");
+
+  assert.ok(result);
+  assert.deepEqual(result.ids, ["a"]);
+  assert.equal(result.scene.nodes.length, 1);
+  assert.equal(result.scene.nodes[0].id, "a");
+  // The child's world position is the same as it was inside the group.
+  assert.deepEqual(result.scene.nodes[0].transform, [1, 0, 0, 1, 55, 25]);
+  assert.deepEqual(worldPoints(result.scene.nodes[0]), [[55, 25], [155, 25], [105, 125]]);
+});
+
+test("ungrouping a non-group is refused", () => {
+  const scene = sceneWith([triangle("a")]);
+  assert.equal(ungroupNode(scene, "a"), null);
+  assert.equal(ungroupNode(scene, "missing"), null);
+});
+
+test("depthOf reports the nesting level", () => {
+  const scene = sceneWith([
+    {
+      kind: "group",
+      id: "g",
+      name: "Gruppo",
+      transform: IDENTITY,
+      opacity: 1,
+      visible: true,
+      nodes: [triangle("a")],
+    },
+  ]);
+  assert.equal(depthOf(scene.nodes, "g"), 1);
+  assert.equal(depthOf(scene.nodes, "a"), 2);
+  assert.equal(depthOf(scene.nodes, "missing"), 0);
 });

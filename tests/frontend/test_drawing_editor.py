@@ -185,10 +185,11 @@ def _live_props(scene=None) -> dict:
 
 
 def _drag(page, start, end) -> None:
-    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
-    page.mouse.move(box["x"] + start[0], box["y"] + start[1])
+    first = _at(page, start[0], start[1])
+    second = _at(page, end[0], end[1])
+    page.mouse.move(first[0], first[1])
     page.mouse.down()
-    page.mouse.move(box["x"] + end[0], box["y"] + end[1], steps=4)
+    page.mouse.move(second[0], second[1], steps=4)
     page.mouse.up()
 
 
@@ -337,9 +338,22 @@ def _one_triangle() -> SceneDocument:
 
 
 def _at(page, x: float, y: float) -> tuple[float, float]:
-    """Artboard coordinates to page coordinates, so a click lands where meant."""
-    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
-    return (box["x"] + (x / 640) * box["width"], box["y"] + (y / 480) * box["height"])
+    """Artboard coordinates to page coordinates.
+
+    Uses the SVG's own screen matrix, the exact inverse of what the controller
+    does, so a click lands on the artboard point the test meant whatever the
+    layout does with the element.
+    """
+    return tuple(
+        page.evaluate(
+            """([x, y]) => {
+                const svg = document.querySelector('[data-drawing-artboard]');
+                const m = svg.getScreenCTM();
+                return [m.a * x + m.c * y + m.e, m.b * x + m.d * y + m.f];
+            }""",
+            [x, y],
+        )
+    )
 
 
 def _select_the_triangle(page) -> None:
@@ -533,6 +547,113 @@ def test_a_cut_between_adjacent_vertices_is_refused(component):
 
     assert len(_scene_of(page)["nodes"]) == 1
     assert "non è valido" in page.locator("[data-drawing-error]").inner_text()
+
+
+# --- grouping --------------------------------------------------------------
+
+
+def _draw_two(page) -> None:
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (220, 200))
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (320, 100), (440, 200))
+
+
+def _select_two(page) -> None:
+    first = _at(page, 160, 160)
+    page.mouse.click(first[0], first[1])
+    second = _at(page, 380, 160)
+    page.keyboard.down("Shift")
+    page.mouse.click(second[0], second[1])
+    page.keyboard.up("Shift")
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection.length"
+        )
+        == 2
+    )
+
+
+def test_shift_click_groups_two_shapes_into_one(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    _draw_two(page)
+    _select_two(page)
+
+    page.get_by_test_id("drawing-group").click()
+
+    nodes = _scene_of(page)["nodes"]
+    assert len(nodes) == 1
+    assert nodes[0]["kind"] == "group"
+    assert [child["kind"] for child in nodes[0]["nodes"]] == ["polygon", "polygon"]
+    # The group is an identity transform: the children did not move.
+    assert nodes[0]["transform"] == [1, 0, 0, 1, 0, 0]
+    # The layer list shows the group and its two children.
+    assert page.locator("[data-testid='drawing-layer']").count() == 3
+
+
+def test_moving_a_group_moves_its_children(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    _draw_two(page)
+    _select_two(page)
+    page.get_by_test_id("drawing-group").click()
+    before = _scene_of(page)["nodes"][0]["transform"]
+
+    # The group is selected; a drag inside it moves the group, not the child.
+    _drag(page, (160, 160), (260, 160))
+
+    moved = _scene_of(page)["nodes"][0]["transform"]
+    assert moved != before
+    assert moved[4] > 0
+    # The children keep their own transforms: only the group moved.
+    assert _scene_of(page)["nodes"][0]["nodes"][0]["transform"] == [1, 0, 0, 1, 0, 0]
+
+
+def test_ungrouping_restores_two_shapes_without_moving_them(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    _draw_two(page)
+    _select_two(page)
+    page.get_by_test_id("drawing-group").click()
+    grouped = _scene_of(page)["nodes"][0]
+    grouped_points = [child["points"] for child in grouped["nodes"]]
+
+    page.get_by_test_id("drawing-ungroup").click()
+
+    nodes = _scene_of(page)["nodes"]
+    assert [node["kind"] for node in nodes] == ["polygon", "polygon"]
+    assert [node["points"] for node in nodes] == grouped_points
+    assert page.locator("[data-testid='drawing-layer']").count() == 2
+
+
+def test_grouping_and_ungrouping_are_undoable(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    _draw_two(page)
+    _select_two(page)
+    page.get_by_test_id("drawing-group").click()
+    assert len(_scene_of(page)["nodes"]) == 1
+
+    page.get_by_test_id("drawing-undo").click()
+    assert [node["kind"] for node in _scene_of(page)["nodes"]] == ["polygon", "polygon"]
+
+    page.get_by_test_id("drawing-redo").click()
+    assert _scene_of(page)["nodes"][0]["kind"] == "group"
+
+
+def test_renaming_a_shape_updates_the_layer_list(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (220, 200))
+
+    field = page.locator("[data-node-name]")
+    field.fill("Becco")
+    field.blur()
+
+    assert _scene_of(page)["nodes"][0]["name"] == "Becco"
+    assert "Becco" in page.locator("[data-testid='drawing-layers']").inner_text()
 
 
 # --- the editor page: explicit save ----------------------------------------

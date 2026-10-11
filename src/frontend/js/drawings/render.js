@@ -6,7 +6,7 @@
    transform applied, so a handle stays the same size on screen. */
 
 import { apply, multiply } from "./geometry.js";
-import { nodeBounds, pathPoints } from "./scene.js";
+import { nodeBounds, nodeCenter } from "./scene.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -23,7 +23,7 @@ function matrixAttr(m) {
 }
 
 function shapeElement(node, view) {
-  const selected = node.id === view.selectedId;
+  const selected = (view.selection || []).includes(node.id) || node.id === view.selectedId;
   const group = el("g", {
     class: "drawing-editor__node" + (selected ? " is-selected" : ""),
     transform: matrixAttr(node.transform),
@@ -129,6 +129,9 @@ export function visibleRuns(node) {
 function overlayElements(scene, view) {
   const found = findById(scene.nodes, view.selectedId);
   if (!found) return [];
+  // The transform box and its handles belong to a single selection; a
+  // multi-selection is shown by the outlines alone.
+  if ((view.selection || []).length > 1) return [];
   const node = found;
   const toView = multiply(view.viewport, node.transform);
   const box = nodeBounds(node);
@@ -160,7 +163,7 @@ function overlayElements(scene, view) {
       );
     });
     const top = [(corners[0][0] + corners[1][0]) / 2, (corners[0][1] + corners[1][1]) / 2];
-    const center = apply(toView, nodeCenterOf(node));
+    const center = apply(toView, nodeCenter(node));
     const outward = normalize([top[0] - center[0], top[1] - center[1]]);
     const rotate = [top[0] + outward[0] * 28, top[1] + outward[1] * 28];
     elements.push(el("line", { class: "drawing-editor__rotate-stem", x1: top[0], y1: top[1], x2: rotate[0], y2: rotate[1] }));
@@ -223,19 +226,6 @@ function overlayElements(scene, view) {
     );
   }
   return elements;
-}
-
-function nodeCenterOf(node) {
-  if (node.kind === "ellipse") return [node.cx, node.cy];
-  if (node.kind === "path") {
-    const points = pathPoints(node.d);
-    const xs = points.map((point) => point[0]);
-    const ys = points.map((point) => point[1]);
-    return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
-  }
-  const xs = node.points.map((point) => point[0]);
-  const ys = node.points.map((point) => point[1]);
-  return [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...ys) + Math.max(...ys)) / 2];
 }
 
 function normalize(vector) {

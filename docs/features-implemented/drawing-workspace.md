@@ -39,6 +39,13 @@ document; the drawing tools themselves arrive in later tickets.
   refused with a message. The piece that kept the original id stays selected,
   the new piece sits right after it, and the shared cut edge starts hidden so
   the silhouette is unchanged. The whole cut is one undo step.
+- **Grouping.** `Shift`+click selects several shapes; `Raggruppa` nests them
+  into one group, which the layer list shows indented. The group takes an
+  identity transform, so grouping never moves anything, and moving, scaling or
+  rotating the group moves its children with it (a click inside a selected
+  group drags the group, not the child under it). `Separa` dissolves the group,
+  composing each child's transform with the group's so nothing moves. The
+  format's nesting limit is enforced with a message. Objects can be renamed.
 - **Explicit save.** The Save button and `Ctrl`/`Cmd`+`S` send the whole
   document with the version it was read at. The page's save indicator reports
   dirty, saving and saved; a failed save says so and never claims success; a
@@ -99,15 +106,18 @@ document; the drawing tools themselves arrive in later tickets.
 
 ## Limits
 
-- **Groups and Bézier curves are not here yet** (`T07`, `T08`).
+- **Bézier curves are not here yet** (`T08`); the `Linea` tool draws a straight
+  open path.
 - A cut splits along a straight chord only; a curved cut is not offered. The
   two pieces are independent afterwards — the shared boundary is not welded.
+- A group is only as deep as the format allows, and only siblings can be
+  grouped; nodes at different levels are refused with a message.
 - Snapping covers the grid and a polygon's own vertices; edge midpoints,
   attachment points and other objects are not snap targets yet.
 - Scaling keeps the dragged corner proportional-ish but does not snap to a
   ratio; rotation has no angle snapping.
-- Pan/zoom exists (wheel to zoom, `Shift`+drag or the middle button to pan) but
+- Pan/zoom exists (wheel to zoom, `Space`+drag or the middle button to pan) but
   there is no "fit" control and no zoom readout.
-- The layer list shows a flat outline of groups; nesting arrives with grouping.
-- Only one selection at a time.
+- The layer list is a flat outline of the tree (one indented row per node); it
+  is not a collapsible tree yet.
 - Phone is a preview, not a drawing surface.

@@ -7,6 +7,9 @@
 
 import { apply, bounds, centerOf, distanceToSegment, invert, multiply, pointInPolygon, polygonArea } from "./geometry.js";
 
+/** The deepest nesting the document format accepts. */
+export const MAX_DEPTH = 8;
+
 let sequence = 0;
 
 export function newId(prefix = "n") {
@@ -45,6 +48,24 @@ export function worldPoints(node) {
 }
 
 export function nodeBounds(node) {
+  if (node.kind === "group") {
+    const boxes = node.nodes.map((child) => {
+      const box = nodeBounds(child);
+      const corners = [
+        [box.minX, box.minY],
+        [box.maxX, box.minY],
+        [box.maxX, box.maxY],
+        [box.minX, box.maxY],
+      ].map((point) => apply(child.transform, point));
+      return bounds(corners);
+    });
+    return boxes.reduce((acc, box) => ({
+      minX: Math.min(acc.minX, box.minX),
+      minY: Math.min(acc.minY, box.minY),
+      maxX: Math.max(acc.maxX, box.maxX),
+      maxY: Math.max(acc.maxY, box.maxY),
+    }));
+  }
   if (node.kind === "ellipse") {
     return { minX: node.cx - node.rx, minY: node.cy - node.ry, maxX: node.cx + node.rx, maxY: node.cy + node.ry };
   }
@@ -55,9 +76,8 @@ export function nodeBounds(node) {
 }
 
 export function nodeCenter(node) {
-  if (node.kind === "ellipse") return [node.cx, node.cy];
-  if (node.kind === "path") return centerOf(pathPoints(node.d));
-  return centerOf(node.points);
+  const box = nodeBounds(node);
+  return [(box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2];
 }
 
 /* ---------- path parsing (absolute M/L/C/Z) ---------- */
@@ -285,6 +305,79 @@ export function setTransform(scene, id, matrix) {
 
 export function validPolygon(points) {
   return points.length >= 3 && polygonArea(points) > 1e-6;
+}
+
+/* ---------- grouping ---------- */
+
+export function depthOf(nodes, id, depth = 1) {
+  for (const node of nodes) {
+    if (node.id === id) return depth;
+    if (node.kind === "group") {
+      const nested = depthOf(node.nodes, id, depth + 1);
+      if (nested) return nested;
+    }
+  }
+  return 0;
+}
+
+/**
+ * Group sibling nodes into one new group.
+ *
+ * The group takes an identity transform, so every child keeps its own
+ * transform and nothing moves: regrouping is a change of structure, not of
+ * geometry. Only siblings are grouped, and the result must still fit the
+ * format's nesting limit.
+ */
+export function groupNodes(scene, ids) {
+  if (ids.length < 2) return null;
+  const next = cloneScene(scene);
+  const found = [];
+  walk(next.nodes, (node, siblings, index) => {
+    if (ids.includes(node.id)) found.push({ node, siblings, index });
+  });
+  if (found.length !== ids.length) return null;
+  const siblings = found[0].siblings;
+  if (!found.every((entry) => entry.siblings === siblings)) return null;
+  const deepest = Math.max(...ids.map((id) => depthOf(next.nodes, id)));
+  if (deepest + 1 > MAX_DEPTH) return null;
+
+  const index = Math.min(...found.map((entry) => entry.index));
+  const members = [...found]
+    .sort((a, b) => a.index - b.index)
+    .map((entry) => entry.node);
+  for (const entry of [...found].sort((a, b) => b.index - a.index)) {
+    siblings.splice(entry.index, 1);
+  }
+  const group = {
+    kind: "group",
+    id: newId("group"),
+    name: "Gruppo",
+    transform: [1, 0, 0, 1, 0, 0],
+    opacity: 1,
+    visible: true,
+    nodes: members,
+  };
+  siblings.splice(index, 0, group);
+  return { scene: next, id: group.id };
+}
+
+/**
+ * Dissolve a group into its children, in place.
+ *
+ * Each child's transform is composed with the group's, so the world position
+ * is exactly what it was: ungrouping must not move anything.
+ */
+export function ungroupNode(scene, id) {
+  const next = cloneScene(scene);
+  const found = findNode(next, id);
+  if (!found || found.node.kind !== "group") return null;
+  const group = found.node;
+  const children = group.nodes.map((child) => ({
+    ...cloneScene(child),
+    transform: multiply(group.transform, child.transform),
+  }));
+  found.siblings.splice(found.index, 1, ...children);
+  return { scene: next, ids: children.map((child) => child.id) };
 }
 
 /* ---------- straight cut ---------- */
