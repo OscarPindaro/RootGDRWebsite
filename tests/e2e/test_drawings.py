@@ -275,6 +275,37 @@ def test_scene_parent_and_eye_state_survive_reopening(session: BrowserSession):
     assert page.get_by_role("tree", name="Oggetti della scena").count() == 1
 
 
+def test_both_curve_endpoints_remain_editable_after_saving(session: BrowserSession):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-curve").click()
+    _drag(page, (100, 100), (300, 150))
+    before = _local_node_scene(session)["nodes"][0]["d"]
+    page.locator("[data-drawing-mode]").click()
+    page.get_by_role("button", name="Punto finale", exact=True).focus()
+    page.keyboard.press("ArrowRight")
+    page.get_by_role("button", name="Punto iniziale", exact=True).focus()
+    page.keyboard.press("ArrowDown")
+    after = _local_node_scene(session)["nodes"][0]["d"]
+    assert after != before
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert (
+        session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"][0][
+            "d"
+        ]
+        == after
+    )
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-select-node]").first.click()
+    page.locator("[data-drawing-mode]").click()
+    assert page.get_by_role("button", name="Punto iniziale", exact=True).count() == 1
+    assert page.get_by_role("button", name="Punto finale", exact=True).count() == 1
+
+
 def _local_node(session: BrowserSession) -> dict:
     """The in-progress document in the page, before it is saved."""
     return session.page.evaluate(

@@ -399,6 +399,17 @@
   cursor: move;
 }
 
+.drawing-editor__handle.is-active,
+.drawing-editor__curve-control.is-active {
+  fill: var(--cobalt);
+  stroke: var(--surface);
+}
+
+.drawing-editor__handle:focus-visible,
+.drawing-editor__curve-control:focus-visible {
+  outline: 2px solid var(--cobalt);
+}
+
 .drawing-editor__overlay .drawing-editor__selection,
 .drawing-editor__overlay .drawing-editor__preview,
 .drawing-editor__overlay .drawing-editor__snap,

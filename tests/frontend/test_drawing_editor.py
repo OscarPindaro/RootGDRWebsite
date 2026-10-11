@@ -9,7 +9,13 @@ the columns stack on a phone, every tool is labelled — not the artwork.
 import pytest
 from types import SimpleNamespace
 
-from backend.drawings.schemas import Artboard, GroupNode, PolygonNode, SceneDocument
+from backend.drawings.schemas import (
+    Artboard,
+    GroupNode,
+    PathNode,
+    PolygonNode,
+    SceneDocument,
+)
 from backend.navigation import Crumb
 
 pytestmark = pytest.mark.frontend
@@ -896,6 +902,28 @@ def test_scene_tree_arrow_keys_collapse_without_moving_artwork(component):
     page.keyboard.press("ArrowRight")
     assert page.locator("[data-select-node='p']").is_visible()
     assert _scene_of(page) == before
+
+
+def test_both_bezier_endpoints_can_be_selected_and_edited(component):
+    scene = SceneDocument(
+        nodes=[
+            PathNode(id="curve", name="Curve", d="M100 100 C150 150 250 150 300 100")
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='curve']").click()
+    page.locator("[data-drawing-mode]").click()
+    end = page.get_by_role("button", name="Punto finale", exact=True)
+    assert end.count() == 1
+    end.focus()
+    page.keyboard.press("ArrowRight")
+    assert _scene_of(page)["nodes"][0]["d"].endswith("301 100")
+    assert _scene_of(page)["nodes"][0]["d"].startswith("M100 100")
+    start = page.get_by_role("button", name="Punto iniziale", exact=True)
+    start.focus()
+    page.keyboard.press("ArrowDown")
+    assert _scene_of(page)["nodes"][0]["d"].startswith("M100 101")
 
 
 def test_space_activates_a_focused_tool_button(component):

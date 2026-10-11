@@ -98,6 +98,7 @@ export function createController(root) {
   let selectedId = null;
   let tool = "select";
   let mode = "transform";
+  let pathPoint = null;
   let viewport = [1, 0, 0, 1, 0, 0];
   let drag = null;
   let pendingPolygon = null;
@@ -126,6 +127,7 @@ export function createController(root) {
       selectedId,
       viewport,
       mode,
+      pathPoint,
       tool,
       snap: snapPoint,
       cut: cut && cutCursor ? { from: apply(nodeFrame(scene, cut.id).world, findNode(scene, cut.id).node.points[cut.index]), to: cutCursor } : null,
@@ -591,6 +593,7 @@ export function createController(root) {
   }
 
   function select(id, additive = false) {
+    pathPoint = null;
     if (!id) {
       selection = [];
     } else if (additive) {
@@ -704,6 +707,7 @@ export function createController(root) {
     gestureBefore = scene;
     const target = event.target;
     if (target.dataset.pathCommand !== undefined && mode === "vertex" && selectedId) {
+      pathPoint = `${target.dataset.pathCommand}:${target.dataset.pathOffset}`;
       const node = selected().node;
       drag = { kind: "path", id: selectedId, command: Number(target.dataset.pathCommand), offset: Number(target.dataset.pathOffset), d: node.d, transform: nodeFrame(scene, selectedId).world };
       return;
@@ -930,6 +934,25 @@ export function createController(root) {
   function onKeyDown(event) {
     if (!editable || root.dataset.copying || !root.isConnected || document.querySelector("dialog[open]")) return;
     if (event.target.closest("input, textarea, select, [contenteditable='true']")) return;
+    if (mode === "vertex" && event.target.dataset.pathCommand !== undefined && selectedId) {
+      const nudges = {ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1]};
+      if (nudges[event.key]) {
+        event.preventDefault();
+        const command = Number(event.target.dataset.pathCommand);
+        const offset = Number(event.target.dataset.pathOffset);
+        const node = selected().node;
+        const frame = nodeFrame(scene, selectedId).world;
+        const point = pathCommands(node.d)[command].numbers.slice(offset, offset + 2);
+        const world = apply(frame, point);
+        const step = event.shiftKey ? 10 : 1;
+        const [dx, dy] = nudges[event.key];
+        const next = apply(invert(frame), [world[0] + dx * step, world[1] + dy * step]);
+        pathPoint = `${command}:${offset}`;
+        commit(patchNode(scene, selectedId, {d:movePathPoint(node.d, command, offset, next)}));
+        svg.querySelector(`[data-path-command='${command}'][data-path-offset='${offset}']`)?.focus();
+        return;
+      }
+    }
     const mod = event.ctrlKey || event.metaKey;
     if (mod && event.key.toLowerCase() === "s") {
       event.preventDefault();

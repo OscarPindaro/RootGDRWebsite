@@ -409,6 +409,13 @@ test("reparenting keeps world transforms and rejects cycles", async () => {
   assert.equal(nested, null);
 });
 
+test("each cubic control is attached to its own endpoint", async () => {
+  const { pathHandles } = await import("../../src/frontend/js/drawings/scene.js");
+  const handles = pathHandles("M0 0 C10 20 30 20 40 0");
+  assert.deepEqual(handles[1].anchor, [0, 0]);
+  assert.deepEqual(handles[2].anchor, [40, 0]);
+});
+
 test("curve controls retain commands when edited", async () => {
   const { pathHandles, movePathPoint } = await import("../../src/frontend/js/drawings/scene.js");
   const d = "M0 0 C10 20 30 20 40 0";

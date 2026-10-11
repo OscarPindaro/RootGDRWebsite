@@ -85,11 +85,21 @@ export function nodeCenter(node) {
 
 export function pathHandles(d) {
   const handles = [];
+  let previous = null;
+  let controlNumber = 0;
   pathCommands(d).forEach((command, index) => {
     for (let offset = 0; offset < command.numbers.length; offset += 2) {
-      handles.push({ command: index, offset, point: command.numbers.slice(offset, offset + 2), control: command.name === "C" && offset % 6 !== 4 });
+      const point = command.numbers.slice(offset, offset + 2);
+      const control = command.name === "C" && offset % 6 !== 4;
+      const endOffset = Math.floor(offset / 6) * 6 + 4;
+      const anchor = control ? (offset % 6 === 0 ? previous : command.numbers.slice(endOffset, endOffset + 2)) : null;
+      handles.push({ command: index, offset, point, control, anchor, label: control ? `Controllo ${++controlNumber}` : "Punto del tracciato" });
+      if (!control) previous = point;
     }
   });
+  const endpoints = handles.filter(handle => !handle.control);
+  if (endpoints.length) endpoints[0].label = "Punto iniziale";
+  if (endpoints.length > 1) endpoints[endpoints.length - 1].label = "Punto finale";
   return handles;
 }
 

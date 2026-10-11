@@ -201,15 +201,14 @@ function overlayElements(scene, view) {
 
   if (view.mode === "vertex" && node.kind === "path") {
     const handles = pathHandles(node.d);
-    let anchor = handles[0]?.point;
     for (const handle of handles) {
       const point = apply(toView, handle.point);
-      if (handle.control && anchor) {
-        const origin = apply(toView, anchor);
+      if (handle.control && handle.anchor) {
+        const origin = apply(toView, handle.anchor);
         elements.push(el("line", { class: "drawing-editor__rotate-stem", x1: origin[0], y1: origin[1], x2: point[0], y2: point[1] }));
       }
-      elements.push(el("circle", { class: handle.control ? "drawing-editor__curve-control" : "drawing-editor__handle", cx: point[0], cy: point[1], r: 6, "data-path-command": handle.command, "data-path-offset": handle.offset }));
-      if (!handle.control) anchor = handle.point;
+      const active = view.pathPoint === `${handle.command}:${handle.offset}`;
+      elements.push(el("circle", { class: (handle.control ? "drawing-editor__curve-control" : "drawing-editor__handle") + (active ? " is-active" : ""), cx: point[0], cy: point[1], r: 6, role: "button", tabindex: 0, "aria-label": handle.label, "data-path-command": handle.command, "data-path-offset": handle.offset }));
     }
   }
 

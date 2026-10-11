@@ -20,6 +20,9 @@ library, skeleton, publishing or export capabilities.
 - **Vertici** edits polygon vertices or path endpoints/control handles. Click a
   polygon edge to insert a point; Alt-click a vertex to remove it (minimum
   three). Click a straight path segment to insert an editable polyline point.
+  Both Bézier endpoints are labelled and focusable; each control is tethered to
+  its own endpoint. Select either endpoint/control with the mouse or Tab and
+  nudge it with arrow keys (Shift for larger steps).
 - Polygon edge-midpoint controls hide individual outlines without losing fill.
   **Taglia** selects two boundary points and splits along an internal straight
   chord. Pieces edit independently; their new shared outlines start hidden.
