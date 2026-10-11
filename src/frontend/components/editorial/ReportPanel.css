@@ -102,13 +102,24 @@ dialog.report-panel-dialog {
   border-top: var(--rule-ink);
 }
 
+/* One bar for the tools, the colours and the zoom: a wrapped second line is
+   better than three stacked rows the reader has to hunt through. */
+.report-panel__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  margin-bottom: var(--sp-3);
+}
+
 .report-panel__tools,
 .report-panel__colours,
+.report-panel__zoom,
 .report-panel__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: var(--sp-2);
-  margin-bottom: var(--sp-3);
 }
 
 .report-panel__tool {
@@ -161,18 +172,15 @@ dialog.report-panel-dialog {
   font-size: var(--text-sm);
 }
 
-.report-panel__zoom {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  margin-bottom: var(--sp-2);
-}
-
 .report-panel__zoom-value {
   min-width: 4ch;
   font-size: var(--text-sm);
   text-align: right;
   color: var(--muted);
+}
+
+.report-panel__input--size {
+  flex: 0 0 auto;
 }
 
 .report-panel__surface {

@@ -28,6 +28,7 @@ const { version } = require("lucide/package.json");
 const NAMES = [
   "arrow-left",
   "arrow-right",
+  "blend",
   "book-open",
   "calendar",
   "check",
@@ -53,6 +54,7 @@ const NAMES = [
   "map-pin",
   "map-pin-off",
   "menu",
+  "move-up-right",
   "mouse-pointer-2",
   "panel-left-close",
   "pen-tool",
@@ -69,6 +71,7 @@ const NAMES = [
   "star",
   "trash-2",
   "triangle",
+  "type",
   "undo-2",
   "upload",
   "user",

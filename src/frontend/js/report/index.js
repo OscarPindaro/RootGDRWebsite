@@ -246,9 +246,12 @@ function mountEditor(dialog, list, status) {
   const chips = Array.from(colours.querySelectorAll("[data-report-colour]"));
 
   function select(buttons, chosen) {
-    buttons.forEach((button) =>
-      button.setAttribute("aria-pressed", String(button === chosen))
-    );
+    buttons.forEach((button) => {
+      const on = button === chosen;
+      button.setAttribute("aria-pressed", String(on));
+      // The shared Button skin draws the pressed state from this class.
+      button.classList.toggle("btn-selected", on);
+    });
   }
 
   function close() {
@@ -298,6 +301,11 @@ function mountEditor(dialog, list, status) {
     })
   );
   textInput.addEventListener("input", () => annotator.setText(textInput.value));
+  const textSize = dialog.querySelector("[data-report-text-size]");
+  annotator.setTextSize(Number(textSize.value));
+  textSize.addEventListener("change", () =>
+    annotator.setTextSize(Number(textSize.value))
+  );
   dialog
     .querySelector("[data-report-undo]")
     .addEventListener("click", () => annotator.undo());

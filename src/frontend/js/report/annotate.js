@@ -27,6 +27,7 @@ export function createAnnotator(canvas) {
   let tool = "arrow";
   let colour = COLOURS[0];
   let text = "";
+  let textScale = 0.03;
   let zoom = 1;
 
   /* The canvas keeps the image's own pixel size; the zoom is its CSS size, so
@@ -71,7 +72,12 @@ export function createAnnotator(canvas) {
       );
       context.stroke();
     } else if (shape.tool === "text") {
-      context.font = FONT.replace("%d", String(Math.max(16, canvas.width / 42)));
+      // The size is the one chosen when the text was placed, so changing the
+      // selector afterwards never reflows a note that is already on the image.
+      context.font = FONT.replace(
+        "%d",
+        String(Math.max(14, canvas.width * (shape.size || textScale)))
+      );
       context.textBaseline = "top";
       context.fillText(shape.text, shape.x, shape.y);
     } else if (shape.tool === "blur") {
@@ -107,7 +113,14 @@ export function createAnnotator(canvas) {
     const point = toImage(event);
     if (tool === "text") {
       if (text.trim() === "") return;
-      shapes.push({ tool: "text", colour, x: point.x, y: point.y, text: text.trim() });
+      shapes.push({
+        tool: "text",
+        colour,
+        x: point.x,
+        y: point.y,
+        text: text.trim(),
+        size: textScale,
+      });
       render();
       return;
     }
@@ -171,6 +184,9 @@ export function createAnnotator(canvas) {
     },
     setText(next) {
       text = next;
+    },
+    setTextSize(next) {
+      if (Number.isFinite(next) && next > 0) textScale = next;
     },
     undo() {
       shapes.pop();

@@ -15,9 +15,19 @@ A reader can report a problem from the page they are on, without leaving it.
 - Each screenshot can be annotated before submission: **Annota** opens the
   capture on a canvas with a coloured arrow, a box, text and an optional blur.
   **Salva annotazione** replaces that capture with the marked image.
+- The four tools, the colour chips and the zoom share one bar, which wraps onto
+  a second line when the panel is narrow. The tools are icons with a name —
+  the arrow carries its origin, the box its outline, the text a **T**, the blur
+  a blend mark.
+- Text is placed where the reader clicks, at the size chosen next to the field
+  (Piccolo, Medio, Grande); there is no rectangle to draw first, and a click
+  with an empty field leaves no mark.
 - The capture opens fitted to the panel and can be zoomed with **−** / **+** /
   **Adatta**, or with Ctrl and the wheel, between 20% and 400%. A capture is
   worth reading whole before it is worth zooming into.
+- **Annulla ultima** sits above the capture, **Salva annotazione** and
+  **Chiudi** below it, so the destructive and the committing action are never
+  next to each other.
 - **Riproduci il problema** records the reproduction: the reader navigates
   normally and both the browser steps and the backend calls stay attached to
   this report. **Interrompi la registrazione** keeps what was collected.

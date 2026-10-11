@@ -320,24 +320,41 @@ def test_the_annotation_tools_and_colours_are_choices(component):
     page.click('[data-report-annotate="screenshot_full_page"]')
     page.wait_for_selector("[data-report-editor]:not([hidden])")
 
-    tools = page.locator("[data-report-tool]")
-    assert [tools.nth(index).inner_text() for index in range(tools.count())] == [
-        "Freccia",
-        "Riquadro",
-        "Testo",
-        "Sfoca",
-    ]
-    assert page.locator("[data-report-tool][aria-pressed='true']").inner_text() == (
-        "Freccia"
-    )
+    # The tools, the colours and the zoom share one bar.
+    assert page.locator(".report-panel__bar [data-report-tool]").count() == 4
+    assert page.locator(".report-panel__bar [data-report-colour]").count() == 6
+    assert page.locator(".report-panel__bar [data-report-zoom]").count() == 3
+
+    # Each tool is an icon with a name, not a word.
+    for tool, icon in (
+        ("arrow", "move-up-right"),
+        ("box", "square"),
+        ("text", "type"),
+        ("blur", "blend"),
+    ):
+        button = page.locator(f"[data-report-tool='{tool}']")
+        assert button.inner_text().strip() == ""
+        assert (
+            button.get_attribute("aria-label")
+            == {
+                "arrow": "Freccia",
+                "box": "Riquadro",
+                "text": "Testo",
+                "blur": "Sfoca",
+            }[tool]
+        )
+        assert button.locator(f"svg[data-icon='{icon}']").count() == 1
+
+    arrow = page.locator("[data-report-tool='arrow']")
+    assert arrow.get_attribute("aria-pressed") == "true"
+    assert "btn-selected" in arrow.get_attribute("class")
 
     page.click("[data-report-tool='blur']")
-    assert page.locator("[data-report-tool='blur']").get_attribute("aria-pressed") == (
-        "true"
-    )
-    assert page.locator("[data-report-tool='arrow']").get_attribute("aria-pressed") == (
-        "false"
-    )
+    blur = page.locator("[data-report-tool='blur']")
+    assert blur.get_attribute("aria-pressed") == "true"
+    assert "btn-selected" in blur.get_attribute("class")
+    assert arrow.get_attribute("aria-pressed") == "false"
+    assert "btn-selected" not in arrow.get_attribute("class")
 
     chips = page.locator("[data-report-colour]")
     assert chips.count() == 6
@@ -346,6 +363,54 @@ def test_the_annotation_tools_and_colours_are_choices(component):
         page.locator("[data-report-colour]:nth-child(3)").get_attribute("aria-pressed")
         == "true"
     )
+
+    # The actions carry their own icons, and the text has a size of its own.
+    assert page.locator("[data-report-undo] svg[data-icon='undo-2']").count() == 1
+    assert page.locator("[data-report-save] svg[data-icon='save']").count() == 1
+    assert page.locator("[data-report-editor-close] svg[data-icon='x']").count() == 1
+    sizes = page.locator("[data-report-text-size] option")
+    assert [sizes.nth(index).inner_text() for index in range(sizes.count())] == [
+        "Piccolo",
+        "Medio",
+        "Grande",
+    ]
+    assert page.locator("[data-report-text-size]").input_value() == "0.022"
+
+
+def test_text_lands_where_it_is_clicked_and_needs_some_text(component):
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("screenshot_viewport"), _capture("page_html")]),
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _serve_shot(page, "screenshot_viewport")
+    _open(component)
+    _wait_for_state(page, "saved")
+
+    page.click('[data-report-annotate="screenshot_viewport"]')
+    page.wait_for_selector("[data-report-editor]:not([hidden])")
+    page.wait_for_function(
+        "() => document.querySelector('[data-report-canvas]').dataset.reportLoaded === 'true'"
+    )
+    canvas = page.locator("[data-report-canvas]")
+    data = "el => el.toDataURL()"
+    untouched = canvas.evaluate(data)
+    box = canvas.bounding_box()
+
+    # The text tool places what the field holds, with no rectangle to draw first.
+    page.click("[data-report-tool='text']")
+    page.fill("[data-report-text]", "Qui non si vede il titolo")
+    page.select_option("[data-report-text-size]", "0.032")
+    page.mouse.click(box["x"] + 60, box["y"] + 60)
+    with_text = canvas.evaluate(data)
+    assert with_text != untouched
+
+    # An empty field places nothing: a stray click must not leave a mark.
+    page.fill("[data-report-text]", "")
+    page.mouse.click(box["x"] + 200, box["y"] + 200)
+    assert canvas.evaluate(data) == with_text
 
 
 def test_the_reproduction_can_be_started_and_interrupted(component):

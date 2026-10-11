@@ -90,7 +90,7 @@ BUDGETS = {
     ),
     "icon assets (the registry's inline markup, one of each)": (
         _icon_payload(),
-        16_000,
+        22_000,
         4_000,
     ),
     "fonts (self-hosted latin subsets)": (_measure(FONTS), 420_000, 420_000),

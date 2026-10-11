@@ -17,42 +17,50 @@
       aria-label="Allegati della segnalazione"></ul>
   <section class="report-panel__editor" data-report-editor hidden
            aria-label="Annotazione della schermata">
-    <div class="report-panel__tools" role="toolbar" aria-label="Strumenti di annotazione">
-      <button type="button" class="report-panel__tool" data-report-tool="arrow"
-              aria-pressed="true">Freccia</button>
-      <button type="button" class="report-panel__tool" data-report-tool="box"
-              aria-pressed="false">Riquadro</button>
-      <button type="button" class="report-panel__tool" data-report-tool="text"
-              aria-pressed="false">Testo</button>
-      <button type="button" class="report-panel__tool" data-report-tool="blur"
-              aria-pressed="false">Sfoca</button>
+    <div class="report-panel__bar">
+      <div class="report-panel__tools" role="toolbar" aria-label="Strumenti di annotazione">
+        <common.IconButton icon="move-up-right" label="Freccia" data-report-tool="arrow"
+                           selected={{ True }} />
+        <common.IconButton icon="square" label="Riquadro" data-report-tool="box"
+                           selected={{ False }} />
+        <common.IconButton icon="type" label="Testo" data-report-tool="text"
+                           selected={{ False }} />
+        <common.IconButton icon="blend" label="Sfoca" data-report-tool="blur"
+                           selected={{ False }} />
+      </div>
+      <div class="report-panel__colours" data-report-colours role="group"
+           aria-label="Colore dell’annotazione"></div>
+      <div class="report-panel__zoom" role="group" aria-label="Ingrandimento della schermata">
+        <button type="button" class="report-panel__tool" data-report-zoom="out"
+                aria-label="Riduci">−</button>
+        <span class="report-panel__zoom-value mono" data-report-zoom-value>100%</span>
+        <button type="button" class="report-panel__tool" data-report-zoom="in"
+                aria-label="Ingrandisci">+</button>
+        <button type="button" class="report-panel__tool" data-report-zoom="fit">Adatta</button>
+      </div>
     </div>
-    <div class="report-panel__colours" data-report-colours role="group"
-         aria-label="Colore dell’annotazione"></div>
     <label class="report-panel__field report-panel__field--inline">
       <span class="report-panel__label">Testo da inserire</span>
       <input class="report-panel__input" type="text" maxlength="120"
              data-report-text placeholder="Nota sulla schermata" />
+      <select class="report-panel__input report-panel__input--size" data-report-text-size
+              aria-label="Dimensione del testo">
+        <option value="0.015">Piccolo</option>
+        <option value="0.022" selected>Medio</option>
+        <option value="0.032">Grande</option>
+      </select>
     </label>
-    <div class="report-panel__zoom" role="group" aria-label="Ingrandimento della schermata">
-      <button type="button" class="report-panel__tool" data-report-zoom="out"
-              aria-label="Riduci">−</button>
-      <span class="report-panel__zoom-value mono" data-report-zoom-value>100%</span>
-      <button type="button" class="report-panel__tool" data-report-zoom="in"
-              aria-label="Ingrandisci">+</button>
-      <button type="button" class="report-panel__tool" data-report-zoom="fit">Adatta</button>
+    <div class="report-panel__actions">
+      <common.IconButton icon="undo-2" label="Annulla ultima" data-report-undo />
     </div>
     <div class="report-panel__surface" data-report-surface>
       <canvas class="report-panel__canvas" data-report-canvas></canvas>
     </div>
     <div class="report-panel__actions">
-      <common.Button variant="secondary" size="sm" data-report-undo>
-        Annulla ultima
-      </common.Button>
-      <common.Button variant="primary" size="sm" data-report-save>
+      <common.Button variant="primary" size="sm" icon="save" data-report-save>
         Salva annotazione
       </common.Button>
-      <common.Button variant="secondary" size="sm" data-report-editor-close>
+      <common.Button variant="secondary" size="sm" icon="x" data-report-editor-close>
         Chiudi
       </common.Button>
     </div>
