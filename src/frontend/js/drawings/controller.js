@@ -41,6 +41,7 @@ import {
   setTransform,
   selectionCorners,
   transformInWorld,
+  transformNodesInWorld,
   ungroupNode,
   validPolygon,
   worldPoints,
@@ -67,7 +68,7 @@ const SHAPE_NAMES = {
 const PRESET_LABELS = {
   triangle_isosceles: "Isoscele", triangle_equilateral: "Equilatero",
   triangle_right_right: "Rettangolo · angolo a destra", triangle_right_left: "Rettangolo · angolo a sinistra",
-  rectangle: "Rettangolo", square: "Quadrato", regular_polygon: "Poligono regolare",
+  rectangle: "Rettangolo", square: "Quadrato", regular_polygon: "Poligono regolare", circle: "Cerchio", ellipse: "Ellisse",
 };
 
 function clamp(value, low, high) {
@@ -880,7 +881,9 @@ export function createController(root) {
       if (!Number.isFinite(sx)) sx = 1;
       if (!Number.isFinite(sy)) sy = 1;
       const delta = scaleAbout(fixed, clampFactor(sx), clampFactor(sy));
-      for (const entry of drag.transforms) scene = transformInWorld(scene, entry.id, delta, entry.transform);
+      const next = transformNodesInWorld(scene, drag.transforms, delta);
+      if (next === scene) announce("Trasformazione incompatibile con i vincoli: sblocca la geometria per deformarla.");
+      else { announce(""); scene = next; }
       draw();
       return;
     }
@@ -888,7 +891,9 @@ export function createController(root) {
       const point = scenePoint(event);
       const angle = Math.atan2(point[1] - drag.center[1], point[0] - drag.center[0]) - drag.start;
       const delta = rotateAbout(drag.center, angle);
-      for (const entry of drag.transforms) scene = transformInWorld(scene, entry.id, delta, entry.transform);
+      const next = transformNodesInWorld(scene, drag.transforms, delta);
+      if (next === scene) announce("Trasformazione incompatibile con i vincoli: sblocca la geometria per deformarla.");
+      else { announce(""); scene = next; }
       draw();
       return;
     }
@@ -902,7 +907,9 @@ export function createController(root) {
       const snapped = snapWorld(scenePoint(event), null, -1, event.altKey, selection);
       snapPoint = snapped.snapped ? snapped.point : null;
       const local = apply(invert(drag.transform), snapped.point);
+      const radius = clamp(Math.hypot(local[0] - drag.node.cx, local[1] - drag.node.cy), 0.1, 100000);
       const patch = drag.axis === "center" ? { cx: round(local[0]), cy: round(local[1]) }
+        : drag.node.constraint?.kind === "circle" ? { rx: radius, ry: radius }
         : drag.axis === "x" ? { rx: clamp(Math.abs(local[0] - drag.node.cx), 0.1, 100000) }
         : { ry: clamp(Math.abs(local[1] - drag.node.cy), 0.1, 100000) };
       scene = patchNode(scene, drag.id, patch);
@@ -980,6 +987,15 @@ export function createController(root) {
       return;
     }
     if (event.target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
+    if (mode === "vertex" && event.target.dataset.ellipseAxis && selectedId && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+      event.preventDefault();
+      const axis = event.target.dataset.ellipseAxis, node = selected().node;
+      const field = axis === "center" ? (["ArrowLeft", "ArrowRight"].includes(event.key) ? "cx" : "cy") : axis === "x" ? "rx" : "ry";
+      const step = (event.shiftKey ? 10 : 1) * (["ArrowLeft", "ArrowUp"].includes(event.key) ? -1 : 1);
+      execute("ellipse-parameter", {field, value:node[field] + step});
+      svg.querySelector(`[data-ellipse-axis='${axis}']`)?.focus();
+      return;
+    }
     if (mode === "vertex" && event.target.dataset.pathCommand !== undefined && selectedId) {
       const nudges = {ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1]};
       if (nudges[event.key]) {
@@ -1138,6 +1154,19 @@ export function createController(root) {
     commit(patchNode(scene, selectedId, patch));
   }
 
+  function setEllipseParameter({field, value} = {}) {
+    if (!["cx", "cy", "rx", "ry"].includes(field) || !Number.isFinite(value) || Math.abs(value) > 100000 || (["rx", "ry"].includes(field) && value <= 0)) {
+      announce("Usa valori finiti entro 100000 unità e raggi maggiori di zero.");
+      syncControls();
+      return false;
+    }
+    const node = selected().node;
+    const patch = node.constraint?.kind === "circle" && ["rx", "ry"].includes(field) ? {rx:value, ry:value} : {[field]:value};
+    const next = patchNode(scene, selectedId, patch);
+    if (next === scene) announce("Il valore non rispetta i vincoli della forma.");
+    else { announce(""); commit(next); }
+  }
+
   const actions = {
     select: { label: "Seleziona", enabled: () => true, run: () => setMode("select") },
     edit: { label: "Modifica forma", enabled: () => selection.length === 1 && selected()?.node.kind !== "group", run: () => setMode("vertex") },
@@ -1152,18 +1181,19 @@ export function createController(root) {
     forward: { label: "Avanti", enabled: () => Boolean(selected()) && selected().index < selected().siblings.length - 1, run: () => commit(reorderNode(scene, selectedId, 1)) },
     backward: { label: "Dietro", enabled: () => Boolean(selected()) && selected().index > 0, run: () => commit(reorderNode(scene, selectedId, -1)) },
     unlock: { label: "Sblocca geometria", enabled: () => selection.length === 1 && Boolean(selected()?.node.constraint), run: () => commit(patchNode(scene, selectedId, { constraint: null })) },
+    "ellipse-parameter": { label: "Modifica centro e raggi", enabled: () => selection.length === 1 && selected()?.node.kind === "ellipse", run: setEllipseParameter },
   };
 
   for (const name of [...Object.keys(SHAPE_NAMES), "curve", "cut"]) {
     actions[`tool-${name}`] = { label: SHAPE_NAMES[name] || (name === "curve" ? "Curva" : "Taglia"), enabled: () => name !== "cut" || (selection.length === 1 && selected()?.node.kind === "polygon" && !selected().node.constraint), run: () => {
-      creationPreset = {triangle:"triangle_isosceles", square:"rectangle", regular:"regular_polygon"}[name] || null;
+      creationPreset = {triangle:"triangle_isosceles", square:"rectangle", regular:"regular_polygon", circle:"circle"}[name] || null;
       setTool(name);
     } };
   }
   for (const [kind, label] of Object.entries(PRESET_LABELS)) {
     actions[`preset-${kind}`] = { label, enabled: () => true, run: () => {
       creationPreset = kind;
-      setTool(kind.startsWith("triangle_") ? "triangle" : ["square", "rectangle"].includes(kind) ? "square" : "regular");
+      setTool(kind.startsWith("triangle_") ? "triangle" : ["square", "rectangle"].includes(kind) ? "square" : ["circle", "ellipse"].includes(kind) ? "circle" : "regular");
     } };
   }
 
@@ -1171,10 +1201,9 @@ export function createController(root) {
     return Boolean(editable && !root.dataset.copying && !drag && !cut && actions[id]?.enabled());
   }
 
-  function execute(id) {
+  function execute(id, parameters) {
     if (!canExecute(id)) return false;
-    actions[id].run();
-    return true;
+    return actions[id].run(parameters) !== false;
   }
 
   /* ---------- controls ---------- */
@@ -1237,6 +1266,15 @@ export function createController(root) {
     selectButton.classList.toggle("btn-selected", tool === "select" && mode === "select");
     selectButton.setAttribute("aria-pressed", String(tool === "select" && mode === "select"));
     root.querySelector("[data-drawing-mode-label]").textContent = tool === "select" ? {select:"Seleziona", vertex:"Modifica forma", transform:"Trasforma"}[mode] : PRESET_LABELS[creationPreset] || SHAPE_NAMES[tool] || (tool === "curve" ? "Curva" : "Taglia");
+    root.querySelector("[data-ellipse-parameters]").hidden = selection.length !== 1 || node?.kind !== "ellipse";
+    root.querySelectorAll("[data-ellipse-parameter]").forEach(input => {
+      input.disabled = !canExecute("ellipse-parameter");
+      input.closest("label").hidden = input.dataset.ellipseParameter === "ry" && node?.constraint?.kind === "circle";
+      if (node?.kind === "ellipse" && document.activeElement !== input) input.value = round(node[input.dataset.ellipseParameter]);
+    });
+    const radiusLabel = node?.constraint?.kind === "circle" ? "Raggio" : "Raggio orizzontale";
+    root.querySelector("[data-ellipse-radius-label]").textContent = radiusLabel;
+    root.querySelector("[data-ellipse-parameter='rx']").setAttribute("aria-label", radiusLabel);
     root.querySelector("[data-regular-options]").hidden = tool !== "regular";
     root.querySelectorAll("[data-drawing-preset]").forEach(button => { button.disabled = !canExecute(`preset-${button.dataset.drawingPreset}`); });
     const constraint = root.querySelector("[data-drawing-constraint]");
@@ -1276,6 +1314,9 @@ export function createController(root) {
     root.querySelectorAll("[data-drawing-preset]").forEach(button => {
       button.dataset.drawingAction = `preset-${button.dataset.drawingPreset}`;
       button.addEventListener("click", () => execute(button.dataset.drawingAction));
+    });
+    root.querySelectorAll("[data-ellipse-parameter]").forEach(input => {
+      input.addEventListener("change", () => execute("ellipse-parameter", {field:input.dataset.ellipseParameter, value:input.valueAsNumber}));
     });
     root.querySelector("[data-regular-sides]").addEventListener("change", event => {
       const value = Number(event.target.value);

@@ -488,3 +488,18 @@ test("all polygon presets retain their invariant through constrained editing", a
   assert.equal(createPreset("regular_polygon",[0,0],[100,100],2),null);
   assert.equal(createPreset("rectangle",[0,0],[0,100]),null);
 });
+
+test("circle presets and atomic selection transforms cannot introduce oval distortion", async () => {
+  const {createPreset, constraintsValid, transformNodesInWorld, nodeFrame} = await import("../../src/frontend/js/drawings/scene.js");
+  const circle = createPreset("circle",[0,0],[200,100]);
+  assert.equal(circle.rx,50);
+  assert.equal(circle.ry,50);
+  const ellipse = createPreset("ellipse",[0,0],[200,100]);
+  assert.equal(ellipse.constraint,null);
+  assert.equal(ellipse.rx,100);
+  assert.equal(ellipse.ry,50);
+  const scene = sceneWith([circle,ellipse]);
+  const entries = scene.nodes.map(node => ({id:node.id,transform:nodeFrame(scene,node.id).world}));
+  assert.deepEqual(transformNodesInWorld(scene,entries,scaleAbout([0,0],2,3)),scene);
+  assert.equal(constraintsValid(transformNodesInWorld(scene,entries,scaleAbout([0,0],-2,2))),true);
+});

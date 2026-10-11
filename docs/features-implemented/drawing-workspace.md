@@ -16,7 +16,13 @@ library, skeleton, publishing or export capabilities.
   Direct preset edits retain the invariant; equilateral/regular vertices scale
   radially, isosceles retains its centred apex, rectangles keep right angles.
   Topology edits/cuts require explicit unlocking. Existing free artwork stays free.
-  Drag ellipses onto the artboard. Click polygon
+  The circle button creates a locked circle fitted inside the drag rectangle;
+  its submenu creates a free ellipse. Circle editing exposes centre and radius;
+  ellipse editing exposes centre and two axes, through handles and numeric local
+  document-unit fields. Keyboard handles nudge parameters; invalid radii are refused.
+  Incompatible non-uniform own/parent/multi-selection transforms are refused
+  atomically with feedback. Explicit unlocking retains appearance and permits
+  oval deformation; legacy shapes are not relocked from their names. Click polygon
   vertices and double-click or press Enter to finish. Drag open lines or cubic
   Bézier curves.
 - Select through the canvas or connected scene tree; Shift selects multiple
@@ -29,7 +35,7 @@ library, skeleton, publishing or export capabilities.
   A single shape defaults to direct geometry editing after creation/selection;
   groups and multiple selections use whole-selection controls. **T** enters
   Transform with focus in the workspace; Ctrl+T remains the browser shortcut.
-  Ellipses expose centre/two-axis handles. A multi-object transform is one undo
+  Ellipses expose centre/two-axis handles; locked circles have centre/radius handles. A multi-object transform is one undo
   step. Toolbar and keyboard actions share their availability checks.
 - **Modifica forma** edits polygon vertices or path endpoints/control handles. Click a
   polygon edge to insert a point; Alt-click a vertex to remove it (minimum
@@ -118,7 +124,8 @@ specimen in the component showcase.
 - Explicit saving only: no autosave, offline/crash recovery or persisted undo.
   A failed/ambiguous response does not claim successful persistence; inspect or
   reload server state before treating local work as durable.
-- Ellipses remain ellipses, cuts are straight, boundaries are not welded, and
+- Circles stay locked until explicitly converted to free ellipses; no circle-to-path
+  conversion is supplied. Cuts are straight, boundaries are not welded, and
   polyline/cubic editing does not offer a full path-boolean toolset.
 - Groups must be consecutive siblings to preserve overlap order. The layer list
   is a connected, collapsible scene tree. Group styling is not exposed.

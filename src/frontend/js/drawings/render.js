@@ -194,9 +194,11 @@ function overlayElements(scene, view) {
   }
 
   if (view.mode === "vertex" && node.kind === "ellipse") {
-    for (const [axis, local, label] of [["center", [node.cx, node.cy], "Centro"], ["x", [node.cx + node.rx, node.cy], "Raggio orizzontale"], ["y", [node.cx, node.cy + node.ry], "Raggio verticale"]]) {
+    const circle = node.constraint?.kind === "circle";
+    const handles = [["center", [node.cx, node.cy], "Centro"], ["x", [node.cx + node.rx, node.cy], circle ? "Raggio" : "Raggio orizzontale"], ...(!circle ? [["y", [node.cx, node.cy + node.ry], "Raggio verticale"]] : [])];
+    for (const [axis, local, label] of handles) {
       const point = apply(toView, local);
-      elements.push(el("circle", { class: "drawing-editor__handle", cx: point[0], cy: point[1], r: 6, "data-ellipse-axis": axis, "aria-label": label }));
+      elements.push(el("circle", { class: "drawing-editor__handle", cx: point[0], cy: point[1], r: 6, "data-ellipse-axis": axis, "aria-label": label, role:"button", tabindex:0 }));
     }
   }
 

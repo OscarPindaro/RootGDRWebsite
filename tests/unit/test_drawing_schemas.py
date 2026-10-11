@@ -1,7 +1,13 @@
 import pytest
 from pydantic import ValidationError
 
-from backend.drawings.schemas import PathNode, PolygonNode, SceneDocument
+from backend.drawings.schemas import (
+    EllipseNode,
+    GroupNode,
+    PathNode,
+    PolygonNode,
+    SceneDocument,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -130,6 +136,61 @@ def test_locked_square_rejects_nonuniform_parent_transform():
         SceneDocument.model_validate(scene)
     scene["nodes"][0]["nodes"][0]["constraint"] = None
     assert SceneDocument.model_validate(scene).nodes[0].nodes[0].constraint is None
+
+
+@pytest.mark.parametrize("transform", [(2, 0, 0, 3, 0, 0), (1, 0, 1, 1, 0, 0)])
+def test_locked_circles_reject_incompatible_own_and_parent_transforms(transform):
+    circle = EllipseNode(
+        id="circle",
+        name="Circle",
+        cx=0,
+        cy=0,
+        rx=10,
+        ry=10,
+        constraint={"kind": "circle"},
+    )
+    with pytest.raises(ValidationError):
+        SceneDocument(nodes=[circle.model_copy(update={"transform": transform})])
+    with pytest.raises(ValidationError):
+        SceneDocument(
+            nodes=[GroupNode(id="g", name="Group", transform=transform, nodes=[circle])]
+        )
+    circle.constraint = None
+    assert SceneDocument(
+        nodes=[GroupNode(id="g", name="Group", transform=transform, nodes=[circle])]
+    )
+
+
+def test_reflected_uniform_circle_transform_and_legacy_named_ellipse_remain_valid():
+    circle = EllipseNode(
+        id="c",
+        name="Circle",
+        cx=0,
+        cy=0,
+        rx=10,
+        ry=10,
+        constraint={"kind": "circle"},
+        transform=(-2, 0, 0, 2, 0, 0),
+    )
+    assert SceneDocument(nodes=[circle]).nodes[0].constraint.kind == "circle"
+    legacy = SceneDocument.model_validate(
+        {
+            "schemaVersion": 1,
+            "nodes": [
+                {
+                    "kind": "ellipse",
+                    "id": "old",
+                    "name": "Cerchio",
+                    "cx": 10,
+                    "cy": 20,
+                    "rx": 30,
+                    "ry": 15,
+                }
+            ],
+        }
+    )
+    assert legacy.nodes[0].constraint is None
+    assert legacy.nodes[0].rx == 30 and legacy.nodes[0].ry == 15
 
 
 def test_curve_and_anchor_identities_round_trip():

@@ -368,7 +368,10 @@ export function createPreset(kind, from, to, sides = 6) {
   const x = Math.min(from[0], to[0]), y = Math.min(from[1], to[1]);
   if (![x, y, width, height].every(Number.isFinite) || width < 0.1 || height < 0.1) return null;
   let node;
-  if (kind === "rectangle" || kind === "square") {
+  if (kind === "circle" || kind === "ellipse") {
+    const radius = Math.min(width, height) / 2;
+    node = createEllipse(kind === "circle" ? "Cerchio" : "Ellisse", [x + width / 2, y + height / 2], kind === "circle" ? radius : width / 2, kind === "circle" ? radius : height / 2);
+  } else if (kind === "rectangle" || kind === "square") {
     if (kind === "square") width = height = Math.min(width, height);
     node = createRect(kind === "square" ? "Quadrato" : "Rettangolo", [x, y], [x + width, y + height]);
   } else if (kind.startsWith("triangle_")) {
@@ -386,7 +389,7 @@ export function createPreset(kind, from, to, sides = 6) {
       return [x + width / 2 + radius * Math.cos(angle), y + height / 2 + radius * Math.sin(angle)];
     }));
   } else return null;
-  node.constraint = {kind};
+  node.constraint = kind === "ellipse" ? null : {kind};
   return node;
 }
 
@@ -488,6 +491,16 @@ export function setTransform(scene, id, matrix) {
 export function transformInWorld(scene, id, delta, original = nodeFrame(scene, id).world) {
   const frame = nodeFrame(scene, id);
   return setTransform(scene, id, multiply(invert(frame.parent), multiply(delta, original)));
+}
+
+export function transformNodesInWorld(scene, entries, delta) {
+  const next = cloneScene(scene);
+  for (const {id, transform} of entries) {
+    const frame = nodeFrame(next, id);
+    if (!frame) return scene;
+    findNode(next, id).node.transform = multiply(invert(frame.parent), multiply(delta, transform));
+  }
+  return constraintsValid(next) ? next : scene;
 }
 
 export function validPolygon(points) {

@@ -1221,7 +1221,8 @@ def test_multiple_shapes_transform_together_as_one_undo_step(component):
 def test_ellipse_defaults_to_direct_center_and_axis_controls(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props())
     _mounted(page)
-    page.get_by_test_id("drawing-tool-circle").click()
+    page.locator("[data-preset-menu='circle']").click()
+    page.locator("[data-drawing-preset='ellipse']").click()
     _drag(page, (100, 100), (300, 200))
     assert page.locator("[data-ellipse-axis]").count() == 3
     _drag(page, (300, 150), (340, 150))
@@ -1283,6 +1284,60 @@ def test_split_button_presets_create_persistent_constrained_geometry(
     assert _scene_of(page)["nodes"][1]["constraint"] == node["constraint"]
     page.get_by_test_id("drawing-undo").click()
     assert len(_scene_of(page)["nodes"]) == 1
+
+
+def test_circle_creation_and_radius_controls_keep_equal_radii(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (300, 200))
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "circle"}
+    assert node["rx"] == node["ry"] == pytest.approx(50, abs=1)
+    assert page.locator("[data-ellipse-axis]").count() == 2
+    _drag(page, (250, 150), (290, 150))
+    assert (
+        _scene_of(page)["nodes"][0]["rx"]
+        == _scene_of(page)["nodes"][0]["ry"]
+        == pytest.approx(90, abs=1)
+    )
+    page.locator("[data-ellipse-parameter='rx']").fill("65")
+    page.locator("[data-ellipse-parameter='rx']").blur()
+    assert _scene_of(page)["nodes"][0]["rx"] == _scene_of(page)["nodes"][0]["ry"] == 65
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["rx"] == 90
+
+
+def test_ellipse_menu_and_explicit_circle_unlock_expose_two_axes(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-preset-menu='circle']").click()
+    page.locator("[data-drawing-preset='ellipse']").click()
+    _drag(page, (100, 100), (300, 200))
+    ellipse = _scene_of(page)["nodes"][0]
+    assert ellipse["constraint"] is None
+    assert ellipse["rx"] == pytest.approx(100, abs=1)
+    assert ellipse["ry"] == pytest.approx(50, abs=1)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (350, 100), (450, 200))
+    page.locator("[data-drawing-unlock]").click()
+    page.locator("[data-ellipse-parameter='ry']").fill("75")
+    page.locator("[data-ellipse-parameter='ry']").blur()
+    node = _scene_of(page)["nodes"][1]
+    assert node["rx"] == 50 and node["ry"] == 75
+
+
+def test_invalid_ellipse_parameters_do_not_change_geometry(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (200, 200))
+    before = _scene_of(page)
+    radius = page.locator("[data-ellipse-parameter='rx']")
+    radius.fill("0")
+    radius.blur()
+    assert _scene_of(page) == before
+    assert page.locator("[data-drawing-error]").is_visible()
 
 
 def test_preset_menu_keyboard_navigation_does_not_move_the_selection(component):

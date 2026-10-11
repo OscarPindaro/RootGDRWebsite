@@ -260,6 +260,8 @@
   font-size: var(--text-sm);
 }
 
+.drawing-editor__geometry { display: grid; gap: var(--sp-2); border: 0; min-width: 0; }
+
 .drawing-editor__field {
   display: flex;
   align-items: center;

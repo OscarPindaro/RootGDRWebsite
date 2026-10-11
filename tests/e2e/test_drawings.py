@@ -435,3 +435,33 @@ def test_locked_presets_and_explicit_unlock_survive_native_save(
         page.get_by_test_id("drawing-save").click()
     assert saved.value.status == 200
     assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == unlocked
+
+
+def test_circle_parameters_stay_locked_after_save_and_reopen(session: BrowserSession):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (300, 200))
+    for field, value in [("cx", "220"), ("cy", "180"), ("rx", "65")]:
+        page.locator(f"[data-ellipse-parameter='{field}']").fill(value)
+        page.locator(f"[data-ellipse-parameter='{field}']").blur()
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    stored = session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"][
+        0
+    ]
+    assert stored["rx"] == stored["ry"] == 65
+    assert stored["cx"] == 220 and stored["cy"] == 180
+    assert stored["constraint"] == {"kind": "circle"}
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-select-node]").first.click()
+    page.get_by_role("button", name="Raggio", exact=True).focus()
+    page.keyboard.press("ArrowRight")
+    assert (
+        _local_node_scene(session)["nodes"][0]["rx"]
+        == _local_node_scene(session)["nodes"][0]["ry"]
+        == 66
+    )

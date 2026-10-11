@@ -81,10 +81,16 @@
       <common.Menu id="drawing-rectangle-menu" labelledby="drawing-rectangle-trigger">
         <common.MenuItem label="Quadrato" data-drawing-preset="square" />
       </common.Menu>
-      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="circle" data-testid="drawing-tool-circle">
-        <common.Icon name="circle" size=20 />
-        <span class="drawing-editor__tool-label">Cerchio</span>
-      </button>
+      <div class="drawing-editor__split">
+        <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="circle" data-testid="drawing-tool-circle">
+          <common.Icon name="circle" size=20 />
+          <span class="drawing-editor__tool-label">Cerchio</span>
+        </button>
+        <common.IconButton icon="chevron-down" label="Varianti del cerchio" id="drawing-circle-trigger" popovertarget="drawing-circle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="circle" disabled={{ not editable }} />
+      </div>
+      <common.Menu id="drawing-circle-menu" labelledby="drawing-circle-trigger">
+        <common.MenuItem label="Ellisse" data-drawing-preset="ellipse" />
+      </common.Menu>
       <div class="drawing-editor__split">
         <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="polygon" data-testid="drawing-tool-polygon">
           <common.Icon name="pentagon" size=20 />
@@ -172,6 +178,15 @@
         </div>
         <p class="hint" data-drawing-constraint>Geometria libera</p>
         <common.Button size="xs" variant="secondary" icon="lock-open" data-drawing-unlock disabled={{ not editable }}>Sblocca geometria</common.Button>
+        <fieldset class="drawing-editor__geometry" data-ellipse-parameters hidden>
+          <legend class="hint">Coordinate locali · unità tavola</legend>
+          {% for field, label in [('cx', 'Centro X'), ('cy', 'Centro Y'), ('rx', 'Raggio orizzontale'), ('ry', 'Raggio verticale')] %}
+          <label class="drawing-editor__field">
+            <span class="drawing-editor__field-label" {% if field == 'rx' %}data-ellipse-radius-label{% endif %}>{{ label }}</span>
+            <input class="drawing-editor__name" type="number" step="any" data-ellipse-parameter="{{ field }}" aria-label="{{ label }}" max="100000" min="{{ '0.1' if field in ['rx', 'ry'] else '-100000' }}" />
+          </label>
+          {% endfor %}
+        </fieldset>
         <div class="drawing-editor__palette" role="group" aria-label="Tavolozza">
           <button type="button" class="drawing-editor__chip" data-palette="#ffffff" style="--swatch: #ffffff" aria-label="Bianco"></button>
           <button type="button" class="drawing-editor__chip" data-palette="#000000" style="--swatch: #000000" aria-label="Nero"></button>
