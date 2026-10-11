@@ -465,6 +465,76 @@ def test_an_edge_toggle_hides_the_outline_but_keeps_the_fill(component):
     assert page.locator(".drawing-editor__shape").count() >= 2
 
 
+# --- straight cut ----------------------------------------------------------
+
+
+def _square() -> SceneDocument:
+    return SceneDocument(
+        nodes=[
+            PolygonNode(
+                id="box",
+                name="Riquadro",
+                points=[(100, 100), (400, 100), (400, 400), (100, 400)],
+                fill="#1f7a7a",
+            )
+        ]
+    )
+
+
+def test_the_cut_tool_splits_a_polygon_into_two_pieces(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    point = _at(page, 250, 250)
+    page.mouse.click(point[0], point[1])
+
+    page.get_by_test_id("drawing-tool-cut").click()
+    for corner in ((100, 100), (400, 400)):
+        target = _at(page, corner[0], corner[1])
+        page.mouse.click(target[0], target[1])
+
+    nodes = _scene_of(page)["nodes"]
+    assert len(nodes) == 2
+    assert sum(len(node["points"]) for node in nodes) == 6
+    assert nodes[0]["id"] == "box", "the original keeps its id"
+    assert "tagliata" in nodes[1]["name"]
+    # The shared cut edge is hidden on both pieces.
+    assert nodes[0]["edgeVisible"][-1] is False
+    assert nodes[1]["edgeVisible"][-1] is False
+
+
+def test_a_cut_is_one_undo_step(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    point = _at(page, 250, 250)
+    page.mouse.click(point[0], point[1])
+    page.get_by_test_id("drawing-tool-cut").click()
+    for corner in ((100, 100), (400, 400)):
+        target = _at(page, corner[0], corner[1])
+        page.mouse.click(target[0], target[1])
+    assert len(_scene_of(page)["nodes"]) == 2
+
+    page.get_by_test_id("drawing-undo").click()
+
+    nodes = _scene_of(page)["nodes"]
+    assert len(nodes) == 1
+    assert nodes[0]["id"] == "box"
+    assert len(nodes[0]["points"]) == 4
+
+
+def test_a_cut_between_adjacent_vertices_is_refused(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    point = _at(page, 250, 250)
+    page.mouse.click(point[0], point[1])
+    page.get_by_test_id("drawing-tool-cut").click()
+    for corner in ((100, 100), (400, 100)):
+        target = _at(page, corner[0], corner[1])
+        page.mouse.click(target[0], target[1])
+
+    assert len(_scene_of(page)["nodes"]) == 1
+    assert "non è valido" in page.locator("[data-drawing-error]").inner_text()
+
+
 # --- the editor page: explicit save ----------------------------------------
 
 

@@ -287,6 +287,117 @@ export function validPolygon(points) {
   return points.length >= 3 && polygonArea(points) > 1e-6;
 }
 
+/* ---------- straight cut ---------- */
+
+/** Do two segments cross, other than at a shared endpoint? */
+function crosses(a1, a2, b1, b2) {
+  const orientation = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+  const onSegment = (p, q, r) =>
+    Math.min(p[0], r[0]) <= q[0] && q[0] <= Math.max(p[0], r[0]) &&
+    Math.min(p[1], r[1]) <= q[1] && q[1] <= Math.max(p[1], r[1]);
+  const o1 = orientation(a1, a2, b1);
+  const o2 = orientation(a1, a2, b2);
+  const o3 = orientation(b1, b2, a1);
+  const o4 = orientation(b1, b2, a2);
+  if (o1 !== o2 && o3 !== o4) return true;
+  if (o1 === 0 && onSegment(a1, b1, a2)) return true;
+  if (o2 === 0 && onSegment(a1, b2, a2)) return true;
+  if (o3 === 0 && onSegment(b1, a1, b2)) return true;
+  if (o4 === 0 && onSegment(b1, a2, b2)) return true;
+  return false;
+}
+
+/** A simple polygon: no two non-adjacent edges cross. */
+export function isSimplePolygon(points) {
+  const n = points.length;
+  for (let i = 0; i < n; i += 1) {
+    for (let j = i + 1; j < n; j += 1) {
+      const adjacent = j === i + 1 || (i === 0 && j === n - 1);
+      if (adjacent) continue;
+      if (crosses(points[i], points[(i + 1) % n], points[j], points[(j + 1) % n])) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Split a polygon along the chord between vertices i and j.
+ *
+ * Returns `{a, b}` (each with its own points and the source edge indices) or
+ * null when the cut is not a real split: adjacent or coincident endpoints, a
+ * chord that leaves the polygon, or a piece with no area. The caller keeps the
+ * original node for `a` and adds a new one for `b`.
+ */
+export function splitPolygonAt(points, i, j) {
+  const n = points.length;
+  if (n < 4) return null;
+  if (i === j) return null;
+  const adjacent = (i + 1) % n === j || (j + 1) % n === i;
+  if (adjacent) return null;
+
+  const walk = (from, to) => {
+    const chain = [];
+    for (let k = from; ; k = (k + 1) % n) {
+      chain.push(k);
+      if (k === to) break;
+    }
+    return chain;
+  };
+  const aIndices = walk(i, j);
+  const bIndices = walk(j, i);
+  if (aIndices.length < 3 || bIndices.length < 3) return null;
+
+  const aPoints = aIndices.map((index) => points[index]);
+  const bPoints = bIndices.map((index) => points[index]);
+  if (!validPolygon(aPoints) || !validPolygon(bPoints)) return null;
+  if (!isSimplePolygon(aPoints) || !isSimplePolygon(bPoints)) return null;
+
+  // The chord must stay inside the source polygon: sample it, endpoints aside.
+  for (let step = 1; step < 9; step += 1) {
+    const t = step / 9;
+    const point = [
+      points[i][0] + (points[j][0] - points[i][0]) * t,
+      points[i][1] + (points[j][1] - points[i][1]) * t,
+    ];
+    if (!pointInPolygon(point, points)) return null;
+  }
+  return { aIndices, bIndices, aPoints, bPoints };
+}
+
+/** The cut edges are hidden: the two pieces still read as one silhouette. */
+function cutVisibility(sourceVisible, indices) {
+  const visible = sourceVisible || indices.map(() => true);
+  return indices.map((index, position) =>
+    position === indices.length - 1 ? false : visible[index] !== false
+  );
+}
+
+/**
+ * Apply a cut to a polygon node: the original keeps the `a` piece and its id,
+ * and the `b` piece becomes a sibling right after it. One document, one undo.
+ */
+export function cutNode(scene, id, i, j) {
+  const found = findNode(scene, id);
+  if (!found || found.node.kind !== "polygon") return null;
+  const node = found.node;
+  const split = splitPolygonAt(node.points, i, j);
+  if (!split) return null;
+
+  const next = cloneScene(scene);
+  const target = findNode(next, id);
+  target.node.points = split.aPoints;
+  target.node.edgeVisible = cutVisibility(node.edgeVisible, split.aIndices);
+  const piece = {
+    ...cloneScene(node),
+    id: newId("poly"),
+    name: `${node.name} tagliata`,
+    points: split.bPoints,
+    edgeVisible: cutVisibility(node.edgeVisible, split.bIndices),
+  };
+  target.siblings.splice(target.index + 1, 0, piece);
+  return { scene: next, id: piece.id };
+}
+
 /* ---------- history ---------- */
 
 export class History {

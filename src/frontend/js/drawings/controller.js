@@ -21,6 +21,7 @@ import {
   createPath,
   createPolygon,
   createRect,
+  cutNode,
   duplicateNode,
   findNode,
   nodeAt,
@@ -90,6 +91,8 @@ export function createController(root) {
   let drag = null;
   let pendingPolygon = null;
   let snapPoint = null;
+  let cut = null;
+  let cutCursor = null;
 
   let savedScene = canonical(scene);
   let savedVersion = Number(root.dataset.version || 0) || null;
@@ -98,7 +101,14 @@ export function createController(root) {
   /* ---------- rendering ---------- */
 
   function view() {
-    return { selectedId, viewport, mode, tool, snap: snapPoint };
+    return {
+      selectedId,
+      viewport,
+      mode,
+      tool,
+      snap: snapPoint,
+      cut: cut && cutCursor ? { from: worldPoints(findNode(scene, cut.id).node)[cut.index], to: cutCursor } : null,
+    };
   }
 
   function draw() {
@@ -381,12 +391,93 @@ export function createController(root) {
     commit(patchNode(scene, selectedId, { edgeVisible: visible }));
   }
 
+  /* ---------- straight cut ---------- */
+
+  const VERTEX_TOLERANCE_PX = 9;
+
+  /** Where on the polygon boundary a click landed: a vertex, or a new point. */
+  function boundaryAt(node, world) {
+    const inverse = invert(node.transform);
+    if (!inverse) return null;
+    const local = apply(inverse, world);
+    const vertexTolerance = VERTEX_TOLERANCE_PX / viewport[0];
+    for (let index = 0; index < node.points.length; index += 1) {
+      const point = node.points[index];
+      if (Math.hypot(point[0] - local[0], point[1] - local[1]) <= vertexTolerance) {
+        return { index, insert: false };
+      }
+    }
+    const hit = closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0]);
+    return hit ? { index: hit.edge + 1, point: hit.point, insert: true } : null;
+  }
+
+  /** A cut needs its endpoints to be vertices: insert one on the edge clicked. */
+  function ensureVertex(nodeId, boundary) {
+    if (!boundary.insert) return boundary.index;
+    const node = findNode(scene, nodeId).node;
+    const points = node.points.map((point) => [...point]);
+    points.splice(boundary.index, 0, [round(boundary.point[0]), round(boundary.point[1])]);
+    const patch = { points };
+    if (node.edgeVisible) {
+      const visible = edgeVisibility(node);
+      visible.splice(boundary.index, 0, visible[boundary.index - 1] !== false);
+      patch.edgeVisible = visible;
+    }
+    // Uncommitted: the whole cut is one history step.
+    scene = patchNode(scene, nodeId, patch);
+    return boundary.index;
+  }
+
+  function cutClick(event) {
+    const world = scenePoint(event);
+    const hit = selectedId ? selected().node : nodeAt(scene, world);
+    if (!hit) return;
+    if (hit.kind !== "polygon") {
+      announce("Il taglio funziona sui poligoni.");
+      return;
+    }
+    if (selectedId !== hit.id) {
+      selectedId = hit.id;
+      cut = null;
+    }
+    const boundary = boundaryAt(hit, world);
+    if (!boundary) {
+      announce("Clicca sul bordo del poligono per scegliere i due punti.");
+      return;
+    }
+    const index = ensureVertex(hit.id, boundary);
+    if (!cut) {
+      cut = { id: hit.id, index };
+      cutCursor = world;
+      draw();
+      return;
+    }
+    const result = cutNode(scene, cut.id, cut.index, index);
+    cut = null;
+    cutCursor = null;
+    if (!result) {
+      announce("Il taglio non è valido: serve una corda interna fra due vertici non adiacenti.");
+      draw();
+      return;
+    }
+    announce("");
+    commit(result.scene);
+    // The selection stays on the piece that kept the original id, so the cut
+    // does not move the user's selection: the tip they were editing is still
+    // the selected shape and can be recoloured straight away.
+    selectedId = hit.id;
+    draw();
+  }
+
   /* ---------- tools ---------- */
 
   function setTool(next) {
     tool = next;
     pendingPolygon = null;
-    if (next === "select") mode = "transform";
+    cut = null;
+    cutCursor = null;
+    // Vertex handles belong to the select tool; a tool switch leaves that mode.
+    mode = "transform";
     root.querySelectorAll("[data-tool]").forEach((button) => {
       button.classList.toggle("is-selected", button.dataset.tool === next);
       button.setAttribute("aria-pressed", String(button.dataset.tool === next));
@@ -518,12 +609,14 @@ export function createController(root) {
         }
       }
     }
-    if (target.dataset.corner !== undefined && selectedId) {
+    // The transform handles belong to the select tool; another tool's clicks
+    // must reach the canvas, not a handle sitting on the same corner.
+    if (target.dataset.corner !== undefined && selectedId && tool === "select") {
       const node = selected().node;
       drag = { kind: "scale", id: selectedId, corner: Number(target.dataset.corner), transform: node.transform, corners: worldCorners(node), from: scenePoint(event) };
       return;
     }
-    if (target.classList.contains("drawing-editor__rotate-handle") && selectedId) {
+    if (target.classList.contains("drawing-editor__rotate-handle") && selectedId && tool === "select") {
       const node = selected().node;
       const corners = worldCorners(node);
       const center = [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
@@ -533,6 +626,10 @@ export function createController(root) {
 
     if (tool === "polygon") {
       addPolygonPoint(event);
+      return;
+    }
+    if (tool === "cut") {
+      cutClick(event);
       return;
     }
     if (tool === "line") {
@@ -554,6 +651,11 @@ export function createController(root) {
   }
 
   function onPointerMove(event) {
+    if (tool === "cut" && cut) {
+      cutCursor = scenePoint(event);
+      draw();
+      return;
+    }
     if (!drag) return;
     if (drag.kind === "pan") {
       const point = artboardPoint(event);
@@ -681,6 +783,14 @@ export function createController(root) {
     if (event.key === "Escape" && pendingPolygon) {
       event.preventDefault();
       cancelPolygon();
+      return;
+    }
+    if (event.key === "Escape" && cut) {
+      event.preventDefault();
+      cut = null;
+      cutCursor = null;
+      announce("");
+      draw();
       return;
     }
     if (event.key === "Escape") {
@@ -866,6 +976,12 @@ export function createController(root) {
     },
     get selectedId() {
       return selectedId;
+    },
+    get tool() {
+      return tool;
+    },
+    get cut() {
+      return cut;
     },
     setTool,
     select,

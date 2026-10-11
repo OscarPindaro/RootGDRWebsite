@@ -87,6 +87,14 @@ jobs:
           npm ci
       - name: Install Chromium
         run: uv run harness browsers --with-deps
+      - name: The committed bundles match their sources
+        # A stale bundle ships code that no test ever runs. Rebuilding here is
+        # what proves the committed artefact is the one the sources produce.
+        run: |
+          npm run build
+          git diff --exit-code -- src/frontend/static/js/editor.js src/frontend/static/js/drawings.js
+      - name: Drawing algorithm tests
+        run: npm run test:drawings
       - name: Component tests
         run: uv run harness test frontend
       - name: Collect diagnostics

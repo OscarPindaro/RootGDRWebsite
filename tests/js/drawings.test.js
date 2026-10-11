@@ -25,9 +25,11 @@ import {
   addNode,
   createPolygon,
   createRect,
+  cutNode,
   duplicateNode,
   edgesOf,
   findNode,
+  isSimplePolygon,
   newId,
   nodeAt,
   nodeBounds,
@@ -35,6 +37,7 @@ import {
   pathPoints,
   removeNode,
   reorderNode,
+  splitPolygonAt,
   validPolygon,
   walk,
   worldPoints,
@@ -224,4 +227,62 @@ test("findNode reports the containing list", () => {
   const found = findNode(scene, "b");
   assert.equal(found.index, 1);
   assert.equal(found.siblings.length, 2);
+});
+
+/* ---------- straight cut ---------- */
+
+const SQUARE = [[0, 0], [100, 0], [100, 100], [0, 100]];
+// An L: the region x>40 and y>40 is outside it.
+const L_SHAPE = [[0, 0], [100, 0], [100, 40], [40, 40], [40, 100], [0, 100]];
+
+test("a square splits along its diagonal into two triangles", () => {
+  const split = splitPolygonAt(SQUARE, 0, 2);
+  assert.deepEqual(split.aIndices, [0, 1, 2]);
+  assert.deepEqual(split.bIndices, [2, 3, 0]);
+  assert.equal(polygonArea(split.aPoints), 5000);
+  assert.equal(polygonArea(split.bPoints), 5000);
+});
+
+test("a cut needs two non-adjacent vertices", () => {
+  assert.equal(splitPolygonAt(SQUARE, 0, 0), null);
+  assert.equal(splitPolygonAt(SQUARE, 0, 1), null, "adjacent");
+  assert.equal(splitPolygonAt(SQUARE, 1, 0), null, "adjacent the other way");
+  assert.equal(splitPolygonAt([[0, 0], [10, 0], [5, 10]], 0, 1), null, "a triangle");
+});
+
+test("a chord that leaves a concave polygon is refused", () => {
+  assert.equal(splitPolygonAt(L_SHAPE, 1, 5), null);
+  // A chord that stays inside the same shape is accepted.
+  assert.ok(splitPolygonAt(L_SHAPE, 1, 3));
+});
+
+test("a concave polygon with a self-intersecting piece is refused", () => {
+  // A bowtie: the pieces of any chord cross themselves.
+  const bowtie = [[0, 0], [100, 100], [100, 0], [0, 100]];
+  assert.equal(isSimplePolygon(bowtie), false);
+  assert.equal(splitPolygonAt(bowtie, 0, 2), null);
+});
+
+test("cutNode keeps the original id, hides the cut edges and adds a sibling", () => {
+  const scene = sceneWith([{ ...createPolygon("Becco", SQUARE), id: "beak" }]);
+  const result = cutNode(scene, "beak", 0, 2);
+
+  assert.ok(result);
+  assert.equal(result.scene.nodes.length, 2);
+  const [original, piece] = result.scene.nodes;
+  assert.equal(original.id, "beak");
+  assert.equal(piece.id, result.id);
+  assert.match(piece.name, /tagliata/);
+  // The shared cut edge is hidden on both pieces; the perimeter stays drawn.
+  assert.equal(original.edgeVisible[original.edgeVisible.length - 1], false);
+  assert.equal(piece.edgeVisible[piece.edgeVisible.length - 1], false);
+  assert.equal(original.edgeVisible[0], true);
+  // The source document is untouched.
+  assert.equal(scene.nodes.length, 1);
+});
+
+test("cutNode refuses a polygon it cannot split", () => {
+  const scene = sceneWith([{ ...createPolygon("Becco", SQUARE), id: "beak" }]);
+  assert.equal(cutNode(scene, "beak", 0, 1), null);
+  assert.equal(cutNode(scene, "missing", 0, 2), null);
 });

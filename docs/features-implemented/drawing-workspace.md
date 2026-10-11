@@ -32,6 +32,13 @@ document; the drawing tools themselves arrive in later tickets.
 - **Layers.** The object list is rebuilt from the document on every change; a
   layer can be hidden (it disappears from the artboard but stays in the list)
   and selecting a row selects the shape.
+- **Straight cut.** The `Taglia` tool takes two points on the polygon's
+  boundary (clicking an edge inserts the vertex there), previews the chord and
+  splits the shape. The chord must stay inside and yield two valid polygons, so
+  adjacent vertices, coincident points and chords that leave the shape are
+  refused with a message. The piece that kept the original id stays selected,
+  the new piece sits right after it, and the shared cut edge starts hidden so
+  the silhouette is unchanged. The whole cut is one undo step.
 - **Explicit save.** The Save button and `Ctrl`/`Cmd`+`S` send the whole
   document with the version it was read at. The page's save indicator reports
   dirty, saving and saved; a failed save says so and never claims success; a
@@ -92,8 +99,9 @@ document; the drawing tools themselves arrive in later tickets.
 
 ## Limits
 
-- **Straight cuts, groups and Bézier curves are not here yet** (`T06`–`T08`).
-  The tools are present in the rail; `Taglia` does nothing.
+- **Groups and Bézier curves are not here yet** (`T07`, `T08`).
+- A cut splits along a straight chord only; a curved cut is not offered. The
+  two pieces are independent afterwards — the shared boundary is not welded.
 - Snapping covers the grid and a polygon's own vertices; edge midpoints,
   attachment points and other objects are not snap targets yet.
 - Scaling keeps the dragged corner proportional-ish but does not snap to a

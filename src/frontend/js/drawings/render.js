@@ -146,7 +146,7 @@ function overlayElements(scene, view) {
     }),
   ];
 
-  if (view.mode === "transform") {
+  if (view.mode === "transform" && view.tool === "select") {
     corners.forEach((point, index) => {
       elements.push(
         el("rect", {
@@ -194,6 +194,20 @@ function overlayElements(scene, view) {
         })
       );
     });
+  }
+
+  if (view.cut) {
+    const from = apply(view.viewport, view.cut.from);
+    const to = apply(view.viewport, view.cut.to);
+    elements.push(
+      el("line", {
+        class: "drawing-editor__preview",
+        x1: from[0],
+        y1: from[1],
+        x2: to[0],
+        y2: to[1],
+      })
+    );
   }
 
   if (view.snap) {

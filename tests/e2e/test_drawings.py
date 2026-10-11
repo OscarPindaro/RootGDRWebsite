@@ -160,7 +160,12 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
         session.page.mouse.click(point[0], point[1])
     assert len(_local_node(session)["points"]) == 5
 
-    # Drag the original tip downward.
+    # Drag the original tip downward. It is the topmost vertex, wherever the
+    # two insertions left it in the order.
+    tip_index = min(
+        range(5), key=lambda index: _local_node(session)["points"][index][1]
+    )
+    tip = _local_node(session)["points"][tip_index]
     tip_at = _at(session.page, tip[0], tip[1])
     lower_at = _at(session.page, tip[0], tip[1] + 90)
     session.page.mouse.move(tip_at[0], tip_at[1])
@@ -174,7 +179,7 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
 
     bent = _node(session, drawing_id)
     assert len(bent["points"]) == 5
-    assert bent["points"][2][1] > tip[1]
+    assert bent["points"][tip_index][1] > tip[1] + 60
 
     session.goto(f"/drawings/{drawing_id}")
     session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
@@ -182,10 +187,75 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     assert session.errors == []
 
 
+def test_a_cut_recolours_the_tip_without_losing_the_rest(
+    session: BrowserSession,
+) -> None:
+    """The beak: bend it, cut the tip off, colour the tip, keep the rest."""
+    drawing_id = _create(session)
+    session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+
+    session.page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(session.page, (180, 90), (360, 220))
+    drawn = _local_node(session)
+    tip = drawn["points"][2]
+
+    session.page.locator("[data-drawing-mode]").click()
+    for index in (0, 1):
+        start = drawn["points"][index]
+        x = start[0] + (tip[0] - start[0]) * 0.25
+        y = start[1] + (tip[1] - start[1]) * 0.25
+        point = _at(session.page, x, y)
+        session.page.mouse.click(point[0], point[1])
+    assert len(_local_node(session)["points"]) == 5
+
+    # Cut between the two inserted vertices: the two points nearest the tip.
+    points = _local_node(session)["points"]
+    tip_index = min(range(5), key=lambda index: points[index][1])
+    neighbours = sorted([(tip_index - 1) % 5, (tip_index + 1) % 5])
+    session.page.get_by_test_id("drawing-tool-cut").click()
+    for index in neighbours:
+        point = _at(session.page, points[index][0], points[index][1])
+        session.page.mouse.click(point[0], point[1])
+
+    pieces = _local_node_scene(session)["nodes"]
+    assert len(pieces) == 2
+    assert sorted(len(piece["points"]) for piece in pieces) == [3, 4]
+
+    # The smaller piece is selected, so the palette recolours the tip.
+    session.page.locator("[data-palette='#d1402a']").click()
+
+    with session.page.expect_response(_is_patch_to(drawing_id)) as saved:
+        session.page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+
+    stored = session.expect_api(f"/api/drawings/{drawing_id}").json()
+    assert stored["nodeCount"] == 2
+    tip_piece = next(
+        node for node in stored["scene"]["nodes"] if len(node["points"]) == 3
+    )
+    rest = next(node for node in stored["scene"]["nodes"] if len(node["points"]) == 4)
+    assert tip_piece["fill"] == "#d1402a"
+    assert rest["fill"] != "#d1402a"
+    # The shared cut edge is hidden on both pieces.
+    assert tip_piece["edgeVisible"][-1] is False
+    assert rest["edgeVisible"][-1] is False
+
+    session.goto(f"/drawings/{drawing_id}")
+    session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert session.page.locator(".drawing-editor__shape").count() >= 2
+    assert session.errors == []
+
+
 def _local_node(session: BrowserSession) -> dict:
     """The in-progress document in the page, before it is saved."""
     return session.page.evaluate(
         "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes[0]"
+    )
+
+
+def _local_node_scene(session: BrowserSession) -> dict:
+    return session.page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene"
     )
 
 
