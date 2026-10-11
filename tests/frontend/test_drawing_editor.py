@@ -1288,6 +1288,55 @@ def test_split_button_presets_create_persistent_constrained_geometry(
     assert len(_scene_of(page)["nodes"]) == 1
 
 
+def test_canvas_command_variants_are_exclusive_and_preserve_drafts_without_execution(
+    component,
+):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("/")
+    page.locator("#drawing-command-dialog").wait_for(state="visible", timeout=2000)
+    page.locator("[data-canvas-command-input]").fill("Duplica")
+    page.locator("[data-canvas-mode='guided']").click()
+    assert (
+        page.locator("[data-canvas-mode='guided']").get_attribute("aria-pressed")
+        == "true"
+    )
+    assert (
+        page.locator("[data-canvas-mode='compact']").get_attribute("aria-pressed")
+        == "false"
+    )
+    page.locator("[data-canvas-mode='compact']").click()
+    assert page.locator("[data-canvas-command-input]").input_value() == "Duplica"
+    assert _scene_of(page) == before
+    page.keyboard.press("Escape")
+    assert _scene_of(page) == before
+
+
+def test_canvas_commands_share_action_availability_and_validate_vector_units(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('create-preset', {kind:'square', width:NaN, height:100})"
+        )
+        is False
+    )
+    assert _scene_of(page)["nodes"] == []
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('create-preset', {kind:'square', width:100, height:100})"
+        )
+        is True
+    )
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "square"}
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"] == []
+
+
 def test_canvas_context_commands_and_shift_bypass_are_focus_owned(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
@@ -1312,12 +1361,16 @@ def test_slash_commands_and_shortcut_help_leave_text_and_dialogs_in_control(comp
     page.locator("[data-select-node='box']").click()
     page.locator("[data-drawing-artboard]").focus()
     page.keyboard.press("/")
-    page.locator("#drawing-context-menu").wait_for(state="visible", timeout=2000)
+    page.locator("#drawing-command-dialog").wait_for(state="visible", timeout=2000)
     page.keyboard.press("Escape")
+    page.wait_for_selector("#drawing-command-dialog[open]", state="detached")
+    page.wait_for_function(
+        "() => document.activeElement.hasAttribute('data-drawing-artboard')"
+    )
     before = _scene_of(page)
     page.locator("[data-node-name]").focus()
     page.keyboard.press("/")
-    assert not page.locator("#drawing-context-menu").is_visible()
+    assert not page.locator("#drawing-command-dialog").is_visible()
     page.locator("[data-drawing-help]").click()
     page.locator("#drawing-help").wait_for(state="visible", timeout=2000)
     before = _scene_of(page)

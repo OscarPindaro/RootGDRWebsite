@@ -29,6 +29,17 @@
   line-height: var(--leading-tight);
 }
 
+.drawing-editor__command-options {
+  list-style: none;
+  max-height: var(--drawing-layers-height);
+  overflow-y: auto;
+}
+.drawing-editor__command-option { padding: var(--sp-2); cursor: pointer; }
+.drawing-editor__command-option[aria-selected="true"] { background: var(--paper-deep); }
+.drawing-editor__command-option[aria-disabled="true"] { color: var(--muted); }
+.drawing-editor__command-dialog .dialog-body { display: grid; gap: var(--sp-3); }
+.drawing-editor__command-dialog { margin: 0; inset: auto; }
+
 .drawing-editor__context-menu {
   max-height: calc(100dvh - var(--sp-4));
   max-width: calc(100dvw - var(--sp-4));

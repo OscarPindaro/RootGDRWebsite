@@ -1,5 +1,5 @@
 {#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True #}
-{#css editorial/DrawingEditor.css, common/Button.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css, common/Menu.css #}
+{#css editorial/DrawingEditor.css, common/Button.css, common/ButtonGroup.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css, common/Menu.css #}
 {#js common/Dialog.js, common/Menu.js, editorial/DrawingEditor.js #}
 {% set artboard = scene.artboard if scene else None %}
 {% set objects = scene.nodes if scene else [] %}
@@ -18,7 +18,8 @@
       <common.Button variant="secondary" size="sm" icon="undo-2" disabled={{ not editable }} data-drawing-undo data-testid="drawing-undo">Annulla</common.Button>
       <common.Button variant="secondary" size="sm" icon="redo-2" disabled={{ not editable }} data-drawing-redo data-testid="drawing-redo">Ripeti</common.Button>
       <common.Button variant="primary" size="sm" icon="save" disabled={{ not editable }} data-testid="drawing-save">Salva</common.Button>
-      <common.IconButton icon="ellipsis-vertical" label="Comandi canvas (/)" id="drawing-context-trigger" popovertarget="drawing-context-menu" aria-haspopup="menu" aria-expanded="false" data-drawing-context disabled={{ not editable }} />
+      <common.IconButton icon="ellipsis-vertical" label="Azioni della selezione" id="drawing-context-trigger" popovertarget="drawing-context-menu" aria-haspopup="menu" aria-expanded="false" data-drawing-context disabled={{ not editable }} />
+      <common.Button variant="secondary" size="sm" data-drawing-commands disabled={{ not editable }}>Comandi (/)</common.Button>
       <common.IconButton icon="file-text" label="Scorciatoie" data-dialog-open="drawing-help" data-drawing-help disabled={{ not editable }} />
     </div>
   </header>
@@ -47,6 +48,27 @@
     <common.MenuItem label={{ label }} icon={{ icon }} data-drawing-command={{ action }} disabled={{ not editable }} />
     {% endfor %}
   </common.Menu>
+  <common.Dialog title="Comandi canvas" id="drawing-command-dialog" class="drawing-editor__command-dialog" manual={{ True }}>
+    <common.ButtonGroup label="Metodo dei comandi" variant="connected" size="sm">
+      <common.Button size="sm" variant="secondary" selected={{ True }} data-canvas-mode="compact">Compatta</common.Button>
+      <common.Button size="sm" variant="secondary" selected={{ False }} data-canvas-mode="guided">Guidata</common.Button>
+    </common.ButtonGroup>
+    <div data-canvas-compact>
+      <label class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Comando</span>
+        <input class="drawing-editor__name" data-canvas-command-input maxlength="255" role="combobox" aria-label="Comando canvas" aria-autocomplete="list" aria-controls="canvas-command-options" aria-expanded="true" data-dialog-autofocus />
+      </label>
+      <ul class="drawing-editor__command-options" id="canvas-command-options" data-canvas-command-options role="listbox" aria-label="Comandi disponibili"></ul>
+    </div>
+    <div data-canvas-guided hidden>
+      <label class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Azione</span>
+        <select class="drawing-editor__name" data-canvas-command-action aria-label="Azione canvas"></select>
+      </label>
+      <common.Button size="sm" variant="primary" data-canvas-command-apply>Applica</common.Button>
+    </div>
+    <p class="hint" data-canvas-command-status role="status" aria-live="polite"></p>
+  </common.Dialog>
   <common.Dialog title="Scorciatoie del disegno" id="drawing-help" manual={{ True }}>
     <ul class="prose">
       <li><kbd>T</kbd>: Trasforma la selezione.</li>
@@ -66,8 +88,8 @@
 
   <div class="drawing-editor__selection-bar" data-drawing-selection-bar role="toolbar" aria-label="Selezione e agganci">
     <common.IconButton icon="mouse-pointer-2" label="Seleziona" data-tool="select" data-testid="drawing-tool-select" selected={{ True }} disabled={{ not editable }} />
-    <common.IconButton icon="spline" label="Modifica forma" data-drawing-mode="vertex" disabled={{ not editable }} />
-    <common.IconButton icon="grid-2x2" label="Trasforma (T)" data-drawing-mode="transform" disabled={{ not editable }} />
+    <common.IconButton icon="spline" label="Modifica forma" selected={{ False }} data-drawing-mode="vertex" disabled={{ not editable }} />
+    <common.IconButton icon="grid-2x2" label="Trasforma (T)" selected={{ False }} data-drawing-mode="transform" disabled={{ not editable }} />
     <span class="hint" data-drawing-mode-label aria-live="polite">Seleziona</span>
     <common.IconButton icon="grid-2x2" label="Raggruppa" data-drawing-group data-testid="drawing-group" disabled={{ not editable }} />
     <common.IconButton icon="list" label="Separa" data-drawing-ungroup data-testid="drawing-ungroup" disabled={{ not editable }} />

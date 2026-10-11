@@ -52,6 +52,7 @@ import {
   pathHandles,
 } from "./scene.js";
 import { render } from "./render.js";
+import { createCanvasPalette } from "./canvas-palette.js";
 
 const PALETTE = [
   "#ffffff", "#000000",
@@ -108,6 +109,7 @@ export function createController(root) {
   const saveUrl = root.dataset.saveUrl || null;
   const contextMenu = root.querySelector("#drawing-context-menu");
   let contextPosition = null, contextOpener = svg;
+  let commandPalette = null;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
   let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 2, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
@@ -1056,8 +1058,9 @@ export function createController(root) {
         return;
       }
     }
-    if (!mod && !event.altKey && event.key === "/") {
-      if (openContext()) event.preventDefault();
+    if (!mod && !event.altKey && event.key === "/" && commandPalette && !drag && !cut) {
+      event.preventDefault();
+      commandPalette.open(document.activeElement);
       return;
     }
     if (!mod && !event.altKey && event.key.toLowerCase() === "t" && canExecute("transform")) {
@@ -1200,6 +1203,26 @@ export function createController(root) {
     commit(patchNode(scene, selectedId, patch));
   }
 
+  function createCommand(parameters = {}) {
+    if (!parameters || typeof parameters !== "object" || Array.isArray(parameters)) return false;
+    const center = apply(invert(viewport), [scene.artboard.width / 2, scene.artboard.height / 2]);
+    const kind = parameters.kind || "triangle_isosceles";
+    const width = parameters.width ?? Math.min(120, scene.artboard.width / viewport[0] * 0.7);
+    const height = parameters.height ?? Math.min(100, scene.artboard.height / viewport[0] * 0.7);
+    const x = parameters.x ?? center[0], y = parameters.y ?? center[1], sides = parameters.sides ?? 6;
+    if (!Object.keys(PRESET_LABELS).includes(kind) || ![width, height, x, y].every(Number.isFinite) || width <= 0 || height <= 0 || width > 100000 || height > 100000 || Math.abs(x) + width / 2 > 100000 || Math.abs(y) + height / 2 > 100000) {
+      announce("Dimensioni o posizione non valide nelle unità della tavola.");
+      return false;
+    }
+    const node = createPreset(kind, [x - width / 2, y - height / 2], [x + width / 2, y + height / 2], sides);
+    if (!node) { announce("La forma non è valida."); return false; }
+    announce("");
+    commit(addNode(scene, node));
+    setSelection([node.id]);
+    setTool("select");
+    return true;
+  }
+
   function setEllipseParameter({field, value} = {}) {
     if (!["cx", "cy", "rx", "ry"].includes(field) || !Number.isFinite(value) || Math.abs(value) > 100000 || (["rx", "ry"].includes(field) && value <= 0)) {
       announce("Usa valori finiti entro 100000 unità e raggi maggiori di zero.");
@@ -1214,6 +1237,7 @@ export function createController(root) {
   }
 
   const actions = {
+    "create-preset": { label: "Crea forma", enabled: () => true, run: createCommand },
     select: { label: "Seleziona", enabled: () => true, run: () => setMode("select") },
     edit: { label: "Modifica forma", enabled: () => selection.length === 1 && selected()?.node.kind !== "group", run: () => setMode("vertex") },
     transform: { label: "Trasforma", enabled: () => selection.length > 0, run: () => setMode("transform") },
@@ -1336,6 +1360,8 @@ export function createController(root) {
   }
 
   function wire() {
+    commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id)})), execute});
+    root.querySelector("[data-drawing-commands]").addEventListener("click", event => commandPalette.open(event.currentTarget));
     const grid = root.querySelector("[data-drawing-grid]");
     grid.addEventListener("click", () => {
       const on = grid.getAttribute("aria-pressed") !== "true";
@@ -1586,6 +1612,7 @@ export function createController(root) {
     canExecute,
     get actions() { return Object.entries(actions).map(([id, action]) => ({ id, label: action.label, enabled: canExecute(id) })); },
     get mode() { return mode; },
+    get commandDraft() { return commandPalette?.draft || null; },
     palette: PALETTE,
   };
 }

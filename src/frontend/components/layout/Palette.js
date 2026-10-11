@@ -292,7 +292,7 @@
     var hotkey =
       (event.altKey && event.code === "Space") ||
       ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k");
-    if (!hotkey) return;
+    if (!hotkey || (!dialog.open && document.querySelector("dialog[open]"))) return;
     // While open the query field owns the keyboard; Escape closes the dialog.
     if (dialog.open) {
       event.preventDefault();

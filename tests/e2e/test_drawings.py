@@ -622,3 +622,27 @@ def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
         session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"] == []
     )
     assert session.expect_api(f"/api/drawings/{target['id']}").status == 200
+
+
+def test_canvas_palette_framework_creates_vectors_with_one_undo_and_native_save(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-mode='guided']").click()
+    page.locator("[data-canvas-command-action]").select_option("create-preset")
+    page.locator("[data-canvas-command-apply]").click()
+    assert len(_local_node_scene(session)["nodes"]) == 1
+    assert _local_node_scene(session)["nodes"][0]["constraint"] == {
+        "kind": "triangle_isosceles"
+    }
+    page.get_by_test_id("drawing-undo").click()
+    assert _local_node_scene(session)["nodes"] == []
+    page.get_by_test_id("drawing-redo").click()
+    local = _local_node_scene(session)
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local

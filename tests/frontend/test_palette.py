@@ -420,6 +420,17 @@ def test_the_phone_dialog_stays_in_the_viewport_and_scrolls_its_list(component):
     )
 
 
+def test_global_search_does_not_take_keyboard_ownership_from_another_dialog(component):
+    page = _mount(component)
+    component.route_json("GET", "/api/palette", body={"data": []})
+    page.evaluate(
+        "() => { const dialog = document.createElement('dialog'); dialog.id='canvas-modal'; dialog.innerHTML='<button>Mode</button>'; document.body.append(dialog); dialog.showModal(); dialog.querySelector('button').focus(); }"
+    )
+    page.keyboard.press("Control+k")
+    assert not page.locator("#palette").evaluate("el => el.open")
+    assert page.locator("#canvas-modal").evaluate("el => el.open")
+
+
 def test_hotkey_returns_focus_to_an_on_screen_opener_not_an_off_canvas_rail(component):
     page = _mount(component)
     component.route_json("GET", "/api/palette", body={"data": []})

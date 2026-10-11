@@ -83,7 +83,13 @@ library, skeleton, publishing or export capabilities.
   Space-left-drag or the middle mouse button pans, including over geometry handles.
   Right-click on the canvas/tree opens shared contextual actions; Shift-right-click
   preserves the browser menu. Slash and a visible header button open local commands;
-  **Scorciatoie** opens focus-owned help. Text fields, menus and dialogs retain their
+  **Scorciatoie** opens focus-owned help. A floating native canvas-command dialog
+  keeps **Compatta/Guidata** as an exclusive segmented choice; switching retains
+  both local drafts and performs no action. Both surfaces share the editor action
+  registry, availability and validated vector creation (document units, bounded
+  default size and placement in the visible canvas). Incremental shape refinements
+  and guided parameter/preview workflows are separate follow-up capabilities.
+  Text fields, menus and dialogs retain their
   keyboard behaviour, and Ctrl/Cmd+K remains global search. Ctrl+T is not intercepted.
 - Undo/redo is in-memory and bounded to 60 completed operations. A drag or
   property change is one step; view changes and selection are excluded.
