@@ -9,7 +9,8 @@ library, skeleton, publishing or export capabilities.
 - `/drawings` lists saved drawings in pages of 24; create a blank drawing,
   rename it in the workspace and save explicitly with **Salva** or Ctrl/Cmd+S.
 - Drag triangles, rectangles and ellipses onto the artboard. Click polygon
-  vertices and press Enter to finish. Drag open lines or cubic Bézier curves.
+  vertices and double-click or press Enter to finish. Drag open lines or cubic
+  Bézier curves.
 - Select through the canvas or object list; Shift selects multiple objects.
   Move, scale, rotate, duplicate, delete and reorder objects. Arrow keys nudge.
 - **Vertici** edits polygon vertices or path endpoints/control handles. Click a

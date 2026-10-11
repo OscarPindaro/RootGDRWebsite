@@ -752,6 +752,24 @@ def test_a_failed_save_never_claims_success(component):
     assert _status(page) != "Salvato"
 
 
+def test_polygon_double_click_finishes_without_duplicate_vertices(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-polygon").click()
+    page.mouse.click(*_at(page, 100, 100))
+    page.mouse.click(*_at(page, 300, 100))
+    page.mouse.dblclick(*_at(page, 200, 300))
+    nodes = _scene_of(page)["nodes"]
+    assert len(nodes) == 1
+    assert len(nodes[0]["points"]) == 3
+    for actual, expected in zip(
+        nodes[0]["points"], [[100, 100], [300, 100], [200, 300]], strict=True
+    ):
+        assert actual == pytest.approx(expected, abs=1)
+    page.get_by_test_id("drawing-undo").click()
+    assert not _scene_of(page)["nodes"]
+
+
 def test_space_activates_a_focused_tool_button(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props())
     _mounted(page)

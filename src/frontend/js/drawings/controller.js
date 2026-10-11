@@ -646,7 +646,7 @@ export function createController(root) {
   function finishPolygon() {
     if (!pendingPolygon || pendingPolygon.length < 3) return;
     if (!validPolygon(pendingPolygon)) {
-      announce("Il poligono non ha area: aggiungi altri punti.");
+      announce("Il poligono si interseca o non ha area: correggi i punti prima di chiuderlo.");
       return;
     }
     const node = createPolygon("Poligono", pendingPolygon);
@@ -741,10 +741,7 @@ export function createController(root) {
       return;
     }
 
-    if (tool === "polygon") {
-      addPolygonPoint(event);
-      return;
-    }
+    if (tool === "polygon") return;
     if (tool === "cut") {
       cutClick(event);
       return;
@@ -1168,6 +1165,9 @@ export function createController(root) {
       drag = null;
       snapPoint = null;
       draw();
+    });
+    svg.addEventListener("click", event => {
+      if (tool === "polygon" && event.detail === 1 && event.button === 0 && !spaceDown) addPolygonPoint(event);
     });
     svg.addEventListener("dblclick", (event) => {
       if (tool === "polygon" && pendingPolygon) {

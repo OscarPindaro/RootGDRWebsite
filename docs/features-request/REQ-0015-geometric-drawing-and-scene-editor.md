@@ -237,6 +237,26 @@ remain outside this milestone. They remain part of the parent request.
 See the [drawing workspace manual](../features-implemented/drawing-workspace.md)
 for the native format, interaction contract and limits.
 
+## Workspace feedback tickets
+
+The follow-up review requests five consecutive local implementation tickets:
+
+- `REQ-0015/T09`: finish polygons reliably on double-click, without duplicate
+  closing vertices; retain invalid drafts and explain the actual geometry error.
+- `REQ-0015/T10`: include pure white and black in the predefined palette.
+- `REQ-0015/T11`: a floating selection/action bar at the top of the artboard,
+  with independent grid visibility, grid snap and geometry snap; move objects
+  with snapping as well as individual vertices.
+- `REQ-0015/T12`: replace separate layer cards/checkboxes with a connected,
+  collapsible scene hierarchy, Godot-style, and eye controls on the right.
+  Local parent/child relationships follow transforms and remain editable.
+- `REQ-0015/T13`: expose both Bézier endpoints and their associated controls
+  clearly in vertex mode, with reliable selection and editing.
+
+User-supplied screenshots show the open polygon draft/error, the detached-looking
+layer rows and the drawn character. These are feedback evidence, not new image
+assets to commit. These local keys do not imply new board task registrations.
+
 ## Tracking
 
 Initial intake key: `REQ-0015/T01`. Registered in Vikunja project **Root GDR**
