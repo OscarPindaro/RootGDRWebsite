@@ -154,33 +154,11 @@ dialog.report-panel-dialog {
   box-shadow: 0 0 0 var(--sp-1) var(--clr-accent-bg);
 }
 
-.report-panel__field--inline {
-  flex-direction: row;
-  align-items: center;
-  gap: var(--sp-3);
-}
-
-.report-panel__input {
-  flex: 1;
-  min-width: 0;
-  padding: var(--sp-2) var(--sp-3);
-  border: var(--field-outline-width) solid var(--clr-border-strong);
-  border-radius: var(--radius);
-  background: var(--surface-sunk);
-  color: var(--ink);
-  font-family: var(--sans);
-  font-size: var(--text-sm);
-}
-
 .report-panel__zoom-value {
   min-width: 4ch;
   font-size: var(--text-sm);
   text-align: right;
   color: var(--muted);
-}
-
-.report-panel__input--size {
-  flex: 0 0 auto;
 }
 
 .report-panel__surface {
@@ -197,6 +175,29 @@ dialog.report-panel-dialog {
   display: block;
   touch-action: none;
   cursor: crosshair;
+}
+
+/* The box a reader dragged out for their text, with the caret inside it. It is
+   the selection, not a mark: it disappears when the text is placed. */
+.report-panel__canvas-wrap {
+  position: relative;
+  width: max-content;
+}
+
+.report-panel__inline {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 0;
+  border: var(--field-outline-width) dashed var(--clr-accent);
+  background: transparent;
+  font-family: var(--sans);
+  font-weight: var(--weight-bold);
+  line-height: 1;
+}
+
+.report-panel__inline::placeholder {
+  color: var(--muted);
+  font-weight: var(--weight-regular);
 }
 
 .report-panel__reproduction {

@@ -11,7 +11,7 @@
 
 import { toCanvas } from "html-to-image";
 
-import { COLOURS, createAnnotator } from "./annotate.js";
+import { CAP_RATIO, COLOURS, createAnnotator } from "./annotate.js";
 import {
   forgetSession,
   rememberSession,
@@ -227,7 +227,7 @@ async function capture(status, list) {
 function mountEditor(dialog, list, status) {
   const editor = dialog.querySelector("[data-report-editor]");
   const canvas = dialog.querySelector("[data-report-canvas]");
-  const textInput = dialog.querySelector("[data-report-text]");
+  const inline = dialog.querySelector("[data-report-inline]");
   const colours = dialog.querySelector("[data-report-colours]");
   const tools = Array.from(dialog.querySelectorAll("[data-report-tool]"));
   const annotator = createAnnotator(canvas);
@@ -255,6 +255,8 @@ function mountEditor(dialog, list, status) {
   }
 
   function close() {
+    // What the reader typed is placed, not thrown away with the editor.
+    closeInline(true);
     editing = null;
     editor.hidden = true;
   }
@@ -290,6 +292,7 @@ function mountEditor(dialog, list, status) {
 
   tools.forEach((button) =>
     button.addEventListener("click", () => {
+      closeInline(true);
       annotator.setTool(button.dataset.reportTool);
       select(tools, button);
     })
@@ -300,12 +303,46 @@ function mountEditor(dialog, list, status) {
       select(chips, button);
     })
   );
-  textInput.addEventListener("input", () => annotator.setText(textInput.value));
-  const textSize = dialog.querySelector("[data-report-text-size]");
-  annotator.setTextSize(Number(textSize.value));
-  textSize.addEventListener("change", () =>
-    annotator.setTextSize(Number(textSize.value))
-  );
+  // The text tool drags out a box and the reader types into it: the field sits
+  // exactly over that box, at the size the text will keep, and it is gone as
+  // soon as the text is placed.
+  let inlineBox = null;
+
+  function closeInline(commit) {
+    if (inlineBox === null) return;
+    const box = inlineBox;
+    const value = inline.value;
+    inlineBox = null;
+    inline.hidden = true;
+    inline.value = "";
+    if (commit) annotator.placeText(box, value);
+  }
+
+  inline.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      closeInline(true);
+    } else if (event.key === "Escape") {
+      event.preventDefault();
+      closeInline(false);
+    }
+  });
+  inline.addEventListener("blur", () => closeInline(true));
+
+  annotator.setTextBoxHandler((box, screen) => {
+    const chip = colours.querySelector('[data-report-colour][aria-pressed="true"]');
+    inline.style.left = screen.x + "px";
+    inline.style.top = screen.y + "px";
+    inline.style.width = screen.w + "px";
+    inline.style.height = screen.h + "px";
+    inline.style.fontSize = screen.h / CAP_RATIO + "px";
+    inline.style.color = chip ? chip.dataset.reportColour : "inherit";
+    inline.value = "";
+    inline.hidden = false;
+    inlineBox = box;
+    inline.focus();
+  });
+
   dialog
     .querySelector("[data-report-undo]")
     .addEventListener("click", () => annotator.undo());

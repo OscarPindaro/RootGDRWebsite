@@ -3,7 +3,11 @@
    Shapes are kept in the image's own pixel space, so the canvas can be scaled
    to the dialog without moving a mark. The export is the canvas itself, which
    is why a blur is painted by re-drawing the image inside the clip rather than
-   kept as a separate layer. */
+   kept as a separate layer.
+
+   Text is placed the way a drawing tool does it: the tool drags out a box, the
+   reader types into it, and the box goes away. What stays is the text, whose
+   capitals are as tall as the box was. */
 
 export const COLOURS = [
   "#d1402a",
@@ -16,7 +20,11 @@ export const COLOURS = [
 
 const FONT = "600 %dpx system-ui, -apple-system, Segoe UI, sans-serif";
 const MIN_DRAG = 4;
-
+// Cap height of the sans face, as a share of the em. A box the reader dragged
+// out gets a font whose capitals are exactly as tall as that box, and the
+// inline field uses the same ratio so the preview matches what is placed.
+export const CAP_RATIO = 0.72;
+const MIN_FONT = 8;
 const MIN_ZOOM = 0.2;
 const MAX_ZOOM = 4;
 
@@ -26,9 +34,8 @@ export function createAnnotator(canvas) {
   let draft = null;
   let tool = "arrow";
   let colour = COLOURS[0];
-  let text = "";
-  let textScale = 0.03;
   let zoom = 1;
+  let onTextBox = null;
 
   /* The canvas keeps the image's own pixel size; the zoom is its CSS size, so
      the marks never move and the pointer mapping keeps dividing by the rect. */
@@ -41,6 +48,15 @@ export function createAnnotator(canvas) {
 
   function strokeWidth() {
     return Math.max(2, canvas.width / 360);
+  }
+
+  function normalise(box) {
+    return {
+      x: box.w < 0 ? box.x + box.w : box.x,
+      y: box.h < 0 ? box.y + box.h : box.y,
+      w: Math.abs(box.w),
+      h: Math.abs(box.h),
+    };
   }
 
   function paint(context, shape) {
@@ -72,13 +88,9 @@ export function createAnnotator(canvas) {
       );
       context.stroke();
     } else if (shape.tool === "text") {
-      // The size is the one chosen when the text was placed, so changing the
-      // selector afterwards never reflows a note that is already on the image.
-      context.font = FONT.replace(
-        "%d",
-        String(Math.max(14, canvas.width * (shape.size || textScale)))
-      );
-      context.textBaseline = "top";
+      // The baseline is the bottom of the box the text was dragged into.
+      context.font = FONT.replace("%d", String(shape.size));
+      context.textBaseline = "alphabetic";
       context.fillText(shape.text, shape.x, shape.y);
     } else if (shape.tool === "blur") {
       context.beginPath();
@@ -90,13 +102,27 @@ export function createAnnotator(canvas) {
     context.restore();
   }
 
+  /* The box being dragged out for a text is a selection, not a mark: it is
+     dashed while the reader sizes it and gone once the text is placed. */
+  function paintSelection(context, box) {
+    const area = normalise(box);
+    context.save();
+    context.strokeStyle = colour;
+    context.lineWidth = strokeWidth();
+    context.setLineDash([strokeWidth() * 3, strokeWidth() * 3]);
+    context.strokeRect(area.x, area.y, area.w, area.h);
+    context.restore();
+  }
+
   function render() {
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
     if (image === null) return;
     context.drawImage(image, 0, 0);
     for (const shape of shapes) paint(context, shape);
-    if (draft !== null) paint(context, draft);
+    if (draft === null) return;
+    if (draft.tool === "text") paintSelection(context, draft);
+    else paint(context, draft);
   }
 
   function toImage(event) {
@@ -111,19 +137,6 @@ export function createAnnotator(canvas) {
     if (image === null) return;
     canvas.setPointerCapture(event.pointerId);
     const point = toImage(event);
-    if (tool === "text") {
-      if (text.trim() === "") return;
-      shapes.push({
-        tool: "text",
-        colour,
-        x: point.x,
-        y: point.y,
-        text: text.trim(),
-        size: textScale,
-      });
-      render();
-      return;
-    }
     draft = { tool, colour, x: point.x, y: point.y, w: 0, h: 0 };
   });
 
@@ -137,10 +150,24 @@ export function createAnnotator(canvas) {
 
   canvas.addEventListener("pointerup", () => {
     if (draft === null) return;
-    if (Math.abs(draft.w) > MIN_DRAG || Math.abs(draft.h) > MIN_DRAG) {
-      shapes.push(draft);
-    }
+    const pending = draft;
     draft = null;
+    render();
+    const area = normalise(pending);
+    if (area.w < MIN_DRAG || area.h < MIN_DRAG) return;
+    if (pending.tool === "text") {
+      if (onTextBox) {
+        onTextBox(area, {
+          x: area.x * zoom,
+          y: area.y * zoom,
+          w: area.w * zoom,
+          h: area.h * zoom,
+        });
+      }
+      return;
+    }
+    // An arrow keeps the direction it was drawn in; the other marks do not.
+    shapes.push(pending.tool === "arrow" ? pending : { ...area, tool: pending.tool, colour: pending.colour });
     render();
   });
 
@@ -182,11 +209,22 @@ export function createAnnotator(canvas) {
     setColour(next) {
       colour = next;
     },
-    setText(next) {
-      text = next;
+    setTextBoxHandler(handler) {
+      onTextBox = handler;
     },
-    setTextSize(next) {
-      if (Number.isFinite(next) && next > 0) textScale = next;
+    placeText(box, value) {
+      const text = (value || "").trim();
+      if (text === "") return false;
+      shapes.push({
+        tool: "text",
+        colour,
+        x: box.x,
+        y: box.y + box.h,
+        size: Math.max(MIN_FONT, box.h / CAP_RATIO),
+        text,
+      });
+      render();
+      return true;
     },
     undo() {
       shapes.pop();

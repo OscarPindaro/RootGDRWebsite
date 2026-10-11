@@ -330,7 +330,7 @@ def test_the_annotation_tools_and_colours_are_choices(component):
         ("arrow", "move-up-right"),
         ("box", "square"),
         ("text", "type"),
-        ("blur", "blend"),
+        ("blur", "cloud-fog"),
     ):
         button = page.locator(f"[data-report-tool='{tool}']")
         assert button.inner_text().strip() == ""
@@ -364,20 +364,13 @@ def test_the_annotation_tools_and_colours_are_choices(component):
         == "true"
     )
 
-    # The actions carry their own icons, and the text has a size of its own.
+    # The actions carry their own icons.
     assert page.locator("[data-report-undo] svg[data-icon='undo-2']").count() == 1
     assert page.locator("[data-report-save] svg[data-icon='save']").count() == 1
     assert page.locator("[data-report-editor-close] svg[data-icon='x']").count() == 1
-    sizes = page.locator("[data-report-text-size] option")
-    assert [sizes.nth(index).inner_text() for index in range(sizes.count())] == [
-        "Piccolo",
-        "Medio",
-        "Grande",
-    ]
-    assert page.locator("[data-report-text-size]").input_value() == "0.022"
 
 
-def test_text_lands_where_it_is_clicked_and_needs_some_text(component):
+def test_text_is_typed_into_the_box_that_is_dragged(component):
     component.route_json(
         "GET",
         f"/api/reports/{DRAFT_ID}",
@@ -395,22 +388,58 @@ def test_text_lands_where_it_is_clicked_and_needs_some_text(component):
         "() => document.querySelector('[data-report-canvas]').dataset.reportLoaded === 'true'"
     )
     canvas = page.locator("[data-report-canvas]")
+    inline = page.locator("[data-report-inline]")
     data = "el => el.toDataURL()"
     untouched = canvas.evaluate(data)
     box = canvas.bounding_box()
 
-    # The text tool places what the field holds, with no rectangle to draw first.
+    # The tool drags out the area; the field to type into appears inside it.
     page.click("[data-report-tool='text']")
-    page.fill("[data-report-text]", "Qui non si vede il titolo")
-    page.select_option("[data-report-text-size]", "0.032")
-    page.mouse.click(box["x"] + 60, box["y"] + 60)
-    with_text = canvas.evaluate(data)
-    assert with_text != untouched
+    page.mouse.move(box["x"] + 40, box["y"] + 40)
+    page.mouse.down()
+    page.mouse.move(box["x"] + 260, box["y"] + 100)
+    page.mouse.up()
+    assert inline.is_visible()
+    # The text will be as tall as the box, so the field previews that size.
+    assert float(inline.evaluate("el => parseFloat(el.style.fontSize)")) > 0
+    assert float(inline.evaluate("el => parseFloat(el.style.height)")) == 60
 
-    # An empty field places nothing: a stray click must not leave a mark.
-    page.fill("[data-report-text]", "")
-    page.mouse.click(box["x"] + 200, box["y"] + 200)
-    assert canvas.evaluate(data) == with_text
+    page.fill("[data-report-inline]", "Qui non si vede il titolo")
+    page.keyboard.press("Enter")
+    assert inline.is_hidden()
+    placed = canvas.evaluate(data)
+    assert placed != untouched
+
+    # One undo takes the whole mark away: the box left nothing behind.
+    page.click("[data-report-undo]")
+    assert canvas.evaluate(data) == untouched
+
+
+def test_a_click_without_a_box_leaves_no_text(component):
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("screenshot_viewport"), _capture("page_html")]),
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _serve_shot(page, "screenshot_viewport")
+    _open(component)
+    _wait_for_state(page, "saved")
+
+    page.click('[data-report-annotate="screenshot_viewport"]')
+    page.wait_for_selector("[data-report-editor]:not([hidden])")
+    page.wait_for_function(
+        "() => document.querySelector('[data-report-canvas]').dataset.reportLoaded === 'true'"
+    )
+    canvas = page.locator("[data-report-canvas]")
+    untouched = canvas.evaluate("el => el.toDataURL()")
+    box = canvas.bounding_box()
+
+    page.click("[data-report-tool='text']")
+    page.mouse.click(box["x"] + 40, box["y"] + 40)
+    assert page.locator("[data-report-inline]").is_hidden()
+    assert canvas.evaluate("el => el.toDataURL()") == untouched
 
 
 def test_the_reproduction_can_be_started_and_interrupted(component):

@@ -18,10 +18,11 @@ A reader can report a problem from the page they are on, without leaving it.
 - The four tools, the colour chips and the zoom share one bar, which wraps onto
   a second line when the panel is narrow. The tools are icons with a name —
   the arrow carries its origin, the box its outline, the text a **T**, the blur
-  a blend mark.
-- Text is placed where the reader clicks, at the size chosen next to the field
-  (Piccolo, Medio, Grande); there is no rectangle to draw first, and a click
-  with an empty field leaves no mark.
+  a fog mark.
+- Text is placed the way a drawing tool does it: **T**, then drag out the area,
+  then type into the field that appears inside it. The box is a selection, not a
+  mark — it is gone once the text is placed — and the text's capitals are
+  exactly as tall as the box was. A click without a drag leaves nothing.
 - The capture opens fitted to the panel and can be zoomed with **−** / **+** /
   **Adatta**, or with Ctrl and the wheel, between 20% and 400%. A capture is
   worth reading whole before it is worth zooming into.
@@ -91,6 +92,8 @@ A reader can report a problem from the page they are on, without leaving it.
   twice. The colour palette is the six cold/ink chips the drawing editor uses.
   The zoom is the canvas's CSS size: the intrinsic size stays the image's, so
   the pointer mapping keeps dividing by the rect and the export is unaffected.
+  The inline field the text is typed into uses the same cap ratio as the placed
+  text, so what is previewed is what lands.
 - The panel is wider than a confirmation dialog on purpose — the captures are
   the point of it, and a 480px column makes them unreadable. `.dialog-body`
   scrolls, so the panel can be taller than the viewport without pushing its
