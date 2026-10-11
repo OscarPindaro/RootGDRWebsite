@@ -15,6 +15,9 @@ A reader can report a problem from the page they are on, without leaving it.
 - Each screenshot can be annotated before submission: **Annota** opens the
   capture on a canvas with a coloured arrow, a box, text and an optional blur.
   **Salva annotazione** replaces that capture with the marked image.
+- **Riproduci il problema** records the reproduction: the reader navigates
+  normally and both the browser steps and the backend calls stay attached to
+  this report. **Interrompi la registrazione** keeps what was collected.
 - A draft is not a board ticket. Saving or reopening one creates nothing on the
   board; submission is a later step (REQ-0014/T05).
 
@@ -39,6 +42,17 @@ A reader can report a problem from the page they are on, without leaving it.
 - A screenshot's type comes from its leading bytes, never from the declared
   name; the page HTML is stored as `text/html`. Limits are 5 MB per screenshot
   and 2 MB of HTML.
+- A reproduction is the opposite of the development recorder: one report, one
+  browser session and one backend session, started by the reader. The report row
+  keeps both session ids and the window; the browser is joined to them by the
+  `report_reproduction` cookie, because a full page load cannot carry a header,
+  and the steps live under `reports/<report id>/recording/` on the configured
+  filesystem. Every backend step carries the request and trace ids of the call
+  it recorded, so a report points at an exact call rather than a time window.
+- `src/backend/reports/recording.py` owns that state, and
+  `ReportRecorderMiddleware` writes a step only for a request that carries the
+  cookie of an active reproduction. The report's own API is never recorded: an
+  evidence upload would put a screenshot in the recording.
 - `src/frontend/js/report/annotate.js` owns the annotation surface. Marks are
   kept in the image's own pixel space, so the canvas can be scaled to the dialog
   without moving a mark, and a blur is painted by re-drawing the image inside
@@ -59,5 +73,11 @@ A reader can report a problem from the page they are on, without leaving it.
   handle, not the row, and there is no draft list in the UI to find it again.
 - Retention is not implemented: drafts and their files stay until a cleanup step
   exists.
-- The panel captures the page as it stands when it opens. The optional
-  reproduction and the ticket submission are REQ-0014/T04 and REQ-0014/T05.
+- The panel captures the page as it stands when it opens. The ticket submission
+  is REQ-0014/T05: nothing here creates a board ticket, and the collected
+  recording is not attached to one yet.
+- A reproduction stops only when the reader stops it; the recording is bounded
+  at 2 000 steps per side, and starting again replaces the previous attempt
+  rather than adding to it.
+- The recording survives a reload but not a different browser: the session is in
+  `sessionStorage`, so a second tab records its own reproduction.

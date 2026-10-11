@@ -48,6 +48,24 @@
       </common.Button>
     </div>
   </section>
+  <section class="report-panel__reproduction" aria-label="Riproduzione del problema">
+    <p class="report-panel__label">Riproduzione</p>
+    <p class="report-panel__lead report-panel__lead--tight">
+      Riproduci il problema e naviga come fai di solito: i passaggi e le chiamate
+      restano legati a questa segnalazione.
+    </p>
+    <div class="report-panel__actions" data-report-reproduce-actions>
+      <common.Button variant="secondary" size="sm" data-report-reproduce>
+        Riproduci il problema
+      </common.Button>
+    </div>
+    <div class="report-panel__actions" data-report-stop-actions hidden>
+      <common.Button variant="danger" size="sm" data-report-stop>
+        Interrompi la registrazione
+      </common.Button>
+    </div>
+    <p class="report-panel__recording" data-report-recording role="status" hidden></p>
+  </section>
   <p class="report-panel__status" data-report-status role="status"></p>
   <common.Button variant="secondary" size="sm" data-report-recapture>
     Riprendi schermata

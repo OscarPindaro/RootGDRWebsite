@@ -1,5 +1,6 @@
 """Transport schemas for the report panel."""
 
+from datetime import datetime
 from typing import Annotated
 
 from pydantic import Field
@@ -32,6 +33,23 @@ class ReportEvidenceResponse(AppBaseModel, TimestampMixin):
     content_type: Annotated[str, Field(description="Media type")]
     byte_size: Annotated[int, Field(description="Stored size in bytes")]
     sha256: Annotated[str, Field(description="Stored content digest")]
+
+
+class ReproductionResponse(AppBaseModel):
+    """The state of one report's reproduction, with both sides' step counts."""
+
+    report_id: Annotated[UUIDField, Field(description="Report ID")]
+    active: bool = False
+    frontend_session: str | None = None
+    backend_session: str | None = None
+    started_at: datetime | None = None
+    stopped_at: datetime | None = None
+    frontend_steps: int = 0
+    backend_steps: int = 0
+
+
+class ReproductionStepsResponse(AppBaseModel):
+    frontend_steps: int = 0
 
 
 class ReportResponse(AppBaseModel, TimestampMixin):

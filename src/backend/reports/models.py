@@ -8,10 +8,12 @@ whole access control for a visitor who is not signed in.
 """
 
 import uuid
+from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import (
     BigInteger,
+    DateTime,
     Enum as SAEnum,
     ForeignKey,
     Integer,
@@ -56,6 +58,17 @@ class ReportModel(Base, UUIDv4PrimaryKeyMixin, TimestampMixin):
     viewport_height: Mapped[int | None] = mapped_column(Integer, nullable=True)
     reporter_user_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    # The reproduction: one browser session and one backend session, both scoped
+    # to this report. The browser is joined to them by a cookie, so ordinary
+    # navigation keeps recording without the reader copying an id.
+    frontend_session: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    backend_session: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    reproduction_started_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    reproduction_stopped_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
     )
     reporter: Mapped[UserModel | None] = relationship(lazy="joined")
     evidence: Mapped[list["ReportEvidenceModel"]] = relationship(

@@ -76,8 +76,33 @@ def _serve_shot(page, kind: str, width: int = 800, height: int = 600) -> None:
     page.route(f"**/api/reports/{DRAFT_ID}/evidence/{kind}", handler)
 
 
-def _open(page) -> None:
-    """Put a real opener in the page and click it."""
+def _reproduction(
+    *,
+    active: bool = False,
+    frontend_session: str | None = None,
+    backend_session: str | None = None,
+    frontend_steps: int = 0,
+    backend_steps: int = 0,
+    stopped_at: str | None = None,
+) -> dict:
+    return {
+        "reportId": DRAFT_ID,
+        "active": active,
+        "frontendSession": frontend_session,
+        "backendSession": backend_session,
+        "startedAt": None,
+        "stoppedAt": stopped_at,
+        "frontendSteps": frontend_steps,
+        "backendSteps": backend_steps,
+    }
+
+
+def _open(component) -> None:
+    """Stub the reproduction state, then open the panel from a real opener."""
+    page = component.page
+    component.route_json(
+        "GET", f"/api/reports/{DRAFT_ID}/reproduction", body=_reproduction()
+    )
     page.wait_for_function(
         "() => document.querySelector('#report-panel')?.dataset.reportBound === 'true'"
     )
@@ -117,7 +142,7 @@ def test_the_panel_opens_over_the_page_with_italian_copy(component):
         body=_draft(evidence=[_capture("page_html")]),
     )
     page = component.mount("editorial.ReportPanel")
-    _open(page)
+    _open(component)
 
     assert page.locator("#report-panel").evaluate("dialog => dialog.open")
     assert (
@@ -137,7 +162,7 @@ def test_a_new_report_keeps_its_draft_and_lists_its_captures(component):
         body=_draft(evidence=[_capture(kind) for kind in CAPTURES]),
     )
     page = component.mount("editorial.ReportPanel")
-    _open(page)
+    _open(component)
     _wait_for_state(page, "saved")
 
     assert component.local_storage(DRAFT_KEY) == DRAFT_ID
@@ -158,7 +183,7 @@ def test_a_saved_description_is_recovered_when_the_panel_reopens(component):
     )
     page = component.mount("editorial.ReportPanel")
     component.set_local_storage(DRAFT_KEY, DRAFT_ID)
-    _open(page)
+    _open(component)
     _wait_for_state(page, "saved")
 
     assert (
@@ -180,7 +205,7 @@ def test_typing_saves_the_description_on_the_draft(component):
     )
     page = component.mount("editorial.ReportPanel")
     component.set_local_storage(DRAFT_KEY, DRAFT_ID)
-    _open(page)
+    _open(component)
     _wait_for_state(page, "saved")
 
     page.fill("[data-report-description]", "Non salva più")
@@ -202,7 +227,7 @@ def test_a_screenshot_is_annotated_and_saved_back(component):
     page = component.mount("editorial.ReportPanel")
     component.set_local_storage(DRAFT_KEY, DRAFT_ID)
     _serve_shot(page, "screenshot_viewport")
-    _open(page)
+    _open(component)
     _wait_for_state(page, "saved")
 
     # The editor opens on the screenshot the reader chose.
@@ -243,7 +268,7 @@ def test_the_annotation_tools_and_colours_are_choices(component):
     page = component.mount("editorial.ReportPanel")
     component.set_local_storage(DRAFT_KEY, DRAFT_ID)
     _serve_shot(page, "screenshot_full_page")
-    _open(page)
+    _open(component)
     _wait_for_state(page, "saved")
 
     page.click('[data-report-annotate="screenshot_full_page"]')
@@ -277,6 +302,73 @@ def test_the_annotation_tools_and_colours_are_choices(component):
     )
 
 
+def test_the_reproduction_can_be_started_and_interrupted(component):
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("page_html")]),
+    )
+    component.route_json(
+        "GET", f"/api/reports/{DRAFT_ID}/reproduction", body=_reproduction()
+    )
+    component.route_json(
+        "POST",
+        f"/api/reports/{DRAFT_ID}/reproduction",
+        body=_reproduction(
+            active=True, frontend_session="f-one", backend_session="b-one"
+        ),
+    )
+    component.route_json(
+        "POST",
+        f"/api/reports/{DRAFT_ID}/reproduction/steps",
+        body={"frontendSteps": 1},
+    )
+    component.route_json(
+        "POST",
+        f"/api/reports/{DRAFT_ID}/reproduction/stop",
+        body=_reproduction(
+            frontend_session="f-one",
+            backend_session="b-one",
+            frontend_steps=1,
+            stopped_at="2026-10-11T19:00:00+0000",
+        ),
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    _open(component)
+    _wait_for_state(page, "saved")
+
+    assert page.locator("[data-report-reproduce-actions]").is_visible()
+    assert page.locator("[data-report-stop-actions]").is_hidden()
+
+    page.click("[data-report-reproduce]")
+    page.wait_for_selector("[data-report-stop-actions]:not([hidden])")
+    assert page.locator("[data-report-reproduce-actions]").is_hidden()
+    assert (
+        page.locator("[data-report-recording]")
+        .inner_text()
+        .startswith("Registrazione in corso")
+    )
+    assert (
+        page.evaluate("() => sessionStorage.getItem('rootgdr.report.session')")
+        == "f-one"
+    )
+    # The recorder posts the page it landed on, so the reproduction has a start.
+    _wait_for_request(component, "POST", f"/api/reports/{DRAFT_ID}/reproduction/steps")
+
+    page.click("[data-report-stop]")
+    page.wait_for_selector("[data-report-reproduce-actions]:not([hidden])")
+    assert page.locator("[data-report-stop-actions]").is_hidden()
+    assert (
+        page.locator("[data-report-recording]")
+        .inner_text()
+        .startswith("Registrazione fermata")
+    )
+    assert (
+        page.evaluate("() => sessionStorage.getItem('rootgdr.report.session')") is None
+    )
+
+
 def test_the_captures_are_collected_for_a_new_draft(component):
     component.route_json("POST", "/api/reports/", status=201, body=_draft())
     for kind in CAPTURES:
@@ -289,7 +381,7 @@ def test_the_captures_are_collected_for_a_new_draft(component):
         body=_draft(evidence=[_capture(kind) for kind in CAPTURES]),
     )
     page = component.mount("editorial.ReportPanel")
-    _open(page)
+    _open(component)
     _wait_for_state(page, "saved")
 
     for kind in CAPTURES:

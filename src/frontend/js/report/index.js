@@ -12,6 +12,13 @@
 import { toCanvas } from "html-to-image";
 
 import { COLOURS, createAnnotator } from "./annotate.js";
+import {
+  forgetSession,
+  rememberSession,
+  start as startReproduction,
+  stop as stopReproduction,
+  storedSession,
+} from "./reproduce.js";
 
 const DRAFT_KEY = "rootgdr.report.draft";
 const SAVE_DELAY = 1000;
@@ -291,6 +298,77 @@ function mount(dialog) {
 
   mountEditor(dialog, list, status);
 
+  const reproduce = dialog.querySelector("[data-report-reproduce]");
+  const interrupt = dialog.querySelector("[data-report-stop]");
+  const reproduceActions = dialog.querySelector("[data-report-reproduce-actions]");
+  const stopActions = dialog.querySelector("[data-report-stop-actions]");
+  const recording = dialog.querySelector("[data-report-recording]");
+
+  function renderReproduction(reproduction) {
+    reproduceActions.hidden = reproduction.active;
+    stopActions.hidden = !reproduction.active;
+    const counts = `${reproduction.frontendSteps} passaggi, ${reproduction.backendSteps} chiamate`;
+    recording.hidden = !reproduction.active && !reproduction.stoppedAt;
+    recording.dataset.state = reproduction.active ? "active" : "stopped";
+    recording.textContent = reproduction.active
+      ? `Registrazione in corso: ${counts}.`
+      : reproduction.stoppedAt
+        ? `Registrazione fermata: ${counts}.`
+        : "";
+  }
+
+  async function readReproduction() {
+    return json(
+      await fetch(`/api/reports/${draftId}/reproduction`, {
+        headers: { Accept: "application/json" },
+      })
+    );
+  }
+
+  reproduce.addEventListener("click", async () => {
+    try {
+      const reproduction = await json(
+        await fetch(`/api/reports/${draftId}/reproduction`, {
+          method: "POST",
+          headers: { Accept: "application/json" },
+        })
+      );
+      rememberSession(reproduction.frontendSession);
+      startReproduction(draftId, reproduction.frontendSession, () =>
+        document.dispatchEvent(new CustomEvent("report:reproduction-stopped"))
+      );
+      renderReproduction(reproduction);
+    } catch (error) {
+      setStatus(status, "failed");
+    }
+  });
+
+  interrupt.addEventListener("click", async () => {
+    stopReproduction();
+    forgetSession();
+    try {
+      renderReproduction(
+        await json(
+          await fetch(`/api/reports/${draftId}/reproduction/stop`, {
+            method: "POST",
+            headers: { Accept: "application/json" },
+          })
+        )
+      );
+    } catch (error) {
+      setStatus(status, "failed");
+    }
+  });
+
+  document.addEventListener("report:reproduction-stopped", async () => {
+    if (draftId === null) return;
+    try {
+      renderReproduction(await readReproduction());
+    } catch (error) {
+      /* the panel stays as it was; the recording is already gone */
+    }
+  });
+
   async function openPanel() {
     setStatus(status, "opening");
     try {
@@ -301,6 +379,18 @@ function mount(dialog) {
       // what the reader has typed since the draft was last read.
       if (!textarea.value) textarea.value = draft.description || "";
       renderEvidence(list, draft.evidence || []);
+      // A reproduction is optional: a draft that cannot report its recording
+      // state still opens, writes and captures.
+      try {
+        renderReproduction(await readReproduction());
+      } catch (error) {
+        renderReproduction({
+          active: false,
+          stoppedAt: null,
+          frontendSteps: 0,
+          backendSteps: 0,
+        });
+      }
       if ((draft.evidence || []).length === 0) await capture(status, list);
       else setStatus(status, "saved");
     } catch (error) {
@@ -336,9 +426,20 @@ function mount(dialog) {
   recapture.addEventListener("click", () => capture(status, list));
 }
 
+function resumeReproduction() {
+  const reportId = stored();
+  const session = storedSession();
+  if (reportId === null || session === null) return;
+  startReproduction(reportId, session, () => {
+    forgetSession();
+    document.dispatchEvent(new CustomEvent("report:reproduction-stopped"));
+  });
+}
+
 function mountAll() {
   document.querySelectorAll(PANEL).forEach(mount);
 }
 
 mountAll();
+resumeReproduction();
 document.body.addEventListener("htmx:afterSwap", mountAll);

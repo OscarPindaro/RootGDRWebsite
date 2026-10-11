@@ -8,6 +8,7 @@ the previous file is removed once the replacement is committed.
 
 import hashlib
 import uuid
+from datetime import UTC, datetime
 
 from fastapi import UploadFile
 from sqlalchemy import select
@@ -16,13 +17,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db.enums import UserRole
 from ..filesystem.base import FileSystem
 from ..log import get_logger
+from ..replay.schemas import ReplayBatch
 from ..users.schemas import User
+from . import recording
 from .exceptions import (
     ReportAccessDeniedException,
     ReportAlreadySubmittedException,
     ReportEvidenceNotFoundException,
     ReportEvidenceValidationError,
     ReportNotFoundException,
+    ReportRecordingMismatchException,
 )
 from .models import EvidenceKind, ReportEvidenceModel, ReportModel, ReportState
 from .schemas import (
@@ -31,6 +35,7 @@ from .schemas import (
     MAX_USER_AGENT,
     ReportCreate,
     ReportUpdate,
+    ReproductionResponse,
 )
 
 logger = get_logger(__name__)
@@ -195,6 +200,90 @@ async def store_evidence(
     if previous is not None:
         await _discard(filesystem, previous)
     return evidence
+
+
+async def start_reproduction(
+    db: AsyncSession,
+    filesystem: FileSystem,
+    report_id: uuid.UUID,
+    user: User | None,
+) -> ReportModel:
+    """Open a reproduction for this report, replacing an earlier attempt."""
+    model = await get_report(db, report_id, user)
+    _require_draft(model)
+    config = await recording.start(filesystem, report_id)
+    model.frontend_session = config.frontend_session
+    model.backend_session = config.backend_session
+    model.reproduction_started_at = datetime.now(UTC)
+    model.reproduction_stopped_at = None
+    await db.flush()
+    await db.refresh(model)
+    logger.info("Reproduction started", report_id=str(report_id))
+    return model
+
+
+async def stop_reproduction(
+    db: AsyncSession,
+    filesystem: FileSystem,
+    report_id: uuid.UUID,
+    user: User | None,
+) -> ReportModel:
+    model = await get_report(db, report_id, user)
+    await recording.stop(filesystem, report_id)
+    if model.reproduction_stopped_at is None:
+        model.reproduction_stopped_at = datetime.now(UTC)
+    await db.flush()
+    await db.refresh(model)
+    return model
+
+
+async def reproduction_status(
+    db: AsyncSession,
+    filesystem: FileSystem,
+    report_id: uuid.UUID,
+    user: User | None,
+) -> ReproductionResponse:
+    model = await get_report(db, report_id, user)
+    config = await recording.read_config(filesystem, report_id)
+    return ReproductionResponse(
+        report_id=model.id,
+        active=bool(config is not None and config.active),
+        frontend_session=model.frontend_session,
+        backend_session=model.backend_session,
+        started_at=model.reproduction_started_at,
+        stopped_at=model.reproduction_stopped_at,
+        frontend_steps=len(
+            await recording.load_steps(filesystem, report_id, recording.FRONTEND)
+        ),
+        backend_steps=len(
+            await recording.load_steps(filesystem, report_id, recording.BACKEND)
+        ),
+    )
+
+
+async def record_steps(
+    db: AsyncSession,
+    filesystem: FileSystem,
+    report_id: uuid.UUID,
+    batch: ReplayBatch,
+    user: User | None,
+) -> int:
+    """Append the browser steps of the report's own reproduction."""
+    model = await get_report(db, report_id, user)
+    config = await recording.read_config(filesystem, report_id)
+    if (
+        model.frontend_session is None
+        or batch.session != model.frontend_session
+        or config is None
+        or not config.active
+    ):
+        raise ReportRecordingMismatchException()
+    return await recording.append_steps(
+        filesystem,
+        report_id,
+        recording.FRONTEND,
+        [step.model_dump(exclude_none=True) for step in batch.steps],
+    )
 
 
 async def read_evidence(

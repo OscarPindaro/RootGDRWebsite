@@ -52,6 +52,19 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     )
     app.state.config = config
 
+    # A report's reproduction is a product feature, not the development
+    # recorder: it is available wherever reporting is, and only a request that
+    # carries its cookie touches the disk. It is registered before the
+    # correlation middleware so the step it writes can name the request and the
+    # trace it belongs to.
+    from .filesystem.local import LocalFileSystem  # noqa: PLC0415
+    from .reports.recording import ReportRecorderMiddleware  # noqa: PLC0415
+
+    app.add_middleware(
+        ReportRecorderMiddleware,
+        filesystem=LocalFileSystem(config.storage.storage_root),
+    )
+
     # Outermost middleware: bind correlation ids for the whole request and
     # echo the request id back in the response headers.
     app.add_middleware(RequestContextMiddleware)

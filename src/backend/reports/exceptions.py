@@ -33,6 +33,14 @@ class ReportAlreadySubmittedException(HTTPException):
         )
 
 
+class ReportRecordingMismatchException(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This reproduction is not the report's active recording",
+        )
+
+
 class ReportEvidenceValidationError(HTTPException):
     def __init__(self, detail: str):
         super().__init__(

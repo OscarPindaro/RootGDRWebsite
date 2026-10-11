@@ -9,9 +9,12 @@ signed-in reader cannot open somebody else's.
 
 from __future__ import annotations
 
+import json
+import shutil
 import uuid
 from collections.abc import AsyncGenerator
 from datetime import UTC, datetime
+from pathlib import Path
 
 import pytest
 import pytest_asyncio
@@ -91,8 +94,10 @@ async def users(db_manager: DatabaseManager) -> AsyncGenerator[dict[str, User], 
 
 
 @pytest_asyncio.fixture
-async def opened(db_manager: DatabaseManager) -> AsyncGenerator[list[uuid.UUID], None]:
-    """Report ids a test opened anonymously, removed afterwards."""
+async def opened(
+    db_manager: DatabaseManager, app_config: AppConfig
+) -> AsyncGenerator[list[uuid.UUID], None]:
+    """Report ids a test opened, with their rows and files, removed afterwards."""
     created: list[uuid.UUID] = []
     yield created
     async with db_manager.async_session_maker() as session:
@@ -101,13 +106,16 @@ async def opened(db_manager: DatabaseManager) -> AsyncGenerator[list[uuid.UUID],
                 await session.execute(
                     delete(ReportModel).where(ReportModel.id.in_(created))
                 )
+    root = Path(app_config.storage.storage_root) / "reports"
+    for report_id in created:
+        shutil.rmtree(root / str(report_id), ignore_errors=True)
 
 
 def _app(
     app_config: AppConfig,
     db_manager: DatabaseManager,
     user: User | None,
-    storage,
+    storage=None,
 ) -> FastAPI:
     app = create_app(app_config)
 
@@ -121,7 +129,8 @@ def _app(
 
     app.dependency_overrides[get_db_session] = _session
     app.dependency_overrides[get_optional_user] = lambda: user
-    app.dependency_overrides[get_filesystem] = lambda: LocalFileSystem(storage)
+    if storage is not None:
+        app.dependency_overrides[get_filesystem] = lambda: LocalFileSystem(storage)
     return app
 
 
@@ -298,6 +307,135 @@ async def test_an_anonymous_reader_reaches_their_draft_by_its_id(
         response = await client.get(f"/api/reports/{report_id}")
     assert response.status_code == 200
     assert response.json()["id"] == report_id
+
+
+def _recording(app_config: AppConfig, report_id: str, side: str) -> list[dict]:
+    path = (
+        Path(app_config.storage.storage_root)
+        / "reports"
+        / report_id
+        / "recording"
+        / f"{side}.json"
+    )
+    return json.loads(path.read_text())
+
+
+async def test_a_reproduction_records_both_sides(
+    app_config, db_manager, users, opened
+) -> None:
+    app = _app(app_config, db_manager, users["admin"])
+    report_id = await _open(app, track=opened)
+
+    async with _client(app) as client:
+        started = await client.post(f"/api/reports/{report_id}/reproduction")
+        assert started.status_code == 200
+        body = started.json()
+        assert body["active"] is True
+        assert body["frontendSession"] and body["backendSession"]
+        # The cookie is what keeps the backend side joined across page loads.
+        assert client.cookies.get("report_reproduction") == report_id
+
+        posted = await client.post(
+            f"/api/reports/{report_id}/reproduction/steps",
+            json={
+                "session": body["frontendSession"],
+                "steps": [{"kind": "click", "selector": "#nuovo", "label": "Nuovo"}],
+            },
+        )
+        assert posted.status_code == 200
+        assert posted.json()["frontendSteps"] == 1
+
+        # An ordinary call carrying the cookie is recorded on the backend side.
+        assert (await client.get("/ping")).status_code == 200
+
+        status = await client.get(f"/api/reports/{report_id}/reproduction")
+    payload = status.json()
+    assert payload["active"] is True
+    assert payload["frontendSteps"] == 1
+    assert payload["backendSteps"] >= 1
+
+    recorded = _recording(app_config, report_id, "backend")
+    assert {step["path"] for step in recorded} >= {"/ping"}
+    # A step points at the exact call, not at a time window.
+    assert all(step["request_id"] and step["trace_id"] for step in recorded)
+    assert _recording(app_config, report_id, "frontend")[0]["selector"] == "#nuovo"
+
+
+async def test_a_batch_from_another_session_is_refused(
+    app_config, db_manager, users, opened
+) -> None:
+    app = _app(app_config, db_manager, users["admin"])
+    report_id = await _open(app, track=opened)
+
+    async with _client(app) as client:
+        await client.post(f"/api/reports/{report_id}/reproduction")
+        response = await client.post(
+            f"/api/reports/{report_id}/reproduction/steps",
+            json={"session": "someone-elses", "steps": []},
+        )
+    assert response.status_code == 409
+
+
+async def test_stopping_keeps_the_steps_and_stops_recording(
+    app_config, db_manager, users, opened
+) -> None:
+    app = _app(app_config, db_manager, users["admin"])
+    report_id = await _open(app, track=opened)
+
+    async with _client(app) as client:
+        started = await client.post(f"/api/reports/{report_id}/reproduction")
+        await client.post(
+            f"/api/reports/{report_id}/reproduction/steps",
+            json={
+                "session": started.json()["frontendSession"],
+                "steps": [{"kind": "goto", "url": "/mondi"}],
+            },
+        )
+        await client.get("/ping")
+        collected = (await client.get(f"/api/reports/{report_id}/reproduction")).json()[
+            "backendSteps"
+        ]
+
+        stopped = await client.post(f"/api/reports/{report_id}/reproduction/stop")
+        assert stopped.json()["active"] is False
+        assert client.cookies.get("report_reproduction") is None
+
+        # With the cookie gone, a later call is not part of the reproduction.
+        await client.get("/ping")
+        after = await client.get(f"/api/reports/{report_id}/reproduction")
+
+    payload = after.json()
+    assert payload["active"] is False
+    assert payload["stoppedAt"] is not None
+    assert payload["frontendSteps"] == 1
+    assert payload["backendSteps"] == collected
+
+
+async def test_each_report_has_its_own_recording(
+    app_config, db_manager, users, opened
+) -> None:
+    app = _app(app_config, db_manager, users["admin"])
+    first = await _open(app, track=opened)
+    second = await _open(app, track=opened)
+
+    async with _client(app) as one:
+        started = await one.post(f"/api/reports/{first}/reproduction")
+        await one.post(
+            f"/api/reports/{first}/reproduction/steps",
+            json={
+                "session": started.json()["frontendSession"],
+                "steps": [{"kind": "goto", "url": "/mondi"}],
+            },
+        )
+    async with _client(app) as other:
+        await other.post(f"/api/reports/{second}/reproduction")
+
+    async with _client(app) as reader:
+        one_status = (await reader.get(f"/api/reports/{first}/reproduction")).json()
+        other_status = (await reader.get(f"/api/reports/{second}/reproduction")).json()
+    assert one_status["frontendSteps"] == 1
+    assert other_status["frontendSteps"] == 0
+    assert one_status["frontendSession"] != other_status["frontendSession"]
 
 
 async def test_a_submitted_report_accepts_no_more_edits(
