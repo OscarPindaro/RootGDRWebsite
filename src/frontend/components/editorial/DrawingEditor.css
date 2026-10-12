@@ -30,8 +30,48 @@
 }
 
 .drawing-editor__viewport-controls { display: inline-flex; align-items: center; gap: var(--sp-1); }
-.drawing-editor__command-preview { width: 100%; max-height: var(--drawing-layers-height); border: var(--rule); }
-.drawing-editor__command-dialog { max-height: calc(100dvh - var(--sp-4)); overflow-y: auto; }
+/* ---------- docked command palette ----------
+   Inside the canvas, at its top centre: the commands belong to the drawing
+   surface, not to the application, so the panel never covers the page chrome
+   and the canvas stays usable around it. */
+.drawing-editor__canvas {
+  position: relative;
+  min-width: 0;
+  border: var(--rule-ink);
+  background: var(--surface);
+}
+
+.drawing-editor__palette-dock {
+  position: absolute;
+  top: var(--sp-2);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: grid;
+  gap: var(--sp-2);
+  width: min(100% - var(--sp-4), 28rem);
+  max-height: calc(100% - var(--sp-4));
+  overflow-y: auto;
+  padding: var(--sp-3);
+  border: var(--rule-ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.drawing-editor__palette-dock[hidden] { display: none; }
+
+.drawing-editor__commands-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.drawing-editor__command-preview {
+  width: 100%;
+  max-height: var(--drawing-layers-height);
+  border: var(--rule);
+}
 
 .drawing-editor__command-options {
   list-style: none;
@@ -41,8 +81,6 @@
 .drawing-editor__command-option { padding: var(--sp-2); cursor: pointer; }
 .drawing-editor__command-option[aria-selected="true"] { background: var(--paper-deep); }
 .drawing-editor__command-option[aria-disabled="true"] { color: var(--muted); }
-.drawing-editor__command-dialog .dialog-body { display: grid; gap: var(--sp-3); }
-.drawing-editor__command-dialog { margin: 0; inset: auto; }
 
 .drawing-editor__context-menu {
   max-height: calc(100dvh - var(--sp-4));
@@ -203,12 +241,6 @@
 }
 
 /* ---------- artboard ---------- */
-
-.drawing-editor__canvas {
-  min-width: 0;
-  border: var(--rule-ink);
-  background: var(--surface);
-}
 
 .drawing-editor__artboard {
   display: block;

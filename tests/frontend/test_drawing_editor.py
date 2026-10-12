@@ -1554,6 +1554,113 @@ def test_split_button_presets_create_persistent_constrained_geometry(
     assert len(_scene_of(page)["nodes"]) == 1
 
 
+def test_the_command_palette_is_docked_inside_the_canvas(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    panel = page.locator("[data-testid='drawing-commands']")
+    panel.wait_for(state="visible")
+
+    assert page.locator("dialog#drawing-command-dialog").count() == 0
+    assert panel.evaluate("el => el.tagName") == "DIV"
+    canvas = page.locator("[data-testid='drawing-canvas']").bounding_box()
+    box = panel.bounding_box()
+    assert box["x"] >= canvas["x"] - 1
+    assert box["x"] + box["width"] <= canvas["x"] + canvas["width"] + 1
+    assert box["y"] >= canvas["y"] - 1
+    # Top centre of the canvas.
+    assert abs((box["x"] + box["width"] / 2) - (canvas["x"] + canvas["width"] / 2)) < 4
+    assert box["y"] - canvas["y"] <= 24
+
+
+def test_the_close_control_and_escape_put_the_palette_away(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-testid='drawing-commands']").wait_for(state="visible")
+    page.locator("[data-canvas-command-close]").click()
+    assert not page.locator("[data-testid='drawing-commands']").is_visible()
+
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-command-input]").press("Escape")
+    assert not page.locator("[data-testid='drawing-commands']").is_visible()
+    assert page.evaluate(
+        "() => document.activeElement.hasAttribute('data-drawing-commands')"
+    )
+
+
+@pytest.mark.parametrize(
+    "refinement,width,kind",
+    [
+        ("130", 130, "triangle_isosceles"),
+        ("130 isoscele", 130, "triangle_isosceles"),
+        ("isoscele 130", 130, "triangle_isosceles"),
+        ("equilatero 80", 80, "triangle_equilateral"),
+        ("rect left 60", 60, "triangle_right_left"),
+    ],
+)
+def test_the_compact_stage_takes_a_size_and_a_variant(
+    component, refinement, width, kind
+):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+
+    field.fill(refinement)
+    page.keyboard.press("Enter")
+
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": kind}
+    xs = [point[0] for point in node["points"]]
+    assert round(max(xs) - min(xs)) == width
+
+
+def test_a_polygon_takes_its_vertex_count_in_the_second_stage(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("poligono")
+    page.keyboard.press("Enter")
+    field.fill("6")
+    page.keyboard.press("Enter")
+
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "regular_polygon"}
+    assert len(node["points"]) == 6
+
+
+def test_an_out_of_range_vertex_count_creates_nothing(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("poligono")
+    page.keyboard.press("Enter")
+    for value in ("2", "99", "molti"):
+        field.fill(value)
+        page.keyboard.press("Enter")
+        assert _scene_of(page)["nodes"] == []
+
+
+def test_the_compact_stage_shows_the_interpretation(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    field.fill("130 isoscele")
+
+    status = page.locator("[data-canvas-command-status]").inner_text()
+    assert "Triangolo · isoscele" in status
+    assert "130" in status
+
+
 @pytest.mark.parametrize(
     "refinement,kind",
     [
@@ -1685,7 +1792,7 @@ def test_guided_shape_preview_is_non_destructive_until_apply(component):
         page.locator("[data-canvas-preview] .drawing-editor__command-shape").count() > 0
     )
     page.keyboard.press("Escape")
-    page.wait_for_selector("#drawing-command-dialog[open]", state="detached")
+    page.wait_for_selector("#drawing-command-dialog", state="hidden")
     assert _scene_of(page)["nodes"] == []
     page.locator("[data-drawing-commands]").click()
     page.locator("[data-canvas-command-apply]").click()
@@ -1823,7 +1930,7 @@ def test_slash_commands_and_shortcut_help_leave_text_and_dialogs_in_control(comp
     page.keyboard.press("/")
     page.locator("#drawing-command-dialog").wait_for(state="visible", timeout=2000)
     page.keyboard.press("Escape")
-    page.wait_for_selector("#drawing-command-dialog[open]", state="detached")
+    page.wait_for_selector("#drawing-command-dialog", state="hidden")
     page.wait_for_function(
         "() => document.activeElement.hasAttribute('data-drawing-artboard')"
     )

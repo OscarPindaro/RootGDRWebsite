@@ -819,7 +819,7 @@ def test_compact_triangle_refinement_saves_an_editable_native_right_triangle(
     assert _local_node_scene(session)["nodes"] == []
     field.fill("rect left")
     page.keyboard.press("Enter")
-    page.wait_for_selector("#drawing-command-dialog[open]", state="detached")
+    page.wait_for_selector("#drawing-command-dialog", state="hidden")
     local = _local_node_scene(session)
     assert len(local["nodes"]) == 1
     assert local["nodes"][0]["constraint"] == {"kind": "triangle_right_left"}

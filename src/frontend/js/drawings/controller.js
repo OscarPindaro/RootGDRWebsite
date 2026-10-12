@@ -1106,6 +1106,8 @@ export function createController(root) {
       return;
     }
     if (event.target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
+    // The docked command palette owns its own keys while it is open.
+    if (commandPalette?.isOpen && event.target.closest("[data-testid='drawing-commands']")) return;
     if (event.target.dataset.transformPivot && selectedId && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
       event.preventDefault();
       const pivot = selected().node.pivot || nodeCenter(selected().node), step = event.shiftKey ? 10 : 1;

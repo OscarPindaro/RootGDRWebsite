@@ -102,19 +102,26 @@ library, skeleton, publishing or export capabilities.
   Space-left-drag or the middle mouse button pans, including over geometry handles.
   Right-click on the canvas/tree opens shared contextual actions; Shift-right-click
   preserves the browser menu. Slash and a visible header button open local commands;
-  **Scorciatoie** opens focus-owned help. A floating native canvas-command dialog
-  keeps **Compatta/Guidata** as an exclusive segmented choice; switching retains
-  both local drafts and performs no action. Both surfaces share the editor action
-  registry, availability and validated vector creation (document units, bounded
-  default size and placement in the visible canvas).
-  Compact accepts a shape on the first Enter and creates it on the second. For
-  triangles, `rect/right/left/isosceles/equilateral` (and Italian equivalents)
-  refine the accepted shape before creation; right-angle defaults to the right.
-  Suggestions, interpretation and defaults remain visible. Unknown input creates
-  nothing; Escape cancels. Default bounding size is at most 120×100 document units
-  and 70% of the visible world rectangle, centred in the current view. Presets fit
-  within that box and stay native/constrained/editable. Switching variants keeps
-  the accepted command/refinement; final creation is one undo step.
+  **Scorciatoie** opens focus-owned help. The command palette is docked inside the
+  canvas, at its top centre, not a modal over the application: it never covers the
+  page chrome, the canvas stays usable around it, and Escape or its close control
+  returns focus to whatever opened it. It keeps **Compatta/Guidata** as an
+  exclusive segmented choice; switching retains both local drafts and performs no
+  action. Both surfaces share the editor action registry, availability and
+  validated vector creation (document units, bounded default size and placement in
+  the visible canvas).
+  Compact runs in two stages. The first Enter accepts a shape; the second creates
+  it. Between them the text refines the accepted shape: a number is the bounding
+  box width (the other dimension keeps the shape's default ratio), a number on a
+  regular polygon is its vertex count (3–32), and a triangle also takes
+  `rect/right/left/isoscele/equilatero` (and English equivalents) in either order,
+  so `130 isoscele` and `isoscele 130` agree. Right-angle defaults to the right.
+  Suggestions, the interpretation and the resulting size stay visible. Unknown or
+  out-of-range input creates nothing; Escape cancels. Default bounding size is at
+  most 120×100 document units and 70% of the visible world rectangle, centred in
+  the current view. Presets fit within that box and stay native/constrained/editable.
+  Switching variants keeps the accepted command/refinement; final creation is one
+  undo step.
   Guided offers contextual shape/preset/dimension, radius, movement, parent and
   alignment fields. Its SVG preview uses the same validated native operations
   against a cloned scene; the original/history stay unchanged until **Applica**.

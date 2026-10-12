@@ -606,6 +606,25 @@ test("edit locks cover descendants independently from visibility and primitive c
   assert.equal(editableSelection(scene,["g"]),false);
 });
 
+test("the compact second stage takes a size, a vertex count and a variant", async () => {
+  const {parseCompact} = await import("../../src/frontend/js/drawings/canvas-palette.js");
+  assert.deepEqual(parseCompact("130", "triangle_isosceles"),{kind:"triangle_isosceles",size:130,sides:null});
+  assert.deepEqual(parseCompact("isoscele 130", "triangle_isosceles"),{kind:"triangle_isosceles",size:130,sides:null});
+  assert.deepEqual(parseCompact("equilatero 80", "triangle_isosceles"),{kind:"triangle_equilateral",size:80,sides:null});
+  assert.deepEqual(parseCompact("rect left 60", "triangle_isosceles"),{kind:"triangle_right_left",size:60,sides:null});
+  assert.deepEqual(parseCompact("6", "regular_polygon"),{kind:"regular_polygon",size:null,sides:6});
+  assert.deepEqual(parseCompact("", "regular_polygon"),{kind:"regular_polygon",size:null,sides:null});
+  assert.equal(parseCompact("2", "regular_polygon"),null);
+  assert.equal(parseCompact("99", "regular_polygon"),null);
+  assert.equal(parseCompact("0", "triangle_isosceles"),null);
+  assert.equal(parseCompact("-5", "triangle_isosceles"),null);
+  assert.equal(parseCompact("molti", "triangle_isosceles"),null);
+  assert.equal(parseCompact("130", "triangle_isosceles").size,130);
+  // The first stage still resolves a shape name and rejects anything else.
+  assert.equal(parseCompact("triangle").kind,"triangle_isosceles");
+  assert.equal(parseCompact("not-a-shape"),null);
+});
+
 test("cubic insertion preserves sampled geometry and stable endpoints, linked tangents remain opposite", async () => {
   const {insertPathAnchor, setPathAnchorMode, moveCurvePoint, createPath, pathHandles, pathCommands} = await import("../../src/frontend/js/drawings/scene.js");
   const node=createPath("Curve","M0 0 C0 100 100 100 100 0");
