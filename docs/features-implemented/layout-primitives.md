@@ -35,6 +35,11 @@ one place and can be changed without touching every page.
 
 ## Limits
 
+- A wrapper that is not a primitive has no rhythm. `<div class="…">` or
+  `<form class="…">` around stacked children gets the browser default, which is
+  no gap at all; `common.VStack` is the fix, not a new page class.
+  `test_every_class_a_template_uses_has_a_rule` now fails on a class nobody
+  styles, which is how that mistake is caught.
 - `Grid` has no explicit column widths beyond `split`; a page needing another
   ratio adds a variant rather than an inline `grid-template-columns`.
 - `HStack` only relaxes `min-width` for direct `input`/`select` children.

@@ -1,5 +1,5 @@
 {#def crumbs, current_user=None #}
-{#css common/Button.css, common/Field.css, common/HStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/SaveIndicator.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css, common/Alert.css, common/RequestFallback.css, common/Icon.css, common/Mark.css, editorial/Crumbs.css, editorial/Masthead.css #}
+{#css common/Button.css, common/Field.css, common/HStack.css, common/VStack.css, layout/UserMenu.css, common/Avatar.css, common/Menu.css, layout/Page.css, common/SaveIndicator.css, layout/Rail.css, layout/Topbar.css, layout/Palette.css, common/Alert.css, common/RequestFallback.css, common/Icon.css, common/Mark.css, editorial/Crumbs.css, editorial/Masthead.css #}
 <layout.Page title="Nuovo mondo" current_user={{ current_user }}>
   <editorial.Masthead
     title="Nuovo mondo"
@@ -7,7 +7,7 @@
     lede="Nome, descrizione e copertina. Potrai invitare i membri dopo averlo creato."
     :crumbs="crumbs" />
 
-  <form class="form"
+  <common.VStack element="form" gap=6
         hx-post="/worlds/new"
         hx-swap="none">
     <common.Field label="Nome" name="name" type="text" required maxlength=255 placeholder="Le Cronache di Boscochiaro" />
@@ -17,5 +17,5 @@
       <common.Button type="submit" variant="primary" size="md" data-testid="save-world">Crea mondo</common.Button>
       <common.Button variant="text" href="/worlds">Annulla</common.Button>
     </common.HStack>
-  </form>
+  </common.VStack>
 </layout.Page>

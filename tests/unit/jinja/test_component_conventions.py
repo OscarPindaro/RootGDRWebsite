@@ -180,3 +180,78 @@ def test_the_migration_allowlist_is_empty() -> None:
     component root any more.
     """
     assert MIGRATION_ALLOWLIST == {}
+
+
+# --- A class a template writes must resolve to a rule -----------------------
+
+# Vertical rhythm and every other visual property come from a stylesheet. A
+# template that writes a class nobody styles is not a neutral mistake: the
+# element keeps the browser default, which for a block child is no spacing at
+# all. `WorldNew` shipped `<form class="form">` with no `.form` rule anywhere, so
+# its name and description fields touched — a defect that rendered without an
+# error, passed every test, and was found by hand. This test is the guard.
+CLASS_ATTRIBUTE = re.compile(r'class="([^"]*)"')
+# Jinja expressions inside a class attribute are not class names. Dropping them
+# also drops the prefix of an interpolated class (`btn-{{ size }}` leaves
+# `btn-`), which is why a trailing separator is not a name either.
+JINJA_TAG = re.compile(r"\{\{.*?\}\}|\{%.*?%\}", re.DOTALL)
+CLASS_NAME = re.compile(r"^-?[_a-zA-Z][\w-]*$")
+
+# A class that carries no rule of its own, and why it is still correct. The
+# reasons are of three kinds: an SVG or script hook the client queries by class,
+# a marker on an element that is hidden or styled by a global, and a BEM parent
+# whose layout lives on its children. An entry here is not a licence to skip
+# styling — the test fails on a stale entry, so an exception cannot outlive the
+# markup that needed it.
+UNSTYLED_ALLOWLIST: dict[str, str] = {
+    "btn-mixed": "marker for an icon plus label button; the box comes from .btn",
+    "docedit__source": "hidden textarea that carries the document body",
+    "document": "BEM parent; the layout lives on its .document__* children",
+    "drawing-editor__empty": "scene-tree placeholder, styled by the global .hint",
+    "drawing-editor__grid": "SVG hook; the grid is painted by the #drawing-grid pattern",
+    "drawing-editor__preview-grid": "SVG hook; the guided preview reuses #drawing-grid",
+    "drawing-editor__scene": "SVG hook the client rebuilds the scene into",
+}
+
+
+def _styled_classes() -> set[str]:
+    """Every class name that some stylesheet names in a rule selector."""
+    names: set[str] = set()
+    for stylesheet in [MAIN_CSS, *sorted(COMPONENTS.rglob("*.css"))]:
+        source = COMMENT.sub("", stylesheet.read_text(encoding="utf-8"))
+        for prelude in _rule_preludes(source):
+            names.update(CLASS_TOKEN.findall(prelude))
+    return names
+
+
+def _unstyled_classes() -> dict[str, set[str]]:
+    styled = _styled_classes()
+    missing: dict[str, set[str]] = {}
+    for name in NAMES:
+        source = JINJA_TAG.sub(" ", (COMPONENTS / name).read_text(encoding="utf-8"))
+        for value in CLASS_ATTRIBUTE.findall(source):
+            for token in value.split():
+                if not CLASS_NAME.match(token) or token.endswith(("-", "_")):
+                    continue
+                if token not in styled:
+                    missing.setdefault(token, set()).add(name)
+    return missing
+
+
+def test_every_class_a_template_uses_has_a_rule() -> None:
+    missing = _unstyled_classes()
+
+    unexpected = sorted(set(missing) - set(UNSTYLED_ALLOWLIST))
+    assert not unexpected, (
+        "These classes have no rule in any stylesheet, so the element keeps the "
+        "browser default: "
+        + ", ".join(f".{name} ({sorted(missing[name])})" for name in unexpected)
+        + ". Style it, or use a layout primitive (common.VStack / HStack / Grid) "
+        "instead of a bare wrapper."
+    )
+
+    stale = sorted(set(UNSTYLED_ALLOWLIST) - set(missing))
+    assert not stale, (
+        "UNSTYLED_ALLOWLIST is stale: these classes now have a rule or are no "
+        f"longer used, so remove them — {stale}"
+    )
