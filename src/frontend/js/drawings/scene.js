@@ -5,7 +5,7 @@
    document is the same shape the server stores and validates; the client never
    invents a field the API would refuse. */
 
-import { apply, bounds, centerOf, distanceToSegment, invert, multiply, pointInPolygon, polygonArea } from "./geometry.js";
+import { apply, bounds, centerOf, distanceToSegment, invert, multiply, pointInPolygon, polygonArea, translation, rotateAbout } from "./geometry.js";
 
 /** The deepest nesting the document format accepts. */
 export const MAX_DEPTH = 8;
@@ -23,9 +23,10 @@ export function cloneScene(scene) {
 
 export function migrateScene(scene) {
   const next = cloneScene(scene);
-  if (![1, 2].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
-  next.schemaVersion = 2;
+  if (![1, 2, 3].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
+  next.schemaVersion = 3;
   walk(next.nodes, node => {
+    node.pivot ??= null;
     node.anchors ??= [];
     if (node.kind !== "group") node.constraint ??= null;
     if (node.kind === "polygon") node.pointIds ??= node.points.map((_, index) => `v${index}`);
@@ -58,6 +59,8 @@ export function lockedPolygon(points, kind) {
 export function constraintsValid(scene) {
   let valid = true;
   walk(scene.nodes, node => {
+    const [a, b, c, d] = node.transform;
+    valid &&= node.transform.every(value => Number.isFinite(value) && Math.abs(value) <= 100000) && Math.abs(a * d - b * c) >= 1e-9;
     if (!node.constraint) return;
     const world = nodeFrame(scene, node.id).world;
     if (node.kind === "polygon") {
@@ -325,6 +328,7 @@ export function createPolygon(name, points, fill = "#e0a327") {
     strokeWidth: 4,
     points,
     pointIds: points.map(() => newId("v")),
+    pivot: null,
     anchors: [],
     constraint: null,
     edgeVisible: null,
@@ -346,6 +350,7 @@ export function createEllipse(name, center, rx, ry, fill = "#e0a327") {
     cy: center[1],
     rx,
     ry,
+    pivot: null,
     anchors: [],
     constraint: null,
   };
@@ -364,6 +369,7 @@ export function createPath(name, d, stroke = DEFAULT_STROKE) {
     strokeWidth: 4,
     d,
     pointIds: pathHandles(d).map(() => newId("h")),
+    pivot: null,
     anchors: [],
     constraint: null,
   };
@@ -511,18 +517,96 @@ export function setTransform(scene, id, matrix) {
 }
 
 export function transformInWorld(scene, id, delta, original = nodeFrame(scene, id).world) {
-  const frame = nodeFrame(scene, id);
-  return setTransform(scene, id, multiply(invert(frame.parent), multiply(delta, original)));
+  return transformNodesInWorld(scene, [{id, transform:original}], delta);
 }
 
 export function transformNodesInWorld(scene, entries, delta) {
   const next = cloneScene(scene);
   for (const {id, transform} of entries) {
     const frame = nodeFrame(next, id);
-    if (!frame) return scene;
-    findNode(next, id).node.transform = multiply(invert(frame.parent), multiply(delta, transform));
+    const inverse = frame && invert(frame.parent);
+    if (!inverse) return scene;
+    findNode(next, id).node.transform = multiply(inverse, multiply(delta, transform));
   }
   return constraintsValid(next) ? next : scene;
+}
+
+export function geometryInfo(scene, ids) {
+  if (!ids.length || ids.some(id => !findNode(scene, id))) return null;
+  const corners = selectionCorners(scene, ids), frame = nodeFrame(scene, ids[0]);
+  const pivot = ids.length === 1 ? frame.node.pivot || nodeCenter(frame.node) : [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
+  return {x:corners[0][0], y:corners[0][1], width:Math.hypot(corners[1][0] - corners[0][0], corners[1][1] - corners[0][1]), height:Math.hypot(corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]), angle:Math.atan2(corners[1][1] - corners[0][1], corners[1][0] - corners[0][0]) * 180 / Math.PI, pivotX:pivot[0], pivotY:pivot[1]};
+}
+
+export function editGeometry(scene, ids, parameters) {
+  const info = geometryInfo(scene, ids);
+  if (!info || !parameters || Object.entries(parameters).some(([key, value]) => !["x", "y", "width", "height", "angle", "pivotX", "pivotY"].includes(key) || !Number.isFinite(value) || Math.abs(value) > 100000)) return null;
+  if ((parameters.width !== undefined && (parameters.width <= 0 || !info.width)) || (parameters.height !== undefined && (parameters.height <= 0 || !info.height))) return null;
+  let next = cloneScene(scene);
+  if (parameters.pivotX !== undefined || parameters.pivotY !== undefined) {
+    if (ids.length !== 1) return null;
+    findNode(next, ids[0]).node.pivot = [parameters.pivotX ?? info.pivotX, parameters.pivotY ?? info.pivotY];
+  }
+  let sx = parameters.width !== undefined ? parameters.width / info.width : 1;
+  let sy = parameters.height !== undefined ? parameters.height / info.height : 1;
+  let ratioLocked = false;
+  walk(next.nodes, node => {
+    if (!["circle", "square", "triangle_equilateral", "regular_polygon"].includes(node.constraint?.kind)) return;
+    let current = findNode(next, node.id);
+    while (current) {
+      if (ids.includes(current.node.id)) { ratioLocked = true; break; }
+      current = current.parent ? findNode(next, current.parent.id) : null;
+    }
+  });
+  if (ratioLocked && parameters.width !== undefined && parameters.height !== undefined && Math.abs(sx - sy) > 1e-6) return null;
+  if (ratioLocked && parameters.width !== undefined && parameters.height === undefined) sy = sx;
+  if (ratioLocked && parameters.height !== undefined && parameters.width === undefined) sx = sy;
+  const corners = selectionCorners(next, ids), frame = nodeFrame(next, ids[0]);
+  const pivot = ids.length === 1 ? apply(frame.world, frame.node.pivot || nodeCenter(frame.node)) : [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
+  const u = [corners[1][0] - corners[0][0], corners[1][1] - corners[0][1]], v = [corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]];
+  if (!info.width && !info.height) { u[0] = 1; v[1] = 1; }
+  else {
+    if (!info.width) { u[0] = v[1] / info.height; u[1] = -v[0] / info.height; }
+    if (!info.height) { v[0] = -u[1] / info.width; v[1] = u[0] / info.width; }
+  }
+  const basis = [u[0], u[1], v[0], v[1], pivot[0], pivot[1]], inverse = invert(basis);
+  if (!inverse && (parameters.width !== undefined || parameters.height !== undefined)) return null;
+  const scale = inverse ? multiply(basis, multiply([sx,0,0,sy,0,0], inverse)) : [1,0,0,1,0,0];
+  const delta = multiply(rotateAbout(pivot, ((parameters.angle ?? info.angle) - info.angle) * Math.PI / 180), scale);
+  const entries = ids.map(id => ({id, transform:nodeFrame(next,id).world}));
+  const transformed = transformNodesInWorld(next, entries, delta);
+  if (transformed === next && (sx !== 1 || sy !== 1 || parameters.angle !== undefined)) return null;
+  next = transformed;
+  const after = geometryInfo(next, ids);
+  const move = translation((parameters.x ?? after.x) - after.x, (parameters.y ?? after.y) - after.y);
+  const moved = transformNodesInWorld(next, ids.map(id => ({id, transform:nodeFrame(next,id).world})), move);
+  return moved === next && (move[4] || move[5]) ? null : constraintsValid(moved) ? moved : null;
+}
+
+export function alignNodes(scene, ids, alignment) {
+  if (ids.length < (alignment?.startsWith("distribute") ? 3 : 2) || ids.some(id => !findNode(scene,id)) || !["left", "center-x", "right", "top", "center-y", "bottom", "distribute-x", "distribute-y"].includes(alignment)) return null;
+  const boxes = ids.map(id => ({id, box:bounds(selectionCorners(scene,[id]))}));
+  const total = bounds(boxes.flatMap(({box}) => [[box.minX,box.minY],[box.maxX,box.maxY]]));
+  const next = cloneScene(scene);
+  if (alignment.startsWith("distribute")) {
+    const horizontal = alignment === "distribute-x", low = horizontal ? "minX" : "minY", high = horizontal ? "maxX" : "maxY";
+    boxes.sort((a,b) => a.box[low] - b.box[low]);
+    const widths = boxes.map(({box}) => box[high] - box[low]);
+    const gap = (boxes.at(-1).box[high] - boxes[0].box[low] - widths.reduce((a,b) => a+b,0)) / (boxes.length - 1);
+    let cursor = boxes[0].box[low];
+    boxes.forEach((entry,index) => { entry.delta = horizontal ? [cursor - entry.box[low],0] : [0,cursor - entry.box[low]]; cursor += widths[index] + gap; });
+  } else {
+    boxes.forEach(entry => {
+      const b = entry.box;
+      entry.delta = [alignment === "left" ? total.minX - b.minX : alignment === "right" ? total.maxX - b.maxX : alignment === "center-x" ? (total.minX + total.maxX - b.minX - b.maxX) / 2 : 0, alignment === "top" ? total.minY - b.minY : alignment === "bottom" ? total.maxY - b.maxY : alignment === "center-y" ? (total.minY + total.maxY - b.minY - b.maxY) / 2 : 0];
+    });
+  }
+  for (const {id, delta} of boxes) {
+    const frame = nodeFrame(scene,id), inverse = invert(frame.parent);
+    if (!inverse) return null;
+    findNode(next,id).node.transform = multiply(inverse, multiply(translation(...delta), frame.world));
+  }
+  return constraintsValid(next) ? next : null;
 }
 
 export function validPolygon(points) {
@@ -581,6 +665,7 @@ export function groupNodes(scene, ids) {
     opacity: 1,
     visible: true,
     nodes: members,
+    pivot: null,
     anchors: [],
   };
   siblings.splice(index, 0, group);
@@ -605,7 +690,7 @@ export function ungroupNode(scene, id) {
     visible: group.visible && child.visible,
   }));
   found.siblings.splice(found.index, 1, ...children);
-  return { scene: next, ids: children.map((child) => child.id) };
+  return constraintsValid(next) ? { scene: next, ids: children.map((child) => child.id) } : null;
 }
 
 export function reparentNode(scene, id, parentId = null) {
@@ -625,7 +710,7 @@ export function reparentNode(scene, id, parentId = null) {
   const destination = parentId ? findNode(next, parentId).node.nodes : next.nodes;
   destination.push(node);
   const height = nodes => Math.max(0, ...nodes.map(n => n.kind === "group" ? 1 + height(n.nodes) : 0));
-  if (height(next.nodes) > MAX_DEPTH) return null;
+  if (height(next.nodes) > MAX_DEPTH || !constraintsValid(next)) return null;
   return {scene: next, id};
 }
 

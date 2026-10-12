@@ -99,6 +99,13 @@ library, skeleton, publishing or export capabilities.
   Guided parameter/preview workflows are a separate follow-up capability.
   Text fields, menus and dialogs retain their
   keyboard behaviour, and Ctrl/Cmd+K remains global search. Ctrl+T is not intercepted.
+- Numeric fields edit the local bounding corner’s scene position, dimensions
+  along object axes, angle in degrees and the stored local pivot. Pivot drag/keys
+  do not alter geometry; rotation uses it. Width-only edits preserve required
+  preset ratios; incompatible paired dimensions and invalid matrices are refused.
+  Edge/centre alignment and equal-gap distribution translate normalized selections.
+  Compact numeric commands include `move/position/size/angle/pivot/radius/parent/align`
+  (Italian aliases accepted); Guided exposes the same actions/validated parameters.
 - Undo/redo is in-memory and bounded to 60 completed operations. A drag or
   property change is one step; view changes and selection are excluded.
 - A stale save returns 409 and retains local work. **Salva come copia** creates
@@ -119,7 +126,7 @@ library, skeleton, publishing or export capabilities.
 - Alembic creates a `drawings` table with creator, timestamps, optimistic version
   and a JSONB native document. A feature-local `SceneJSON` adapter keeps the
   model attribute typed as `SceneDocument`; a save replaces the complete value.
-- Format version 2 stores an artboard and ordered polygon/ellipse/path/group
+- Format version 3 stores an artboard and ordered polygon/ellipse/path/group
   nodes with stable node IDs, names, affine transforms, styles and visibility.
   Polygon vertices and path handles have node-scoped stable `pointIds`; authored
   anchors have IDs, names, positions and angles. Insert/remove/cut keep surviving
@@ -127,8 +134,10 @@ library, skeleton, publishing or export capabilities.
   Polygon vertices remain ordered coordinate pairs; edge visibility follows each
   outgoing edge. Paths use absolute M/L/C/Z commands. UI selection, viewport,
   handles and guides are not saved as artwork.
-- Version 1 is explicitly upgraded in memory on read, with deterministic IDs and
-  no inferred preset locks. Geometry, transforms and styles are unchanged. The
+- Versions 1/2 are explicitly upgraded in memory on read. Version 1 receives
+  deterministic IDs without inferred preset locks; version 2 retains existing
+  locks/identities. Version 3 adds a nullable local transform pivot. Geometry,
+  transforms and styles are unchanged. The
   database row is rewritten only by explicit Save; no schema reset is required.
   Unknown versions and version-2 metadata disguised as version 1 are rejected.
 - Optional typed primitive constraints validate geometry in local and composed
@@ -168,7 +177,7 @@ specimen in the component showcase.
   polyline/cubic editing does not offer a full path-boolean toolset.
 - Groups must be consecutive siblings to preserve overlap order. The layer list
   is a connected, collapsible scene tree. Group styling is not exposed.
-- No angle snapping or zoom readout/fit control. Numeric coordinate
-  authoring and linked-asset overrides are deferred; stable native IDs are present.
+- No angle snapping or zoom readout/fit control. Linked-asset overrides are
+  deferred; stable native identities and numeric geometry are present.
 - JavaScript is required for complete interactive rendering, including groups;
   the server-rendered first paint is not a complete no-JavaScript renderer.

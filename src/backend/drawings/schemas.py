@@ -22,7 +22,7 @@ from pydantic import ConfigDict, Field, model_validator
 from ..concurrency import VersionedResponse, VersionedUpdate
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 
-SCENE_FORMAT_VERSION = 2
+SCENE_FORMAT_VERSION = 3
 
 # Bounds: a drawing is a bounded illustration, not an unlimited scene. The
 # numbers are generous for the intended artwork and keep a request cheap to
@@ -95,6 +95,7 @@ class NodeBase(AppBaseModel):
     transform: Matrix = (1.0, 0.0, 0.0, 1.0, 0.0, 0.0)
     opacity: Opacity = 1.0
     visible: bool = True
+    pivot: Point | None = None
     anchors: Annotated[list[NativeAnchor], Field(max_length=256)] = Field(
         default_factory=list
     )
@@ -213,14 +214,13 @@ class SceneDocument(AppBaseModel):
 
     @model_validator(mode="before")
     @classmethod
-    def _migrate_v1(cls, value: Any) -> Any:
-        if (
-            not isinstance(value, dict)
-            or value.get(
-                "schemaVersion", value.get("schema_version", SCENE_FORMAT_VERSION)
-            )
-            != 1
-        ):
+    def _migrate_legacy(cls, value: Any) -> Any:
+        if not isinstance(value, dict):
+            return value
+        version = value.get(
+            "schemaVersion", value.get("schema_version", SCENE_FORMAT_VERSION)
+        )
+        if version not in (1, 2):
             return value
         if not isinstance(value.get("nodes", []), list):
             raise ValueError("drawing nodes must be a list")
@@ -234,11 +234,15 @@ class SceneDocument(AppBaseModel):
                 raise ValueError("drawing has too many nodes")
             if not isinstance(node, dict):
                 continue
-            if any(
+            if version == 1 and any(
                 key in node
                 for key in ("constraint", "anchors", "pointIds", "point_ids")
             ):
                 raise ValueError("version 1 cannot contain version 2 geometry metadata")
+            if "pivot" in node:
+                raise ValueError(
+                    "legacy versions cannot contain version 3 pivot metadata"
+                )
             if node.get("kind") == "group":
                 if not isinstance(node.get("nodes", []), list):
                     raise ValueError("group nodes must be a list")

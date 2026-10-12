@@ -65,6 +65,10 @@
         <span class="drawing-editor__field-label">Azione</span>
         <select class="drawing-editor__name" data-canvas-command-action aria-label="Azione canvas"></select>
       </label>
+      <label class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Parametri (unità tavola)</span>
+        <input class="drawing-editor__name" data-canvas-command-parameters maxlength="255" aria-label="Parametri comando" placeholder="dx dy / x y larghezza altezza angolo" />
+      </label>
       <common.Button size="sm" variant="primary" data-canvas-command-apply>Applica</common.Button>
     </div>
     <p class="hint" data-canvas-command-status role="status" aria-live="polite"></p>
@@ -227,6 +231,24 @@
         </div>
         <p class="hint" data-drawing-constraint>Geometria libera</p>
         <common.Button size="xs" variant="secondary" icon="lock-open" data-drawing-unlock disabled={{ not editable }}>Sblocca geometria</common.Button>
+        <fieldset class="drawing-editor__geometry" data-geometry-parameters hidden>
+          <legend class="hint">Scena · assi oggetto · pivot locale</legend>
+          {% for field, label in [('x', 'X scena (angolo locale)'), ('y', 'Y scena (angolo locale)'), ('width', 'Larghezza asse'), ('height', 'Altezza asse'), ('angle', 'Angolo (gradi)'), ('pivotX', 'Pivot X locale'), ('pivotY', 'Pivot Y locale')] %}
+          <label class="drawing-editor__field">
+            <span class="drawing-editor__field-label">{{ label }}</span>
+            <input class="drawing-editor__name" type="number" step="any" data-geometry-field="{{ field }}" aria-label="{{ label }}" max="100000" min="{{ '0.1' if field in ['width', 'height'] else '-100000' }}" />
+          </label>
+          {% endfor %}
+        </fieldset>
+        <div class="drawing-editor__field" data-align-controls>
+          <label class="drawing-editor__field-label" for="drawing-alignment">Allineamento / spazi</label>
+          <select class="drawing-editor__name" id="drawing-alignment" data-geometry-align aria-label="Allineamento">
+            <option value="left">Sinistra</option><option value="center-x">Centro orizzontale</option><option value="right">Destra</option>
+            <option value="top">Alto</option><option value="center-y">Centro verticale</option><option value="bottom">Basso</option>
+            <option value="distribute-x">Spazi orizzontali</option><option value="distribute-y">Spazi verticali</option>
+          </select>
+          <common.Button size="xs" variant="secondary" data-geometry-align-apply>Applica allineamento</common.Button>
+        </div>
         <fieldset class="drawing-editor__geometry" data-ellipse-parameters hidden>
           <legend class="hint">Coordinate locali · unità tavola</legend>
           {% for field, label in [('cx', 'Centro X'), ('cy', 'Centro Y'), ('rx', 'Raggio orizzontale'), ('ry', 'Raggio verticale')] %}

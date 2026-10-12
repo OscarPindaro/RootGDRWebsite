@@ -69,7 +69,7 @@ def test_legacy_native_migration_is_deterministic_and_does_not_infer_locks():
     }
     first = SceneDocument.model_validate(legacy)
     second = SceneDocument.model_validate(legacy)
-    assert first.schema_version == 2
+    assert first.schema_version == 3
     assert first == second
     assert first.nodes[0].constraint is None
     assert first.nodes[0].point_ids == ["v0", "v1", "v2"]
@@ -191,6 +191,33 @@ def test_reflected_uniform_circle_transform_and_legacy_named_ellipse_remain_vali
     )
     assert legacy.nodes[0].constraint is None
     assert legacy.nodes[0].rx == 30 and legacy.nodes[0].ry == 15
+
+
+def test_transform_pivots_round_trip_and_version_two_keeps_geometry_locks():
+    old = {
+        "schemaVersion": 2,
+        "nodes": [
+            {
+                "kind": "polygon",
+                "id": "p",
+                "name": "Square",
+                "points": [[0, 0], [100, 0], [100, 100], [0, 100]],
+                "pointIds": ["a", "b", "c", "d"],
+                "constraint": {"kind": "square"},
+            }
+        ],
+    }
+    migrated = SceneDocument.model_validate(old)
+    assert migrated.schema_version == 3
+    assert migrated.nodes[0].point_ids == ["a", "b", "c", "d"]
+    assert migrated.nodes[0].constraint.kind == "square"
+    assert migrated.nodes[0].pivot is None
+    migrated.nodes[0].pivot = (20, 30)
+    assert SceneDocument.model_validate(migrated.model_dump(by_alias=True)).nodes[
+        0
+    ].pivot == (20, 30)
+    with pytest.raises(ValidationError):
+        migrated.nodes[0].pivot = (float("nan"), 0)
 
 
 def test_curve_and_anchor_identities_round_trip():

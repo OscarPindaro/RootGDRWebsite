@@ -6,7 +6,7 @@
    transform applied, so a handle stays the same size on screen. */
 
 import { apply, multiply } from "./geometry.js";
-import { nodeFrame, pathHandles, selectionCorners } from "./scene.js";
+import { nodeFrame, nodeCenter, pathHandles, selectionCorners } from "./scene.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -162,6 +162,10 @@ function overlayElements(scene, view) {
     const rotate = [top[0] + outward[0] * 28, top[1] + outward[1] * 28];
     elements.push(el("line", { class: "drawing-editor__rotate-stem", x1: top[0], y1: top[1], x2: rotate[0], y2: rotate[1] }));
     elements.push(el("circle", { class: "drawing-editor__rotate-handle", cx: rotate[0], cy: rotate[1], r: 6 }));
+    if (ids.length === 1) {
+      const pivot = apply(toView, node.pivot || nodeCenter(node));
+      elements.push(el("circle", {class:"drawing-editor__handle", cx:pivot[0], cy:pivot[1], r:5, "data-transform-pivot":"true", role:"button", tabindex:0, "aria-label":"Pivot della trasformazione"}));
+    }
   }
 
   if (view.mode === "vertex" && node.kind === "polygon") {

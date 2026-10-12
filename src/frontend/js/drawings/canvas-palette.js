@@ -23,16 +23,38 @@ export function parseCompact(text, currentKind = null) {
   return SHAPES.find(shape => shape.aliases.includes(term)) || null;
 }
 
+export function parseNumericCommand(text) {
+  const [token, ...values] = String(text).trim().split(/\s+/), raw = token.toLocaleLowerCase();
+  const command = {sposta:"move", dimensioni:"size", posizione:"position", angolo:"angle", perno:"pivot", raggio:"radius", allinea:"align", genitore:"parent", "ellipse-parameter":"radius"}[raw] || raw;
+  if (command === "parent" && values.length === 1) return /^(?:[a-zA-Z0-9_-]{1,64})$/.test(values[0]) ? {id:"parent", label:"Genitore", parameters:{parent:["root", "scena"].includes(values[0].toLocaleLowerCase()) ? null : values[0]}} : null;
+  if (command === "align" && values.length === 1) {
+    const value = values[0].toLocaleLowerCase(), alignment = {sinistra:"left", destra:"right", alto:"top", basso:"bottom"}[value] || value;
+    return ["left", "right", "top", "bottom", "center-x", "center-y", "distribute-x", "distribute-y"].includes(alignment) ? {id:"align", label:"Allinea", parameters:{alignment}} : null;
+  }
+  const numbers = values.map(Number);
+  if (!numbers.every(Number.isFinite)) return null;
+  if (command === "move" && numbers.length === 2) return {id:"move", label:"Sposta", parameters:{dx:numbers[0], dy:numbers[1]}};
+  if (["size", "position", "pivot"].includes(command) && numbers.length === 2) {
+    const fields = command === "size" ? ["width", "height"] : command === "position" ? ["x", "y"] : ["pivotX", "pivotY"];
+    return {id:"geometry", label:"Geometria numerica", parameters:{[fields[0]]:numbers[0], [fields[1]]:numbers[1]}};
+  }
+  if (command === "angle" && numbers.length === 1) return {id:"geometry", label:"Angolo", parameters:{angle:numbers[0]}};
+  if (command === "radius" && numbers.length === 1) return {id:"ellipse-parameter", label:"Raggio", parameters:{field:"rx", value:numbers[0]}};
+  if (command === "geometry" && [4,5].includes(numbers.length)) return {id:"geometry", label:"Geometria numerica", parameters:{x:numbers[0],y:numbers[1],width:numbers[2],height:numbers[3], ...(numbers.length === 5 ? {angle:numbers[4]} : {})}};
+  return null;
+}
+
 export function createCanvasPalette(root, editor) {
   const dialog = root.querySelector("#drawing-command-dialog");
   const input = dialog.querySelector("[data-canvas-command-input]");
   const list = dialog.querySelector("[data-canvas-command-options]");
   const guided = dialog.querySelector("[data-canvas-command-action]");
+  const parameterInput = dialog.querySelector("[data-canvas-command-parameters]");
   const output = dialog.querySelector("[data-canvas-command-status]");
   let mode = "compact", active = 0, choices = [], acceptedKind = null;
 
   function commands() {
-    return editor.actions().filter(action => !action.id.startsWith("tool-") && !action.id.startsWith("preset-") && action.id !== "ellipse-parameter");
+    return editor.actions().filter(action => !action.id.startsWith("tool-") && !action.id.startsWith("preset-"));
   }
 
   function position() {
@@ -48,7 +70,14 @@ export function createCanvasPalette(root, editor) {
     const parsed = parseCompact(input.value, acceptedKind);
     const suggestions = shapes.filter(shape => !term || shape.label.toLocaleLowerCase().includes(term) || shape.aliases.some(alias => alias.startsWith(term)) || parsed?.kind === shape.kind);
     choices = suggestions.map(shape => ({...shape, id:"create-preset", enabled:true}));
-    if (!acceptedKind) choices.push(...commands().filter(action => action.label.toLocaleLowerCase().includes(term) || action.id.includes(term)));
+    if (!acceptedKind) {
+      choices.push(...commands().filter(action => action.label.toLocaleLowerCase().includes(term) || action.id.includes(term)));
+      const numeric = parseNumericCommand(input.value);
+      if (numeric) {
+        const action = commands().find(action => action.id === numeric.id);
+        if (action) choices.unshift({...numeric, enabled:action.enabled, label:numeric.label + " · " + JSON.stringify(numeric.parameters)});
+      }
+    }
     active = Math.max(0, Math.min(active, choices.length - 1));
     list.replaceChildren(...choices.map((action, index) => {
       const option = document.createElement("li");
@@ -71,6 +100,7 @@ export function createCanvasPalette(root, editor) {
       return option;
     }));
     if ([...guided.options].some(option => option.value === previous)) guided.value = previous;
+    parameterInput.closest("label").hidden = !commands().find(action => action.id === guided.value)?.parameters;
     const defaults = editor.defaults();
     output.textContent = mode === "guided" ? "Scegli un’azione e applicala. Unità vettoriali della tavola." : acceptedKind
       ? parsed ? `${parsed.label} · riquadro ${Math.round(defaults.width)} × ${Math.round(defaults.height)} unità, centro (${Math.round(defaults.x)}, ${Math.round(defaults.y)}). Invio crea; Escape annulla.` : "Variante sconosciuta: correggi il testo o premi Escape."
@@ -99,7 +129,8 @@ export function createCanvasPalette(root, editor) {
 
   function choose(action) {
     if (action.kind) { acceptedKind = action.kind; input.value = ""; active = 0; render(); input.focus(); }
-    else apply(action.id);
+    else if (action.parameters === true) { output.textContent = "Indica i parametri numerici del comando."; }
+    else apply(action.id, action.parameters);
   }
 
   input.addEventListener("input", () => { active = 0; render(); });
@@ -122,7 +153,15 @@ export function createCanvasPalette(root, editor) {
     }
   });
   dialog.querySelectorAll("[data-canvas-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.canvasMode)));
-  dialog.querySelector("[data-canvas-command-apply]").addEventListener("click", () => apply(guided.value));
+  guided.addEventListener("change", render);
+  dialog.querySelector("[data-canvas-command-apply]").addEventListener("click", () => {
+    const action = commands().find(action => action.id === guided.value);
+    if (action?.parameters) {
+      const numeric = parseNumericCommand(guided.value + " " + parameterInput.value);
+      if (!numeric) { output.textContent = "Parametri non validi: usa numeri finiti, un gruppo o un allineamento."; return; }
+      apply(numeric.id, numeric.parameters);
+    } else apply(guided.value);
+  });
   dialog.addEventListener("close", () => { acceptedKind = null; input.value = ""; active = 0; });
   setMode(mode);
   window.addEventListener("resize", position);
@@ -130,6 +169,6 @@ export function createCanvasPalette(root, editor) {
   return {
     open(opener) { render(); window.rootGdrDialog.open(dialog, opener); position(); (mode === "compact" ? input : guided).focus(); },
     get mode() { return mode; },
-    get draft() { return {mode, text:input.value, action:guided.value, kind:acceptedKind}; },
+    get draft() { return {mode, text:input.value, action:guided.value, parameters:parameterInput.value, kind:acceptedKind}; },
   };
 }

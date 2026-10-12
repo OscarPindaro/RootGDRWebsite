@@ -51,7 +51,7 @@ import { visibleRuns } from "../../src/frontend/js/drawings/render.js";
 const IDENTITY = [1, 0, 0, 1, 0, 0];
 
 function sceneWith(nodes) {
-  return { schemaVersion: 2, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
+  return { schemaVersion: 3, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
 }
 
 function triangle(id = "a") {
@@ -452,7 +452,7 @@ test("native migration preserves legacy geometry and assigns stable scoped ident
   delete legacy.nodes[0].pointIds;
   delete legacy.nodes[0].constraint;
   const migrated = migrateScene(legacy);
-  assert.equal(migrated.schemaVersion, 2);
+  assert.equal(migrated.schemaVersion, 3);
   assert.equal(legacy.schemaVersion, 1);
   assert.deepEqual(migrated.nodes[0].points, legacy.nodes[0].points);
   assert.deepEqual(migrated.nodes[0].pointIds, ["v0","v1","v2"]);
@@ -549,4 +549,46 @@ test("compact commands parse triangle refinements without evaluating unknown inp
   assert.equal(parseCompact("", "triangle_right_left").kind,"triangle_right_left");
   assert.equal(parseCompact("rect invalid","triangle_isosceles"),null);
   assert.equal(parseCompact("window.alert(1)"),null);
+});
+
+test("numeric geometry and local pivots preserve nested locks and reject incompatible dimensions", async () => {
+  const {createPreset, geometryInfo, editGeometry, nodeFrame} = await import("../../src/frontend/js/drawings/scene.js");
+  const node = {...createPreset("square",[100,100],[200,200]),id:"p",pivot:null};
+  const scene = sceneWith([{kind:"group",id:"g",name:"Group",transform:[2,0,0,2,20,30],opacity:1,visible:true,pivot:null,anchors:[],nodes:[node]}]);
+  const before = geometryInfo(scene,["p"]);
+  assert.equal(before.width,200);
+  const edited = editGeometry(scene,["p"],{width:300, x:250, y:300, pivotX:120, pivotY:130});
+  assert.ok(edited);
+  assert.equal(geometryInfo(edited,["p"]).width,300);
+  assert.deepEqual(findNode(edited,"p").node.pivot,[120,130]);
+  assert.equal(findNode(edited,"p").node.constraint.kind,"square");
+  assert.deepEqual(findNode(edited,"p").node.pointIds,node.pointIds);
+  assert.equal(editGeometry(scene,["p"],{width:200,height:100}),null);
+  assert.equal(editGeometry(scene,["p"],{width:NaN}),null);
+  assert.deepEqual(nodeFrame(scene,"p").world,[2,0,0,2,20,30]);
+});
+
+test("alignment and spacing distribution only translate complete selections", async () => {
+  const {alignNodes, geometryInfo} = await import("../../src/frontend/js/drawings/scene.js");
+  const a = {...createRect("A",[0,0],[40,40]),id:"a"};
+  const b = {...createRect("B",[100,50],[160,90]),id:"b"};
+  const c = {...createRect("C",[300,100],[380,140]),id:"c"};
+  const scene=sceneWith([a,b,c]);
+  const aligned=alignNodes(scene,["a","b","c"],"top");
+  assert.deepEqual(["a","b","c"].map(id => geometryInfo(aligned,[id]).y),[0,0,0]);
+  const spread=alignNodes(scene,["a","b","c"],"distribute-x");
+  const boxes=["a","b","c"].map(id => geometryInfo(spread,[id]));
+  assert.equal(boxes[1].x-(boxes[0].x+boxes[0].width),boxes[2].x-(boxes[1].x+boxes[1].width));
+  assert.equal(alignNodes(scene,["a"],"left"),null);
+});
+
+test("numeric command parsing is bounded and preserves case-sensitive parent identities", async () => {
+  const {parseNumericCommand} = await import("../../src/frontend/js/drawings/canvas-palette.js");
+  assert.deepEqual(parseNumericCommand("move 20 30").parameters,{dx:20,dy:30});
+  assert.deepEqual(parseNumericCommand("pivot 50 60").parameters,{pivotX:50,pivotY:60});
+  assert.deepEqual(parseNumericCommand("parent HeadGroup").parameters,{parent:"HeadGroup"});
+  assert.deepEqual(parseNumericCommand("parent root").parameters,{parent:null});
+  assert.equal(parseNumericCommand("move NaN 20"),null);
+  assert.equal(parseNumericCommand("align unknown"),null);
+  assert.equal(parseNumericCommand("eval 10 20"),null);
 });

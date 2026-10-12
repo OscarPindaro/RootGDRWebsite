@@ -32,6 +32,10 @@ import {
   groupNodes,
   nodeAt,
   nodeBounds,
+  nodeCenter,
+  geometryInfo,
+  editGeometry,
+  alignNodes,
   nodeFrame,
   movePathPoint,
   pathCommands,
@@ -112,7 +116,7 @@ export function createController(root) {
   let commandPalette = null;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
-  let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 2, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
+  let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 3, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
   const history = new History(scene);
   let selection = [];
   let selectedId = null;
@@ -778,6 +782,10 @@ export function createController(root) {
       return;
     }
 
+    if (target.dataset.transformPivot && selection.length === 1) {
+      drag = {kind:"pivot", id:selectedId, transform:nodeFrame(scene,selectedId).world};
+      return;
+    }
     if (target.dataset.vertex !== undefined && mode === "vertex" && selectedId) {
       const node = selected().node;
       if (event.altKey) {
@@ -814,7 +822,7 @@ export function createController(root) {
     if (target.classList.contains("drawing-editor__rotate-handle") && selectedId && tool === "select") {
       const node = selected().node;
       const corners = selectionCorners(scene, selection);
-      const center = [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
+      const center = selection.length === 1 ? apply(nodeFrame(scene,selectedId).world, node.pivot || nodeCenter(node)) : [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
       drag = { kind: "rotate", transforms: selection.map(id => ({ id, transform: nodeFrame(scene, id).world })), center, start: Math.atan2(scenePoint(event)[1] - center[1], scenePoint(event)[0] - center[0]) };
       return;
     }
@@ -918,6 +926,12 @@ export function createController(root) {
       draw();
       return;
     }
+    if (drag.kind === "pivot") {
+      const snapped = snapWorld(scenePoint(event), null, -1, event.altKey, selection);
+      snapFeedback(snapped);
+      scene = patchNode(scene, drag.id, {pivot:apply(invert(drag.transform),snapped.point).map(round)});
+      draw(); return;
+    }
     if (drag.kind === "path") {
       const snapped = snapWorld(scenePoint(event), null, -1, event.altKey, selection);
       const local = apply(invert(drag.transform), snapped.point);
@@ -960,7 +974,7 @@ export function createController(root) {
     snapGuides = [];
     if (finished.kind === "create") finishShape();
     else if (finished.kind === "line") finishLine();
-    else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex" || finished.kind === "path" || finished.kind === "ellipse") {
+    else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex" || finished.kind === "path" || finished.kind === "ellipse" || finished.kind === "pivot") {
       drag = null;
       commit(scene);
     } else {
@@ -1030,6 +1044,13 @@ export function createController(root) {
       return;
     }
     if (event.target.closest("input, textarea, select, [contenteditable]:not([contenteditable='false'])")) return;
+    if (event.target.dataset.transformPivot && selectedId && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
+      event.preventDefault();
+      const pivot = selected().node.pivot || nodeCenter(selected().node), step = event.shiftKey ? 10 : 1;
+      execute("geometry", {pivotX:pivot[0] + (event.key === "ArrowRight" ? step : event.key === "ArrowLeft" ? -step : 0), pivotY:pivot[1] + (event.key === "ArrowDown" ? step : event.key === "ArrowUp" ? -step : 0)});
+      svg.querySelector("[data-transform-pivot]")?.focus();
+      return;
+    }
     if (mode === "vertex" && event.target.dataset.ellipseAxis && selectedId && ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
       event.preventDefault();
       const axis = event.target.dataset.ellipseAxis, node = selected().node;
@@ -1239,8 +1260,35 @@ export function createController(root) {
     else { announce(""); commit(next); }
   }
 
+  function geometryResult(action, parameters = {}) {
+    if (!parameters || typeof parameters !== "object" || Array.isArray(parameters)) return null;
+    if (action === "geometry") return editGeometry(scene, selection, parameters);
+    if (action === "align") return alignNodes(scene, selection, parameters.alignment);
+    if (action === "parent") {
+      if (selection.length !== 1 || !(parameters.parent === null || typeof parameters.parent === "string")) return null;
+      return reparentNode(scene, selectedId, parameters.parent)?.scene || null;
+    }
+    if (action === "move") {
+      const {dx, dy} = parameters;
+      if (![dx, dy].every(Number.isFinite) || Math.abs(dx) > 100000 || Math.abs(dy) > 100000) return null;
+      const next = transformNodesInWorld(scene, selection.map(id => ({id, transform:nodeFrame(scene,id).world})), translation(dx,dy));
+      return next === scene ? null : next;
+    }
+    return null;
+  }
+
+  function geometryCommand(action, parameters) {
+    const next = geometryResult(action, parameters);
+    if (!next) { announce("Operazione non valida: controlla unità, selezione, gerarchia e vincoli."); syncControls(); return false; }
+    announce(""); commit(next); return true;
+  }
+
   const actions = {
     "create-preset": { label: "Crea forma", enabled: () => true, run: createCommand },
+    geometry: {label:"Geometria numerica", parameters:true, enabled:() => selection.length > 0, run:parameters => geometryCommand("geometry",parameters)},
+    move: {label:"Sposta", parameters:true, enabled:() => selection.length > 0, run:parameters => geometryCommand("move",parameters)},
+    parent: {label:"Genitore", parameters:true, enabled:() => selection.length === 1, run:parameters => geometryCommand("parent",parameters)},
+    align: {label:"Allinea", parameters:true, enabled:() => selection.length > 1, run:parameters => geometryCommand("align",parameters)},
     select: { label: "Seleziona", enabled: () => true, run: () => setMode("select") },
     edit: { label: "Modifica forma", enabled: () => selection.length === 1 && selected()?.node.kind !== "group", run: () => setMode("vertex") },
     transform: { label: "Trasforma", enabled: () => selection.length > 0, run: () => setMode("transform") },
@@ -1256,7 +1304,7 @@ export function createController(root) {
     front: { label: "Primo piano", enabled: () => selection.length === 1 && selected().index < selected().siblings.length - 1, run: () => commit(reorderNode(scene, selectedId, selected().siblings.length)) },
     back: { label: "Sfondo", enabled: () => selection.length === 1 && selected().index > 0, run: () => commit(reorderNode(scene, selectedId, -selected().siblings.length)) },
     unlock: { label: "Sblocca geometria", enabled: () => selection.length === 1 && Boolean(selected()?.node.constraint), run: () => commit(patchNode(scene, selectedId, { constraint: null })) },
-    "ellipse-parameter": { label: "Modifica centro e raggi", enabled: () => selection.length === 1 && selected()?.node.kind === "ellipse", run: setEllipseParameter },
+    "ellipse-parameter": { label: "Modifica centro e raggi", parameters:true, enabled: () => selection.length === 1 && selected()?.node.kind === "ellipse", run: setEllipseParameter },
   };
 
   for (const name of [...Object.keys(SHAPE_NAMES), "curve", "cut"]) {
@@ -1343,6 +1391,15 @@ export function createController(root) {
     selectButton.classList.toggle("btn-selected", tool === "select" && mode === "select");
     selectButton.setAttribute("aria-pressed", String(tool === "select" && mode === "select"));
     root.querySelector("[data-drawing-mode-label]").textContent = tool === "select" ? {select:"Seleziona", vertex:"Modifica forma", transform:"Trasforma"}[mode] : PRESET_LABELS[creationPreset] || SHAPE_NAMES[tool] || (tool === "curve" ? "Curva" : "Taglia");
+    const geometry = geometryInfo(scene, selection);
+    root.querySelector("[data-geometry-parameters]").hidden = !geometry;
+    root.querySelectorAll("[data-geometry-field]").forEach(input => {
+      const field = input.dataset.geometryField;
+      input.disabled = !canExecute("geometry") || (field.startsWith("pivot") && selection.length !== 1) || (["width", "height"].includes(field) && !geometry?.[field]);
+      if (geometry && document.activeElement !== input) input.value = round(geometry[field]);
+    });
+    root.querySelector("[data-geometry-align-apply]").disabled = !canExecute("align");
+    root.querySelector("[data-align-controls]").hidden = selection.length < 2;
     root.querySelector("[data-ellipse-parameters]").hidden = selection.length !== 1 || node?.kind !== "ellipse";
     root.querySelectorAll("[data-ellipse-parameter]").forEach(input => {
       input.disabled = !canExecute("ellipse-parameter");
@@ -1363,7 +1420,7 @@ export function createController(root) {
   }
 
   function wire() {
-    commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id)})), execute, defaults:creationDefaults});
+    commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id), parameters:Boolean(action.parameters)})), execute, defaults:creationDefaults});
     root.querySelector("[data-drawing-commands]").addEventListener("click", event => commandPalette.open(event.currentTarget));
     const grid = root.querySelector("[data-drawing-grid]");
     grid.addEventListener("click", () => {
@@ -1398,6 +1455,10 @@ export function createController(root) {
     root.querySelectorAll("[data-ellipse-parameter]").forEach(input => {
       input.addEventListener("change", () => execute("ellipse-parameter", {field:input.dataset.ellipseParameter, value:input.valueAsNumber}));
     });
+    root.querySelectorAll("[data-geometry-field]").forEach(input => {
+      input.addEventListener("change", () => execute("geometry", {[input.dataset.geometryField]:input.valueAsNumber}));
+    });
+    root.querySelector("[data-geometry-align-apply]").addEventListener("click", () => execute("align", {alignment:root.querySelector("[data-geometry-align]").value}));
     root.querySelector("[data-regular-sides]").addEventListener("change", event => {
       const value = Number(event.target.value);
       if (Number.isInteger(value) && value >= 3 && value <= 32) regularSides = value;
@@ -1444,11 +1505,7 @@ export function createController(root) {
       });
     }
     const parentInput = root.querySelector("[data-node-parent]");
-    parentInput.addEventListener("change", () => {
-      const result = reparentNode(scene, selectedId, parentInput.value || null);
-      if (result) commit(result.scene);
-      else { announce("Il genitore non è valido: controlla la gerarchia e la profondità."); syncControls(); }
-    });
+    parentInput.addEventListener("change", () => execute("parent", {parent:parentInput.value || null}));
     const nameInput = root.querySelector("[data-node-name]");
     if (nameInput) {
       nameInput.addEventListener("change", () => renameSelected(nameInput.value));
@@ -1613,7 +1670,8 @@ export function createController(root) {
     select,
     execute,
     canExecute,
-    get actions() { return Object.entries(actions).map(([id, action]) => ({ id, label: action.label, enabled: canExecute(id) })); },
+    get actions() { return Object.entries(actions).map(([id, action]) => ({ id, label: action.label, enabled: canExecute(id), parameters:Boolean(action.parameters) })); },
+    get geometry() { return geometryInfo(scene, selection); },
     get mode() { return mode; },
     get commandDraft() { return commandPalette?.draft || null; },
     palette: PALETTE,

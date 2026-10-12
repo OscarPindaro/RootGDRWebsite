@@ -143,7 +143,7 @@ def test_the_scene_travels_as_json_for_the_client(component):
     payload = page.evaluate(
         "() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"
     )
-    assert payload["schemaVersion"] == 2
+    assert payload["schemaVersion"] == 3
     assert [node["id"] for node in payload["nodes"]] == ["head", "beak"]
     assert payload["nodes"][1]["points"][1] == [296.0, 120.0]
 
@@ -1319,6 +1319,43 @@ def test_compact_triangle_accepts_then_creates_one_constrained_vector(
     assert len(node["points"]) == 3
     page.get_by_test_id("drawing-undo").click()
     assert _scene_of(page)["nodes"] == []
+
+
+def test_numeric_geometry_and_local_pivot_are_validated_and_undoable(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    width = page.locator("[data-geometry-field='width']")
+    width.fill("450")
+    width.blur()
+    assert page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.geometry.width"
+    ) == pytest.approx(450)
+    pivot = page.locator("[data-geometry-field='pivotX']")
+    pivot.fill("150")
+    pivot.blur()
+    assert _scene_of(page)["nodes"][0]["pivot"] == [150, 250]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["pivot"] is None
+
+
+@pytest.mark.parametrize("mode", ["compact", "guided"])
+def test_numeric_move_commands_share_both_palette_operations(component, mode):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-commands]").click()
+    if mode == "compact":
+        page.locator("[data-canvas-command-input]").fill("move 20 30")
+        page.keyboard.press("Enter")
+    else:
+        page.locator("[data-canvas-mode='guided']").click()
+        page.locator("[data-canvas-command-action]").select_option("move")
+        page.locator("[data-canvas-command-parameters]").fill("20 30")
+        page.locator("[data-canvas-command-apply]").click()
+    assert _scene_of(page)["nodes"][0]["transform"][4:] == [20, 30]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["transform"] == [1, 0, 0, 1, 0, 0]
 
 
 def test_compact_default_dimensions_shrink_to_fit_the_visible_zoomed_canvas(component):

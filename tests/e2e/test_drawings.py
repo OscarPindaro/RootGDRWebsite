@@ -624,6 +624,36 @@ def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
     assert session.expect_api(f"/api/drawings/{target['id']}").status == 200
 
 
+def test_numeric_transform_and_pivot_reopen_with_native_geometry_intact(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (100, 100), (300, 250))
+    before = _local_node_scene(session)["nodes"][0]
+    for field, value in [
+        ("width", "260"),
+        ("pivotX", "150"),
+        ("pivotY", "160"),
+        ("angle", "30"),
+    ]:
+        page.locator(f"[data-geometry-field='{field}']").fill(value)
+        page.locator(f"[data-geometry-field='{field}']").blur()
+    local = _local_node_scene(session)
+    assert local["nodes"][0]["pivot"] == [150, 160]
+    assert local["nodes"][0]["points"] == before["points"]
+    assert local["nodes"][0]["pointIds"] == before["pointIds"]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == local
+
+
 def test_compact_triangle_refinement_saves_an_editable_native_right_triangle(
     session: BrowserSession,
 ):

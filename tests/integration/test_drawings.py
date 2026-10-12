@@ -505,7 +505,7 @@ async def test_legacy_rows_upgrade_in_memory_until_explicit_save(
     app = _app(app_config, db_manager, users["admin"])
     async with await _client(app) as client:
         read = (await client.get(f"/api/drawings/{identifier}")).json()
-        assert read["scene"]["schemaVersion"] == 2
+        assert read["scene"]["schemaVersion"] == 3
         assert read["scene"]["nodes"][0]["constraint"] is None
         assert read["scene"]["nodes"][0]["pointIds"] == ["v0", "v1", "v2"]
         async with db_manager.async_session_maker() as session:
@@ -529,7 +529,32 @@ async def test_legacy_rows_upgrade_in_memory_until_explicit_save(
                 text("SELECT document FROM drawings WHERE id = :id"), {"id": identifier}
             )
         ).scalar_one()
-        assert stored["schema_version"] == 2
+        assert stored["schema_version"] == 3
+
+
+async def test_native_pivot_metadata_is_persisted_without_changing_geometry(
+    app_config, db_manager, users
+):
+    app = _app(app_config, db_manager, users["admin"])
+    async with await _client(app) as client:
+        created = await client.post(
+            "/api/drawings/",
+            json={"title": "Pivot", "scene": _scene().model_dump(by_alias=True)},
+        )
+        assert created.status_code == 201
+        read = created.json()
+        scene = read["scene"]
+        original_points = scene["nodes"][0]["points"]
+        scene["nodes"][0]["pivot"] = [25, 35]
+        saved = await client.patch(
+            f"/api/drawings/{read['id']}",
+            json={"expectedVersion": read["version"], "scene": scene},
+        )
+        assert saved.status_code == 200
+        reopened = (await client.get(f"/api/drawings/{read['id']}")).json()
+        assert reopened["scene"]["schemaVersion"] == 3
+        assert reopened["scene"]["nodes"][0]["pivot"] == [25, 35]
+        assert reopened["scene"]["nodes"][0]["points"] == original_points
 
 
 async def test_locked_native_geometry_and_ids_persist_and_reject_invalid_save(
