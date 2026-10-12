@@ -554,7 +554,6 @@ html[data-accent="gradiente"] .prose a:hover {
      colour swatch. */
   --drawing-tool-rail: 11rem;
   --drawing-side-rail: 17rem;
-  --drawing-artboard-ratio: 4 / 3;
   --drawing-swatch: 1.5rem;
   --drawing-chip: 1.5rem;
   --drawing-layers-height: 20rem;

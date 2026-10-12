@@ -122,6 +122,89 @@ def test_the_layers_list_marks_the_selected_object(component):
     assert page.locator(".drawing-editor__layer.is-selected").count() == 1
 
 
+def test_the_artboard_is_editable_and_stays_a_soft_guide(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    width = page.locator("[data-artboard-field='artboardWidth']")
+    assert width.input_value() == "640"
+    svg = page.locator("[data-drawing-artboard]")
+    assert svg.get_attribute("viewBox") == "-160 -120 960 720", (
+        "a quarter around each edge"
+    )
+
+    width.fill("800")
+    width.blur()
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.artboard.width"
+        )
+        == 800
+    )
+    assert svg.get_attribute("viewBox") == "-200 -120 1200 720"
+
+    page.get_by_test_id("drawing-undo").click()
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.artboard.width"
+        )
+        == 640
+    )
+
+
+def test_an_invalid_artboard_size_is_refused(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    before = _scene_of(page)["artboard"]
+    width = page.locator("[data-artboard-field='artboardWidth']")
+
+    for value in ("0", "-5", "999999"):
+        width.fill(value)
+        width.blur()
+        assert _scene_of(page)["artboard"] == before, value
+        assert "100000" in page.locator("[data-drawing-error]").inner_text()
+    assert width.input_value() == "640", "the field shows the document again"
+
+
+def test_the_artboard_background_is_editable(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    plate = page.locator("[data-drawing-artboard] .drawing-editor__plate")
+    assert plate.get_attribute("fill") == "#fffdf6"
+
+    page.evaluate(
+        """() => {
+            const input = document.querySelector("[data-artboard-field='artboardBackground']");
+            input.value = "#123456";
+            input.dispatchEvent(new Event("change", {bubbles: true}));
+        }"""
+    )
+    assert _scene_of(page)["artboard"]["background"] == "#123456"
+    assert plate.get_attribute("fill") == "#123456"
+
+
+def test_artwork_outside_the_artboard_is_drawn_and_not_clipped(component):
+    scene = _square()
+    scene.nodes.append(
+        PolygonNode(
+            id="far",
+            name="Fuori",
+            points=[(900, 900), (1100, 900), (1000, 1100)],
+            fill="#d1402a",
+        )
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+
+    assert (
+        page.locator("[data-drawing-scene-layer] .drawing-editor__shape").count() == 2
+    )
+    # The artboard stays exactly its own size, so what is outside it is visibly
+    # outside rather than cropped away.
+    view = page.locator("[data-drawing-artboard]").get_attribute("viewBox").split()
+    assert view == ["-160", "-120", "960", "720"]
+    assert page.locator(".drawing-editor__outside").count() == 1
+
+
 def test_the_artboard_shows_the_shapes_and_the_selection_handles(component):
     page = component.mount("editorial.DrawingEditor", props=PROPS)
 

@@ -246,12 +246,21 @@
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: var(--drawing-artboard-ratio);
+  /* The ratio comes from the document's artboard, set inline. */
   /* Pointer drags draw; they must not scroll or zoom the page. */
   touch-action: none;
 }
 
-.drawing-editor__plate { fill: var(--surface); }
+/* Off the artboard the drawing still shows, on the page: the artboard is a
+   guide, so what sits outside it is visible but visibly outside. */
+.drawing-editor__outside { fill: var(--paper-deep); }
+
+.drawing-editor__plate {
+  fill: var(--surface);
+  stroke: var(--line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
 
 .drawing-editor__shape,
 .drawing-editor__command-shape {

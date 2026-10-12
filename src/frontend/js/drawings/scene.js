@@ -168,8 +168,22 @@ export function nodeBounds(node) {
   return bounds(node.points);
 }
 
-export function selectionCorners(scene, ids) {
-  const corners = ids.flatMap(id => {
+/**
+ * The bounds of everything the drawing actually contains, or `null` when there
+ * is nothing visible. This is the alternative to cropping at the artboard: an
+ * export can take the artboard's rectangle, or the rectangle the artwork needs.
+ * Hidden nodes do not extend it, because they are not in the rendered result.
+ */
+export function contentBounds(scene) {
+  const ids = [];
+  walk(scene.nodes, node => {
+    if (node.visible !== false && node.opacity !== 0 && node.kind !== "group") ids.push(node.id);
+  });
+  const corners = ids.flatMap(id => selectionCorners(scene, [id]));
+  return corners.length ? bounds(corners) : null;
+}
+
+export function selectionCorners(scene, ids) {  const corners = ids.flatMap(id => {
     const frame = nodeFrame(scene, id);
     const box = nodeBounds(frame.node);
     return [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]].map(point => apply(frame.world, point));
@@ -580,6 +594,13 @@ export function patchNode(scene, id, patch) {
   if (!found) return next;
   Object.assign(found.node, patch);
   return constraintsValid(next) ? next : scene;
+}
+
+/** Change the artboard, which is a guide and an export rectangle, not a clip. */
+export function patchArtboard(scene, patch) {
+  const next = cloneScene(scene);
+  next.artboard = {...next.artboard, ...patch};
+  return next;
 }
 
 export function setTransform(scene, id, matrix) {

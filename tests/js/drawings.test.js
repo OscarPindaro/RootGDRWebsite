@@ -643,6 +643,27 @@ test("an accepted variant can be restated by any name its family answers to", as
   assert.equal(parseCompact("rettangolo","regular_polygon"),null);
 });
 
+test("the artboard is editable and content bounds are the export alternative", async () => {
+  const {patchArtboard, contentBounds, createRect, createEllipse} = await import("../../src/frontend/js/drawings/scene.js");
+  const scene=sceneWith([{...createRect("Box",[0,0],[100,100]),id:"box"}]);
+  const wide=patchArtboard(scene,{width:800,height:600,background:"#ffffff"});
+  assert.deepEqual(wide.artboard,{width:800,height:600,background:"#ffffff"});
+  assert.deepEqual(scene.artboard,{width:640,height:480,background:"#fffdf6"},"the source is untouched");
+
+  // Content outside the artboard still counts, and hidden nodes do not.
+  const outside=sceneWith([
+    {...createRect("Box",[0,0],[100,100]),id:"box"},
+    {...createEllipse("Far",[900,900],50,50),id:"far"},
+  ]);
+  assert.deepEqual(contentBounds(outside),{minX:0,minY:0,maxX:950,maxY:950});
+  const hidden=sceneWith([{...createRect("Box",[0,0],[100,100]),id:"box",visible:false}]);
+  assert.equal(contentBounds(hidden),null,"nothing visible");
+  assert.equal(contentBounds(sceneWith([])),null);
+  // A node hidden by its parent is not in the rendered result either.
+  const nested=sceneWith([{kind:"group",id:"g",name:"Group",transform:[1,0,0,1,0,0],opacity:1,visible:false,nodes:[{...createRect("Box",[0,0],[100,100]),id:"box"}]}]);
+  assert.deepEqual(contentBounds(nested),{minX:0,minY:0,maxX:100,maxY:100});
+});
+
 test("a line cuts a polygon into two simple pieces and hides the new edges", async () => {
   const {splitPolygonByLine, cutNodesByLine, constraintsValid} = await import("../../src/frontend/js/drawings/scene.js");
   const square=[[0,0],[100,0],[100,100],[0,100]];

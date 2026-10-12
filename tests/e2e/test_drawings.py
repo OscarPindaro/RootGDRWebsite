@@ -87,11 +87,19 @@ def test_a_save_from_another_writer_becomes_a_conflict(
     )
 
 
-def _drag(page, start: tuple[int, int], end: tuple[int, int]) -> None:
-    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
-    page.mouse.move(box["x"] + start[0], box["y"] + start[1])
+def _drag(page, start: tuple[float, float], end: tuple[float, float]) -> None:
+    """Drag between two points given in artboard units.
+
+    Reading the SVG's own screen matrix keeps the helper honest whatever the
+    viewBox is: the artboard shows a margin around itself, so a pixel offset from
+    the canvas corner is not an artboard coordinate.
+    """
+    page.locator("[data-drawing-artboard]").scroll_into_view_if_needed()
+    first = _at(page, start[0], start[1])
+    second = _at(page, end[0], end[1])
+    page.mouse.move(first[0], first[1])
     page.mouse.down()
-    page.mouse.move(box["x"] + end[0], box["y"] + end[1], steps=4)
+    page.mouse.move(second[0], second[1], steps=4)
     page.mouse.up()
 
 

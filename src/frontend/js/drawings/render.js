@@ -264,10 +264,19 @@ function findById(nodes, id) {
 export function render(svg, scene, view) {
   const sceneLayer = svg.querySelector("[data-drawing-scene-layer], [data-preview-scene-layer]");
   const overlay = svg.querySelector("[data-drawing-overlay], [data-preview-overlay]");
+  const { width, height } = scene.artboard;
+  // The artboard is a soft guide: a quarter of it is shown around every edge, so
+  // artwork drawn past it stays visible instead of being clipped away.
+  svg.setAttribute("viewBox", `${-width / 4} ${-height / 4} ${width * 1.5} ${height * 1.5}`);
+  const plate = svg.querySelector(".drawing-editor__plate");
+  plate.setAttribute("x", 0);
+  plate.setAttribute("y", 0);
+  plate.setAttribute("width", width);
+  plate.setAttribute("height", height);
   sceneLayer.setAttribute("transform", matrixAttr(view.viewport));
   svg.querySelector(".drawing-editor__grid, .drawing-editor__preview-grid").setAttribute("transform", matrixAttr(view.viewport));
-  svg.querySelector(".drawing-editor__plate").setAttribute("fill", scene.artboard.background);
-  svg.querySelector(".drawing-editor__plate").style.fill = scene.artboard.background;
+  plate.setAttribute("fill", scene.artboard.background);
+  plate.style.fill = scene.artboard.background;
   sceneLayer.replaceChildren(...scene.nodes.map((node) => shapeElement(node, view)));
   overlay.replaceChildren(...overlayElements(scene, view));
   if (view.snap) {

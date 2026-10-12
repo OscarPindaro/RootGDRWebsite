@@ -222,7 +222,9 @@
     </div>
 
     <div class="drawing-editor__canvas" data-testid="drawing-canvas">
-      <svg class="drawing-editor__artboard" viewBox="0 0 {{ artboard.width if artboard else 640 }} {{ artboard.height if artboard else 480 }}"
+      <svg class="drawing-editor__artboard"
+           viewBox="{{ -(artboard.width if artboard else 640) / 4 }} {{ -(artboard.height if artboard else 480) / 4 }} {{ (artboard.width if artboard else 640) * 1.5 }} {{ (artboard.height if artboard else 480) * 1.5 }}"
+           style="aspect-ratio: {{ (artboard.width if artboard else 640) }} / {{ (artboard.height if artboard else 480) }}"
            role="img" aria-label="Tavola da disegno" tabindex="0" data-drawing-artboard>
         <defs>
           <pattern id="drawing-grid" width="10" height="10" patternUnits="userSpaceOnUse">
@@ -232,7 +234,10 @@
             <circle cx="1" cy="1" r="1" fill="var(--line)" />
           </pattern>
         </defs>
-        <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%" />
+        {# Everything outside the artboard is still drawn, on the page rather
+           than on the plate: the artboard is a guide, not a hard edge. #}
+        <rect class="drawing-editor__outside" x="-100000" y="-100000" width="200000" height="200000" />
+        <rect class="drawing-editor__plate" x="0" y="0" width="{{ artboard.width if artboard else 640 }}" height="{{ artboard.height if artboard else 480 }}" />
         <rect class="drawing-editor__grid" x="-100000" y="-100000" width="200000" height="200000" fill="url(#drawing-grid)" />
         {# The scene layer is rebuilt by the client from the document; the
            server-rendered shapes here are the no-JS first paint. #}
@@ -348,6 +353,26 @@
         </div>
         <p class="hint" data-drawing-constraint>Geometria libera</p>
         <common.Button size="xs" variant="secondary" icon="lock-open" data-drawing-unlock disabled={{ not editable }}>Sblocca geometria</common.Button>
+        <fieldset class="drawing-editor__geometry" data-artboard-parameters>
+          <legend class="hint">Tavola · guida morbida · unità tavola</legend>
+          {% for label, fields in [
+            ('Tavola', [('artboardWidth', 'L', 'Larghezza della tavola'), ('artboardHeight', 'A', 'Altezza della tavola')]),
+          ] %}
+          <div class="drawing-editor__row">
+            <span class="drawing-editor__row-label">{{ label }}</span>
+            {% for field, axis, aria in fields %}
+            <label class="drawing-editor__cell">
+              <span class="drawing-editor__axis" aria-hidden="true">{{ axis }}</span>
+              <input class="drawing-editor__name" type="number" step="any" data-artboard-field="{{ field }}" aria-label="{{ aria }}" min="1" max="100000" />
+            </label>
+            {% endfor %}
+          </div>
+          {% endfor %}
+          <div class="drawing-editor__field">
+            <span class="drawing-editor__field-label">Sfondo</span>
+            <input class="drawing-editor__color" type="color" data-artboard-field="artboardBackground" value="{{ artboard.background if artboard else '#fffdf6' }}" aria-label="Colore di sfondo della tavola" disabled={{ not editable }} />
+          </div>
+        </fieldset>
         <fieldset class="drawing-editor__geometry" data-path-advanced hidden>
           <legend class="hint">Ancora curva · tangenti locali</legend>
           <select class="drawing-editor__name" data-path-anchor-mode aria-label="Comportamento ancora">

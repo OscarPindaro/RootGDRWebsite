@@ -47,6 +47,7 @@ import {
   pathCommands,
   pathPoints,
   patchNode,
+  patchArtboard,
   removeNode,
   reorderNode,
   reparentNode,
@@ -1455,6 +1456,25 @@ export function createController(root) {
     "curve-mode": {label:"Comportamento ancora", parameters:true, enabled:() => selection.length === 1 && selected()?.node.kind === "path", run:parameters => curveCommand("mode",parameters)},
     "curve-insert": {label:"Inserisci punto sulla curva", enabled:() => selection.length === 1 && selected()?.node.kind === "path" && pathCommands(selected().node.d).some(command => command.name === "C"), run:() => curveCommand("insert")},
     "select-all": {label:"Seleziona tutto", enabled:() => scene.nodes.length > 0, run:() => { setSelection(scene.nodes.filter(node => node.visible !== false && node.opacity !== 0 && editableSelection(scene,[node.id])).map(node => node.id)); mode = defaultMode(); draw(); }},
+    artboard: {label:"Tavola", parameters:true, enabled:() => editable && !root.dataset.recoveryPending, run: (parameters = {}) => {
+      const fields = {artboardWidth:"width", artboardHeight:"height", artboardBackground:"background"};
+      const patch = {};
+      for (const [field, value] of Object.entries(parameters)) {
+        const key = fields[field];
+        if (!key) return false;
+        if (key === "background") {
+          if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) { announce("Colore di sfondo non valido."); syncControls(); return false; }
+          patch.background = value.toLowerCase();
+        } else {
+          if (!Number.isFinite(value) || value < 1 || value > 100000) { announce("La tavola deve misurare fra 1 e 100000 unità."); syncControls(); return false; }
+          patch[key] = Math.round(value * 1000) / 1000;
+        }
+      }
+      if (!Object.keys(patch).length) return false;
+      announce("");
+      commit(patchArtboard(scene, patch));
+      return true;
+    }},
     autosave: {label:"Salvataggio automatico", enabled:() => Boolean(saveUrl) && editable, run:() => {
       autosave = !autosave;
       preferences.write("autosave", autosave);
@@ -1525,6 +1545,12 @@ export function createController(root) {
     root.querySelectorAll("[data-drawing-autosave]").forEach(item => item.setAttribute("aria-checked", String(autosave)));
     root.querySelectorAll("[data-drawing-grid-dots]").forEach(item => item.setAttribute("aria-checked", String(gridStyle === "dots")));
     applyGridStyle();
+    const artboardFields = {artboardWidth: scene.artboard.width, artboardHeight: scene.artboard.height, artboardBackground: scene.artboard.background};
+    root.querySelectorAll("[data-artboard-field]").forEach(input => {
+      const field = input.dataset.artboardField;
+      input.disabled = !editable || Boolean(root.dataset.recoveryPending);
+      if (document.activeElement !== input) input.value = artboardFields[field];
+    });
     root.querySelector("[data-drawing-zoom]").textContent = Math.round(viewport[0] * 100) + "%";
     const undoButton = root.querySelector("[data-drawing-undo]");
     const redoButton = root.querySelector("[data-drawing-redo]");
@@ -1590,6 +1616,19 @@ export function createController(root) {
     root.querySelector("[data-path-anchor-mode]").disabled = !canExecute("curve-mode");
     root.querySelector("[data-path-anchor-insert]").disabled = !canExecute("curve-insert");
     if (node?.kind === "path") root.querySelector("[data-path-anchor-mode]").value = node.anchorModes?.find(entry => entry.id === node.pointIds[pathAnchorIndex(node)])?.mode || "corner";
+    root.querySelectorAll("[data-artboard-field]").forEach(input => {
+      input.addEventListener("change", () => {
+        const field = input.dataset.artboardField;
+        const value = field === "artboardBackground" ? input.value : input.valueAsNumber;
+        // A refused value is written back to the field, which fires another
+        // change. That echo is not an edit: acting on it would clear the
+        // explanation the user needs.
+        const current = field === "artboardBackground" ? scene.artboard.background
+          : field === "artboardWidth" ? scene.artboard.width : scene.artboard.height;
+        if (value === current) return;
+        execute("artboard", {[field]: value});
+      });
+    });
     root.querySelectorAll("[data-geometry-field]").forEach(input => {
       const field = input.dataset.geometryField;
       input.disabled = !canExecute("geometry") || (field.startsWith("pivot") && selection.length !== 1) || (["width", "height"].includes(field) && !geometry?.[field]);

@@ -144,6 +144,15 @@ library, skeleton, publishing or export capabilities.
   insert-point action splits the selected cubic segment at its midpoint using
   de Casteljau, preserving appearance and existing endpoint identities. New midpoint
   identity/mode, copy and undo/reopen retain editable multi-segment cubic semantics.
+- The artboard is an editable rectangle: its width, height and background are
+  document data, set from the inspector and undoable like any other change. It is
+  a **soft guide**, not a clip — the editor shows a quarter of the artboard's size
+  around every edge, so artwork drawn past it stays visible on the page while the
+  artboard itself keeps its own background and rule. The SVG view box and the
+  element's aspect ratio follow the document, not a fixed token. A drawing
+  therefore has two rectangles an export can use: the artboard, or the bounds of
+  everything visible (`contentBounds`), which is the current no-canvas-size
+  behaviour.
 - Numeric fields edit the local bounding corner’s scene position, dimensions
   along object axes, angle in degrees and the stored local pivot. Pivot drag/keys
   do not alter geometry; rotation uses it. Width-only edits preserve required
@@ -241,7 +250,8 @@ specimen in the component showcase.
   welded, and polyline/cubic editing does not offer a full path-boolean toolset.
 - Groups must be consecutive siblings to preserve overlap order. The layer list
   is a connected, collapsible scene tree. Group styling is not exposed.
-- No angle snapping. Linked-asset overrides are
+- No angle snapping, and no per-drawing artboard preset beyond editing the two
+  numbers. Linked-asset overrides are
   deferred; stable native identities and numeric geometry are present.
 - JavaScript is required for complete interactive rendering, including groups;
   the server-rendered first paint is not a complete no-JavaScript renderer.
