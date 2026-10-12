@@ -147,6 +147,13 @@ removes run-owned staging and resumes only previously running containers of the
 backup leaves them stopped for the caller's migration. No backup path migrates or
 restores application data.
 
+A receipt is the one private file `seal` may replace. Its path is the deployment's
+run UUID, so a second rollout of the *same* deployment refreshes its own record
+instead of failing: the write is atomic, and the superseded snapshot stays in the
+repository whether or not its receipt survives. Every other private write refuses
+to overwrite. Weekly specs still get a fresh UUID, so a periodic copy can never
+land on a deployment's receipt.
+
 Role inputs are `backup_spec`, `backup_application_base`, argv lists
 `backup_capture_command`/`backup_controller_command`, and controller-only paths
 `backup_storage_file`/`backup_receipt_file`. Both commands invoke the same pinned

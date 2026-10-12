@@ -13,6 +13,8 @@ from harness.deploy.backup import (
     BackupError,
     file_inventory,
     private_directory,
+    replace_private,
+    write_private,
 )
 from harness.deploy.backup_storage import RESTIC_IMAGE
 from harness.deploy.backup_schemas import (
@@ -26,6 +28,19 @@ from harness.deploy.backup_schemas import (
 @pytest.mark.parametrize("image", [HELPER_IMAGE, POSTGRES_IMAGE, RESTIC_IMAGE])
 def test_recovery_images_are_immutable(image):
     assert re.search(r"@sha256:[a-f0-9]{64}$", image)
+
+
+def test_a_receipt_is_replaced_while_other_private_files_are_not(tmp_path):
+    """A record is never clobbered; a deployment's own receipt is refreshed."""
+    receipt = tmp_path / "a8fcbcb7.receipt.json"
+    write_private(receipt, b"first")
+    with pytest.raises(FileExistsError):
+        write_private(receipt, b"second")
+
+    replace_private(receipt, b"second")
+    assert receipt.read_bytes() == b"second"
+    assert receipt.stat().st_mode & 0o777 == 0o600
+    assert not (tmp_path / "a8fcbcb7.receipt.json.replacing").exists()
 
 
 @pytest.mark.parametrize("value", ["../escape", "/live", "a/../b", "a//b", ".", "a\\b"])

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
-from .backup import BackupError, capture, verify_bundle, write_private
+from .backup import BackupError, capture, replace_private, verify_bundle, write_private
 from .backup_restore import restore_encrypted
 from .backup_schemas import BackupReceipt, CaptureSpec, RestoreSpec, StorageSpec
 from .backup_storage import initialize_storage, seal
@@ -47,7 +47,7 @@ def main() -> int:
                 StorageSpec.model_validate_json(args.storage.read_bytes()),
                 args.directory,
             )
-            write_private(args.receipt, receipt.model_dump_json(indent=2).encode())
+            replace_private(args.receipt, receipt.model_dump_json(indent=2).encode())
         elif args.operation == "restore":
             result = restore_encrypted(
                 StorageSpec.model_validate_json(args.storage.read_bytes()),

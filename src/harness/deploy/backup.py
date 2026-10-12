@@ -120,6 +120,26 @@ def write_private(path: Path, content: bytes) -> None:
         stream.write(content)
 
 
+def replace_private(path: Path, content: bytes) -> None:
+    """Write a private file, replacing one that is already there.
+
+    ``write_private`` refuses to overwrite, which is what a manifest or a
+    capture needs: it must never clobber a record. A receipt is the exception.
+    Its path is the deployment's run id, so a second rollout of the *same*
+    deployment is updating its own record, not somebody else's — and refusing
+    made re-deploying impossible without moving the file aside by hand.
+
+    The write goes through a sibling temporary file and an atomic rename, so a
+    failure never leaves half a receipt, and the previous snapshot stays in the
+    repository whether or not its receipt survives.
+    """
+    temporary = path.with_name(path.name + ".replacing")
+    temporary.unlink(missing_ok=True)
+    write_private(temporary, content)
+    os.replace(temporary, path)
+    os.chmod(path, 0o600)
+
+
 def source_mount(engine: str, source: FileSource) -> str:
     if source.directory is not None:
         path = source.directory
