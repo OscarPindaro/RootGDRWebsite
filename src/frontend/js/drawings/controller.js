@@ -23,11 +23,11 @@ import {
   addNode,
   createEllipse,
   createPath,
+  cutNodesByLine,
   createPolygon,
   createRect,
   createPreset,
   editPresetVertex,
-  cutNode,
   duplicateNode,
   findNode,
   groupNodes,
@@ -142,13 +142,11 @@ export function createController(root) {
   let pendingPolygon = null;
   let snapPoint = null;
   let snapGuides = [];
-  let cut = null;
-  let cutCursor = null;
+  let cutLine = null, cutDrag = null;
   let spaceDown = false;
   const collapsed = new Set();
   let snapGrid = true;
   let snapShapes = true;
-  let cutBefore = null;
   let gestureBefore = null;
   let title = root.dataset.title || "Nuovo disegno";
   let savedTitle = title;
@@ -171,7 +169,7 @@ export function createController(root) {
       tool,
       snap: snapPoint,
       guides: snapGuides,
-      cut: cut && cutCursor ? { from: apply(nodeFrame(scene, cut.id).world, findNode(scene, cut.id).node.points[cut.index]), to: cutCursor } : null,
+      cut: cutSegment(),
     };
   }
 
@@ -399,7 +397,7 @@ export function createController(root) {
     clearTimeout(autosaveTimer);
     if (!autosave || !saveUrl) return;
     autosaveTimer = setTimeout(() => {
-      if (!editable || root.dataset.copying || root.dataset.recoveryPending || inFlight || drag || cut || pendingPolygon || !isDirty()) return;
+      if (!editable || root.dataset.copying || root.dataset.recoveryPending || inFlight || drag || cutDrag || pendingPolygon || !isDirty()) return;
       save();
     }, 2000);
   }
@@ -415,7 +413,7 @@ export function createController(root) {
   async function save(asCopy = false) {
     if (!saveUrl || inFlight) return false;
     asCopy = asCopy === true;
-    if (drag || cut) {
+    if (drag || cutLine) {
       announce("Completa o annulla l’operazione prima di salvare.");
       return;
     }
@@ -603,100 +601,101 @@ export function createController(root) {
     commit(patchNode(scene, selectedId, { edgeVisible: visible }));
   }
 
-  /* ---------- straight cut ---------- */
+  /* ---------- cut along a line ---------- */
 
-  const VERTEX_TOLERANCE_PX = 9;
+  const CUT_HANDLE_TOLERANCE_PX = 12;
 
-  /** Where on the polygon boundary a click landed: a vertex, or a new point. */
-  function boundaryAt(node, world) {
-    const inverse = invert(nodeFrame(scene, node.id).world);
-    if (!inverse) return null;
-    const local = apply(inverse, world);
-    const vertexTolerance = VERTEX_TOLERANCE_PX / viewport[0];
-    for (let index = 0; index < node.points.length; index += 1) {
-      const point = node.points[index];
-      if (Math.hypot(point[0] - local[0], point[1] - local[1]) <= vertexTolerance) {
-        return { index, insert: false };
-      }
-    }
-    const hit = closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0]);
-    return hit ? { index: hit.edge + 1, point: hit.point, insert: true } : null;
+  /** The two points that define the unbounded cut, as the document sees them. */
+  function cutSegment() {
+    return cutLine ? {from: cutLine[0], to: cutLine[1]} : null;
   }
 
-  /** A cut needs its endpoints to be vertices: insert one on the edge clicked. */
-  function ensureVertex(nodeId, boundary) {
-    if (!boundary.insert) return boundary.index;
-    const node = findNode(scene, nodeId).node;
-    const points = node.points.map((point) => [...point]);
-    points.splice(boundary.index, 0, [round(boundary.point[0]), round(boundary.point[1])]);
-    const pointIds = [...node.pointIds];
-    pointIds.splice(boundary.index, 0, newId("v"));
-    const patch = { points, pointIds };
-    if (node.edgeVisible) {
-      const visible = edgeVisibility(node);
-      visible.splice(boundary.index, 0, visible[boundary.index - 1] !== false);
-      patch.edgeVisible = visible;
-    }
-    // Uncommitted: the whole cut is one history step.
-    scene = patchNode(scene, nodeId, patch);
-    return boundary.index;
+  function lineThrough(from, to) {
+    const dx = to[0] - from[0], dy = to[1] - from[1];
+    if (Math.hypot(dx, dy) < 1e-6) return null;
+    return {point: [...from], direction: [dx, dy]};
   }
 
-  function cutClick(event) {
+  function cutHandleAt(world) {
+    if (!cutLine) return null;
+    const tolerance = CUT_HANDLE_TOLERANCE_PX / viewport[0];
+    for (const index of [0, 1]) {
+      if (Math.hypot(cutLine[index][0] - world[0], cutLine[index][1] - world[1]) <= tolerance) return index;
+    }
+    const line = lineThrough(cutLine[0], cutLine[1]);
+    if (!line) return null;
+    const length = Math.hypot(...line.direction);
+    const distance = Math.abs(line.direction[0] * (world[1] - line.point[1]) - line.direction[1] * (world[0] - line.point[0])) / length;
+    return distance <= tolerance ? "line" : null;
+  }
+
+  function beginCut(event) {
     const world = scenePoint(event);
-    const hit = selectedId ? selected().node : nodeAt(scene, world);
-    if (!hit) return;
-    if (hit.kind !== "polygon") {
-      announce("Il taglio funziona sui poligoni.");
-      return;
+    const handle = cutHandleAt(world);
+    if (handle === null) {
+      cutDrag = {kind: "define", from: world};
+      cutLine = [world, world];
+    } else if (handle === "line") {
+      cutDrag = {kind: "move", from: world, points: cutLine.map(point => [...point])};
+    } else {
+      cutDrag = {kind: "rotate", index: handle};
     }
-    if (selectedId !== hit.id) {
-      selectedId = hit.id;
-      cut = null;
+    draw();
+  }
+
+  function moveCut(event) {
+    if (!cutDrag || !cutLine) return;
+    const world = scenePoint(event);
+    if (cutDrag.kind === "define") {
+      cutLine = [cutDrag.from, world];
+    } else if (cutDrag.kind === "rotate") {
+      const other = cutLine[1 - cutDrag.index];
+      if (Math.hypot(world[0] - other[0], world[1] - other[1]) > 1e-6) cutLine[cutDrag.index] = world;
+    } else {
+      const delta = [world[0] - cutDrag.from[0], world[1] - cutDrag.from[1]];
+      cutLine = cutDrag.points.map(point => [point[0] + delta[0], point[1] + delta[1]]);
     }
-    const boundary = boundaryAt(hit, world);
-    if (!boundary) {
-      announce("Clicca sul bordo del poligono per scegliere i due punti.");
-      return;
+    draw();
+  }
+
+  /** Enter applies the line to every selected polygon; the line then goes away. */
+  function applyCut() {
+    if (!cutLine) return false;
+    const line = lineThrough(cutLine[0], cutLine[1]);
+    const targets = selection.filter(id => findNode(scene, id)?.node.kind === "polygon");
+    if (!line || !targets.length) {
+      announce(targets.length ? "La linea di taglio non è valida." : "Seleziona almeno un poligono da tagliare (Ctrl+clic).");
+      return false;
     }
-    if (!cutBefore) cutBefore = scene;
-    const index = ensureVertex(hit.id, boundary);
-    if (cut && boundary.insert && index <= cut.index) cut.index += 1;
-    if (!cut) {
-      cut = { id: hit.id, index };
-      cutCursor = world;
-      draw();
-      return;
-    }
-    const result = cutNode(scene, cut.id, cut.index, index);
-    cut = null;
-    cutCursor = null;
+    const result = cutNodesByLine(scene, targets, line);
     if (!result) {
-      scene = cutBefore;
-      cutBefore = null;
-      announce("Il taglio non è valido: serve una corda interna fra due vertici non adiacenti.");
-      draw();
-      return;
+      announce("Il taglio non è valido: la linea non attraversa i poligoni selezionati o lascerebbe un pezzo non valido.");
+      return false;
     }
     announce("");
-    cutBefore = null;
-    commit(result.scene);
-    // The selection stays on the piece that kept the original id, so the cut
-    // does not move the user's selection: the tip they were editing is still
-    // the selected shape and can be recoloured straight away.
-    setSelection([hit.id]);
+    cutLine = null;
+    cutDrag = null;
+    setTool("select");
+    commit(result);
+    return true;
+  }
+
+  function cancelCut() {
+    if (!cutLine && !cutDrag) return false;
+    cutLine = null;
+    cutDrag = null;
+    announce("");
     draw();
+    return true;
   }
 
   /* ---------- tools ---------- */
 
   function setTool(next) {
-    if (cutBefore) scene = cutBefore;
-    cutBefore = null;
     tool = next;
     pendingPolygon = null;
-    cut = null;
-    cutCursor = null;
+    cutLine = null;
+    cutDrag = null;
     snapPoint = null;
     snapGuides = [];
     // Vertex handles belong to the select tool; a tool switch leaves that mode.
@@ -751,6 +750,7 @@ export function createController(root) {
   }
 
   function finishShape() {
+    if (cutDrag) { cutDrag = null; draw(); return; }
     if (!drag) return;
     const { tool: shape, preset, sides, from, to } = drag;
     drag = null;
@@ -901,7 +901,7 @@ export function createController(root) {
 
     if (tool === "polygon") return;
     if (tool === "cut") {
-      cutClick(event);
+      beginCut(event);
       return;
     }
     if (tool === "line" || tool === "curve") {
@@ -939,9 +939,8 @@ export function createController(root) {
   }
 
   function onPointerMove(event) {
-    if (tool === "cut" && cut) {
-      cutCursor = scenePoint(event);
-      draw();
+    if (tool === "cut" && cutDrag) {
+      moveCut(event);
       return;
     }
     if (!drag) return;
@@ -1114,7 +1113,7 @@ export function createController(root) {
   }
 
   function openContext(position = null) {
-    if (!editable || root.dataset.copying || drag || cut) return false;
+    if (!editable || root.dataset.copying || drag || cutDrag) return false;
     contextOpener = root.contains(document.activeElement) ? document.activeElement : svg;
     contextPosition = position;
     syncControls();
@@ -1171,9 +1170,14 @@ export function createController(root) {
         return;
       }
     }
-    if (!mod && !event.altKey && event.key === "/" && commandPalette && !drag && !cut) {
+    if (!mod && !event.altKey && event.key === "/" && commandPalette && !drag && !cutLine) {
       event.preventDefault();
       commandPalette.open(document.activeElement);
+      return;
+    }
+    if (event.key === "Enter" && tool === "cut" && cutLine) {
+      event.preventDefault();
+      applyCut();
       return;
     }
     if (event.key === "F2" && event.target.closest?.("[data-select-node]") && renameFromKeyboard()) {
@@ -1214,14 +1218,8 @@ export function createController(root) {
       draw();
       return;
     }
-    if (event.key === "Escape" && cut) {
+    if (event.key === "Escape" && cancelCut()) {
       event.preventDefault();
-      if (cutBefore) scene = cutBefore;
-      cutBefore = null;
-      cut = null;
-      cutCursor = null;
-      announce("");
-      draw();
       return;
     }
     if (event.key === "Escape") {
@@ -1495,7 +1493,7 @@ export function createController(root) {
   };
 
   for (const name of [...Object.keys(SHAPE_NAMES), "curve", "cut"]) {
-    actions[`tool-${name}`] = { label: SHAPE_NAMES[name] || (name === "curve" ? "Curva" : "Taglia"), enabled: () => name !== "cut" || (selection.length === 1 && selected()?.node.kind === "polygon" && !selected().node.constraint), run: () => {
+    actions[`tool-${name}`] = { label: SHAPE_NAMES[name] || (name === "curve" ? "Curva" : "Taglia"), enabled: () => true, run: () => {
       creationPreset = {triangle:"triangle_isosceles", square:"rectangle", regular:"regular_polygon", circle:"circle"}[name] || null;
       setTool(name);
     } };
@@ -1508,8 +1506,8 @@ export function createController(root) {
   }
 
   function canExecute(id) {
-    const modifiesSelection = ["edit", "transform", "geometry", "move", "parent", "align", "delete", "duplicate", "group", "ungroup", "forward", "backward", "front", "back", "unlock", "ellipse-parameter", "tool-cut", "curve-mode", "curve-insert"].includes(id);
-    return Boolean(editable && !root.dataset.copying && !root.dataset.recoveryPending && !drag && !cut && (!modifiesSelection || editableSelection(scene,selection)) && actions[id]?.enabled());
+    const modifiesSelection = ["edit", "transform", "geometry", "move", "parent", "align", "delete", "duplicate", "group", "ungroup", "forward", "backward", "front", "back", "unlock", "ellipse-parameter", "curve-mode", "curve-insert"].includes(id);
+    return Boolean(editable && !root.dataset.copying && !root.dataset.recoveryPending && !drag && !cutLine && (!modifiesSelection || editableSelection(scene,selection)) && actions[id]?.enabled());
   }
 
   function execute(id, parameters) {
@@ -1619,11 +1617,11 @@ export function createController(root) {
   }
 
   function hasLocalWork() {
-    return isDirty() || Boolean(pendingPolygon?.length || recoveredLine || drag || cut || commandPalette?.draft.dirty);
+    return isDirty() || Boolean(pendingPolygon?.length || recoveredLine || drag || cutLine || commandPalette?.draft.dirty);
   }
 
   function recoveryState() {
-    return {scene:cut ? cut.before : drag?.kind === "line" || drag?.kind === "create" ? gestureBefore : scene, title, version:savedVersion, polygon:pendingPolygon, path:drag?.kind === "line" ? {kind:"line",curve:drag.curve,from:drag.from,to:drag.to} : recoveredLine, command:commandPalette?.draft || null};
+    return {scene:drag?.kind === "line" || drag?.kind === "create" ? gestureBefore : scene, title, version:savedVersion, polygon:pendingPolygon, path:drag?.kind === "line" ? {kind:"line",curve:drag.curve,from:drag.from,to:drag.to} : recoveredLine, command:commandPalette?.draft || null};
   }
 
   function restoreRecovery(state) {
@@ -1714,7 +1712,7 @@ export function createController(root) {
     root.addEventListener("contextmenu", event => {
       if (!editable || root.dataset.copying || event.shiftKey || event.target.closest("input, textarea, select, [contenteditable]") || !event.target.closest("[data-drawing-artboard], [data-testid='drawing-layers']")) return;
       event.preventDefault();
-      if (drag || cut) return;
+      if (drag || cutDrag) return;
       const row = event.target.closest("[data-node-id]");
       const id = row?.dataset.nodeId || (svg.contains(event.target) ? nodeAt(scene, scenePoint(event))?.id : null);
       if (id && !selection.includes(id) && !selectedAncestorOf(id)) select(id);
@@ -1910,7 +1908,7 @@ export function createController(root) {
       return tool;
     },
     get cut() {
-      return cut;
+      return cutLine;
     },
     setTool,
     select,

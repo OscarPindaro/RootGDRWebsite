@@ -643,6 +643,65 @@ test("an accepted variant can be restated by any name its family answers to", as
   assert.equal(parseCompact("rettangolo","regular_polygon"),null);
 });
 
+test("a line cuts a polygon into two simple pieces and hides the new edges", async () => {
+  const {splitPolygonByLine, cutNodesByLine, constraintsValid} = await import("../../src/frontend/js/drawings/scene.js");
+  const square=[[0,0],[100,0],[100,100],[0,100]];
+  const vertical={point:[50,0],direction:[0,1]};
+  const split=splitPolygonByLine(square,vertical);
+  assert.ok(split);
+  const span = piece => [Math.min(...piece.points.map(p=>p[0])), Math.max(...piece.points.map(p=>p[0]))];
+  assert.deepEqual(span(split.a),[0,50],"the two halves are on either side");
+  assert.deepEqual(span(split.b),[50,100]);
+  assert.equal(split.a.points.length,4);
+  assert.equal(split.b.points.length,4);
+  assert.ok(Math.abs(polygonArea(split.a.points) - 5000) < 1e-6);
+  assert.ok(Math.abs(polygonArea(split.b.points) - 5000) < 1e-6);
+  // The edge along the cut starts hidden on both halves.
+  assert.equal(split.a.visible.includes(false),true);
+  assert.equal(split.b.visible.includes(false),true);
+  assert.equal(split.a.visible.filter(value => value === false).length,1);
+  // A diagonal cuts the same square into two triangles.
+  const diagonal=splitPolygonByLine(square,{point:[0,0],direction:[1,1]});
+  assert.ok(diagonal);
+  assert.equal(diagonal.a.points.length,3);
+  assert.equal(diagonal.b.points.length,3);
+  assert.ok(Math.abs(polygonArea(diagonal.a.points) - 5000) < 1e-6);
+
+  const scene=sceneWith([{...createRect("Box",[0,0],[100,100]),id:"box",pointIds:["a","b","c","d"]}]);
+  const cut=cutNodesByLine(scene,["box"],vertical);
+  assert.equal(cut.nodes.length,2);
+  assert.equal(cut.nodes[0].id,"box","the original keeps its id");
+  assert.equal(cut.nodes[0].points.length,4);
+  assert.equal(cut.nodes[0].pointIds.length,4);
+  assert.equal(new Set(cut.nodes[0].pointIds).size,4,"fresh identities are unique");
+  assert.equal(cut.nodes[1].pointIds.length,4);
+  assert.equal(cut.nodes[0].pointIds[0],"a","a surviving vertex keeps its identity");
+  assert.equal(constraintsValid(cut),true);
+});
+
+test("a line that misses, an unsplittable piece and a locked preset are refused", async () => {
+  const {splitPolygonByLine, cutNodesByLine, createRect, createPreset} = await import("../../src/frontend/js/drawings/scene.js");
+  const square=[[0,0],[100,0],[100,100],[0,100]];
+  assert.equal(splitPolygonByLine(square,{point:[500,0],direction:[0,1]}),null,"a miss");
+  assert.equal(splitPolygonByLine(square,{point:[50,0],direction:[0,0]}),null,"no direction");
+  assert.equal(splitPolygonByLine(square,{point:[50,NaN],direction:[0,1]}),null,"non-finite");
+  // A line just outside a vertex would leave a piece with no area.
+  assert.equal(splitPolygonByLine(square,{point:[100,0],direction:[0,1]}),null,"touching the edge");
+
+  const locked=sceneWith([createPreset("square",[0,0],[100,100])]);
+  assert.equal(cutNodesByLine(locked,[locked.nodes[0].id],{point:[50,0],direction:[0,1]}),null,"locked");
+  const free=sceneWith([{...createRect("Box",[0,0],[100,100]),id:"box"}]);
+  assert.equal(cutNodesByLine(free,[],{point:[50,0],direction:[0,1]}),null,"nothing selected");
+  assert.equal(cutNodesByLine(free,["box"],{point:[500,0],direction:[0,1]}),null,"the line misses every node");
+});
+
+test("a U cut across its own arms is refused instead of inventing a piece", async () => {
+  const {splitPolygonByLine} = await import("../../src/frontend/js/drawings/scene.js");
+  const u=[[0,0],[100,0],[100,100],[80,100],[80,20],[20,20],[20,100],[0,100]];
+  const across=splitPolygonByLine(u,{point:[0,60],direction:[1,0]});
+  assert.equal(across,null);
+});
+
 test("cubic insertion preserves sampled geometry and stable endpoints, linked tangents remain opposite", async () => {
   const {insertPathAnchor, setPathAnchorMode, moveCurvePoint, createPath, pathHandles, pathCommands} = await import("../../src/frontend/js/drawings/scene.js");
   const node=createPath("Curve","M0 0 C0 100 100 100 100 0");

@@ -665,36 +665,39 @@ def test_the_tree_rename_keeps_working_after_a_save(component):
     assert _scene_of(page)["nodes"][0]["name"] == "Corpo"
 
 
-def test_the_cut_tool_splits_a_polygon_into_two_pieces(component):
+def test_the_cut_line_splits_a_polygon_into_two_pieces(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
-    point = _at(page, 250, 250)
-    page.mouse.click(point[0], point[1])
+    page.locator("[data-select-node='box']").click()
 
     page.get_by_test_id("drawing-tool-cut").click()
-    for corner in ((100, 100), (400, 400)):
-        target = _at(page, corner[0], corner[1])
-        page.mouse.click(target[0], target[1])
+    _drag(page, (250, 50), (250, 450))
+    assert page.locator(".drawing-editor__cut-line").count() == 1, "the line is up"
+    assert page.locator(".drawing-editor__cut-handle").count() == 2
+    assert len(_scene_of(page)["nodes"]) == 1, "nothing is cut before Enter"
+
+    page.keyboard.press("Enter")
 
     nodes = _scene_of(page)["nodes"]
     assert len(nodes) == 2
-    assert sum(len(node["points"]) for node in nodes) == 6
     assert nodes[0]["id"] == "box", "the original keeps its id"
     assert "tagliata" in nodes[1]["name"]
-    # The shared cut edge is hidden on both pieces.
-    assert nodes[0]["edgeVisible"][-1] is False
-    assert nodes[1]["edgeVisible"][-1] is False
+    assert nodes[0]["edgeVisible"].count(False) == 1, "the seam starts hidden"
+    assert nodes[1]["edgeVisible"].count(False) == 1
+    assert page.locator(".drawing-editor__cut-line").count() == 0, "the line goes away"
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.tool"
+        )
+        == "select"
+    )
 
 
 def test_a_cut_is_one_undo_step(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
-    point = _at(page, 250, 250)
-    page.mouse.click(point[0], point[1])
-    page.get_by_test_id("drawing-tool-cut").click()
-    for corner in ((100, 100), (400, 400)):
-        target = _at(page, corner[0], corner[1])
-        page.mouse.click(target[0], target[1])
+    page.locator("[data-select-node='box']").click()
+    _cut_with_line(page, (250, 50), (250, 450))
     assert len(_scene_of(page)["nodes"]) == 2
 
     page.get_by_test_id("drawing-undo").click()
@@ -705,15 +708,99 @@ def test_a_cut_is_one_undo_step(component):
     assert len(nodes[0]["points"]) == 4
 
 
-def test_a_cut_between_adjacent_vertices_is_refused(component):
+def test_the_cut_line_can_be_moved_and_rotated_before_it_is_applied(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
-    point = _at(page, 250, 250)
-    page.mouse.click(point[0], point[1])
+    page.locator("[data-select-node='box']").click()
     page.get_by_test_id("drawing-tool-cut").click()
-    for corner in ((100, 100), (400, 100)):
-        target = _at(page, corner[0], corner[1])
-        page.mouse.click(target[0], target[1])
+    _drag(page, (250, 50), (250, 450))
+
+    def line():
+        return page.evaluate(
+            """() => {
+                const el = document.querySelector('.drawing-editor__cut-line');
+                return [Number(el.getAttribute('x1')), Number(el.getAttribute('y1')),
+                        Number(el.getAttribute('x2')), Number(el.getAttribute('y2'))];
+            }"""
+        )
+
+    before = line()
+    # Drag the middle of the line sideways: it moves without turning.
+    _drag(page, (250, 250), (300, 250))
+    moved = line()
+    assert moved != before
+    # Drag one handle: the other end stays put, so the direction changes.
+    handle = page.locator("[data-cut-handle='1']").bounding_box()
+    page.mouse.move(
+        handle["x"] + handle["width"] / 2, handle["y"] + handle["height"] / 2
+    )
+    page.mouse.down()
+    page.mouse.move(handle["x"] + 80, handle["y"] + handle["height"] / 2, steps=4)
+    page.mouse.up()
+    assert line() != moved
+    page.keyboard.press("Enter")
+    assert len(_scene_of(page)["nodes"]) == 2
+
+
+def test_escape_puts_the_cut_line_away_without_cutting(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.get_by_test_id("drawing-tool-cut").click()
+    _drag(page, (250, 50), (250, 450))
+    page.keyboard.press("Escape")
+
+    assert page.locator(".drawing-editor__cut-line").count() == 0
+    assert _scene_of(page) == before
+    assert not page.get_by_test_id("drawing-undo").is_enabled()
+
+
+def test_a_cut_only_touches_the_selected_polygons(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    _cut_with_line(page, (150, 50), (150, 450))
+
+    nodes = _scene_of(page)["nodes"]
+    assert len(nodes) == 3, "one shape split, the other untouched"
+    assert [node["id"] for node in nodes][:1] == ["box"]
+    assert nodes[1]["name"].endswith("tagliata")
+    assert nodes[2]["id"] == "tri"
+    assert nodes[2]["points"] == [
+        list(point) for point in _two_shapes().nodes[1].points
+    ]
+
+
+def test_a_cut_without_a_selected_polygon_says_so(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-cut").click()
+    _drag(page, (250, 50), (250, 450))
+    page.keyboard.press("Enter")
+
+    assert len(_scene_of(page)["nodes"]) == 1
+    assert "Seleziona" in page.locator("[data-drawing-error]").inner_text()
+
+
+def test_a_cut_along_an_edge_is_refused(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    # The line runs along the top edge: neither piece would have area.
+    _cut_with_line(page, (100, 100), (400, 100))
+
+    assert len(_scene_of(page)["nodes"]) == 1
+    assert "non è valido" in page.locator("[data-drawing-error]").inner_text()
+
+
+def test_a_cut_of_a_locked_preset_is_refused(component):
+    scene = _square()
+    scene.nodes[0].constraint = {"kind": "square"}
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    _cut_with_line(page, (250, 50), (250, 450))
 
     assert len(_scene_of(page)["nodes"]) == 1
     assert "non è valido" in page.locator("[data-drawing-error]").inner_text()
@@ -850,6 +937,13 @@ def _select_first_row(page) -> None:
 def _recolour(page) -> None:
     """A document change that needs no pointer coordinates."""
     page.locator("[data-palette='#ffffff']").first.click()
+
+
+def _cut_with_line(page, start, end) -> None:
+    """Pick the cut tool, drag the unbounded line, then apply it with Enter."""
+    page.get_by_test_id("drawing-tool-cut").click()
+    _drag(page, start, end)
+    page.keyboard.press("Enter")
 
 
 def _status(page) -> str:
@@ -1432,14 +1526,14 @@ def test_curve_handles_edit_a_cubic_stroke_and_undo(component):
     assert _scene_of(page)["nodes"][0]["d"] == before
 
 
-def test_cancelled_cut_restores_inserted_boundary_point(component):
+def test_a_cut_line_does_not_touch_the_document_until_it_is_applied(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
     page.locator("[data-select-node='box']").click()
     before = _scene_of(page)
     page.get_by_test_id("drawing-tool-cut").click()
-    page.mouse.click(*_at(page, 150, 100))
-    assert len(_scene_of(page)["nodes"][0]["points"]) == 5
+    _drag(page, (150, 100), (150, 400))
+    assert _scene_of(page) == before, "the line is editor state, not document state"
     page.keyboard.press("Escape")
     assert _scene_of(page) == before
     assert not page.get_by_test_id("drawing-undo").is_enabled()
@@ -2402,10 +2496,8 @@ def test_insert_remove_and_cut_keep_surviving_vertex_identities(component):
     page.mouse.click(*_at(page, 150, 100))
     page.keyboard.up("Alt")
     assert _scene_of(page)["nodes"][0]["pointIds"] == before
-    page.get_by_test_id("drawing-tool-cut").click()
-    page.mouse.click(*_at(page, 100, 100))
-    page.mouse.click(*_at(page, 400, 400))
-    assert all(
-        len(node["pointIds"]) == len(node["points"])
-        for node in _scene_of(page)["nodes"]
-    )
+    _cut_with_line(page, (250, 50), (250, 450))
+    cut = _scene_of(page)["nodes"]
+    assert all(len(node["pointIds"]) == len(node["points"]) for node in cut)
+    assert all(len(set(node["pointIds"])) == len(node["pointIds"]) for node in cut)
+    assert cut[0]["pointIds"][0] == before[0], "a surviving vertex keeps its identity"

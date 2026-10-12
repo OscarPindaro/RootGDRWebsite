@@ -70,9 +70,15 @@ library, skeleton, publishing or export capabilities.
   its own endpoint. Select either endpoint/control with the mouse or Tab and
   nudge it with arrow keys (Shift for larger steps).
 - Polygon edge-midpoint controls hide individual outlines without losing fill.
-  **Taglia** selects two boundary points and splits along an internal straight
-  chord. Pieces edit independently; their new shared outlines start hidden.
-  Escape cancels a pending cut, including temporary inserted boundary points.
+  **Taglia** draws an unbounded line: drag to place it, drag its middle to move
+  it or either handle to turn it, then Enter splits **every selected** polygon
+  along it into two pieces. The line is editor state, not document state: it is
+  never in the saved scene, it disappears when it is applied, and Escape puts it
+  away without touching the artwork. A line that misses a polygon, that would
+  leave a piece without area, or that would leave a piece touching itself (a U
+  cut across its own arms) is refused with an explanation, and locked presets
+  cannot be cut. Pieces edit independently and the seam the cut made starts
+  hidden on both.
 - **Raggruppa** combines consecutive sibling objects; **Separa** composes the
   parent transform into the children. Nested child edits use the complete
   parent transform. Hidden groups are excluded from canvas selection.
@@ -231,8 +237,8 @@ specimen in the component showcase.
   A failed/ambiguous response does not claim successful persistence; inspect or
   reload server state before treating local work as durable.
 - Circles stay locked until explicitly converted to free ellipses; no circle-to-path
-  conversion is supplied. Cuts are straight, boundaries are not welded, and
-  polyline/cubic editing does not offer a full path-boolean toolset.
+  conversion is supplied. A cut is one straight line at a time, boundaries are not
+  welded, and polyline/cubic editing does not offer a full path-boolean toolset.
 - Groups must be consecutive siblings to preserve overlap order. The layer list
   is a connected, collapsible scene tree. Group styling is not exposed.
 - No angle snapping. Linked-asset overrides are

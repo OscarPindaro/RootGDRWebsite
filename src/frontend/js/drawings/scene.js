@@ -900,6 +900,135 @@ export function cutNode(scene, id, i, j) {
   return { scene: next, id: piece.id };
 }
 
+/* ---------- cutting along a line ---------- */
+
+/** How far off the line a point may be and still count as lying on it. */
+function lineTolerance(points, direction) {
+  const reach = Math.max(1, ...points.flatMap(point => point.map(Math.abs)));
+  return reach * Math.hypot(...direction) * 1e-9;
+}
+
+/**
+ * Clip a ring to one half-plane, carrying each point's source vertex along.
+ *
+ * Each vertex is classified strictly: `+1` beside, `-1` opposite, `0` on the
+ * line. A vertex on the line belongs to both pieces, which is what makes a cut
+ * along a diagonal produce two triangles instead of two whole squares; an
+ * intersection is inserted only where the two ends are strictly opposite, so a
+ * vertex already on the line is never duplicated.
+ */
+function clipHalfPlane(entries, classes, distances, side) {
+  const out = [];
+  const total = entries.length;
+  for (let index = 0; index < total; index += 1) {
+    const here = classes[index], there = classes[(index + 1) % total];
+    if (side > 0 ? here >= 0 : here <= 0) out.push(entries[index]);
+    if (here * there < 0) {
+      const current = entries[index], next = entries[(index + 1) % total];
+      const t = distances[index] / (distances[index] - distances[(index + 1) % total]);
+      out.push([
+        current[0] + (next[0] - current[0]) * t,
+        current[1] + (next[1] - current[1]) * t,
+        -1,
+      ]);
+    }
+  }
+  // A crossing can land exactly on the vertex that follows it.
+  return out.filter((entry, index) => {
+    const previous = out[(index - 1 + out.length) % out.length];
+    return Math.hypot(entry[0] - previous[0], entry[1] - previous[1]) > 1e-9;
+  });
+}
+
+/**
+ * Split a polygon into the two pieces an unbounded line makes of it.
+ *
+ * Returns `null` when the line misses the polygon, when a piece would have no
+ * area, or when a piece would not be a simple ring. Each piece keeps the
+ * original outline visibility, and the new edges along the line start hidden so
+ * the two halves do not show a seam.
+ */
+export function splitPolygonByLine(points, line, sourceVisible = null) {
+  if (!validPolygon(points) || !line) return null;
+  const origin = line.point, direction = line.direction;
+  if (!Array.isArray(origin) || !Array.isArray(direction)) return null;
+  if (![...origin, ...direction].every(Number.isFinite)) return null;
+  if (Math.hypot(...direction) < 1e-9) return null;
+
+  const distance = point =>
+    direction[0] * (point[1] - origin[1]) - direction[1] * (point[0] - origin[0]);
+  const distances = points.map(distance);
+  const epsilon = lineTolerance(points, direction);
+  const classes = distances.map(value => (value > epsilon ? 1 : value < -epsilon ? -1 : 0));
+  if (!classes.includes(1) || !classes.includes(-1)) return null;
+
+  const at = index => (sourceVisible && sourceVisible[index] === false ? false : true);
+  const entries = points.map((point, index) => [...point, index]);
+  const halves = [
+    clipHalfPlane(entries, classes, distances, 1),
+    clipHalfPlane(entries, classes, distances, -1),
+  ];
+  const pieces = halves.map(clipped => {
+    const piece = clipped.map(([x, y]) => [x, y]);
+    if (!validPolygon(piece)) return null;
+    const sources = clipped.map(([, , source]) => source);
+    const total = piece.length;
+    const visible = sources.map((source, index) => {
+      const next = sources[(index + 1) % total];
+      const endsOnLine =
+        Math.abs(distance(piece[index])) <= epsilon &&
+        Math.abs(distance(piece[(index + 1) % total])) <= epsilon;
+      if (endsOnLine) return false;
+      if (source >= 0 && next >= 0) {
+        if (next === (source + 1) % points.length) return at(source);
+        if (source === (next + 1) % points.length) return at(next);
+      }
+      return true;
+    });
+    return {points: piece, sources, visible};
+  });
+  if (pieces.some(piece => !piece)) return null;
+  return {a: pieces[0], b: pieces[1]};
+}
+
+/**
+ * Apply an unbounded line cut to every polygon in `ids`.
+ *
+ * The original keeps its id and one piece; the other becomes a sibling right
+ * after it, so the whole cut is one undo step. A line that misses a node, or
+ * that would leave it unsplittable, leaves that node alone; `null` means
+ * nothing was cut at all.
+ */
+export function cutNodesByLine(scene, ids, line) {
+  if (!Array.isArray(ids) || !ids.length) return null;
+  const next = cloneScene(scene);
+  let cut = false;
+  for (const id of ids) {
+    const found = findNode(next, id);
+    if (!found || found.node.kind !== "polygon" || found.node.constraint) continue;
+    const node = found.node;
+    const split = splitPolygonByLine(node.points, line, node.edgeVisible);
+    if (!split) continue;
+    const identityOf = (piece, source) =>
+      piece.sources.map((index, position) =>
+        index >= 0 ? source.pointIds[index] : newId(`v${position}`)
+      );
+    found.node.points = split.a.points.map(point => [...point]);
+    found.node.pointIds = identityOf(split.a, node);
+    found.node.edgeVisible = split.a.visible;
+    found.siblings.splice(found.index + 1, 0, {
+      ...cloneScene(node),
+      id: newId("poly"),
+      name: `${node.name.slice(0, 111)} tagliata`,
+      points: split.b.points.map(point => [...point]),
+      pointIds: identityOf(split.b, node),
+      edgeVisible: split.b.visible,
+    });
+    cut = true;
+  }
+  return cut && constraintsValid(next) ? next : null;
+}
+
 /* ---------- history ---------- */
 
 export class History {

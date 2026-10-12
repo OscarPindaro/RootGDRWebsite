@@ -509,6 +509,22 @@
   pointer-events: none;
 }
 
+/* The cut is a plane, not a segment: a dashed line that runs off the artboard
+   with two handles for its direction and its position. */
+.drawing-editor__cut-line {
+  stroke: var(--vermilion);
+  stroke-width: 1.5;
+  stroke-dasharray: 8 5;
+  pointer-events: none;
+}
+
+.drawing-editor__cut-handle {
+  fill: var(--surface);
+  stroke: var(--vermilion);
+  stroke-width: 2;
+  cursor: grab;
+}
+
 /* The edge toggle in vertex mode: filled when the outline is drawn, dashed
    when it is hidden. */
 .drawing-editor__edge-handle {

@@ -221,16 +221,24 @@ function overlayElements(scene, view) {
   }
 
   if (view.cut) {
+    // The cut is an unbounded line: it is drawn past both ends of the artboard
+    // so it reads as a plane, not as a segment with two ends to hit.
     const from = apply(view.viewport, view.cut.from);
     const to = apply(view.viewport, view.cut.to);
+    const span = Math.hypot(to[0] - from[0], to[1] - from[1]) || 1;
+    const reach = 100000 / span;
+    const far = [from[0] - (to[0] - from[0]) * reach, from[1] - (to[1] - from[1]) * reach];
+    const beyond = [to[0] + (to[0] - from[0]) * reach, to[1] + (to[1] - from[1]) * reach];
     elements.push(
       el("line", {
-        class: "drawing-editor__preview",
-        x1: from[0],
-        y1: from[1],
-        x2: to[0],
-        y2: to[1],
-      })
+        class: "drawing-editor__cut-line",
+        x1: far[0],
+        y1: far[1],
+        x2: beyond[0],
+        y2: beyond[1],
+      }),
+      el("circle", {class: "drawing-editor__cut-handle", cx: from[0], cy: from[1], r: 7, "data-cut-handle": "0", role: "button", tabindex: 0, "aria-label": "Primo punto della linea di taglio"}),
+      el("circle", {class: "drawing-editor__cut-handle", cx: to[0], cy: to[1], r: 7, "data-cut-handle": "1", role: "button", tabindex: 0, "aria-label": "Secondo punto della linea di taglio"})
     );
   }
 

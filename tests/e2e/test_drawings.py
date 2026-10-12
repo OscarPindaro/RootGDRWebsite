@@ -214,20 +214,31 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
         session.page.mouse.dblclick(point[0], point[1])
     assert len(_local_node(session)["points"]) == 5
 
-    # Cut between the two inserted vertices: the two points nearest the tip.
+    # Cut along the line through the two inserted vertices, so the tip comes off.
     points = _local_node(session)["points"]
     tip_index = min(range(5), key=lambda index: points[index][1])
     neighbours = sorted([(tip_index - 1) % 5, (tip_index + 1) % 5])
+    # Draw the line through the two inserted vertices, then apply it with Enter.
     session.page.get_by_test_id("drawing-tool-cut").click()
-    for index in neighbours:
-        point = _at(session.page, points[index][0], points[index][1])
-        session.page.mouse.click(point[0], point[1])
+    _drag(
+        session.page,
+        (points[neighbours[0]][0], points[neighbours[0]][1]),
+        (points[neighbours[1]][0], points[neighbours[1]][1]),
+    )
+    assert session.page.locator(".drawing-editor__cut-line").count() == 1
+    session.page.keyboard.press("Enter")
 
     pieces = _local_node_scene(session)["nodes"]
-    assert len(pieces) == 2
-    assert sorted(len(piece["points"]) for piece in pieces) == [3, 4]
+    assert len(pieces) == 2, "the beak is two editable pieces"
+    # The tip is the piece that still reaches the original apex; a pointer move
+    # lands on whole pixels, so the cut can clip a vertex and add a point.
+    tip_piece = min(pieces, key=lambda node: min(point[1] for point in node["points"]))
+    rest = next(node for node in pieces if node["id"] != tip_piece["id"])
+    assert min(point[1] for point in tip_piece["points"]) == tip[1], "the apex"
+    for corner in drawn["points"][:2]:
+        assert list(corner) in rest["points"], "the base stays in the other piece"
 
-    # The smaller piece is selected, so the palette recolours the tip.
+    session.page.locator(f"[data-select-node='{tip_piece['id']}']").click()
     session.page.locator("[data-palette='#d1402a']").click()
 
     with session.page.expect_response(_is_patch_to(drawing_id)) as saved:
@@ -236,15 +247,17 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
 
     stored = session.expect_api(f"/api/drawings/{drawing_id}").json()
     assert stored["nodeCount"] == 2
-    tip_piece = next(
-        node for node in stored["scene"]["nodes"] if len(node["points"]) == 3
+    stored_tip = next(
+        node for node in stored["scene"]["nodes"] if node["id"] == tip_piece["id"]
     )
-    rest = next(node for node in stored["scene"]["nodes"] if len(node["points"]) == 4)
-    assert tip_piece["fill"] == "#d1402a"
-    assert rest["fill"] != "#d1402a"
-    # The shared cut edge is hidden on both pieces.
-    assert tip_piece["edgeVisible"][-1] is False
-    assert rest["edgeVisible"][-1] is False
+    stored_rest = next(
+        node for node in stored["scene"]["nodes"] if node["id"] == rest["id"]
+    )
+    assert stored_tip["fill"] == "#d1402a"
+    assert stored_rest["fill"] != "#d1402a"
+    # The seam the cut made starts hidden on both pieces.
+    assert stored_tip["edgeVisible"].count(False) == 1
+    assert stored_rest["edgeVisible"].count(False) == 1
 
     session.goto(f"/drawings/{drawing_id}")
     session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
