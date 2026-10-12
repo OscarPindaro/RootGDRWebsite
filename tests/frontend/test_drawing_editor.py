@@ -143,7 +143,7 @@ def test_the_scene_travels_as_json_for_the_client(component):
     payload = page.evaluate(
         "() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"
     )
-    assert payload["schemaVersion"] == 3
+    assert payload["schemaVersion"] == 4
     assert [node["id"] for node in payload["nodes"]] == ["head", "beak"]
     assert payload["nodes"][1]["points"][1] == [296.0, 120.0]
 
@@ -1337,6 +1337,71 @@ def test_numeric_geometry_and_local_pivot_are_validated_and_undoable(component):
     assert _scene_of(page)["nodes"][0]["pivot"] == [150, 250]
     page.get_by_test_id("drawing-undo").click()
     assert _scene_of(page)["nodes"][0]["pivot"] is None
+
+
+def test_marquee_select_all_and_edit_locks_are_separate_from_geometry_locks(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    _draw_two(page)
+    _drag(page, (50, 50), (480, 240))
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection.length"
+        )
+        == 2
+    )
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Control+a")
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection.length"
+        )
+        == 2
+    )
+    page.locator("[data-select-node]").first.click()
+    node_id = _scene_of(page)["nodes"][0]["id"]
+    page.locator(f"[data-node-locked='{node_id}']").click()
+    before = _scene_of(page)
+    assert before["nodes"][0]["editLocked"] is True
+    assert before["nodes"][0]["constraint"] == {"kind": "triangle_isosceles"}
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('move', {dx:20,dy:30})"
+        )
+        is False
+    )
+    assert _scene_of(page) == before
+    page.locator(f"[data-node-locked='{node_id}']").click()
+    assert _scene_of(page)["nodes"][0]["editLocked"] is False
+
+
+def test_canvas_group_selection_uses_control_for_deeper_children(component):
+    scene = _square()
+    scene.nodes = [GroupNode(id="group", name="Group", nodes=scene.nodes)]
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.mouse.click(*_at(page, 200, 200))
+    assert page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection"
+    ) == ["group"]
+    page.keyboard.down("Control")
+    page.mouse.click(*_at(page, 200, 200))
+    page.keyboard.up("Control")
+    assert page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection"
+    ) == ["box"]
+
+
+def test_fit_and_zoom_readout_do_not_change_native_artwork(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.locator("[data-drawing-fit='selection']").click()
+    assert "%" in page.locator("[data-drawing-zoom]").inner_text()
+    assert _scene_of(page) == before
+    page.locator("[data-drawing-fit='drawing']").click()
+    assert _scene_of(page) == before
 
 
 def test_guided_shape_preview_is_non_destructive_until_apply(component):

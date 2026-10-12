@@ -624,6 +624,36 @@ def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
     assert session.expect_api(f"/api/drawings/{target['id']}").status == 200
 
 
+def test_object_edit_lock_persists_and_fit_does_not_save_geometry(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (250, 220))
+    node_id = _local_node_scene(session)["nodes"][0]["id"]
+    page.locator(f"[data-node-locked='{node_id}']").click()
+    local = _local_node_scene(session)
+    page.locator("[data-drawing-fit='drawing']").click()
+    assert _local_node_scene(session) == local
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator(f"[data-select-node='{node_id}']").click()
+    assert _local_node_scene(session)["nodes"][0]["editLocked"] is True
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('move', {dx:20,dy:30})"
+        )
+        is False
+    )
+    assert _local_node_scene(session) == local
+
+
 def test_guided_radius_preview_applies_once_and_persists_native_circle(
     session: BrowserSession,
 ):

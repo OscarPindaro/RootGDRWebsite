@@ -69,7 +69,7 @@ def test_legacy_native_migration_is_deterministic_and_does_not_infer_locks():
     }
     first = SceneDocument.model_validate(legacy)
     second = SceneDocument.model_validate(legacy)
-    assert first.schema_version == 3
+    assert first.schema_version == 4
     assert first == second
     assert first.nodes[0].constraint is None
     assert first.nodes[0].point_ids == ["v0", "v1", "v2"]
@@ -208,7 +208,7 @@ def test_transform_pivots_round_trip_and_version_two_keeps_geometry_locks():
         ],
     }
     migrated = SceneDocument.model_validate(old)
-    assert migrated.schema_version == 3
+    assert migrated.schema_version == 4
     assert migrated.nodes[0].point_ids == ["a", "b", "c", "d"]
     assert migrated.nodes[0].constraint.kind == "square"
     assert migrated.nodes[0].pivot is None

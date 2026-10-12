@@ -51,7 +51,7 @@ import { visibleRuns } from "../../src/frontend/js/drawings/render.js";
 const IDENTITY = [1, 0, 0, 1, 0, 0];
 
 function sceneWith(nodes) {
-  return { schemaVersion: 3, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
+  return { schemaVersion: 4, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
 }
 
 function triangle(id = "a") {
@@ -452,7 +452,7 @@ test("native migration preserves legacy geometry and assigns stable scoped ident
   delete legacy.nodes[0].pointIds;
   delete legacy.nodes[0].constraint;
   const migrated = migrateScene(legacy);
-  assert.equal(migrated.schemaVersion, 3);
+  assert.equal(migrated.schemaVersion, 4);
   assert.equal(legacy.schemaVersion, 1);
   assert.deepEqual(migrated.nodes[0].points, legacy.nodes[0].points);
   assert.deepEqual(migrated.nodes[0].pointIds, ["v0","v1","v2"]);
@@ -591,4 +591,17 @@ test("numeric command parsing is bounded and preserves case-sensitive parent ide
   assert.equal(parseNumericCommand("move NaN 20"),null);
   assert.equal(parseNumericCommand("align unknown"),null);
   assert.equal(parseNumericCommand("eval 10 20"),null);
+});
+
+test("edit locks cover descendants independently from visibility and primitive constraints", async () => {
+  const {editLocked, editableSelection, transformNodesInWorld} = await import("../../src/frontend/js/drawings/scene.js");
+  const node = {...createRect("Locked",[100,100],[200,200]),id:"p",editLocked:false};
+  const scene=sceneWith([{kind:"group",id:"g",name:"Group",transform:[1,0,0,1,0,0],opacity:1,visible:true,editLocked:true,nodes:[node]}]);
+  assert.equal(editLocked(scene,"p"),true);
+  assert.equal(editableSelection(scene,["p"]),false);
+  assert.equal(nodeAt(scene,[150,150]),null);
+  assert.equal(transformNodesInWorld(scene,[{id:"p",transform:[1,0,0,1,0,0]}],[1,0,0,1,10,20]),scene);
+  scene.nodes[0].editLocked=false;
+  node.editLocked=true;
+  assert.equal(editableSelection(scene,["g"]),false);
 });

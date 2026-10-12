@@ -23,10 +23,11 @@ export function cloneScene(scene) {
 
 export function migrateScene(scene) {
   const next = cloneScene(scene);
-  if (![1, 2, 3].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
-  next.schemaVersion = 3;
+  if (![1, 2, 3, 4].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
+  next.schemaVersion = 4;
   walk(next.nodes, node => {
     node.pivot ??= null;
+    node.editLocked ??= false;
     node.anchors ??= [];
     if (node.kind !== "group") node.constraint ??= null;
     if (node.kind === "polygon") node.pointIds ??= node.points.map((_, index) => `v${index}`);
@@ -88,6 +89,25 @@ export function findNode(scene, id) {
     if (node.id === id) found = { node, siblings, index, parent };
   });
   return found;
+}
+
+export function editLocked(scene, id) {
+  let current = findNode(scene,id);
+  while (current) {
+    if (current.node.editLocked) return true;
+    current = current.parent ? findNode(scene,current.parent.id) : null;
+  }
+  return false;
+}
+
+export function editableSelection(scene, ids) {
+  return ids.every(id => {
+    const found = findNode(scene,id);
+    if (!found || editLocked(scene,id)) return false;
+    let locked = false;
+    if (found.node.kind === "group") walk(found.node.nodes, node => { locked ||= Boolean(node.editLocked); });
+    return !locked;
+  });
 }
 
 export function visibilityIssues(scene, id) {
@@ -259,7 +279,7 @@ export function nodeAt(scene, worldPoint, tolerance = 6) {
   let hit = null;
   function visit(nodes, parent) {
     for (const node of nodes) {
-      if (node.visible === false || node.opacity === 0) continue;
+      if (node.visible === false || node.opacity === 0 || node.editLocked) continue;
       const world = multiply(parent, node.transform);
       if (node.kind === "group") {
         visit(node.nodes, world);
@@ -329,6 +349,7 @@ export function createPolygon(name, points, fill = "#e0a327") {
     points,
     pointIds: points.map(() => newId("v")),
     pivot: null,
+    editLocked: false,
     anchors: [],
     constraint: null,
     edgeVisible: null,
@@ -351,6 +372,7 @@ export function createEllipse(name, center, rx, ry, fill = "#e0a327") {
     rx,
     ry,
     pivot: null,
+    editLocked: false,
     anchors: [],
     constraint: null,
   };
@@ -370,6 +392,7 @@ export function createPath(name, d, stroke = DEFAULT_STROKE) {
     d,
     pointIds: pathHandles(d).map(() => newId("h")),
     pivot: null,
+    editLocked: false,
     anchors: [],
     constraint: null,
   };
@@ -521,6 +544,7 @@ export function transformInWorld(scene, id, delta, original = nodeFrame(scene, i
 }
 
 export function transformNodesInWorld(scene, entries, delta) {
+  if (!editableSelection(scene,entries.map(entry => entry.id))) return scene;
   const next = cloneScene(scene);
   for (const {id, transform} of entries) {
     const frame = nodeFrame(next, id);
@@ -666,6 +690,7 @@ export function groupNodes(scene, ids) {
     visible: true,
     nodes: members,
     pivot: null,
+    editLocked: false,
     anchors: [],
   };
   siblings.splice(index, 0, group);

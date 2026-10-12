@@ -29,6 +29,7 @@
   line-height: var(--leading-tight);
 }
 
+.drawing-editor__viewport-controls { display: inline-flex; align-items: center; gap: var(--sp-1); }
 .drawing-editor__command-preview { width: 100%; max-height: var(--drawing-layers-height); border: var(--rule); }
 .drawing-editor__command-dialog { max-height: calc(100dvh - var(--sp-4)); overflow-y: auto; }
 

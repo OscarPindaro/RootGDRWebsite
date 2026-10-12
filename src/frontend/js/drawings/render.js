@@ -266,6 +266,10 @@ export function render(svg, scene, view) {
     const point = apply(view.viewport, view.snap);
     overlay.appendChild(el("rect", {class:"drawing-editor__snap", x:point[0] - 7, y:point[1] - 7, width:14, height:14}));
   }
+  if (view.marquee) {
+    const from = apply(view.viewport,view.marquee.from), to = apply(view.viewport,view.marquee.to);
+    overlay.appendChild(el("rect", {class:"drawing-editor__selection", "data-drawing-marquee":"true", x:Math.min(from[0],to[0]), y:Math.min(from[1],to[1]), width:Math.abs(to[0]-from[0]), height:Math.abs(to[1]-from[1])}));
+  }
   for (const {axis, value} of view.guides || []) {
     const from = apply(view.viewport, axis === 0 ? [value, -100000] : [-100000, value]);
     const to = apply(view.viewport, axis === 0 ? [value, 100000] : [100000, value]);

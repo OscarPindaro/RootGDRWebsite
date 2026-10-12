@@ -7,6 +7,7 @@
 
 import {
   apply,
+  bounds,
   distanceToSegment,
   invert,
   multiply,
@@ -35,6 +36,8 @@ import {
   nodeCenter,
   geometryInfo,
   editGeometry,
+  editLocked,
+  editableSelection,
   alignNodes,
   nodeFrame,
   movePathPoint,
@@ -116,7 +119,7 @@ export function createController(root) {
   let commandPalette = null;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
-  let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 3, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
+  let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 4, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
   const history = new History(scene);
   let selection = [];
   let selectedId = null;
@@ -153,7 +156,8 @@ export function createController(root) {
       selection,
       selectedId,
       viewport,
-      mode,
+      mode: editableSelection(scene,selection) ? mode : "select",
+      marquee:drag?.kind === "marquee" ? {from:drag.from,to:drag.to} : null,
       pathPoint,
       tool,
       snap: snapPoint,
@@ -175,7 +179,7 @@ export function createController(root) {
     const list = root.querySelector("[data-testid='drawing-layers'] .drawing-editor__layers");
     if (!list) return;
     const focused = document.activeElement;
-    const focusKey = focused && ["selectNode", "nodeCollapse", "nodeVisible"].find(key => focused.dataset?.[key]);
+    const focusKey = focused && ["selectNode", "nodeCollapse", "nodeVisible", "nodeLocked"].find(key => focused.dataset?.[key]);
     const focusId = focusKey ? focused.dataset[focusKey] : null;
     const scroll = list.scrollTop;
     const build = (nodes, depth, inheritedHidden = false) => nodes.map(node => {
@@ -209,6 +213,15 @@ export function createController(root) {
       button.dataset.testid = "drawing-layer";
       button.setAttribute("aria-pressed", String(selection.includes(node.id)));
       row.appendChild(button);
+      const lock = document.createElement("button");
+      lock.type = "button";
+      lock.className = "drawing-editor__visibility";
+      lock.dataset.nodeLocked = node.id;
+      lock.disabled = !editable || (ancestorsOf(node.id) || []).some(id => editLocked(scene,id));
+      lock.setAttribute("aria-pressed",String(Boolean(node.editLocked)));
+      lock.setAttribute("aria-label",`${node.editLocked ? "Sblocca" : "Blocca"} modifica di ${node.name}`);
+      lock.appendChild(root.querySelector(node.editLocked ? "[data-scene-lock]" : "[data-scene-unlock]").content.cloneNode(true));
+      row.appendChild(lock);
       const eye = document.createElement("button");
       eye.type = "button";
       eye.className = "drawing-editor__visibility";
@@ -803,7 +816,7 @@ export function createController(root) {
       drag = { kind: "ellipse", id: selectedId, axis: target.dataset.ellipseAxis, node: selected().node, transform: nodeFrame(scene, selectedId).world };
       return;
     }
-    if (mode === "vertex" && selectedId && tool === "select") {
+    if (mode === "vertex" && selectedId && tool === "select" && editableSelection(scene,selection)) {
       const node = selected().node;
       const local = apply(invert(nodeFrame(scene, selectedId).world), scenePoint(event));
       if (node.kind === "polygon" && closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0])) return;
@@ -841,18 +854,23 @@ export function createController(root) {
       return;
     }
 
-    const hit = nodeAt(scene, scenePoint(event));
+    let hit = nodeAt(scene, scenePoint(event));
     if (!hit) {
-      select(null);
+      drag = {kind:"marquee", from:scenePoint(event), to:scenePoint(event), additive:event.shiftKey, previous:[...selection]};
       return;
     }
+    if (!event.ctrlKey && !event.metaKey) {
+      const parents = ancestorsOf(hit.id) || [];
+      if (parents.length) hit = findNode(scene,parents[0]).node;
+    }
     // A click inside a selected group moves the group, not the child under it.
-    const owner = selectedAncestorOf(hit.id);
+    const owner = event.ctrlKey || event.metaKey ? null : selectedAncestorOf(hit.id);
     if (!owner && event.shiftKey) {
       select(hit.id, true);
       return;
     }
     if (!owner && !selection.includes(hit.id)) select(hit.id);
+    if (!editableSelection(scene,selection)) return;
     drag = {
       kind: "move",
       from: scenePoint(event),
@@ -868,6 +886,7 @@ export function createController(root) {
       return;
     }
     if (!drag) return;
+    if (drag.kind === "marquee") { drag.to = scenePoint(event); draw(); return; }
     if (drag.kind === "pan") {
       const point = artboardPoint(event);
       viewport = [...viewport.slice(0, 4), drag.pan[0] + (point[0] - drag.from[0]), drag.pan[1] + (point[1] - drag.from[1])];
@@ -972,7 +991,16 @@ export function createController(root) {
     const finished = drag;
     snapPoint = null;
     snapGuides = [];
-    if (finished.kind === "create") finishShape();
+    if (finished.kind === "marquee") {
+      const box = bounds([finished.from,finished.to]);
+      const selectedIds = scene.nodes.filter(node => node.visible !== false && node.opacity !== 0 && editableSelection(scene,[node.id])).filter(node => {
+        const current = bounds(worldCorners(node));
+        return current.minX >= box.minX && current.minY >= box.minY && current.maxX <= box.maxX && current.maxY <= box.maxY;
+      }).map(node => node.id);
+      drag = null;
+      setSelection(finished.additive ? [...new Set([...finished.previous,...selectedIds])] : selectedIds);
+      mode = defaultMode();
+    } else if (finished.kind === "create") finishShape();
     else if (finished.kind === "line") finishLine();
     else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex" || finished.kind === "path" || finished.kind === "ellipse" || finished.kind === "pivot") {
       drag = null;
@@ -1038,6 +1066,7 @@ export function createController(root) {
   function onKeyDown(event) {
     if (!editable || event.defaultPrevented || root.dataset.copying || !root.isConnected || !root.contains(document.activeElement) || document.querySelector("dialog[open]") || root.querySelector("[data-menu]:popover-open")) return;
     const mod = event.ctrlKey || event.metaKey;
+    if (mod && event.key.toLowerCase() === "a" && event.target === svg) { event.preventDefault(); execute("select-all"); return; }
     if (mod && event.key.toLowerCase() === "s") {
       event.preventDefault();
       execute("save");
@@ -1145,7 +1174,7 @@ export function createController(root) {
     }
     const nudge = event.shiftKey ? 10 : 1;
     const steps = { ArrowLeft: [-nudge, 0], ArrowRight: [nudge, 0], ArrowUp: [0, -nudge], ArrowDown: [0, nudge] };
-    if (steps[event.key] && (event.target === svg || event.target === root)) {
+    if (steps[event.key] && editableSelection(scene,selection) && (event.target === svg || event.target === root)) {
       event.preventDefault();
       const [dx, dy] = steps[event.key];
       let next = scene;
@@ -1213,14 +1242,14 @@ export function createController(root) {
   }
 
   function renameSelected(name) {
-    if (!selectedId) return;
+    if (!selectedId || !editableSelection(scene,selection)) return;
     const trimmed = name.trim();
     if (!trimmed) return;
     commit(patchNode(scene, selectedId, { name: trimmed }));
   }
 
   function applyStyle(patch) {
-    if (!selectedId) return;
+    if (!selectedId || !editableSelection(scene,selection)) return;
     commit(patchNode(scene, selectedId, patch));
   }
 
@@ -1282,8 +1311,20 @@ export function createController(root) {
     announce(""); commit(next); return true;
   }
 
+  function fitViewport(target) {
+    const ids = target === "selection" ? selection : scene.nodes.filter(node => node.visible !== false).map(node => node.id);
+    const points = ids.flatMap(id => worldCorners(findNode(scene,id).node));
+    const box = points.length ? bounds(points) : {minX:0,minY:0,maxX:scene.artboard.width,maxY:scene.artboard.height};
+    const scale = clamp(Math.min((scene.artboard.width - 40) / Math.max(1,box.maxX-box.minX), (scene.artboard.height - 40) / Math.max(1,box.maxY-box.minY)),0.1,8);
+    viewport = [scale,0,0,scale,scene.artboard.width / 2 - scale * (box.minX+box.maxX) / 2,scene.artboard.height / 2 - scale * (box.minY+box.maxY) / 2];
+    draw();
+  }
+
   const actions = {
     "create-preset": { label: "Crea forma", enabled: () => true, run: createCommand },
+    "select-all": {label:"Seleziona tutto", enabled:() => scene.nodes.length > 0, run:() => { setSelection(scene.nodes.filter(node => node.visible !== false && node.opacity !== 0 && editableSelection(scene,[node.id])).map(node => node.id)); mode = defaultMode(); draw(); }},
+    "fit-drawing": {label:"Adatta disegno", enabled:() => true, run:() => fitViewport("drawing")},
+    "fit-selection": {label:"Adatta selezione", enabled:() => selection.length > 0, run:() => fitViewport("selection")},
     geometry: {label:"Geometria numerica", parameters:true, enabled:() => selection.length > 0, run:parameters => geometryCommand("geometry",parameters)},
     move: {label:"Sposta", parameters:true, enabled:() => selection.length > 0, run:parameters => geometryCommand("move",parameters)},
     parent: {label:"Genitore", parameters:true, enabled:() => selection.length === 1, run:parameters => geometryCommand("parent",parameters)},
@@ -1320,7 +1361,8 @@ export function createController(root) {
   }
 
   function canExecute(id) {
-    return Boolean(editable && !root.dataset.copying && !drag && !cut && actions[id]?.enabled());
+    const modifiesSelection = ["edit", "transform", "geometry", "move", "parent", "align", "delete", "duplicate", "group", "ungroup", "forward", "backward", "front", "back", "unlock", "ellipse-parameter", "tool-cut"].includes(id);
+    return Boolean(editable && !root.dataset.copying && !drag && !cut && (!modifiesSelection || editableSelection(scene,selection)) && actions[id]?.enabled());
   }
 
   function execute(id, parameters) {
@@ -1333,6 +1375,8 @@ export function createController(root) {
   function syncControls() {
     const found = selected();
     const node = found ? found.node : null;
+    const mutable = editableSelection(scene,selection);
+    root.querySelector("[data-drawing-zoom]").textContent = Math.round(viewport[0] * 100) + "%";
     const undoButton = root.querySelector("[data-drawing-undo]");
     const redoButton = root.querySelector("[data-drawing-redo]");
     if (undoButton) undoButton.disabled = !editable || !history.canUndo;
@@ -1345,7 +1389,7 @@ export function createController(root) {
       if (name === "opacity") input.value = node ? Math.round(node.opacity * 100) : 100;
       if (name === "no-fill") input.checked = !(node && node.fill);
       if (name === "no-stroke") input.checked = !(node && node.stroke);
-      input.disabled = !editable || !node || node.kind === "group";
+      input.disabled = !editable || !mutable || !node || node.kind === "group";
     });
     root.querySelectorAll("[data-style-value]").forEach((output) => {
       const name = output.dataset.styleValue;
@@ -1353,14 +1397,14 @@ export function createController(root) {
       if (name === "opacity") output.textContent = `${node ? Math.round(node.opacity * 100) : 100}%`;
     });
     root.querySelectorAll("[data-palette]").forEach((chip) => {
-      chip.disabled = !editable || !node || node.kind === "group";
+      chip.disabled = !editable || !mutable || !node || node.kind === "group";
     });
     const fillSwatch = root.querySelector("[data-testid='drawing-fill-swatch']");
     if (fillSwatch) fillSwatch.style.setProperty("--swatch", (node && node.fill) || "transparent");
     const strokeSwatch = root.querySelector("[data-testid='drawing-stroke-swatch']");
     if (strokeSwatch) strokeSwatch.style.setProperty("--swatch", (node && node.stroke) || "transparent");
     root.querySelectorAll("[data-drawing-duplicate],[data-drawing-delete],[data-drawing-order],[data-drawing-mode],[data-drawing-ungroup],[data-node-name]").forEach((control) => {
-      control.disabled = !editable || !node;
+      control.disabled = !editable || !mutable || !node;
     });
     const groupButton = root.querySelector("[data-drawing-group]");
     if (groupButton) groupButton.disabled = !editable || selection.length < 2;
@@ -1374,12 +1418,13 @@ export function createController(root) {
       });
       parentInput.replaceChildren(...options);
       parentInput.value = found?.parent?.id || "";
-      parentInput.disabled = !editable || !node || selection.length !== 1;
+      parentInput.disabled = !canExecute("parent");
     }
     const nameInput = root.querySelector("[data-node-name]");
     if (nameInput && document.activeElement !== nameInput) nameInput.value = node?.name || "";
     const issues = visibilityIssues(scene, selectedId), descriptions = {"no-selection":"Nessuna selezione", hidden:"Oggetto nascosto", "hidden-parent":"Nascosto dal genitore", "zero-opacity":"Opacità zero", "empty-group":"Gruppo vuoto · conservato", "no-paint":"Riempimento e contorno disattivati"};
     root.querySelector("[data-drawing-diagnostics]").textContent = issues.map(issue => descriptions[issue]).join(" · ") || "Visibilità attiva";
+    if (node && !mutable) root.querySelector("[data-drawing-diagnostics]").textContent += " · Modifica bloccata";
     root.querySelectorAll("[data-drawing-action]").forEach(control => { control.disabled = !canExecute(control.dataset.drawingAction); });
     root.querySelectorAll("[data-drawing-mode]").forEach(button => {
       const active = tool === "select" && mode === button.dataset.drawingMode;
@@ -1495,6 +1540,7 @@ export function createController(root) {
       "[data-drawing-undo]": "undo", "[data-drawing-redo]": "redo", "[data-testid='drawing-save']": "save",
       "[data-drawing-duplicate]": "duplicate", "[data-drawing-delete]": "delete", "[data-drawing-group]": "group",
       "[data-drawing-ungroup]": "ungroup", "[data-drawing-mode='vertex']": "edit", "[data-drawing-mode='transform']": "transform",
+      "[data-drawing-fit='drawing']": "fit-drawing", "[data-drawing-fit='selection']": "fit-selection",
       "[data-drawing-order='1']": "forward", "[data-drawing-order='-1']": "backward", "[data-drawing-order='front']": "front", "[data-drawing-order='back']": "back", "[data-drawing-unlock]": "unlock",
     };
     for (const [selector, id] of Object.entries(bindings)) {
@@ -1539,6 +1585,12 @@ export function createController(root) {
         if (eye) {
           const node = findNode(scene, eye.dataset.nodeVisible).node;
           commit(patchNode(scene, node.id, {visible: !node.visible}));
+        }
+        const lock = event.target.closest("[data-node-locked]");
+        if (lock && !lock.disabled) {
+          const node = findNode(scene,lock.dataset.nodeLocked).node;
+          mode = "select";
+          commit(patchNode(scene,node.id,{editLocked:!node.editLocked}));
         }
         const branch = event.target.closest("[data-node-collapse]");
         if (branch) {
@@ -1590,7 +1642,7 @@ export function createController(root) {
         finishPolygon();
         return;
       }
-      if (tool !== "select" || mode !== "vertex" || selection.length !== 1 || event.target.closest("[data-edge], [data-vertex], [data-path-command], [data-ellipse-axis]")) return;
+      if (tool !== "select" || mode !== "vertex" || selection.length !== 1 || !editableSelection(scene,selection) || event.target.closest("[data-edge], [data-vertex], [data-path-command], [data-ellipse-axis]")) return;
       const node = selected().node, local = apply(invert(nodeFrame(scene, selectedId).world), scenePoint(event));
       if (node.kind === "polygon") {
         const hit = closestEdge(node, local, SNAP_TOLERANCE_PX / viewport[0]);

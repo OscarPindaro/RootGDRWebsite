@@ -136,6 +136,11 @@
     <common.IconButton icon="grid-2x2" label="Mostra griglia" selected={{ True }} data-drawing-grid />
     <common.Button size="xs" variant="secondary" selected={{ True }} data-snap-grid>Aggancia griglia</common.Button>
     <common.Button size="xs" variant="secondary" selected={{ True }} data-snap-shapes>Aggancia oggetti</common.Button>
+    <span class="drawing-editor__viewport-controls">
+      <common.IconButton icon="square" size="xs" label="Adatta disegno" data-drawing-fit="drawing" />
+      <common.IconButton icon="mouse-pointer-2" size="xs" label="Adatta selezione" data-drawing-fit="selection" />
+      <span class="mono" data-drawing-zoom aria-label="Zoom della vista">100%</span>
+    </span>
   </div>
 
   <div class="drawing-editor__workspace">
@@ -236,6 +241,8 @@
     <div class="drawing-editor__side">
       <section class="drawing-editor__panel" aria-label="Scena" data-testid="drawing-layers">
         <h3 class="drawing-editor__panel-title">Scena</h3>
+        <template data-scene-lock><common.Icon name="lock" size=20 /></template>
+        <template data-scene-unlock><common.Icon name="lock-open" size=20 /></template>
         <template data-scene-eye><common.Icon name="eye" size=20 /></template>
         <template data-scene-eye-off><common.Icon name="eye-off" size=20 /></template>
         <template data-scene-arrow><common.Icon name="chevron-down" size=20 /></template>

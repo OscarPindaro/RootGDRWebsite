@@ -33,8 +33,15 @@ library, skeleton, publishing or export capabilities.
   vertices and double-click or press Enter to finish. Drag open lines or cubic
   Bézier curves.
 - Select through the canvas or connected scene tree; Shift selects multiple
-  objects. Groups expand/collapse, eye controls on the right toggle visibility,
-  and arrow/Home/End keys navigate the tree without nudging artwork.
+  objects. Canvas clicks select whole top-level groups; Ctrl/Cmd-click selects
+  deeper children. Empty-canvas marquee fully encloses visible editable root
+  subscenes; Shift adds them and Ctrl/Cmd+A selects the same eligible roots.
+  Ancestors/descendants are never transformed twice. Groups expand/collapse, eye
+  controls toggle visibility, and tree arrows/Home/End never nudge artwork.
+  Tree edit locks cover nodes/subtrees and prevent moving a containing group,
+  independently of visibility and primitive constraints. Locked artwork is
+  skipped by canvas picking but accessible in the tree. These are authoring aids,
+  not permission controls. Fit drawing/selection and zoom readout affect only view.
   The **Genitore** selector attaches an object to a group or the scene root
   while preserving its world placement; cycles and excessive nesting are refused.
   Move, scale, rotate, duplicate, delete and reorder objects. Arrow keys nudge.
@@ -130,7 +137,7 @@ library, skeleton, publishing or export capabilities.
 - Alembic creates a `drawings` table with creator, timestamps, optimistic version
   and a JSONB native document. A feature-local `SceneJSON` adapter keeps the
   model attribute typed as `SceneDocument`; a save replaces the complete value.
-- Format version 3 stores an artboard and ordered polygon/ellipse/path/group
+- Format version 4 stores an artboard and ordered polygon/ellipse/path/group
   nodes with stable node IDs, names, affine transforms, styles and visibility.
   Polygon vertices and path handles have node-scoped stable `pointIds`; authored
   anchors have IDs, names, positions and angles. Insert/remove/cut keep surviving
@@ -138,9 +145,10 @@ library, skeleton, publishing or export capabilities.
   Polygon vertices remain ordered coordinate pairs; edge visibility follows each
   outgoing edge. Paths use absolute M/L/C/Z commands. UI selection, viewport,
   handles and guides are not saved as artwork.
-- Versions 1/2 are explicitly upgraded in memory on read. Version 1 receives
+- Versions 1/2/3 are explicitly upgraded in memory on read. Version 1 receives
   deterministic IDs without inferred preset locks; version 2 retains existing
-  locks/identities. Version 3 adds a nullable local transform pivot. Geometry,
+  locks/identities. Version 3 adds a nullable local transform pivot; version 4
+  adds default-unlocked object/subscene edit locks. Geometry,
   transforms and styles are unchanged. The
   database row is rewritten only by explicit Save; no schema reset is required.
   Unknown versions and version-2 metadata disguised as version 1 are rejected.
@@ -181,7 +189,7 @@ specimen in the component showcase.
   polyline/cubic editing does not offer a full path-boolean toolset.
 - Groups must be consecutive siblings to preserve overlap order. The layer list
   is a connected, collapsible scene tree. Group styling is not exposed.
-- No angle snapping or zoom readout/fit control. Linked-asset overrides are
+- No angle snapping. Linked-asset overrides are
   deferred; stable native identities and numeric geometry are present.
 - JavaScript is required for complete interactive rendering, including groups;
   the server-rendered first paint is not a complete no-JavaScript renderer.
