@@ -38,6 +38,11 @@ export function parseCompact(text, acceptedKind = null) {
   const shape = shapeOf(acceptedKind);
   if (!shape) return null;
   if (!term) return {kind: acceptedKind, size: null, sides: null};
+  // The accepted shape may be restated by any name its family answers to, not
+  // only by the variant that happens to be selected: after accepting a right
+  // triangle, `triangolo` still names the shape and must not be refused.
+  const family = acceptedKind.startsWith("triangle_") ? SHAPES.filter(entry => entry.kind.startsWith("triangle_")) : [shape];
+  const names = new Set(family.flatMap(entry => entry.aliases));
   let size = null, sides = null, kind = acceptedKind;
   for (const word of term.split(" ")) {
     const number = Number(word);
@@ -53,7 +58,7 @@ export function parseCompact(text, acceptedKind = null) {
     }
     const variant = Object.keys(VARIANT_WORDS).find(candidate => VARIANT_WORDS[candidate].includes(word));
     if (variant && acceptedKind.startsWith("triangle_")) { kind = variant; continue; }
-    if (shape.aliases.includes(word)) continue;
+    if (names.has(word)) continue;
     return null;
   }
   return {kind, size, sides};
@@ -189,7 +194,7 @@ export function createCanvasPalette(root, editor) {
     parameterInput.closest("label").hidden = !commands().find(action => action.id === guided.value)?.parameters;
     const defaults = editor.defaults();
     output.textContent = mode === "guided" ? "" : acceptedKind
-      ? parsed ? `${describe(parsed)} · riquadro ${Math.round(parsed.size ?? defaults.width)} unità. Invio crea; Escape annulla.` : "Variante sconosciuta: correggi il testo o premi Escape."
+      ? parsed ? `${describe(parsed)} · riquadro ${Math.round(parsed.size ?? defaults.width)} unità. Invio crea; Escape annulla.` : "Non riconosciuto. In questa fase: una misura (130), i lati del poligono (6) o una variante (isoscele, equilatero, destra, sinistra)."
       : choices.length ? "Invio accetta una forma; dopo puoi indicare misura, lati o variante. Un secondo Invio crea." : "Nessun comando corrisponde al testo.";
     updateGuided();
   }

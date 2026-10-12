@@ -1708,6 +1708,43 @@ def test_split_button_presets_create_persistent_constrained_geometry(
     assert len(_scene_of(page)["nodes"]) == 1
 
 
+def test_an_accepted_variant_is_restated_by_the_shape_name(component):
+    """Regression: a right triangle refused the word `Triangolo` in stage two."""
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    status = page.locator("[data-canvas-command-status]")
+
+    field.fill("rect")
+    page.keyboard.press("Enter")
+    assert "angolo a destra" in status.inner_text()
+
+    field.fill("Triangolo")
+    assert "Non riconosciuto" not in status.inner_text()
+    assert "angolo a destra" in status.inner_text()
+
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"][0]["constraint"] == {"kind": "triangle_right_right"}
+
+
+def test_the_second_stage_says_what_it_accepts(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    field.fill("quadrato")
+
+    status = page.locator("[data-canvas-command-status]").inner_text()
+    assert "Non riconosciuto" in status
+    assert "misura" in status
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+
+
 def test_the_command_palette_is_docked_inside_the_canvas(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props())
     _mounted(page)

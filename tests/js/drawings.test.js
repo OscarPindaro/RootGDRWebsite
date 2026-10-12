@@ -625,6 +625,24 @@ test("the compact second stage takes a size, a vertex count and a variant", asyn
   assert.equal(parseCompact("not-a-shape"),null);
 });
 
+test("an accepted variant can be restated by any name its family answers to", async () => {
+  const {parseCompact} = await import("../../src/frontend/js/drawings/canvas-palette.js");
+  // Regression: after accepting a right triangle, `triangolo` used to be
+  // refused because only the selected variant's aliases were consulted.
+  for (const accepted of ["triangle_right_right","triangle_right_left","triangle_equilateral","triangle_isosceles"]) {
+    assert.deepEqual(parseCompact("triangolo", accepted),{kind:accepted,size:null,sides:null});
+    assert.deepEqual(parseCompact("triangle", accepted),{kind:accepted,size:null,sides:null});
+    assert.deepEqual(parseCompact("130 triangolo", accepted),{kind:accepted,size:130,sides:null});
+  }
+  // A variant word still selects the variant, from any starting variant.
+  assert.equal(parseCompact("isoscele","triangle_right_left").kind,"triangle_isosceles");
+  assert.equal(parseCompact("equilatero","triangle_isosceles").kind,"triangle_equilateral");
+  assert.equal(parseCompact("sinistra","triangle_right_right").kind,"triangle_right_left");
+  // A word that belongs to no part of the family is still refused.
+  assert.equal(parseCompact("quadrato","triangle_isosceles"),null);
+  assert.equal(parseCompact("rettangolo","regular_polygon"),null);
+});
+
 test("cubic insertion preserves sampled geometry and stable endpoints, linked tangents remain opposite", async () => {
   const {insertPathAnchor, setPathAnchorMode, moveCurvePoint, createPath, pathHandles, pathCommands} = await import("../../src/frontend/js/drawings/scene.js");
   const node=createPath("Curve","M0 0 C0 100 100 100 100 0");
