@@ -56,10 +56,12 @@ def test_pyproject_is_the_only_version_authority():
 def test_draft_leaves_fragments_changelog_and_version_untouched():
     before = checksums()
     result = run_draft(REPO_ROOT)
+    rendered = result.stdout + result.stderr
     assert result.returncode == 0, result.stderr
-    assert "Draft only -- nothing has been written." in result.stdout + result.stderr
-    assert "### Added" in result.stdout
-    assert "(REQ-0012-T05)" in result.stdout
+    assert "Draft only -- nothing has been written." in rendered
+    # A draft renders what is pending, and an empty changelog.d — the state
+    # right after a release consumed the fragments — is a valid one to be in.
+    assert "### Added" in rendered or "No significant changes." in rendered
     assert checksums() == before
 
 
