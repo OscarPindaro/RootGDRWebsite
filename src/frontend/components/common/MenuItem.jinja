@@ -1,24 +1,27 @@
-{#def label=None, icon=None, href=None, variant="default" #}
+{#def label=None, icon=None, href=None, variant="default", checked=None #}
 {#css common/Icon.css #}
 {% set classes = "menu-item menu-item-" ~ variant %}
+{% set role = "menuitemcheckbox" if checked is not none else "menuitem" %}
 {% if href %}
-    <a href="{{ href }}" role="menuitem" {{ attrs.render(class=classes) }}>
+    <a href="{{ href }}" role="{{ role }}"{% if checked is not none %} aria-checked="{{ 'true' if checked else 'false' }}"{% endif %} {{ attrs.render(class=classes) }}>
         {% if label %}
             {% if icon %}
                 <span class="menu-item-icon"><common.Icon :name="icon" size={{ 18 }} /></span>
             {% endif %}
             <span class="menu-item-label">{{ label }}</span>
+            {% if checked is not none %}<span class="menu-item-check" aria-hidden="true"><common.Icon name="check" size={{ 18 }} /></span>{% endif %}
         {% else %}
             {{ content }}
         {% endif %}
     </a>
 {% else %}
-    <button type="button" role="menuitem" {{ attrs.render(class=classes) }}>
+    <button type="button" role="{{ role }}"{% if checked is not none %} aria-checked="{{ 'true' if checked else 'false' }}"{% endif %} {{ attrs.render(class=classes) }}>
         {% if label %}
             {% if icon %}
                 <span class="menu-item-icon"><common.Icon :name="icon" size={{ 18 }} /></span>
             {% endif %}
             <span class="menu-item-label">{{ label }}</span>
+            {% if checked is not none %}<span class="menu-item-check" aria-hidden="true"><common.Icon name="check" size={{ 18 }} /></span>{% endif %}
         {% else %}
             {{ content }}
         {% endif %}

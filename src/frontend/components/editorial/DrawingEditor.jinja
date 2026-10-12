@@ -61,6 +61,8 @@
     {% for action, label, icon in [('select', 'Seleziona', 'mouse-pointer-2'), ('edit', 'Modifica forma', 'spline'), ('transform', 'Trasforma (T)', 'grid-2x2'), ('duplicate', 'Duplica', 'copy'), ('delete', 'Elimina sottoscena', 'trash-2'), ('group', 'Raggruppa', 'grid-2x2'), ('ungroup', 'Separa', 'list'), ('forward', 'Porta avanti', 'chevron-up'), ('backward', 'Porta indietro', 'chevron-down'), ('front', 'Primo piano', 'chevron-up'), ('back', 'Sfondo', 'chevron-down'), ('unlock', 'Sblocca geometria', 'lock-open'), ('undo', 'Annulla', 'undo-2'), ('redo', 'Ripeti', 'redo-2'), ('save', 'Salva', 'save')] %}
     <common.MenuItem label={{ label }} icon={{ icon }} data-drawing-command={{ action }} disabled={{ not editable }} />
     {% endfor %}
+    <common.MenuItem label="Salvataggio automatico" icon="save" checked={{ False }} data-drawing-autosave />
+    <common.MenuItem label="Griglia a punti" icon="grid-2x2" checked={{ False }} data-drawing-grid-dots />
   </common.Menu>
   <common.Dialog title="Scorciatoie del disegno" id="drawing-help" manual={{ True }}>
     <ul class="prose">
@@ -168,10 +170,10 @@
         <common.IconButton icon="chevron-down" label="Varianti del triangolo" id="drawing-triangle-trigger" popovertarget="drawing-triangle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="triangle" disabled={{ not editable }} />
       </div>
       <common.Menu id="drawing-triangle-menu" labelledby="drawing-triangle-trigger">
-        <common.MenuItem label="Isoscele" data-drawing-preset="triangle_isosceles" />
-        <common.MenuItem label="Equilatero" data-drawing-preset="triangle_equilateral" />
-        <common.MenuItem label="Rettangolo · angolo a destra" data-drawing-preset="triangle_right_right" />
-        <common.MenuItem label="Rettangolo · angolo a sinistra" data-drawing-preset="triangle_right_left" />
+        <common.MenuItem label="Isoscele" icon="triangle" data-drawing-preset="triangle_isosceles" />
+        <common.MenuItem label="Equilatero" icon="triangle" data-drawing-preset="triangle_equilateral" />
+        <common.MenuItem label="Rettangolo · angolo a destra" icon="triangle" data-drawing-preset="triangle_right_right" />
+        <common.MenuItem label="Rettangolo · angolo a sinistra" icon="triangle" data-drawing-preset="triangle_right_left" />
       </common.Menu>
       <div class="drawing-editor__split">
         <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="square" data-testid="drawing-tool-square">
@@ -181,7 +183,7 @@
         <common.IconButton icon="chevron-down" label="Varianti del rettangolo" id="drawing-rectangle-trigger" popovertarget="drawing-rectangle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="rectangle" disabled={{ not editable }} />
       </div>
       <common.Menu id="drawing-rectangle-menu" labelledby="drawing-rectangle-trigger">
-        <common.MenuItem label="Quadrato" data-drawing-preset="square" />
+        <common.MenuItem label="Quadrato" icon="square" data-drawing-preset="square" />
       </common.Menu>
       <div class="drawing-editor__split">
         <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="circle" data-testid="drawing-tool-circle">
@@ -191,7 +193,7 @@
         <common.IconButton icon="chevron-down" label="Varianti del cerchio" id="drawing-circle-trigger" popovertarget="drawing-circle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="circle" disabled={{ not editable }} />
       </div>
       <common.Menu id="drawing-circle-menu" labelledby="drawing-circle-trigger">
-        <common.MenuItem label="Ellisse" data-drawing-preset="ellipse" />
+        <common.MenuItem label="Ellisse" icon="circle" data-drawing-preset="ellipse" />
       </common.Menu>
       <div class="drawing-editor__split">
         <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="polygon" data-testid="drawing-tool-polygon">
@@ -201,7 +203,7 @@
         <common.IconButton icon="chevron-down" label="Varianti del poligono" id="drawing-polygon-trigger" popovertarget="drawing-polygon-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="polygon" disabled={{ not editable }} />
       </div>
       <common.Menu id="drawing-polygon-menu" labelledby="drawing-polygon-trigger">
-        <common.MenuItem label="Poligono regolare" data-drawing-preset="regular_polygon" />
+        <common.MenuItem label="Poligono regolare" icon="pentagon" data-drawing-preset="regular_polygon" />
       </common.Menu>
       <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="line" data-testid="drawing-tool-line">
         <common.Icon name="pen-tool" size=20 />
@@ -225,6 +227,9 @@
         <defs>
           <pattern id="drawing-grid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M10 0H0V10" fill="none" stroke="var(--line)" stroke-width="1" />
+          </pattern>
+          <pattern id="drawing-grid-dots" width="10" height="10" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="1" fill="var(--line)" />
           </pattern>
         </defs>
         <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%" />

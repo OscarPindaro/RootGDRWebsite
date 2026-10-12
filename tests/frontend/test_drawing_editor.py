@@ -6,6 +6,8 @@ right. These tests pin the layout contract — the artboard dominates on desktop
 the columns stack on a phone, every tool is labelled — not the artwork.
 """
 
+import json
+
 import pytest
 from types import SimpleNamespace
 
@@ -841,8 +843,160 @@ def _page_props(version: int = 3) -> dict:
     }
 
 
+def _select_first_row(page) -> None:
+    page.locator("[data-select-node]").first.click()
+
+
+def _recolour(page) -> None:
+    """A document change that needs no pointer coordinates."""
+    page.locator("[data-palette='#ffffff']").first.click()
+
+
 def _status(page) -> str:
     return page.locator("[data-autosave-status]").inner_text().strip()
+
+
+def test_every_preset_menu_item_carries_its_shape_icon(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+
+    for menu in (
+        "drawing-triangle-menu",
+        "drawing-rectangle-menu",
+        "drawing-circle-menu",
+        "drawing-polygon-menu",
+    ):
+        items = page.locator(f"#{menu} .menu-item")
+        assert items.count() >= 1
+        assert items.locator(".menu-item-icon svg").count() == items.count()
+    assert page.locator("#drawing-triangle-menu .menu-item").count() == 4
+
+
+def test_the_grid_can_be_drawn_as_points(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    grid = page.locator(".drawing-editor__grid")
+    assert grid.get_attribute("fill") == "url(#drawing-grid)"
+    assert page.locator("#drawing-grid-dots circle").count() == 1
+
+    item = page.locator("[data-drawing-grid-dots]")
+    assert item.get_attribute("role") == "menuitemcheckbox"
+    assert item.get_attribute("aria-checked") == "false"
+
+    page.evaluate("() => document.querySelector('[data-drawing-grid-dots]').click()")
+    assert grid.get_attribute("fill") == "url(#drawing-grid-dots)"
+    assert item.get_attribute("aria-checked") == "true"
+    assert (
+        item.locator(".menu-item-check").evaluate(
+            "el => getComputedStyle(el).visibility"
+        )
+        == "visible"
+    )
+
+    page.evaluate("() => document.querySelector('[data-drawing-grid-dots]').click()")
+    assert grid.get_attribute("fill") == "url(#drawing-grid)"
+    assert item.get_attribute("aria-checked") == "false"
+    assert (
+        item.locator(".menu-item-check").evaluate(
+            "el => getComputedStyle(el).visibility"
+        )
+        == "hidden"
+    )
+
+
+def test_the_grid_style_survives_a_reload(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.evaluate("() => document.querySelector('[data-drawing-grid-dots]').click()")
+    page.reload()
+    _mounted(page)
+    assert page.locator(".drawing-editor__grid").get_attribute("fill") == (
+        "url(#drawing-grid-dots)"
+    )
+    assert page.locator("[data-drawing-grid-dots]").get_attribute("aria-checked") == (
+        "true"
+    )
+
+
+def test_autosave_is_a_checkable_menu_item_that_starts_off(component):
+    page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
+    item = page.locator("[data-drawing-autosave]")
+
+    assert item.get_attribute("role") == "menuitemcheckbox"
+    assert item.get_attribute("aria-checked") == "false"
+    page.evaluate("() => document.querySelector('[data-drawing-autosave]').click()")
+    assert item.get_attribute("aria-checked") == "true"
+
+
+def test_autosave_waits_for_two_idle_seconds_and_saves_once(component):
+    page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
+    # The server echoes what it stored, so a successful save settles the editor.
+    page.route(
+        f"**/api/drawings/{DRAWING_ID}",
+        lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "id": DRAWING_ID,
+                    "version": 4,
+                    "scene": json.loads(route.request.post_data)["scene"],
+                }
+            ),
+        ),
+    )
+    page.evaluate(
+        """() => {
+            window.__patches = [];
+            const real = window.fetch;
+            window.fetch = (url, options) => {
+                if (options && options.method === 'PATCH') window.__patches.push(String(url));
+                return real(url, options);
+            };
+        }"""
+    )
+    page.evaluate("() => document.querySelector('[data-drawing-autosave]').click()")
+
+    _select_first_row(page)
+    _recolour(page)
+    assert page.evaluate("() => window.__patches.length") == 0
+
+    page.wait_for_function("() => window.__patches.length === 1")
+    page.wait_for_timeout(2400)
+    assert page.evaluate("() => window.__patches.length") == 1, "one save, not a stream"
+    assert _status(page) == "Salvato"
+
+
+def test_autosave_stays_quiet_when_it_is_off(component):
+    component.route_json(
+        "PATCH",
+        f"/api/drawings/{DRAWING_ID}",
+        body={
+            "id": DRAWING_ID,
+            "version": 4,
+            "scene": _scene().model_dump(by_alias=True),
+        },
+    )
+    page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
+    page.evaluate(
+        """() => {
+            window.__patches = [];
+            const real = window.fetch;
+            window.fetch = (url, options) => {
+                if (options && options.method === 'PATCH') window.__patches.push(String(url));
+                return real(url, options);
+            };
+        }"""
+    )
+    _select_first_row(page)
+    _recolour(page)
+    page.wait_for_timeout(2600)
+
+    assert page.evaluate("() => window.__patches.length") == 0
+    assert _status(page) == "Modifiche non salvate"
 
 
 def test_the_editor_page_mounts_and_reports_the_saved_state(component):

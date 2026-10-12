@@ -98,8 +98,11 @@ library, skeleton, publishing or export capabilities.
   Resize fixes the opposite anchor under rotated/nested/reflected transforms.
   Shift preserves proportions; square/equilateral/regular/circle locks require
   proportional scaling even without Shift. Alt bypasses snap only, never locks.
-  Hiding the grid does not change snap preferences. Wheel zooms;
-  Space-left-drag or the middle mouse button pans, including over geometry handles.
+  Hiding the grid does not change snap preferences, and the grid itself is either
+  lines or points, chosen from the editor menu. The preset submenus name their
+  shape with an icon, so a variant is recognisable before it is read.
+  Wheel zooms; Space-left-drag or the middle mouse button pans, including over
+  geometry handles.
   Right-click on the canvas/tree opens shared contextual actions; Shift-right-click
   preserves the browser menu. Slash and a visible header button open local commands;
   **Scorciatoie** opens focus-owned help. The command palette is docked inside the
@@ -152,6 +155,11 @@ library, skeleton, publishing or export capabilities.
   failures preserve work and explain that it is not confirmed server persistence.
   App links and global search offer Save/Discard/Cancel; pending writes cannot be
   discarded. Browser reload/back keep the native leave warning and flush recovery.
+- Automatic saving is opt-in from the editor menu and stored browser-locally per
+  user, like the other editor preference. When on, it saves once two idle seconds
+  after the last change: a drag or a run of edits is one save, and it never fires
+  mid-gesture, while a request is in flight or while a recovery choice is pending.
+  Explicit Save, the conflict actions and stale-write rejection are unchanged.
 - Undo/redo is in-memory and bounded to 60 completed operations. A drag or
   property change is one step; view changes and selection are excluded.
 - A stale save returns 409 and retains local work. **Salva come copia** creates

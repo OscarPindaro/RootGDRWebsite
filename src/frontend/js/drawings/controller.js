@@ -64,6 +64,7 @@ import {
 import { render } from "./render.js";
 import { createCanvasPalette } from "./canvas-palette.js";
 import { createRecovery } from "./recovery.js";
+import { createPreferences } from "./preferences.js";
 
 const PALETTE = [
   "#ffffff", "#000000",
@@ -121,6 +122,10 @@ export function createController(root) {
   const contextMenu = root.querySelector("#drawing-context-menu");
   let contextPosition = null, contextOpener = svg;
   let commandPalette = null, recovery = null, recoveredLine = null, lastTreeShape = null;
+  const preferences = createPreferences(root);
+  let autosave = preferences.read("autosave", false) === true;
+  let gridStyle = preferences.read("gridStyle", "lines");
+  let autosaveTimer = null;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
   let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 5, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
@@ -378,11 +383,33 @@ export function createController(root) {
     return canonical(scene) !== savedScene || title !== savedTitle;
   }
 
+  /** The grid pattern the artboard paints with: lines or points. */
+  function applyGridStyle() {
+    svg.querySelector(".drawing-editor__grid")?.setAttribute("fill", gridStyle === "dots" ? "url(#drawing-grid-dots)" : "url(#drawing-grid)");
+  }
+
+  /**
+   * Automatic saving is opt-in and browser-local, like the editor's other
+   * preference. It waits for two idle seconds after the last change, so a drag
+   * or a run of edits is one save, and it never fires mid-gesture or while a
+   * request is in flight. A rejected save still leaves the explicit conflict
+   * actions in charge.
+   */
+  function scheduleAutosave() {
+    clearTimeout(autosaveTimer);
+    if (!autosave || !saveUrl) return;
+    autosaveTimer = setTimeout(() => {
+      if (!editable || root.dataset.copying || root.dataset.recoveryPending || inFlight || drag || cut || pendingPolygon || !isDirty()) return;
+      save();
+    }, 2000);
+  }
+
   function refresh() {
     root.dataset.dirty = isDirty() ? "true" : "false";
     if (root.dataset.saving === "true") return;
     status(isDirty() ? "Modifiche non salvate" : "Salvato", isDirty() ? "dirty" : "saved");
     recovery?.schedule();
+    scheduleAutosave();
   }
 
   async function save(asCopy = false) {
@@ -1430,6 +1457,19 @@ export function createController(root) {
     "curve-mode": {label:"Comportamento ancora", parameters:true, enabled:() => selection.length === 1 && selected()?.node.kind === "path", run:parameters => curveCommand("mode",parameters)},
     "curve-insert": {label:"Inserisci punto sulla curva", enabled:() => selection.length === 1 && selected()?.node.kind === "path" && pathCommands(selected().node.d).some(command => command.name === "C"), run:() => curveCommand("insert")},
     "select-all": {label:"Seleziona tutto", enabled:() => scene.nodes.length > 0, run:() => { setSelection(scene.nodes.filter(node => node.visible !== false && node.opacity !== 0 && editableSelection(scene,[node.id])).map(node => node.id)); mode = defaultMode(); draw(); }},
+    autosave: {label:"Salvataggio automatico", enabled:() => Boolean(saveUrl) && editable, run:() => {
+      autosave = !autosave;
+      preferences.write("autosave", autosave);
+      if (autosave) { announce(""); scheduleAutosave(); }
+      else { clearTimeout(autosaveTimer); announce("Salvataggio automatico disattivato: usa Salva o Ctrl/Cmd+S."); }
+      syncControls();
+    }},
+    "grid-dots": {label:"Griglia a punti", enabled:() => true, run:() => {
+      gridStyle = gridStyle === "dots" ? "lines" : "dots";
+      preferences.write("gridStyle", gridStyle);
+      applyGridStyle();
+      syncControls();
+    }},
     "fit-drawing": {label:"Adatta disegno", enabled:() => true, run:() => fitViewport("drawing")},
     "fit-selection": {label:"Adatta selezione", enabled:() => selection.length > 0, run:() => fitViewport("selection")},
     geometry: {label:"Geometria numerica", parameters:true, enabled:() => selection.length > 0, run:parameters => geometryCommand("geometry",parameters)},
@@ -1484,6 +1524,9 @@ export function createController(root) {
     const node = found ? found.node : null;
     const mutable = editableSelection(scene,selection) && !root.dataset.recoveryPending;
     root.querySelector('[data-drawing-title]').disabled = Boolean(root.dataset.recoveryPending);
+    root.querySelectorAll("[data-drawing-autosave]").forEach(item => item.setAttribute("aria-checked", String(autosave)));
+    root.querySelectorAll("[data-drawing-grid-dots]").forEach(item => item.setAttribute("aria-checked", String(gridStyle === "dots")));
+    applyGridStyle();
     root.querySelector("[data-drawing-zoom]").textContent = Math.round(viewport[0] * 100) + "%";
     const undoButton = root.querySelector("[data-drawing-undo]");
     const redoButton = root.querySelector("[data-drawing-redo]");
@@ -1682,6 +1725,7 @@ export function createController(root) {
       "[data-drawing-duplicate]": "duplicate", "[data-drawing-delete]": "delete", "[data-drawing-group]": "group",
       "[data-drawing-ungroup]": "ungroup", "[data-drawing-mode='vertex']": "edit", "[data-drawing-mode='transform']": "transform",
       "[data-drawing-fit='drawing']": "fit-drawing", "[data-drawing-fit='selection']": "fit-selection",
+      "[data-drawing-autosave]": "autosave", "[data-drawing-grid-dots]": "grid-dots",
       "[data-drawing-order='1']": "forward", "[data-drawing-order='-1']": "backward", "[data-drawing-order='front']": "front", "[data-drawing-order='back']": "back", "[data-drawing-unlock]": "unlock",
     };
     for (const [selector, id] of Object.entries(bindings)) {
