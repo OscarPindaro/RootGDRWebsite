@@ -47,7 +47,7 @@ def test_pyproject_is_the_only_version_authority():
     project = tomllib.loads((REPO_ROOT / "pyproject.toml").read_text("utf-8"))[
         "project"
     ]
-    assert project["version"] == "0.1.0"
+    assert project["version"] == "0.2.0"
     package = json.loads((REPO_ROOT / "package.json").read_text("utf-8"))
     assert "version" not in package
     assert importlib.metadata.version("backend") == project["version"]

@@ -1,6 +1,6 @@
 [project]
 name = "backend"
-version = "0.1.0"
+version = "0.2.0"
 description = "A repo where I try fronted + backend integration"
 authors = [
     { name = "Oscar Pindaro", email = "oscar.pindaro@gmail.com" }

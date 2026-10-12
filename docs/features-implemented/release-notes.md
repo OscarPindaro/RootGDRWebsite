@@ -11,7 +11,7 @@ chooses a version.
 - `uv run towncrier build --draft --version UNRELEASED` renders the upcoming
   notes without writing or consuming anything. The draft is the only build
   invoked during the cycle.
-- `pyproject.toml` is the single version authority (`0.1.0` during this cycle).
+- `pyproject.toml` is the single version authority (`0.2.0` for the reporting release).
   `package.json` no longer carries an application counter; the backend
   `/version` endpoint and the image labels and manifests report the packaged
   version and the build revision.
@@ -31,8 +31,9 @@ exclusion in the ticket outcome instead.
 
 ## Limits
 
-- No release has been cut: `CHANGELOG.md` has no entries and the version stays
-  0.1.0.
+- No release has been cut yet: `CHANGELOG.md` has no entries and the 65
+  fragments written so far are still pending, including everything before the
+  reporting cycle. The version is 0.2.0, chosen for the reporting release.
 - The draft checks that fragments are named and typed correctly, not that they
   are well written.
 - Fragments are consumed only by a deliberate release build; `--draft` never
