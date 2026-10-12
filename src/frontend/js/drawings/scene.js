@@ -23,15 +23,15 @@ export function cloneScene(scene) {
 
 export function migrateScene(scene) {
   const next = cloneScene(scene);
-  if (![1, 2, 3, 4].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
-  next.schemaVersion = 4;
+  if (![1, 2, 3, 4, 5].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
+  next.schemaVersion = 5;
   walk(next.nodes, node => {
     node.pivot ??= null;
     node.editLocked ??= false;
     node.anchors ??= [];
     if (node.kind !== "group") node.constraint ??= null;
     if (node.kind === "polygon") node.pointIds ??= node.points.map((_, index) => `v${index}`);
-    if (node.kind === "path") node.pointIds ??= pathHandles(node.d).map((_, index) => `h${index}`);
+    if (node.kind === "path") { node.pointIds ??= pathHandles(node.d).map((_, index) => `h${index}`); node.anchorModes ??= []; }
   });
   return next;
 }
@@ -188,7 +188,7 @@ export function nodeCenter(node) {
 
 export function pathHandles(d) {
   const handles = [];
-  let previous = null;
+  let previous = null, previousIndex = null;
   let controlNumber = 0;
   pathCommands(d).forEach((command, index) => {
     for (let offset = 0; offset < command.numbers.length; offset += 2) {
@@ -196,8 +196,9 @@ export function pathHandles(d) {
       const control = command.name === "C" && offset % 6 !== 4;
       const endOffset = Math.floor(offset / 6) * 6 + 4;
       const anchor = control ? (offset % 6 === 0 ? previous : command.numbers.slice(endOffset, endOffset + 2)) : null;
-      handles.push({ command: index, offset, point, control, anchor, label: control ? `Controllo ${++controlNumber}` : "Punto del tracciato" });
-      if (!control) previous = point;
+      const anchorIndex = control ? (offset % 6 === 0 ? previousIndex : handles.length + 1) : null;
+      handles.push({ command: index, offset, point, control, anchor, anchorIndex, label: control ? `Controllo ${++controlNumber}` : "Punto del tracciato" });
+      if (!control) { previous = point; previousIndex = handles.length - 1; }
     }
   });
   const endpoints = handles.filter(handle => !handle.control);
@@ -210,6 +211,51 @@ export function movePathPoint(d, commandIndex, offset, point) {
   const commands = pathCommands(d);
   commands[commandIndex].numbers.splice(offset, 2, ...point);
   return commands.map(c => c.name + c.numbers.map(n => Math.round(n * 1000) / 1000).join(" ")).join(" ");
+}
+
+export function moveCurvePoint(node, command, offset, point) {
+  const handles = pathHandles(node.d), index = handles.findIndex(handle => handle.command === command && handle.offset === offset);
+  if (index < 0 || !point.every(Number.isFinite)) return null;
+  const commands = pathCommands(node.d), handle = handles[index];
+  commands[command].numbers.splice(offset,2,...point);
+  if (!handle.control) {
+    const delta = point.map((value,axis) => value - handle.point[axis]);
+    handles.filter(control => control.control && control.anchorIndex === index).forEach(control => commands[control.command].numbers.splice(control.offset,2,...control.point.map((value,axis) => value + delta[axis])));
+  } else {
+    const mode = node.anchorModes?.find(mode => mode.id === node.pointIds[handle.anchorIndex])?.mode || "corner";
+    const opposite = handles.find((control,position) => position !== index && control.control && control.anchorIndex === handle.anchorIndex);
+    if (opposite && mode !== "corner") {
+      const anchor = handles[handle.anchorIndex].point, vector = point.map((value,axis) => value - anchor[axis]), length = Math.hypot(...vector);
+      const distance = mode === "symmetric" ? length : Math.hypot(...opposite.point.map((value,axis) => value - anchor[axis]));
+      if (length) commands[opposite.command].numbers.splice(opposite.offset,2,...anchor.map((value,axis) => value - vector[axis] / length * distance));
+      else if (mode === "symmetric") commands[opposite.command].numbers.splice(opposite.offset,2,...anchor);
+    }
+  }
+  const d = commands.map(c => c.name + c.numbers.map(n => Math.round(n * 1e6) / 1e6).join(" ")).join(" ");
+  return d.length <= 8000 && commands.every(command => command.numbers.every(value => Number.isFinite(value) && Math.abs(value) <= 100000)) ? {...node,d} : null;
+}
+
+export function setPathAnchorMode(node, id, mode) {
+  if (!["corner", "smooth", "symmetric"].includes(mode)) return null;
+  const handles = pathHandles(node.d), index = node.pointIds.indexOf(id);
+  if (!handles[index] || handles[index].control) return null;
+  const next = {...node, anchorModes:[...(node.anchorModes || []).filter(entry => entry.id !== id),{id,mode}]};
+  const control = handles.find(handle => handle.control && handle.anchorIndex === index);
+  return control && mode !== "corner" ? moveCurvePoint(next,control.command,control.offset,control.point) : next;
+}
+
+export function insertPathAnchor(node, command, offset = 0, t = 0.5) {
+  const commands = pathCommands(node.d), target = commands[command];
+  if (!target || target.name !== "C" || !Number.isInteger(offset) || offset < 0 || offset % 6 !== 0 || !Number.isFinite(t) || t <= 0 || t >= 1 || target.numbers.length < offset + 6) return null;
+  const handles = pathHandles(node.d), first = handles.findIndex(handle => handle.command === command && handle.offset === offset);
+  const p0 = handles[handles[first].anchorIndex].point, p1 = target.numbers.slice(offset,offset+2), p2 = target.numbers.slice(offset+2,offset+4), p3 = target.numbers.slice(offset+4,offset+6);
+  const mix = (a,b) => a.map((value,axis) => value + (b[axis] - value) * t);
+  const a = mix(p0,p1), b = mix(p1,p2), c = mix(p2,p3), d = mix(a,b), e = mix(b,c), middle = mix(d,e);
+  target.numbers.splice(offset,6,...a,...d,...middle,...e,...c,...p3);
+  const pointIds = [...node.pointIds], midId = newId("h");
+  pointIds.splice(first,3,node.pointIds[first],newId("h"),midId,newId("h"),node.pointIds[first+1],node.pointIds[first+2]);
+  const path = commands.map(c => c.name + c.numbers.map(n => Math.round(n * 1e6) / 1e6).join(" ")).join(" ");
+  return path.length <= 8000 && pointIds.length <= 3072 && (node.anchorModes || []).length < 512 ? {...node, pointIds, anchorModes:[...(node.anchorModes || []),{id:midId,mode:"smooth"}], d:path} : null;
 }
 
 export function pathCommands(d) {
@@ -391,6 +437,7 @@ export function createPath(name, d, stroke = DEFAULT_STROKE) {
     strokeWidth: 4,
     d,
     pointIds: pathHandles(d).map(() => newId("h")),
+    anchorModes: [],
     pivot: null,
     editLocked: false,
     anchors: [],

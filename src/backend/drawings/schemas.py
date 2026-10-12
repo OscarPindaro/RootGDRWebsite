@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 from copy import deepcopy
-from math import isclose
+from math import hypot, isclose
 from typing import Annotated, Any, Literal
 
 from pydantic import ConfigDict, Field, model_validator
@@ -22,7 +22,7 @@ from pydantic import ConfigDict, Field, model_validator
 from ..concurrency import VersionedResponse, VersionedUpdate
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 
-SCENE_FORMAT_VERSION = 4
+SCENE_FORMAT_VERSION = 5
 
 # Bounds: a drawing is a bounded illustration, not an unlimited scene. The
 # numbers are generous for the intended artwork and keep a request cheap to
@@ -164,6 +164,12 @@ class EllipseNode(ShapeNode):
         return self
 
 
+class CurveAnchorMode(AppBaseModel):
+    model_config = AppBaseModel.model_config | DOMAIN
+    id: NodeId
+    mode: Literal["corner", "smooth", "symmetric"]
+
+
 class PathNode(ShapeNode):
     """An open line or curve, the tool for detail strokes."""
 
@@ -172,6 +178,10 @@ class PathNode(ShapeNode):
     point_ids: Annotated[list[NodeId], Field(max_length=MAX_PATH_COMMANDS * 6)] = Field(
         default_factory=list
     )
+
+    anchor_modes: Annotated[
+        list[CurveAnchorMode], Field(max_length=MAX_PATH_COMMANDS)
+    ] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _path_is_supported(self) -> PathNode:
@@ -189,6 +199,49 @@ class PathNode(ShapeNode):
             raise ValueError("point_ids must be unique and match path handles")
         if self.constraint:
             raise ValueError("paths cannot have primitive constraints")
+        positions: dict[str, Point] = {}
+        tangents: dict[str, list[Point]] = {}
+        index = 0
+        previous: str | None = None
+        for name, numbers in commands:
+            if name in {"M", "L"}:
+                for offset in range(0, len(numbers), 2):
+                    previous = self.point_ids[index]
+                    positions[previous] = (numbers[offset], numbers[offset + 1])
+                    index += 1
+            elif name == "C":
+                for offset in range(0, len(numbers), 6):
+                    endpoint = self.point_ids[index + 2]
+                    if previous:
+                        tangents.setdefault(previous, []).append(
+                            (numbers[offset], numbers[offset + 1])
+                        )
+                    tangents.setdefault(endpoint, []).append(
+                        (numbers[offset + 2], numbers[offset + 3])
+                    )
+                    positions[endpoint] = (numbers[offset + 4], numbers[offset + 5])
+                    previous = endpoint
+                    index += 3
+        ids = [anchor.id for anchor in self.anchor_modes]
+        if len(set(ids)) != len(ids) or any(id not in positions for id in ids):
+            raise ValueError("curve modes must reference unique endpoint identities")
+        for anchor in self.anchor_modes:
+            controls = tangents.get(anchor.id, [])
+            if anchor.mode == "corner" or len(controls) != 2:
+                continue
+            origin = positions[anchor.id]
+            a = (controls[0][0] - origin[0], controls[0][1] - origin[1])
+            b = (controls[1][0] - origin[0], controls[1][1] - origin[1])
+            tolerance = max(1.0, hypot(*a) * hypot(*b)) * 1e-6
+            if (
+                abs(a[0] * b[1] - a[1] * b[0]) > tolerance
+                or a[0] * b[0] + a[1] * b[1] > tolerance
+            ):
+                raise ValueError("linked curve tangents must be opposite and collinear")
+            if anchor.mode == "symmetric" and not isclose(
+                hypot(*a), hypot(*b), rel_tol=1e-6, abs_tol=1e-6
+            ):
+                raise ValueError("symmetric curve tangents must have equal length")
         return self
 
 
@@ -221,7 +274,7 @@ class SceneDocument(AppBaseModel):
         version = value.get(
             "schemaVersion", value.get("schema_version", SCENE_FORMAT_VERSION)
         )
-        if version not in (1, 2, 3):
+        if version not in (1, 2, 3, 4):
             return value
         if not isinstance(value.get("nodes", []), list):
             raise ValueError("drawing nodes must be a list")
@@ -244,9 +297,13 @@ class SceneDocument(AppBaseModel):
                 raise ValueError(
                     "legacy versions cannot contain version 3 pivot metadata"
                 )
-            if "editLocked" in node or "edit_locked" in node:
+            if version <= 3 and ("editLocked" in node or "edit_locked" in node):
                 raise ValueError(
                     "legacy versions cannot contain version 4 edit-lock metadata"
+                )
+            if "anchorModes" in node or "anchor_modes" in node:
+                raise ValueError(
+                    "legacy versions cannot contain version 5 curve metadata"
                 )
             if node.get("kind") == "group":
                 if not isinstance(node.get("nodes", []), list):

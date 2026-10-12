@@ -623,6 +623,32 @@ def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
     assert session.expect_api(f"/api/drawings/{target['id']}").status == 200
 
 
+def test_advanced_curve_insertion_and_tangent_mode_persist_without_flattening(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-curve").click()
+    _drag(page, (100, 100), (300, 200))
+    original = _local_node_scene(session)
+    page.locator("[data-path-anchor-insert]").click()
+    inserted = _local_node_scene(session)
+    assert len(inserted["nodes"][0]["pointIds"]) == 7
+    assert inserted["nodes"][0]["pointIds"][0] == original["nodes"][0]["pointIds"][0]
+    page.locator("[data-path-command='1'][data-path-offset='4']").click()
+    page.locator("[data-path-anchor-mode]").select_option("symmetric")
+    local = _local_node_scene(session)
+    assert any(mode["mode"] == "symmetric" for mode in local["nodes"][0]["anchorModes"])
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == local
+
+
 def test_polygon_draft_recovers_and_stale_recovery_cannot_overwrite_newer_server(
     session: BrowserSession,
 ):

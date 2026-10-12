@@ -51,7 +51,7 @@ import { visibleRuns } from "../../src/frontend/js/drawings/render.js";
 const IDENTITY = [1, 0, 0, 1, 0, 0];
 
 function sceneWith(nodes) {
-  return { schemaVersion: 4, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
+  return { schemaVersion: 5, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
 }
 
 function triangle(id = "a") {
@@ -452,7 +452,7 @@ test("native migration preserves legacy geometry and assigns stable scoped ident
   delete legacy.nodes[0].pointIds;
   delete legacy.nodes[0].constraint;
   const migrated = migrateScene(legacy);
-  assert.equal(migrated.schemaVersion, 4);
+  assert.equal(migrated.schemaVersion, 5);
   assert.equal(legacy.schemaVersion, 1);
   assert.deepEqual(migrated.nodes[0].points, legacy.nodes[0].points);
   assert.deepEqual(migrated.nodes[0].pointIds, ["v0","v1","v2"]);
@@ -604,4 +604,21 @@ test("edit locks cover descendants independently from visibility and primitive c
   scene.nodes[0].editLocked=false;
   node.editLocked=true;
   assert.equal(editableSelection(scene,["g"]),false);
+});
+
+test("cubic insertion preserves sampled geometry and stable endpoints, linked tangents remain opposite", async () => {
+  const {insertPathAnchor, setPathAnchorMode, moveCurvePoint, createPath, pathHandles, pathCommands} = await import("../../src/frontend/js/drawings/scene.js");
+  const node=createPath("Curve","M0 0 C0 100 100 100 100 0");
+  const inserted=insertPathAnchor(node,1,0,0.5);
+  assert.ok(inserted);
+  assert.equal(pathHandles(inserted.d).filter(h=>!h.control).length,3);
+  assert.equal(inserted.pointIds[0],node.pointIds[0]);
+  assert.equal(inserted.pointIds.at(-1),node.pointIds.at(-1));
+  const before = pathPoints(node.d), after = pathPoints(inserted.d);
+  before.forEach((point,index) => point.forEach((value,axis) => assert.ok(Math.abs(value-after[index*2][axis]) < 1e-6)));
+  const cmds=pathCommands(inserted.d);
+  assert.deepEqual(cmds[1].numbers.slice(4,6),[50,75]);
+  const mode=setPathAnchorMode(inserted,inserted.pointIds[3],"symmetric");
+  const moved=moveCurvePoint(mode,1,2,[30,90]);
+  assert.deepEqual(pathCommands(moved.d)[1].numbers.slice(6,8),[70,60]);
 });

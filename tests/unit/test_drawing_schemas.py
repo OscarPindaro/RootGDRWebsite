@@ -69,7 +69,7 @@ def test_legacy_native_migration_is_deterministic_and_does_not_infer_locks():
     }
     first = SceneDocument.model_validate(legacy)
     second = SceneDocument.model_validate(legacy)
-    assert first.schema_version == 4
+    assert first.schema_version == 5
     assert first == second
     assert first.nodes[0].constraint is None
     assert first.nodes[0].point_ids == ["v0", "v1", "v2"]
@@ -208,7 +208,7 @@ def test_transform_pivots_round_trip_and_version_two_keeps_geometry_locks():
         ],
     }
     migrated = SceneDocument.model_validate(old)
-    assert migrated.schema_version == 4
+    assert migrated.schema_version == 5
     assert migrated.nodes[0].point_ids == ["a", "b", "c", "d"]
     assert migrated.nodes[0].constraint.kind == "square"
     assert migrated.nodes[0].pivot is None
@@ -218,6 +218,31 @@ def test_transform_pivots_round_trip_and_version_two_keeps_geometry_locks():
     ].pivot == (20, 30)
     with pytest.raises(ValidationError):
         migrated.nodes[0].pivot = (float("nan"), 0)
+
+
+def test_curve_modes_validate_endpoint_identity_and_linked_tangents():
+    data = {
+        "kind": "path",
+        "id": "p",
+        "name": "Curve",
+        "d": "M0 0 C0 50 25 75 50 75 75 75 100 50 100 0",
+        "pointIds": [f"h{i}" for i in range(7)],
+        "anchorModes": [{"id": "h3", "mode": "symmetric"}],
+    }
+    node = PathNode.model_validate(data)
+    assert node.anchor_modes[0].mode == "symmetric"
+    assert (
+        PathNode.model_validate(node.model_dump(by_alias=True)).point_ids
+        == node.point_ids
+    )
+    with pytest.raises(ValidationError):
+        PathNode.model_validate(
+            data | {"anchorModes": [{"id": "h2", "mode": "smooth"}]}
+        )
+    with pytest.raises(ValidationError):
+        PathNode.model_validate(
+            data | {"d": "M0 0 C0 50 25 60 50 75 75 75 100 50 100 0"}
+        )
 
 
 def test_curve_and_anchor_identities_round_trip():

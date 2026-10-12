@@ -110,6 +110,12 @@ library, skeleton, publishing or export capabilities.
   modes remain available, and a completed command is one undo step.
   Text fields, menus and dialogs retain their
   keyboard behaviour, and Ctrl/Cmd+K remains global search. Ctrl+T is not intercepted.
+- Curve anchors expose corner (independent), smooth (opposite direction, separate
+  lengths) and symmetric (opposite equal tangents) modes. Moving an endpoint carries
+  its attached controls; controls remain snap-aware and keyboard reachable. The
+  insert-point action splits the selected cubic segment at its midpoint using
+  de Casteljau, preserving appearance and existing endpoint identities. New midpoint
+  identity/mode, copy and undo/reopen retain editable multi-segment cubic semantics.
 - Numeric fields edit the local bounding corner’s scene position, dimensions
   along object axes, angle in degrees and the stored local pivot. Pivot drag/keys
   do not alter geometry; rotation uses it. Width-only edits preserve required
@@ -147,7 +153,7 @@ library, skeleton, publishing or export capabilities.
 - Alembic creates a `drawings` table with creator, timestamps, optimistic version
   and a JSONB native document. A feature-local `SceneJSON` adapter keeps the
   model attribute typed as `SceneDocument`; a save replaces the complete value.
-- Format version 4 stores an artboard and ordered polygon/ellipse/path/group
+- Format version 5 stores an artboard and ordered polygon/ellipse/path/group
   nodes with stable node IDs, names, affine transforms, styles and visibility.
   Polygon vertices and path handles have node-scoped stable `pointIds`; authored
   anchors have IDs, names, positions and angles. Insert/remove/cut keep surviving
@@ -155,10 +161,12 @@ library, skeleton, publishing or export capabilities.
   Polygon vertices remain ordered coordinate pairs; edge visibility follows each
   outgoing edge. Paths use absolute M/L/C/Z commands. UI selection, viewport,
   handles and guides are not saved as artwork.
-- Versions 1/2/3 are explicitly upgraded in memory on read. Version 1 receives
+- Versions 1/2/3/4 are explicitly upgraded in memory on read. Version 1 receives
   deterministic IDs without inferred preset locks; version 2 retains existing
   locks/identities. Version 3 adds a nullable local transform pivot; version 4
-  adds default-unlocked object/subscene edit locks. Geometry,
+  adds default-unlocked object/subscene edit locks; version 5 stores endpoint-bound
+  corner/smooth/symmetric curve modes. Older curves retain independent tangents.
+  Geometry,
   transforms and styles are unchanged. The
   database row is rewritten only by explicit Save; no schema reset is required.
   Unknown versions and version-2 metadata disguised as version 1 are rejected.

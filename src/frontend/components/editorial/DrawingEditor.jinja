@@ -282,6 +282,13 @@
         </div>
         <p class="hint" data-drawing-constraint>Geometria libera</p>
         <common.Button size="xs" variant="secondary" icon="lock-open" data-drawing-unlock disabled={{ not editable }}>Sblocca geometria</common.Button>
+        <fieldset class="drawing-editor__geometry" data-path-advanced hidden>
+          <legend class="hint">Ancora curva · tangenti locali</legend>
+          <select class="drawing-editor__name" data-path-anchor-mode aria-label="Comportamento ancora">
+            <option value="corner">Angolo · tangenti indipendenti</option><option value="smooth">Morbida · direzione collegata</option><option value="symmetric">Simmetrica · tangenti uguali</option>
+          </select>
+          <common.Button size="xs" variant="secondary" data-path-anchor-insert>Inserisci punto (curva invariata)</common.Button>
+        </fieldset>
         <fieldset class="drawing-editor__geometry" data-geometry-parameters hidden>
           <legend class="hint">Scena · assi oggetto · pivot locale</legend>
           {% for field, label in [('x', 'X scena (angolo locale)'), ('y', 'Y scena (angolo locale)'), ('width', 'Larghezza asse'), ('height', 'Altezza asse'), ('angle', 'Angolo (gradi)'), ('pivotX', 'Pivot X locale'), ('pivotY', 'Pivot Y locale')] %}

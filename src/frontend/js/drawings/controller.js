@@ -41,6 +41,9 @@ import {
   alignNodes,
   nodeFrame,
   movePathPoint,
+  moveCurvePoint,
+  setPathAnchorMode,
+  insertPathAnchor,
   pathCommands,
   pathPoints,
   patchNode,
@@ -120,7 +123,7 @@ export function createController(root) {
   let commandPalette = null, recovery = null, recoveredLine = null;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
-  let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 4, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
+  let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 5, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
   const history = new History(scene);
   let selection = [];
   let selectedId = null;
@@ -958,7 +961,8 @@ export function createController(root) {
       const snapped = snapWorld(scenePoint(event), null, -1, event.altKey, selection);
       const local = apply(invert(drag.transform), snapped.point);
       snapFeedback(snapped);
-      scene = patchNode(scene, drag.id, { d: movePathPoint(drag.d, drag.command, drag.offset, local) });
+      const moved = moveCurvePoint(findNode(gestureBefore,drag.id).node,drag.command,drag.offset,local);
+      if (moved) scene = patchNode(scene, drag.id, {d:moved.d});
       draw();
       return;
     }
@@ -1106,7 +1110,8 @@ export function createController(root) {
         const [dx, dy] = nudges[event.key];
         const next = apply(invert(frame), [world[0] + dx * step, world[1] + dy * step]);
         pathPoint = `${command}:${offset}`;
-        commit(patchNode(scene, selectedId, {d:movePathPoint(node.d, command, offset, next)}));
+        const moved = moveCurvePoint(node,command,offset,next);
+        if (moved) commit(patchNode(scene,selectedId,{d:moved.d}));
         svg.querySelector(`[data-path-command='${command}'][data-path-offset='${offset}']`)?.focus();
         return;
       }
@@ -1314,6 +1319,25 @@ export function createController(root) {
     announce(""); commit(next); return true;
   }
 
+  function pathAnchorIndex(node) {
+    const handles = pathHandles(node.d), found = handles.findIndex(handle => `${handle.command}:${handle.offset}` === pathPoint), index = found < 0 ? 0 : found;
+    return handles[index].control ? handles[index].anchorIndex : index;
+  }
+
+  function curveCommand(operation, parameters = {}) {
+    const node = selected()?.node;
+    if (node?.kind !== "path") return false;
+    let next;
+    if (operation === "mode") next = setPathAnchorMode(node,node.pointIds[pathAnchorIndex(node)],parameters.mode);
+    else {
+      const handle = pathHandles(node.d).find(handle => `${handle.command}:${handle.offset}` === pathPoint);
+      const commands = pathCommands(node.d), index = handle && commands[handle.command].name === "C" ? handle.command : commands.findIndex(command => command.name === "C");
+      next = insertPathAnchor(node,index,handle && commands[handle.command].name === "C" ? Math.floor(handle.offset / 6) * 6 : 0);
+    }
+    if (!next) { announce("Operazione sulla curva non valida."); return false; }
+    commit(patchNode(scene,selectedId,next)); return true;
+  }
+
   function fitViewport(target) {
     const ids = target === "selection" ? selection : scene.nodes.filter(node => node.visible !== false).map(node => node.id);
     const points = ids.flatMap(id => worldCorners(findNode(scene,id).node));
@@ -1325,6 +1349,8 @@ export function createController(root) {
 
   const actions = {
     "create-preset": { label: "Crea forma", enabled: () => true, run: createCommand },
+    "curve-mode": {label:"Comportamento ancora", parameters:true, enabled:() => selection.length === 1 && selected()?.node.kind === "path", run:parameters => curveCommand("mode",parameters)},
+    "curve-insert": {label:"Inserisci punto sulla curva", enabled:() => selection.length === 1 && selected()?.node.kind === "path" && pathCommands(selected().node.d).some(command => command.name === "C"), run:() => curveCommand("insert")},
     "select-all": {label:"Seleziona tutto", enabled:() => scene.nodes.length > 0, run:() => { setSelection(scene.nodes.filter(node => node.visible !== false && node.opacity !== 0 && editableSelection(scene,[node.id])).map(node => node.id)); mode = defaultMode(); draw(); }},
     "fit-drawing": {label:"Adatta disegno", enabled:() => true, run:() => fitViewport("drawing")},
     "fit-selection": {label:"Adatta selezione", enabled:() => selection.length > 0, run:() => fitViewport("selection")},
@@ -1364,7 +1390,7 @@ export function createController(root) {
   }
 
   function canExecute(id) {
-    const modifiesSelection = ["edit", "transform", "geometry", "move", "parent", "align", "delete", "duplicate", "group", "ungroup", "forward", "backward", "front", "back", "unlock", "ellipse-parameter", "tool-cut"].includes(id);
+    const modifiesSelection = ["edit", "transform", "geometry", "move", "parent", "align", "delete", "duplicate", "group", "ungroup", "forward", "backward", "front", "back", "unlock", "ellipse-parameter", "tool-cut", "curve-mode", "curve-insert"].includes(id);
     return Boolean(editable && !root.dataset.copying && !root.dataset.recoveryPending && !drag && !cut && (!modifiesSelection || editableSelection(scene,selection)) && actions[id]?.enabled());
   }
 
@@ -1441,6 +1467,10 @@ export function createController(root) {
     root.querySelector("[data-drawing-mode-label]").textContent = tool === "select" ? {select:"Seleziona", vertex:"Modifica forma", transform:"Trasforma"}[mode] : PRESET_LABELS[creationPreset] || SHAPE_NAMES[tool] || (tool === "curve" ? "Curva" : "Taglia");
     const geometry = geometryInfo(scene, selection);
     root.querySelector("[data-geometry-parameters]").hidden = !geometry;
+    root.querySelector("[data-path-advanced]").hidden = node?.kind !== "path" || selection.length !== 1;
+    root.querySelector("[data-path-anchor-mode]").disabled = !canExecute("curve-mode");
+    root.querySelector("[data-path-anchor-insert]").disabled = !canExecute("curve-insert");
+    if (node?.kind === "path") root.querySelector("[data-path-anchor-mode]").value = node.anchorModes?.find(entry => entry.id === node.pointIds[pathAnchorIndex(node)])?.mode || "corner";
     root.querySelectorAll("[data-geometry-field]").forEach(input => {
       const field = input.dataset.geometryField;
       input.disabled = !canExecute("geometry") || (field.startsWith("pivot") && selection.length !== 1) || (["width", "height"].includes(field) && !geometry?.[field]);
@@ -1530,6 +1560,8 @@ export function createController(root) {
     root.querySelectorAll("[data-ellipse-parameter]").forEach(input => {
       input.addEventListener("change", () => execute("ellipse-parameter", {field:input.dataset.ellipseParameter, value:input.valueAsNumber}));
     });
+    root.querySelector("[data-path-anchor-mode]").addEventListener("change", event => execute("curve-mode", {mode:event.target.value}));
+    root.querySelector("[data-path-anchor-insert]").addEventListener("click", () => execute("curve-insert"));
     root.querySelectorAll("[data-geometry-field]").forEach(input => {
       input.addEventListener("change", () => execute("geometry", {[input.dataset.geometryField]:input.valueAsNumber}));
     });

@@ -143,7 +143,7 @@ def test_the_scene_travels_as_json_for_the_client(component):
     payload = page.evaluate(
         "() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"
     )
-    assert payload["schemaVersion"] == 4
+    assert payload["schemaVersion"] == 5
     assert [node["id"] for node in payload["nodes"]] == ["head", "beak"]
     assert payload["nodes"][1]["points"][1] == [296.0, 120.0]
 
