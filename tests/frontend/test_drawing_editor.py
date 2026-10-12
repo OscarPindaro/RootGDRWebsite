@@ -504,6 +504,164 @@ def _square() -> SceneDocument:
     )
 
 
+def _two_shapes() -> SceneDocument:
+    return SceneDocument(
+        nodes=[
+            PolygonNode(
+                id="box",
+                name="Riquadro",
+                points=[(100, 100), (300, 100), (300, 300), (100, 300)],
+                fill="#1f7a7a",
+            ),
+            PolygonNode(
+                id="tri",
+                name="Triangolo",
+                points=[(350, 100), (500, 100), (425, 300)],
+                fill="#3f7fb0",
+            ),
+        ]
+    )
+
+
+def _selection(page) -> list[str]:
+    return page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection"
+    )
+
+
+def test_control_and_shift_click_in_the_tree_both_add_to_the_selection(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.keyboard.down("Control")
+    page.locator("[data-select-node='tri']").click()
+    page.keyboard.up("Control")
+    assert _selection(page) == ["box", "tri"]
+
+    # Ctrl again removes it: the same gesture is additive and toggling.
+    page.keyboard.down("Control")
+    page.locator("[data-select-node='tri']").click()
+    page.keyboard.up("Control")
+    assert _selection(page) == ["box"]
+
+    page.keyboard.down("Shift")
+    page.locator("[data-select-node='tri']").click()
+    page.keyboard.up("Shift")
+    assert _selection(page) == ["box", "tri"]
+
+
+def test_two_tree_rows_can_be_grouped_after_a_control_click(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.keyboard.down("Control")
+    page.locator("[data-select-node='tri']").click()
+    page.keyboard.up("Control")
+    page.locator("[data-drawing-group]").click()
+
+    nodes = _scene_of(page)["nodes"]
+    assert len(nodes) == 1
+    assert nodes[0]["kind"] == "group"
+    assert len(nodes[0]["nodes"]) == 2
+
+
+def test_double_clicking_the_row_renames_it_inline(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+    page.locator("[data-select-node='box']").dblclick()
+
+    field = page.locator(".drawing-editor__layer-input")
+    assert field.count() == 1
+    assert field.input_value() == "Riquadro"
+    field.fill("Becco")
+    field.press("Enter")
+
+    assert _scene_of(page)["nodes"][0]["name"] == "Becco"
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+    assert page.locator("[data-select-node='box']").inner_text() == "Becco"
+
+
+def test_a_single_click_on_a_selected_row_only_selects(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").click()
+
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+    assert _selection(page) == ["box"]
+
+
+def test_escape_leaves_the_name_alone(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").dblclick()
+    page.locator(".drawing-editor__layer-input").fill("Buttato")
+    page.keyboard.press("Escape")
+
+    assert _scene_of(page)["nodes"][0]["name"] == "Riquadro"
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+
+
+def test_f2_renames_the_selected_row(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").focus()
+    page.keyboard.press("F2")
+
+    assert page.locator(".drawing-editor__layer-input").count() == 1
+
+
+def test_a_locked_row_is_not_renamed(component):
+    scene = _two_shapes()
+    scene.nodes[0].edit_locked = True
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").dblclick()
+
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+    assert _scene_of(page)["nodes"][0]["name"] == "Riquadro"
+
+
+def test_tree_rows_are_separated_by_a_rule(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    widths = page.evaluate(
+        """() => [...document.querySelectorAll(
+            '[data-testid="drawing-layers"] .drawing-editor__layer'
+        )].map(el => getComputedStyle(el).borderBottomWidth)"""
+    )
+    assert widths == ["1px", "0px"], "a rule between the rows, none after the last"
+
+
+def test_the_tree_rename_keeps_working_after_a_save(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").dblclick()
+    page.locator(".drawing-editor__layer-input").fill("Corpo")
+    page.locator(".drawing-editor__layer-input").press("Enter")
+
+    payload = page.evaluate(
+        """() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"""
+    )
+    assert payload["schemaVersion"] == 5
+    assert _scene_of(page)["nodes"][0]["name"] == "Corpo"
+
+
 def test_the_cut_tool_splits_a_polygon_into_two_pieces(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)

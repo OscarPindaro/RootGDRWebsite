@@ -260,10 +260,28 @@
   align-items: center;
   gap: var(--sp-2);
   min-height: var(--touch-target);
-  border: 0;
+  border-bottom: var(--rule);
+  border-inline: 0;
   padding: 0 var(--sp-2);
   /* A nested row indents by its depth in the tree. */
   padding-left: calc(var(--sp-2) + var(--drawing-depth, 0) * var(--sp-3));
+}
+
+/* A rule between rows, and none after the last row of a level: the nested
+   children already open with their own left rule. */
+.drawing-editor__tree-node:last-child > .drawing-editor__layer { border-bottom: 0; }
+
+.drawing-editor__layer-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--touch-target);
+  border: var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  padding-inline: var(--sp-2);
 }
 
 .drawing-editor__layer.is-selected {

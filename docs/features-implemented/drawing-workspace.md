@@ -32,8 +32,12 @@ library, skeleton, publishing or export capabilities.
   oval deformation; legacy shapes are not relocked from their names. Click polygon
   vertices and double-click or press Enter to finish. Drag open lines or cubic
   Bézier curves.
-- Select through the canvas or connected scene tree; Shift selects multiple
-  objects. Canvas clicks select whole top-level groups; Ctrl/Cmd-click selects
+- Select through the canvas or connected scene tree; Shift, Ctrl and Cmd each
+  add to the selection in the tree, so two rows can be picked and grouped. The
+  rows are separated by a rule. A single click always selects; renaming is a
+  double-click on the row's name (or F2), which swaps the name for a field in
+  place — Enter commits, Escape restores. A locked row cannot be renamed.
+  Canvas clicks select whole top-level groups; Ctrl/Cmd-click selects
   deeper children. Empty-canvas marquee fully encloses visible editable root
   subscenes; Shift adds them and Ctrl/Cmd+A selects the same eligible roots.
   Ancestors/descendants are never transformed twice. Groups expand/collapse, eye

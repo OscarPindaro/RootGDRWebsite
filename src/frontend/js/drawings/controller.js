@@ -120,7 +120,7 @@ export function createController(root) {
   const saveUrl = root.dataset.saveUrl || null;
   const contextMenu = root.querySelector("#drawing-context-menu");
   let contextPosition = null, contextOpener = svg;
-  let commandPalette = null, recovery = null, recoveredLine = null;
+  let commandPalette = null, recovery = null, recoveredLine = null, lastTreeShape = null;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
   let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 5, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
@@ -178,10 +178,36 @@ export function createController(root) {
     refresh();
   }
 
+  /** Everything a layer row draws, so a rebuild only happens when it changed. */
+  function treeShape() {
+    const parts = [];
+    const visit = (nodes, depth, inheritedHidden) => nodes.forEach((node) => {
+      parts.push([node.id, depth, node.name, node.visible, node.editLocked, inheritedHidden, collapsed.has(node.id)].join(":"));
+      if (node.kind === "group") visit(node.nodes, depth + 1, inheritedHidden || !node.visible);
+    });
+    visit(scene.nodes, 0, false);
+    return parts.join("|");
+  }
+
   /** The object list, rebuilt from the document: names, visibility, selection. */
   function renderLayers() {
     const list = root.querySelector("[data-testid='drawing-layers'] .drawing-editor__layers");
     if (!list) return;
+    // A selection change must not replace the rows. The browser needs the row
+    // under the pointer to survive both clicks of a double-click, and a rebuilt
+    // list also drops the scroll position and the focus for no reason. So the
+    // rows are only rebuilt when the tree's own shape changes; a selection is
+    // patched onto the rows that are already there.
+    if (treeShape() === lastTreeShape) {
+      [...list.querySelectorAll("[data-node-id]")].forEach((row) => {
+        const selected = selection.includes(row.dataset.nodeId);
+        row.classList.toggle("is-selected", selected);
+        row.setAttribute("aria-selected", String(selected));
+        row.querySelector("[data-select-node]")?.setAttribute("aria-pressed", String(selected));
+      });
+      return;
+    }
+    lastTreeShape = treeShape();
     const focused = document.activeElement;
     const focusKey = focused && ["selectNode", "nodeCollapse", "nodeVisible", "nodeLocked"].find(key => focused.dataset?.[key]);
     const focusId = focusKey ? focused.dataset[focusKey] : null;
@@ -1121,6 +1147,10 @@ export function createController(root) {
       commandPalette.open(document.activeElement);
       return;
     }
+    if (event.key === "F2" && event.target.closest?.("[data-select-node]") && renameFromKeyboard()) {
+      event.preventDefault();
+      return;
+    }
     if (!mod && !event.altKey && event.key.toLowerCase() === "t" && canExecute("transform")) {
       event.preventDefault();
       execute("transform");
@@ -1254,6 +1284,52 @@ export function createController(root) {
     const trimmed = name.trim();
     if (!trimmed) return;
     commit(patchNode(scene, selectedId, { name: trimmed }));
+  }
+
+  /** The tree row's name becomes a text field in place; the tree is not redrawn. */
+  function beginRename(id) {
+    const found = findNode(scene, id);
+    const button = [...root.querySelectorAll("[data-select-node]")].find(entry => entry.dataset.selectNode === id);
+    if (!found || !button || !editableSelection(scene, [id])) return;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "drawing-editor__layer-input";
+    input.value = found.node.name;
+    input.maxLength = 120;
+    input.setAttribute("aria-label", `Rinomina ${found.node.name}`);
+    button.replaceWith(input);
+    input.focus();
+    input.select();
+    let settled = false;
+    const finish = (keep) => {
+      if (settled) return;
+      settled = true;
+      const value = input.value.trim();
+      if (keep && value && value !== found.node.name) renameSelected(value);
+      else {
+        // Cancelling changes nothing in the document, so the rows are still
+        // "current" and would not be rebuilt; the field would stay behind.
+        lastTreeShape = null;
+        renderLayers();
+      }
+      [...root.querySelectorAll("[data-select-node]")].find(entry => entry.dataset.selectNode === id)?.focus();
+    };
+    input.addEventListener("keydown", (event) => {
+      // The workspace and the tree both listen on the document; a text field
+      // owns its own keys.
+      event.stopPropagation();
+      if (event.key === "Enter") { event.preventDefault(); finish(true); }
+      else if (event.key === "Escape") { event.preventDefault(); finish(false); }
+    });
+    input.addEventListener("blur", () => finish(true));
+  }
+
+  function renameFromKeyboard() {
+    if (selection.length !== 1) return false;
+    const button = [...root.querySelectorAll("[data-select-node]")].find(entry => entry.dataset.selectNode === selectedId);
+    if (!button) return false;
+    beginRename(selectedId);
+    return true;
   }
 
   function applyStyle(patch) {
@@ -1635,15 +1711,17 @@ export function createController(root) {
     const noStroke = root.querySelector("[data-style='no-stroke']");
     if (noStroke) noStroke.addEventListener("change", () => applyStyle({ stroke: noStroke.checked ? null : "#17150f" }));
 
-    root.querySelectorAll("[data-select-node]").forEach((button) => {
-      button.addEventListener("click", () => select(button.dataset.selectNode));
-    });
     // The layer rows are rebuilt on every change, so their events are delegated.
     const layers = root.querySelector("[data-testid='drawing-layers']");
     if (layers) {
       layers.addEventListener("click", (event) => {
         const button = event.target.closest("[data-select-node]");
-        if (button) select(button.dataset.selectNode, event.shiftKey);
+        if (button) {
+          // Shift, Ctrl and Cmd all add to the selection, as in any desktop
+          // list. Renaming is the double-click below, so a single click keeps
+          // meaning "select this" even on a row that is already selected.
+          select(button.dataset.selectNode, event.shiftKey || event.ctrlKey || event.metaKey);
+        }
         const eye = event.target.closest("[data-node-visible]");
         if (eye) {
           const node = findNode(scene, eye.dataset.nodeVisible).node;
@@ -1662,6 +1740,14 @@ export function createController(root) {
           else collapsed.add(id);
           renderLayers();
         }
+      });
+      // Rename by double-clicking the row's name, as in a file manager; F2 does
+      // the same from the keyboard. A single click stays a selection.
+      layers.addEventListener("dblclick", (event) => {
+        const button = event.target.closest("[data-select-node]");
+        if (!button || event.shiftKey || event.ctrlKey || event.metaKey) return;
+        event.preventDefault();
+        beginRename(button.dataset.selectNode);
       });
       layers.addEventListener("keydown", event => {
         if (!event.target.matches("[data-select-node]")) return;
