@@ -289,6 +289,21 @@ uv run harness env teardown
   `localhost` for the database).
 - `dev login` (`POST /auth/dev-login`) sets the same cookies as a real login;
   browser contexts are authenticated through it.
+- **Removing a worktree removes its environments with it.** Tear them down
+  first — `harness dev down` and `harness env teardown` — because the harness
+  state is keyed to the worktree path: once the directory is gone the CLI can no
+  longer reach that worktree's containers, and they keep running with nothing
+  pointing at them. Deleting a workspace without doing this is the mistake, not
+  an accepted cost. If it already happened, the containers are named after the
+  worktree path hash (the same one in
+  `~/.cache/fastapi-template/harness/<worktree>_<hash>/`), so remove them by
+  name and then drop the state directory:
+
+  ```console
+  podman pod rm -f pod_rootgdr_dev_<hash> pod_fastapi_template_harness_<hash>
+  podman volume rm rootgdr_dev_<hash>_rootgdr_dev_pgdata
+  rm -rf ~/.cache/fastapi-template/harness/<worktree>_<hash>
+  ```
 
 ## Replay (learned)
 
