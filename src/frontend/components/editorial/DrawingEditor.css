@@ -29,6 +29,9 @@
   line-height: var(--leading-tight);
 }
 
+.drawing-editor__command-preview { width: 100%; max-height: var(--drawing-layers-height); border: var(--rule); }
+.drawing-editor__command-dialog { max-height: calc(100dvh - var(--sp-4)); overflow-y: auto; }
+
 .drawing-editor__command-options {
   list-style: none;
   max-height: var(--drawing-layers-height);
@@ -158,7 +161,8 @@
 
 .drawing-editor__plate { fill: var(--surface); }
 
-.drawing-editor__shape {
+.drawing-editor__shape,
+.drawing-editor__command-shape {
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
 }

@@ -1339,6 +1339,30 @@ def test_numeric_geometry_and_local_pivot_are_validated_and_undoable(component):
     assert _scene_of(page)["nodes"][0]["pivot"] is None
 
 
+def test_guided_shape_preview_is_non_destructive_until_apply(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-mode='guided']").click()
+    page.locator("[data-canvas-command-action]").select_option("create-preset")
+    page.locator("[data-guided-field='kind']").select_option("square")
+    page.locator("[data-guided-field='width']").first.fill("140")
+    page.locator("[data-guided-field='height']").first.fill("140")
+    assert _scene_of(page)["nodes"] == []
+    assert page.locator("[data-canvas-preview]").is_visible()
+    assert (
+        page.locator("[data-canvas-preview] .drawing-editor__command-shape").count() > 0
+    )
+    page.keyboard.press("Escape")
+    page.wait_for_selector("#drawing-command-dialog[open]", state="detached")
+    assert _scene_of(page)["nodes"] == []
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-command-apply]").click()
+    assert _scene_of(page)["nodes"][0]["constraint"] == {"kind": "square"}
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"] == []
+
+
 @pytest.mark.parametrize("mode", ["compact", "guided"])
 def test_numeric_move_commands_share_both_palette_operations(component, mode):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
@@ -1351,7 +1375,8 @@ def test_numeric_move_commands_share_both_palette_operations(component, mode):
     else:
         page.locator("[data-canvas-mode='guided']").click()
         page.locator("[data-canvas-command-action]").select_option("move")
-        page.locator("[data-canvas-command-parameters]").fill("20 30")
+        page.locator("[data-guided-fields='move'] [data-guided-field='dx']").fill("20")
+        page.locator("[data-guided-fields='move'] [data-guided-field='dy']").fill("30")
         page.locator("[data-canvas-command-apply]").click()
     assert _scene_of(page)["nodes"][0]["transform"][4:] == [20, 30]
     page.get_by_test_id("drawing-undo").click()

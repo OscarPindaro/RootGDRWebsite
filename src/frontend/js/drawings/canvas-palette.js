@@ -1,3 +1,5 @@
+import { render as renderScene } from "./render.js";
+
 const SHAPES = [
   {kind:"triangle_isosceles", label:"Triangolo · isoscele", aliases:["triangle", "triangolo", "isosceles", "isoscele"]},
   {kind:"triangle_equilateral", label:"Triangolo · equilatero", aliases:["equilateral", "equilatero"]},
@@ -51,6 +53,7 @@ export function createCanvasPalette(root, editor) {
   const guided = dialog.querySelector("[data-canvas-command-action]");
   const parameterInput = dialog.querySelector("[data-canvas-command-parameters]");
   const output = dialog.querySelector("[data-canvas-command-status]");
+  const preview = dialog.querySelector("[data-canvas-preview]");
   let mode = "compact", active = 0, choices = [], acceptedKind = null;
 
   function commands() {
@@ -62,6 +65,46 @@ export function createCanvasPalette(root, editor) {
     const canvas = root.querySelector("[data-drawing-artboard]").getBoundingClientRect();
     dialog.style.left = Math.max(8, Math.min(canvas.x + canvas.width / 2 - dialog.offsetWidth / 2, window.innerWidth - dialog.offsetWidth - 8)) + "px";
     dialog.style.top = Math.max(8, Math.min(canvas.y + 16, window.innerHeight - dialog.offsetHeight - 8)) + "px";
+  }
+
+  function guidedParameters() {
+    const panel = dialog.querySelector(`[data-guided-fields='${guided.value}']`);
+    if (!panel) return parseNumericCommand(guided.value + " " + parameterInput.value)?.parameters;
+    const values = Object.fromEntries([...panel.querySelectorAll("[data-guided-field]")].map(field => [field.dataset.guidedField, field.type === "number" ? field.valueAsNumber : field.value]));
+    if (guided.value === "parent") values.parent ||= null;
+    if (guided.value === "ellipse-parameter") values.field = "rx";
+    return values;
+  }
+
+  function updateGuided() {
+    if (mode !== "guided" || !dialog.open) { preview.toggleAttribute("hidden",true); return; }
+    const action = commands().find(action => action.id === guided.value);
+    dialog.querySelectorAll("[data-guided-fields]").forEach(panel => {
+      const selected = panel.dataset.guidedFields === guided.value;
+      panel.hidden = !selected;
+      if (!selected) return;
+      const kind = panel.querySelector("[data-guided-field='kind']");
+      if (kind && !kind.options.length) kind.replaceChildren(...SHAPES.map(shape => new Option(shape.label,shape.kind)));
+      const parent = panel.querySelector("[data-guided-field='parent']");
+      if (parent) { const previous = parent.value; parent.replaceChildren(...editor.parents().map(option => new Option(option.label,option.value))); if ([...parent.options].some(option => option.value === previous)) parent.value = previous; }
+      if (!panel.dataset.initialized) {
+        const defaults = panel.dataset.guidedFields === "create-preset" ? {...editor.defaults(), kind:"triangle_isosceles"} : panel.dataset.guidedFields === "move" ? {dx:0,dy:0} : panel.dataset.guidedFields === "ellipse-parameter" ? {value:editor.ellipse()?.rx || 50} : {};
+        panel.querySelectorAll("[data-guided-field]").forEach(field => { if (defaults[field.dataset.guidedField] !== undefined) field.value = defaults[field.dataset.guidedField]; });
+        panel.dataset.initialized = "true";
+      }
+    });
+    const custom = Boolean(dialog.querySelector(`[data-guided-fields='${guided.value}']`));
+    parameterInput.closest("label").hidden = custom || !action?.parameters;
+    const supported = ["create-preset", "geometry", "move", "parent", "align", "ellipse-parameter"].includes(guided.value);
+    const parameters = guidedParameters(), predicted = supported && action?.enabled && (!action.parameters || parameters !== undefined) ? editor.preview(guided.value, parameters) : null;
+    preview.toggleAttribute("hidden",!predicted);
+    dialog.querySelector("[data-canvas-command-apply]").disabled = !action?.enabled || (supported && !predicted);
+    if (predicted) {
+      preview.setAttribute("viewBox", `0 0 ${predicted.artboard.width} ${predicted.artboard.height}`);
+      renderScene(preview, predicted, {selection:[], selectedId:null, viewport:[1,0,0,1,0,0], mode:"select", tool:"select", preview:true});
+    }
+    if (mode === "guided") output.textContent = predicted ? "Anteprima locale · nessuna modifica fino ad Applica. Le unità sono quelle della tavola." : supported ? "Parametri non validi o operazione non disponibile per la selezione." : "Scegli un’azione e applicala.";
+    position();
   }
 
   function render() {
@@ -105,7 +148,7 @@ export function createCanvasPalette(root, editor) {
     output.textContent = mode === "guided" ? "Scegli un’azione e applicala. Unità vettoriali della tavola." : acceptedKind
       ? parsed ? `${parsed.label} · riquadro ${Math.round(defaults.width)} × ${Math.round(defaults.height)} unità, centro (${Math.round(defaults.x)}, ${Math.round(defaults.y)}). Invio crea; Escape annulla.` : "Variante sconosciuta: correggi il testo o premi Escape."
       : choices.length ? "Invio accetta una forma; un secondo Invio la crea. Dimensioni vettoriali adattate alla vista." : "Nessun comando corrisponde al testo.";
-    position();
+    updateGuided();
   }
 
   function setMode(next) {
@@ -154,20 +197,20 @@ export function createCanvasPalette(root, editor) {
   });
   dialog.querySelectorAll("[data-canvas-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.canvasMode)));
   guided.addEventListener("change", render);
+  dialog.querySelectorAll("[data-guided-field]").forEach(field => { field.addEventListener("input", updateGuided); field.addEventListener("change", updateGuided); });
+  parameterInput.addEventListener("input", updateGuided);
   dialog.querySelector("[data-canvas-command-apply]").addEventListener("click", () => {
     const action = commands().find(action => action.id === guided.value);
-    if (action?.parameters) {
-      const numeric = parseNumericCommand(guided.value + " " + parameterInput.value);
-      if (!numeric) { output.textContent = "Parametri non validi: usa numeri finiti, un gruppo o un allineamento."; return; }
-      apply(numeric.id, numeric.parameters);
-    } else apply(guided.value);
+    const parameters = guidedParameters();
+    if (action?.parameters && parameters === undefined) { output.textContent = "Parametri non validi: usa numeri finiti, un gruppo o un allineamento."; return; }
+    apply(guided.value, parameters);
   });
   dialog.addEventListener("close", () => { acceptedKind = null; input.value = ""; active = 0; });
   setMode(mode);
   window.addEventListener("resize", position);
 
   return {
-    open(opener) { render(); window.rootGdrDialog.open(dialog, opener); position(); (mode === "compact" ? input : guided).focus(); },
+    open(opener) { render(); window.rootGdrDialog.open(dialog, opener); updateGuided(); position(); (mode === "compact" ? input : guided).focus(); },
     get mode() { return mode; },
     get draft() { return {mode, text:input.value, action:guided.value, parameters:parameterInput.value, kind:acceptedKind}; },
   };

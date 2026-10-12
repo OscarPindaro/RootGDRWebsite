@@ -24,6 +24,7 @@ function matrixAttr(m) {
 
 function shapeElement(node, view) {
   const selected = (view.selection || []).includes(node.id) || node.id === view.selectedId;
+  const shapeClass = view.preview ? "drawing-editor__command-shape" : "drawing-editor__shape";
   const group = el("g", {
     class: "drawing-editor__node" + (selected ? " is-selected" : ""),
     transform: matrixAttr(node.transform),
@@ -40,7 +41,7 @@ function shapeElement(node, view) {
     const allVisible = !node.edgeVisible || node.edgeVisible.every(Boolean);
     group.appendChild(
       el("polygon", {
-        class: "drawing-editor__shape",
+        class: shapeClass,
         points: node.points.map((point) => point.join(",")).join(" "),
         fill,
         stroke: allVisible ? stroke : "none",
@@ -52,7 +53,7 @@ function shapeElement(node, view) {
       for (const run of visibleRuns(node)) {
         group.appendChild(
           el("polyline", {
-            class: "drawing-editor__shape drawing-editor__shape--outline",
+            class: shapeClass + " drawing-editor__shape--outline",
             points: run.map((point) => point.join(",")).join(" "),
             fill: "none",
             stroke,
@@ -66,7 +67,7 @@ function shapeElement(node, view) {
   } else if (node.kind === "ellipse") {
     group.appendChild(
       el("ellipse", {
-        class: "drawing-editor__shape",
+        class: shapeClass,
         cx: node.cx,
         cy: node.cy,
         rx: node.rx,
@@ -79,7 +80,7 @@ function shapeElement(node, view) {
   } else if (node.kind === "path") {
     group.appendChild(
       el("path", {
-        class: "drawing-editor__shape",
+        class: shapeClass,
         d: node.d,
         fill,
         stroke,
@@ -253,10 +254,10 @@ function findById(nodes, id) {
 }
 
 export function render(svg, scene, view) {
-  const sceneLayer = svg.querySelector("[data-drawing-scene-layer]");
-  const overlay = svg.querySelector("[data-drawing-overlay]");
+  const sceneLayer = svg.querySelector("[data-drawing-scene-layer], [data-preview-scene-layer]");
+  const overlay = svg.querySelector("[data-drawing-overlay], [data-preview-overlay]");
   sceneLayer.setAttribute("transform", matrixAttr(view.viewport));
-  svg.querySelector(".drawing-editor__grid").setAttribute("transform", matrixAttr(view.viewport));
+  svg.querySelector(".drawing-editor__grid, .drawing-editor__preview-grid").setAttribute("transform", matrixAttr(view.viewport));
   svg.querySelector(".drawing-editor__plate").setAttribute("fill", scene.artboard.background);
   svg.querySelector(".drawing-editor__plate").style.fill = scene.artboard.background;
   sceneLayer.replaceChildren(...scene.nodes.map((node) => shapeElement(node, view)));

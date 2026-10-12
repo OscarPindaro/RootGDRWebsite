@@ -624,6 +624,35 @@ def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
     assert session.expect_api(f"/api/drawings/{target['id']}").status == 200
 
 
+def test_guided_radius_preview_applies_once_and_persists_native_circle(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (200, 200))
+    original = _local_node_scene(session)
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-mode='guided']").click()
+    page.locator("[data-canvas-command-action]").select_option("ellipse-parameter")
+    page.locator(
+        "[data-guided-fields='ellipse-parameter'] [data-guided-field='value']"
+    ).fill("80")
+    assert _local_node_scene(session) == original
+    assert page.locator("[data-canvas-preview] ellipse").count() == 1
+    page.locator("[data-canvas-command-apply]").click()
+    local = _local_node_scene(session)
+    assert local["nodes"][0]["rx"] == local["nodes"][0]["ry"] == 80
+    page.get_by_test_id("drawing-undo").click()
+    assert _local_node_scene(session) == original
+    page.get_by_test_id("drawing-redo").click()
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+
+
 def test_numeric_transform_and_pivot_reopen_with_native_geometry_intact(
     session: BrowserSession,
 ):

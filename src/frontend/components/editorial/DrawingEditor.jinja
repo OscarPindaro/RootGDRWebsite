@@ -69,6 +69,36 @@
         <span class="drawing-editor__field-label">Parametri (unità tavola)</span>
         <input class="drawing-editor__name" data-canvas-command-parameters maxlength="255" aria-label="Parametri comando" placeholder="dx dy / x y larghezza altezza angolo" />
       </label>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="create-preset" hidden>
+        <legend class="hint">Forma · riquadro in unità tavola · centro scena</legend>
+        <label class="drawing-editor__field"><span>Forma</span><select class="drawing-editor__name" data-guided-field="kind" aria-label="Forma da creare"></select></label>
+        {% for field, label in [('width', 'Larghezza riquadro'), ('height', 'Altezza riquadro'), ('x', 'Centro X scena'), ('y', 'Centro Y scena'), ('sides', 'Lati (poligono)')] %}
+        <label class="drawing-editor__field"><span>{{ label }}</span><input class="drawing-editor__name" type="number" step="any" data-guided-field="{{ field }}" aria-label="{{ label }}" /></label>
+        {% endfor %}
+      </fieldset>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="move" hidden>
+        <legend class="hint">Spostamento · unità scena</legend>
+        <label class="drawing-editor__field"><span>Delta X</span><input class="drawing-editor__name" type="number" step="any" data-guided-field="dx" aria-label="Delta X" /></label>
+        <label class="drawing-editor__field"><span>Delta Y</span><input class="drawing-editor__name" type="number" step="any" data-guided-field="dy" aria-label="Delta Y" /></label>
+      </fieldset>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="ellipse-parameter" hidden>
+        <legend class="hint">Raggio / semiasse · unità locali</legend>
+        <label class="drawing-editor__field"><span>Raggio orizzontale</span><input class="drawing-editor__name" type="number" step="any" data-guided-field="value" aria-label="Raggio guidato" /></label>
+      </fieldset>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="parent" hidden>
+        <legend class="hint">Genitore · mantiene la posizione scena</legend>
+        <select class="drawing-editor__name" data-guided-field="parent" aria-label="Genitore guidato"></select>
+      </fieldset>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="align" hidden>
+        <legend class="hint">Allineamento / spazi · assi scena</legend>
+        <select class="drawing-editor__name" data-guided-field="alignment" aria-label="Allineamento guidato">
+          <option value="left">Sinistra</option><option value="center-x">Centro orizzontale</option><option value="right">Destra</option><option value="top">Alto</option><option value="center-y">Centro verticale</option><option value="bottom">Basso</option><option value="distribute-x">Spazi orizzontali</option><option value="distribute-y">Spazi verticali</option>
+        </select>
+      </fieldset>
+      <svg class="drawing-editor__command-preview" data-canvas-preview role="img" aria-label="Anteprima del comando" viewBox="0 0 640 480" hidden>
+        <rect class="drawing-editor__plate" width="100%" height="100%" />
+        <g class="drawing-editor__preview-grid"></g><g data-preview-scene-layer></g><g data-preview-overlay></g>
+      </svg>
       <common.Button size="sm" variant="primary" data-canvas-command-apply>Applica</common.Button>
     </div>
     <p class="hint" data-canvas-command-status role="status" aria-live="polite"></p>

@@ -1229,17 +1229,18 @@ export function createController(root) {
     return {width:Math.min(120, scene.artboard.width / viewport[0] * 0.7), height:Math.min(100, scene.artboard.height / viewport[0] * 0.7), x:center[0], y:center[1], sides:6};
   }
 
-  function createCommand(parameters = {}) {
-    if (!parameters || typeof parameters !== "object" || Array.isArray(parameters)) return false;
+  function creationNode(parameters = {}) {
+    if (!parameters || typeof parameters !== "object" || Array.isArray(parameters)) return null;
     const defaults = creationDefaults(), kind = parameters.kind || "triangle_isosceles";
     const width = parameters.width ?? defaults.width, height = parameters.height ?? defaults.height;
     const x = parameters.x ?? defaults.x, y = parameters.y ?? defaults.y, sides = parameters.sides ?? defaults.sides;
-    if (!Object.keys(PRESET_LABELS).includes(kind) || ![width, height, x, y].every(Number.isFinite) || width <= 0 || height <= 0 || width > 100000 || height > 100000 || Math.abs(x) + width / 2 > 100000 || Math.abs(y) + height / 2 > 100000) {
-      announce("Dimensioni o posizione non valide nelle unità della tavola.");
-      return false;
-    }
-    const node = createPreset(kind, [x - width / 2, y - height / 2], [x + width / 2, y + height / 2], sides);
-    if (!node) { announce("La forma non è valida."); return false; }
+    if (!Object.keys(PRESET_LABELS).includes(kind) || ![width, height, x, y].every(Number.isFinite) || width <= 0 || height <= 0 || width > 100000 || height > 100000 || Math.abs(x) + width / 2 > 100000 || Math.abs(y) + height / 2 > 100000) return null;
+    return createPreset(kind, [x - width / 2, y - height / 2], [x + width / 2, y + height / 2], sides);
+  }
+
+  function createCommand(parameters) {
+    const node = creationNode(parameters);
+    if (!node) { announce("Dimensioni o posizione non valide nelle unità della tavola."); return false; }
     announce("");
     commit(addNode(scene, node));
     setSelection([node.id]);
@@ -1247,21 +1248,19 @@ export function createController(root) {
     return true;
   }
 
-  function setEllipseParameter({field, value} = {}) {
-    if (!["cx", "cy", "rx", "ry"].includes(field) || !Number.isFinite(value) || Math.abs(value) > 100000 || (["rx", "ry"].includes(field) && value <= 0)) {
-      announce("Usa valori finiti entro 100000 unità e raggi maggiori di zero.");
-      syncControls();
-      return false;
-    }
-    const node = selected().node;
-    const patch = node.constraint?.kind === "circle" && ["rx", "ry"].includes(field) ? {rx:value, ry:value} : {[field]:value};
-    const next = patchNode(scene, selectedId, patch);
-    if (next === scene) announce("Il valore non rispetta i vincoli della forma.");
-    else { announce(""); commit(next); }
-  }
-
   function geometryResult(action, parameters = {}) {
     if (!parameters || typeof parameters !== "object" || Array.isArray(parameters)) return null;
+    if (action === "create-preset") {
+      const node = creationNode(parameters);
+      return node ? addNode(scene,node) : null;
+    }
+    if (action === "ellipse-parameter") {
+      const {field, value} = parameters, node = selected()?.node;
+      if (node?.kind !== "ellipse" || !["cx", "cy", "rx", "ry"].includes(field) || !Number.isFinite(value) || Math.abs(value) > 100000 || (["rx", "ry"].includes(field) && value <= 0)) return null;
+      const patch = node.constraint?.kind === "circle" && ["rx", "ry"].includes(field) ? {rx:value, ry:value} : {[field]:value};
+      const next = patchNode(scene, selectedId, patch);
+      return next === scene ? null : next;
+    }
     if (action === "geometry") return editGeometry(scene, selection, parameters);
     if (action === "align") return alignNodes(scene, selection, parameters.alignment);
     if (action === "parent") {
@@ -1304,7 +1303,7 @@ export function createController(root) {
     front: { label: "Primo piano", enabled: () => selection.length === 1 && selected().index < selected().siblings.length - 1, run: () => commit(reorderNode(scene, selectedId, selected().siblings.length)) },
     back: { label: "Sfondo", enabled: () => selection.length === 1 && selected().index > 0, run: () => commit(reorderNode(scene, selectedId, -selected().siblings.length)) },
     unlock: { label: "Sblocca geometria", enabled: () => selection.length === 1 && Boolean(selected()?.node.constraint), run: () => commit(patchNode(scene, selectedId, { constraint: null })) },
-    "ellipse-parameter": { label: "Modifica centro e raggi", parameters:true, enabled: () => selection.length === 1 && selected()?.node.kind === "ellipse", run: setEllipseParameter },
+    "ellipse-parameter": { label: "Modifica centro e raggi", parameters:true, enabled: () => selection.length === 1 && selected()?.node.kind === "ellipse", run:parameters => geometryCommand("ellipse-parameter",parameters) },
   };
 
   for (const name of [...Object.keys(SHAPE_NAMES), "curve", "cut"]) {
@@ -1420,7 +1419,7 @@ export function createController(root) {
   }
 
   function wire() {
-    commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id), parameters:Boolean(action.parameters)})), execute, defaults:creationDefaults});
+    commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id), parameters:Boolean(action.parameters)})), execute, defaults:creationDefaults, preview:geometryResult, geometry:() => geometryInfo(scene,selection), parents:() => [...root.querySelector('[data-node-parent]').options].map(option => ({value:option.value,label:option.textContent})), ellipse:() => { const node = selected()?.node; return node?.kind === 'ellipse' ? {cx:node.cx,cy:node.cy,rx:node.rx,ry:node.ry} : null; }});
     root.querySelector("[data-drawing-commands]").addEventListener("click", event => commandPalette.open(event.currentTarget));
     const grid = root.querySelector("[data-drawing-grid]");
     grid.addEventListener("click", () => {

@@ -96,7 +96,11 @@ library, skeleton, publishing or export capabilities.
   and 70% of the visible world rectangle, centred in the current view. Presets fit
   within that box and stay native/constrained/editable. Switching variants keeps
   the accepted command/refinement; final creation is one undo step.
-  Guided parameter/preview workflows are a separate follow-up capability.
+  Guided offers contextual shape/preset/dimension, radius, movement, parent and
+  alignment fields. Its SVG preview uses the same validated native operations
+  against a cloned scene; the original/history stay unchanged until **Applica**.
+  Escape discards only the preview. Fields survive variant/action switching, both
+  modes remain available, and a completed command is one undo step.
   Text fields, menus and dialogs retain their
   keyboard behaviour, and Ctrl/Cmd+K remains global search. Ctrl+T is not intercepted.
 - Numeric fields edit the local bounding corner’s scene position, dimensions
