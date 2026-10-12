@@ -552,8 +552,8 @@ html[data-accent="gradiente"] .prose a:hover {
   /* The drawing workspace (editorial.DrawingEditor): the two fixed rails around
      the artboard, its proportion, the vertex handle, the layer checkbox and the
      colour swatch. */
-  --drawing-tool-rail: 9.5rem;
-  --drawing-side-rail: 15rem;
+  --drawing-tool-rail: 11rem;
+  --drawing-side-rail: 17rem;
   --drawing-artboard-ratio: 4 / 3;
   --drawing-swatch: 1.5rem;
   --drawing-chip: 1.5rem;

@@ -79,7 +79,15 @@ library, skeleton, publishing or export capabilities.
 - A curated fourteen-colour palette, including pure white and black, custom
   fill/stroke colours, width and opacity
   support angular silhouettes and faint details. For paths, palette choices
-  change the stroke colour.
+  change the stroke colour. The paint controls sit in the left rail beside the
+  tools, so they are on screen without scrolling the inspector; the chips wrap
+  to the rail's width.
+- The inspector is a list of compact rows: **Posizione** (X and Y), **Dimensione**
+  (length and height), **Rotazione** and **Pivot** (X and Y) each share one line,
+  and the ellipse centre/radius rows follow the same shape. Values are document
+  units; the axis letter is decorative and every field keeps its own accessible
+  label. The right rail holds identity (name, parent) and geometry; paint lives
+  on the left.
 - A floating selection bar keeps vertex/group/order actions and independent
   grid visibility, grid snap and geometry snap controls together. Moving an
   object or group snaps its anchor, excluding the selected objects themselves.

@@ -158,6 +158,62 @@
   </div>
 
   <div class="drawing-editor__workspace">
+    <div class="drawing-editor__rail">
+    <section class="drawing-editor__panel drawing-editor__paint" aria-label="Colore e contorno" data-testid="drawing-paint">
+      <h3 class="drawing-editor__panel-title">Colore</h3>
+      <div class="drawing-editor__palette" role="group" aria-label="Tavolozza">
+        <button type="button" class="drawing-editor__chip" data-palette="#ffffff" style="--swatch: #ffffff" aria-label="Bianco"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#000000" style="--swatch: #000000" aria-label="Nero"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#d1402a" style="--swatch: #d1402a" aria-label="Vermiglio"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#d97a26" style="--swatch: #d97a26" aria-label="Arancio"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#e0a327" style="--swatch: #e0a327" aria-label="Ocra"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#8a9a2b" style="--swatch: #8a9a2b" aria-label="Oliva"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#3c7a52" style="--swatch: #3c7a52" aria-label="Bosco"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#1f7a7a" style="--swatch: #1f7a7a" aria-label="Turchese"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#3f7fb0" style="--swatch: #3f7fb0" aria-label="Cielo"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#2c46a8" style="--swatch: #2c46a8" aria-label="Cobalto"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#4a3f8f" style="--swatch: #4a3f8f" aria-label="Indaco"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#7b3f8f" style="--swatch: #7b3f8f" aria-label="Prugna"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#c2506f" style="--swatch: #c2506f" aria-label="Rosa"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#8a5a3c" style="--swatch: #8a5a3c" aria-label="Argilla"></button>
+      </div>
+      <div class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Riempimento</span>
+        <span class="drawing-editor__swatch" data-testid="drawing-fill-swatch"
+              {% if selected and selected.fill %}style="--swatch: {{ selected.fill }}"{% endif %}></span>
+        <input class="drawing-editor__color" type="color" data-style="fill"
+               value="{{ selected.fill if selected and selected.fill else '#e0a327' }}"
+               aria-label="Colore di riempimento" disabled={{ not editable }} />
+        <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-fill"
+               {% if not (selected and selected.fill) %}checked{% endif %}
+               aria-label="Nessun riempimento" disabled={{ not editable }} /> Nessuno</label>
+      </div>
+      <div class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Contorno</span>
+        <span class="drawing-editor__swatch drawing-editor__swatch--stroke" data-testid="drawing-stroke-swatch"
+              {% if selected and selected.stroke %}style="--swatch: {{ selected.stroke }}"{% endif %}></span>
+        <input class="drawing-editor__color" type="color" data-style="stroke"
+               value="{{ selected.stroke if selected and selected.stroke else '#17150f' }}"
+               aria-label="Colore del contorno" disabled={{ not editable }} />
+        <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-stroke"
+               {% if not (selected and selected.stroke) %}checked{% endif %}
+               aria-label="Nessun contorno" disabled={{ not editable }} /> Nessuno</label>
+      </div>
+      <div class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Spessore</span>
+        <input class="drawing-editor__range" type="range" min="0" max="20" step="0.5" data-style="strokeWidth"
+               value="{{ selected.stroke_width if selected else 4 }}" aria-label="Spessore del contorno"
+               disabled={{ not editable }} />
+        <span class="drawing-editor__value mono" data-style-value="strokeWidth">{{ selected.stroke_width if selected else 4 }}</span>
+      </div>
+      <div class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Opacità</span>
+        <input class="drawing-editor__range" type="range" min="0" max="100" step="1" data-style="opacity"
+               value="{{ (selected.opacity * 100) | round | int if selected else 100 }}" aria-label="Opacità"
+               disabled={{ not editable }} />
+        <span class="drawing-editor__value mono" data-style-value="opacity">{{ (selected.opacity * 100) | round | int if selected else 100 }}%</span>
+      </div>
+    </section>
     <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno" data-testid="drawing-toolbar">
       <div class="drawing-editor__split">
         <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="triangle" data-testid="drawing-tool-triangle">
@@ -214,6 +270,8 @@
         <common.Icon name="scissors" size=20 />
         <span class="drawing-editor__tool-label">Taglia</span>
       </button>
+    </div>
+
     </div>
 
     <div class="drawing-editor__canvas" data-testid="drawing-canvas">
@@ -291,11 +349,21 @@
         </fieldset>
         <fieldset class="drawing-editor__geometry" data-geometry-parameters hidden>
           <legend class="hint">Scena · assi oggetto · pivot locale</legend>
-          {% for field, label in [('x', 'X scena (angolo locale)'), ('y', 'Y scena (angolo locale)'), ('width', 'Larghezza asse'), ('height', 'Altezza asse'), ('angle', 'Angolo (gradi)'), ('pivotX', 'Pivot X locale'), ('pivotY', 'Pivot Y locale')] %}
-          <label class="drawing-editor__field">
-            <span class="drawing-editor__field-label">{{ label }}</span>
-            <input class="drawing-editor__name" type="number" step="any" data-geometry-field="{{ field }}" aria-label="{{ label }}" max="100000" min="{{ '0.1' if field in ['width', 'height'] else '-100000' }}" />
-          </label>
+          {% for label, fields in [
+            ('Posizione', [('x', 'X', 'X scena (angolo locale)'), ('y', 'Y', 'Y scena (angolo locale)')]),
+            ('Dimensione', [('width', 'L', 'Larghezza asse'), ('height', 'A', 'Altezza asse')]),
+            ('Rotazione', [('angle', '°', 'Angolo (gradi)')]),
+            ('Pivot', [('pivotX', 'X', 'Pivot X locale'), ('pivotY', 'Y', 'Pivot Y locale')]),
+          ] %}
+          <div class="drawing-editor__row">
+            <span class="drawing-editor__row-label">{{ label }}</span>
+            {% for field, axis, aria in fields %}
+            <label class="drawing-editor__cell">
+              <span class="drawing-editor__axis" aria-hidden="true">{{ axis }}</span>
+              <input class="drawing-editor__name" type="number" step="any" data-geometry-field="{{ field }}" aria-label="{{ aria }}" max="100000" min="{{ '0.1' if field in ['width', 'height'] else '-100000' }}" />
+            </label>
+            {% endfor %}
+          </div>
           {% endfor %}
         </fieldset>
         <div class="drawing-editor__field" data-align-controls>
@@ -309,29 +377,22 @@
         </div>
         <fieldset class="drawing-editor__geometry" data-ellipse-parameters hidden>
           <legend class="hint">Coordinate locali · unità tavola</legend>
-          {% for field, label in [('cx', 'Centro X'), ('cy', 'Centro Y'), ('rx', 'Raggio orizzontale'), ('ry', 'Raggio verticale')] %}
-          <label class="drawing-editor__field">
-            <span class="drawing-editor__field-label" {% if field == 'rx' %}data-ellipse-radius-label{% endif %}>{{ label }}</span>
-            <input class="drawing-editor__name" type="number" step="any" data-ellipse-parameter="{{ field }}" aria-label="{{ label }}" max="100000" min="{{ '0.1' if field in ['rx', 'ry'] else '-100000' }}" />
-          </label>
+          {% for label, fields in [
+            ('Centro', [('cx', 'X', 'Centro X'), ('cy', 'Y', 'Centro Y')]),
+            ('Raggio', [('rx', 'X', 'Raggio orizzontale'), ('ry', 'Y', 'Raggio verticale')]),
+          ] %}
+          <div class="drawing-editor__row">
+            <span class="drawing-editor__row-label" {% if label == 'Raggio' %}data-ellipse-radius-label{% endif %}>{{ label }}</span>
+            {% for field, axis, aria in fields %}
+            <label class="drawing-editor__cell">
+              <span class="drawing-editor__axis" aria-hidden="true">{{ axis }}</span>
+              <input class="drawing-editor__name" type="number" step="any" data-ellipse-parameter="{{ field }}" aria-label="{{ aria }}" max="100000" min="{{ '0.1' if field in ['rx', 'ry'] else '-100000' }}" />
+            </label>
+            {% endfor %}
+          </div>
           {% endfor %}
         </fieldset>
-        <div class="drawing-editor__palette" role="group" aria-label="Tavolozza">
-          <button type="button" class="drawing-editor__chip" data-palette="#ffffff" style="--swatch: #ffffff" aria-label="Bianco"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#000000" style="--swatch: #000000" aria-label="Nero"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#d1402a" style="--swatch: #d1402a" aria-label="Vermiglio"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#d97a26" style="--swatch: #d97a26" aria-label="Arancio"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#e0a327" style="--swatch: #e0a327" aria-label="Ocra"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#8a9a2b" style="--swatch: #8a9a2b" aria-label="Oliva"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#3c7a52" style="--swatch: #3c7a52" aria-label="Bosco"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#1f7a7a" style="--swatch: #1f7a7a" aria-label="Turchese"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#3f7fb0" style="--swatch: #3f7fb0" aria-label="Cielo"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#2c46a8" style="--swatch: #2c46a8" aria-label="Cobalto"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#4a3f8f" style="--swatch: #4a3f8f" aria-label="Indaco"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#7b3f8f" style="--swatch: #7b3f8f" aria-label="Prugna"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#c2506f" style="--swatch: #c2506f" aria-label="Rosa"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#8a5a3c" style="--swatch: #8a5a3c" aria-label="Argilla"></button>
-        </div>
+
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Nome</span>
           <input class="drawing-editor__name" type="text" data-node-name maxlength="120"
@@ -342,44 +403,8 @@
           <label class="drawing-editor__field-label" for="drawing-parent">Genitore</label>
           <select class="drawing-editor__name" id="drawing-parent" data-node-parent disabled><option value="">Scena</option></select>
         </div>
-        <div class="drawing-editor__field">
-          <span class="drawing-editor__field-label">Riempimento</span>
-          <span class="drawing-editor__swatch" data-testid="drawing-fill-swatch"
-                {% if selected and selected.fill %}style="--swatch: {{ selected.fill }}"{% endif %}></span>
-          <input class="drawing-editor__color" type="color" data-style="fill"
-                 value="{{ selected.fill if selected and selected.fill else '#e0a327' }}"
-                 aria-label="Colore di riempimento" disabled={{ not editable }} />
-          <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-fill"
-                 {% if not (selected and selected.fill) %}checked{% endif %}
-                 aria-label="Nessun riempimento" disabled={{ not editable }} /> Nessuno</label>
-        </div>
-        <div class="drawing-editor__field">
-          <span class="drawing-editor__field-label">Contorno</span>
-          <span class="drawing-editor__swatch drawing-editor__swatch--stroke" data-testid="drawing-stroke-swatch"
-                {% if selected and selected.stroke %}style="--swatch: {{ selected.stroke }}"{% endif %}></span>
-          <input class="drawing-editor__color" type="color" data-style="stroke"
-                 value="{{ selected.stroke if selected and selected.stroke else '#17150f' }}"
-                 aria-label="Colore del contorno" disabled={{ not editable }} />
-          <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-stroke"
-                 {% if not (selected and selected.stroke) %}checked{% endif %}
-                 aria-label="Nessun contorno" disabled={{ not editable }} /> Nessuno</label>
-        </div>
-        <div class="drawing-editor__field">
-          <span class="drawing-editor__field-label">Spessore</span>
-          <input class="drawing-editor__range" type="range" min="0" max="20" step="0.5" data-style="strokeWidth"
-                 value="{{ selected.stroke_width if selected else 4 }}" aria-label="Spessore del contorno"
-                 disabled={{ not editable }} />
-          <span class="drawing-editor__value mono" data-style-value="strokeWidth">{{ selected.stroke_width if selected else 4 }}</span>
-        </div>
-        <div class="drawing-editor__field">
-          <span class="drawing-editor__field-label">Opacità</span>
-          <input class="drawing-editor__range" type="range" min="0" max="100" step="1" data-style="opacity"
-                 value="{{ (selected.opacity * 100) | round | int if selected else 100 }}" aria-label="Opacità"
-                 disabled={{ not editable }} />
-          <span class="drawing-editor__value mono" data-style-value="opacity">{{ (selected.opacity * 100) | round | int if selected else 100 }}%</span>
-        </div>
 
-        <p class="hint" data-testid="drawing-inspector-hint">Seleziona un oggetto per modificarne colore, spessore e opacità.</p>
+        <p class="hint" data-testid="drawing-inspector-hint">Seleziona un oggetto per modificarne nome, geometria e genitore. Colore e contorno sono a sinistra.</p>
       </section>
     </div>
   </div>

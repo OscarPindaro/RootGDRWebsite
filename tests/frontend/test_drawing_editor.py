@@ -11,6 +11,7 @@ from types import SimpleNamespace
 
 from backend.drawings.schemas import (
     Artboard,
+    EllipseNode,
     GroupNode,
     PathNode,
     PolygonNode,
@@ -1101,6 +1102,103 @@ def test_space_activates_a_focused_tool_button(component):
     assert button.get_attribute("aria-pressed") == "true"
 
 
+def test_colour_and_border_controls_sit_in_the_left_rail(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+
+    rail = page.locator(".drawing-editor__rail")
+    assert rail.locator("[data-testid='drawing-fill-swatch']").count() == 1
+    assert rail.locator("[data-style='stroke']").count() == 1
+    assert rail.locator("[data-style='strokeWidth']").count() == 1
+    assert rail.locator("[data-style='opacity']").count() == 1
+    assert rail.locator("[data-palette]").count() == 14
+
+    # The inspector keeps the identity and geometry, not a second copy of paint.
+    inspector = page.locator("[data-testid='drawing-inspector']")
+    assert inspector.locator("[data-style='fill']").count() == 0
+    assert inspector.locator("[data-palette]").count() == 0
+
+
+def test_the_paint_controls_are_reachable_without_scrolling(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+
+    swatch = page.locator("[data-testid='drawing-fill-swatch']").bounding_box()
+    viewport = page.evaluate("() => window.innerHeight")
+    assert swatch["y"] + swatch["height"] <= viewport
+
+
+def test_related_geometry_fields_share_one_row(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+
+    rows = page.locator("[data-geometry-parameters] .drawing-editor__row")
+    assert rows.count() == 4
+    assert rows.locator(".drawing-editor__row-label").all_inner_texts() == [
+        "Posizione",
+        "Dimensione",
+        "Rotazione",
+        "Pivot",
+    ]
+
+    position = rows.nth(0)
+    x = position.locator("[data-geometry-field='x']").bounding_box()
+    y = position.locator("[data-geometry-field='y']").bounding_box()
+    assert abs(x["y"] - y["y"]) < 4, "X and Y are on one line"
+
+    size = rows.nth(1)
+    width = size.locator("[data-geometry-field='width']").bounding_box()
+    height = size.locator("[data-geometry-field='height']").bounding_box()
+    assert abs(width["y"] - height["y"]) < 4, "the two dimensions are on one line"
+
+
+def test_the_ellipse_radius_row_keeps_its_accessible_label(component):
+    # A free ellipse has two independent axes.
+    free = SceneDocument(
+        nodes=[EllipseNode(id="oval", name="Ellisse", cx=250, cy=250, rx=100, ry=60)]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(free))
+    _mounted(page)
+    page.locator("[data-select-node='oval']").click()
+
+    radius = page.locator("[data-ellipse-parameters] .drawing-editor__row").nth(1)
+    assert radius.locator(".drawing-editor__row-label").inner_text() == (
+        "Raggio orizzontale"
+    )
+    assert (
+        radius.locator("[data-ellipse-parameter='rx']").get_attribute("aria-label")
+        == "Raggio orizzontale"
+    )
+
+    # A locked circle has a single radius, and the row label says so.
+    circle = SceneDocument(
+        nodes=[
+            EllipseNode(
+                id="oval",
+                name="Cerchio",
+                cx=250,
+                cy=250,
+                rx=100,
+                ry=100,
+                constraint={"kind": "circle"},
+            )
+        ]
+    )
+    locked = component.mount("editorial.DrawingEditor", props=_live_props(circle))
+    _mounted(locked)
+    locked.locator("[data-select-node='oval']").click()
+
+    row = locked.locator("[data-ellipse-parameters] .drawing-editor__row").nth(1)
+    assert row.locator(".drawing-editor__row-label").inner_text() == "Raggio"
+    assert (
+        row.locator("[data-ellipse-parameter='rx']").get_attribute("aria-label")
+        == "Raggio"
+    )
+
+
 def test_phone_preview_has_no_overflow_or_active_editing_controls(component):
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     page.set_viewport_size(PHONE)
@@ -1108,8 +1206,18 @@ def test_phone_preview_has_no_overflow_or_active_editing_controls(component):
     _mounted(page)
     assert page.locator("[data-testid='drawing-phone-note']").is_visible()
     assert page.get_by_test_id("drawing-save").is_disabled()
-    for selector in (".drawing-editor__canvas", ".drawing-editor__panel"):
-        box = page.locator(selector).first.bounding_box()
+    # Every surface the phone actually shows fits; the authoring rail is hidden,
+    # so it is not measured.
+    boxes = page.evaluate(
+        """() => [...document.querySelectorAll(
+            '.drawing-editor__canvas, .drawing-editor__panel'
+        )].filter(el => el.getClientRects().length).map(el => {
+            const r = el.getBoundingClientRect();
+            return {x: r.x, width: r.width};
+        })"""
+    )
+    assert boxes
+    for box in boxes:
         assert box["x"] + box["width"] <= PHONE["width"]
     assert page.evaluate("() => document.documentElement.scrollWidth") <= PHONE["width"]
 

@@ -108,6 +108,65 @@
 
 /* ---------- tools ---------- */
 
+.drawing-editor__rail {
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+  min-width: 0;
+}
+
+.drawing-editor__paint { padding: var(--sp-2); }
+
+/* The rail is narrower than the inspector, so a paint row groups its controls
+   to the left and wraps instead of spreading them across the column. */
+.drawing-editor__paint .drawing-editor__field {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+/* An inspector row: a label and its fields on one line, so related numbers read
+   as one property instead of one property per field. */
+.drawing-editor__row {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.drawing-editor__row-label {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  /* "Raggio orizzontale" wraps in the label column instead of being clipped. */
+  overflow-wrap: anywhere;
+}
+
+.drawing-editor__cell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.drawing-editor__axis {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+/* A row's number field is one of two in a narrow column: no room for the
+   browser's spinner or the default padding. */
+.drawing-editor__cell .drawing-editor__name {
+  flex: 1 1 auto;
+  width: 100%;
+  padding-inline: var(--sp-1);
+  appearance: textfield;
+}
+
+.drawing-editor__cell .drawing-editor__name::-webkit-outer-spin-button,
+.drawing-editor__cell .drawing-editor__name::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
 .drawing-editor__tools {
   display: grid;
   gap: var(--sp-1);
@@ -329,9 +388,12 @@
 
 /* ---------- palette and style controls ---------- */
 
+/* The paint controls live in the left rail, beside the tools, so they are
+   reachable without scrolling the inspector. The chips wrap instead of
+   overflowing that narrow column. */
 .drawing-editor__palette {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--drawing-chip), 1fr));
   gap: var(--sp-1);
 }
 
@@ -468,16 +530,10 @@
 @media (max-width: 900px) {
   .drawing-editor__workspace { grid-template-columns: minmax(0, 1fr); }
 
-  .drawing-editor__tools {
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    overflow-x: auto;
-  }
-
   .drawing-editor__selection-bar,
   .drawing-editor__hint,
   .drawing-editor__bar,
-  .drawing-editor__tools { display: none; }
+  .drawing-editor__rail { display: none; }
 
   .drawing-editor__phone-note {
     display: block;
