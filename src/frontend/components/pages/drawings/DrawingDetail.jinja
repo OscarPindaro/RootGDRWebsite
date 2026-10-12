@@ -12,6 +12,7 @@
     title={{ drawing.title | e }}
     :drawing_id="drawing.id"
     :version="drawing.version"
+    :owner_id="current_user.id if current_user else None"
     :scene="scene"
     :save_url="'/api/drawings/' ~ drawing.id" />
 </layout.Page>

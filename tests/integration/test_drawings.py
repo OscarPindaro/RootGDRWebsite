@@ -532,6 +532,28 @@ async def test_legacy_rows_upgrade_in_memory_until_explicit_save(
         assert stored["schema_version"] == 4
 
 
+async def test_recovery_validation_is_admin_only_and_never_creates_a_drawing(
+    app_config, db_manager, users
+):
+    async with await _client(_app(app_config, db_manager, users["admin"])) as client:
+        before = (await client.get("/api/drawings/")).json()
+        validated = await client.post(
+            "/api/drawings/validate", json=_scene().model_dump(by_alias=True)
+        )
+        assert validated.status_code == 200
+        assert (
+            validated.json()["nodes"][0]["points"]
+            == _scene().model_dump(mode="json", by_alias=True)["nodes"][0]["points"]
+        )
+        assert (await client.get("/api/drawings/")).json() == before
+    async with await _client(_app(app_config, db_manager, users["member"])) as client:
+        assert (
+            await client.post(
+                "/api/drawings/validate", json=_scene().model_dump(by_alias=True)
+            )
+        ).status_code == 403
+
+
 async def test_native_pivot_metadata_is_persisted_without_changing_geometry(
     app_config, db_manager, users
 ):

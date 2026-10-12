@@ -42,6 +42,11 @@ def scene_of(model: DrawingModel) -> SceneDocument:
     return SceneDocument.model_validate(model.document)
 
 
+def validate_scene(data: SceneDocument, user: User) -> SceneDocument:
+    _require_admin(user)
+    return data
+
+
 def node_count_of(model: DrawingModel) -> int:
     return count_nodes(scene_of(model))
 

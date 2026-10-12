@@ -60,6 +60,7 @@ import {
 } from "./scene.js";
 import { render } from "./render.js";
 import { createCanvasPalette } from "./canvas-palette.js";
+import { createRecovery } from "./recovery.js";
 
 const PALETTE = [
   "#ffffff", "#000000",
@@ -116,7 +117,7 @@ export function createController(root) {
   const saveUrl = root.dataset.saveUrl || null;
   const contextMenu = root.querySelector("#drawing-context-menu");
   let contextPosition = null, contextOpener = svg;
-  let commandPalette = null;
+  let commandPalette = null, recovery = null, recoveredLine = null;
   const editable = root.dataset.readonly !== "true" && !window.matchMedia("(max-width: 900px)").matches;
 
   let scene = migrateScene(sceneScript ? JSON.parse(sceneScript.textContent) : { schemaVersion: 4, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes: [] });
@@ -217,7 +218,7 @@ export function createController(root) {
       lock.type = "button";
       lock.className = "drawing-editor__visibility";
       lock.dataset.nodeLocked = node.id;
-      lock.disabled = !editable || (ancestorsOf(node.id) || []).some(id => editLocked(scene,id));
+      lock.disabled = !editable || Boolean(root.dataset.recoveryPending) || (ancestorsOf(node.id) || []).some(id => editLocked(scene,id));
       lock.setAttribute("aria-pressed",String(Boolean(node.editLocked)));
       lock.setAttribute("aria-label",`${node.editLocked ? "Sblocca" : "Blocca"} modifica di ${node.name}`);
       lock.appendChild(root.querySelector(node.editLocked ? "[data-scene-lock]" : "[data-scene-unlock]").content.cloneNode(true));
@@ -226,7 +227,7 @@ export function createController(root) {
       eye.type = "button";
       eye.className = "drawing-editor__visibility";
       eye.dataset.nodeVisible = node.id;
-      eye.disabled = !editable;
+      eye.disabled = !editable || Boolean(root.dataset.recoveryPending);
       eye.setAttribute("aria-pressed", String(node.visible));
       eye.setAttribute("aria-label", `${node.visible ? "Nascondi" : "Mostra"} ${node.name}`);
       eye.appendChild(root.querySelector(node.visible ? "[data-scene-eye]" : "[data-scene-eye-off]").content.cloneNode(true));
@@ -352,10 +353,11 @@ export function createController(root) {
     root.dataset.dirty = isDirty() ? "true" : "false";
     if (root.dataset.saving === "true") return;
     status(isDirty() ? "Modifiche non salvate" : "Salvato", isDirty() ? "dirty" : "saved");
+    recovery?.schedule();
   }
 
   async function save(asCopy = false) {
-    if (!saveUrl || inFlight) return;
+    if (!saveUrl || inFlight) return false;
     asCopy = asCopy === true;
     if (drag || cut) {
       announce("Completa o annulla l’operazione prima di salvare.");
@@ -399,9 +401,10 @@ export function createController(root) {
       delete root.dataset.copying;
       lockedControls.forEach(([control, disabled]) => { control.disabled = disabled; });
       delete root.dataset.saving;
-      if (saved) refresh();
+      if (saved) { refresh(); recovery?.confirmed(); }
       else status("Non salvato", "error");
     }
+    return saved;
   }
 
   /* ---------- coordinates ---------- */
@@ -775,7 +778,7 @@ export function createController(root) {
   /* ---------- pointer ---------- */
 
   function onPointerDown(event) {
-    if (!editable || root.dataset.copying || ![0, 1].includes(event.button)) return;
+    if (!editable || root.dataset.copying || root.dataset.recoveryPending || ![0, 1].includes(event.button)) return;
     event.preventDefault();
     svg.focus({ preventScroll: true });
     svg.setPointerCapture(event.pointerId);
@@ -1362,7 +1365,7 @@ export function createController(root) {
 
   function canExecute(id) {
     const modifiesSelection = ["edit", "transform", "geometry", "move", "parent", "align", "delete", "duplicate", "group", "ungroup", "forward", "backward", "front", "back", "unlock", "ellipse-parameter", "tool-cut"].includes(id);
-    return Boolean(editable && !root.dataset.copying && !drag && !cut && (!modifiesSelection || editableSelection(scene,selection)) && actions[id]?.enabled());
+    return Boolean(editable && !root.dataset.copying && !root.dataset.recoveryPending && !drag && !cut && (!modifiesSelection || editableSelection(scene,selection)) && actions[id]?.enabled());
   }
 
   function execute(id, parameters) {
@@ -1375,7 +1378,8 @@ export function createController(root) {
   function syncControls() {
     const found = selected();
     const node = found ? found.node : null;
-    const mutable = editableSelection(scene,selection);
+    const mutable = editableSelection(scene,selection) && !root.dataset.recoveryPending;
+    root.querySelector('[data-drawing-title]').disabled = Boolean(root.dataset.recoveryPending);
     root.querySelector("[data-drawing-zoom]").textContent = Math.round(viewport[0] * 100) + "%";
     const undoButton = root.querySelector("[data-drawing-undo]");
     const redoButton = root.querySelector("[data-drawing-redo]");
@@ -1463,8 +1467,35 @@ export function createController(root) {
     if (hint) hint.hidden = Boolean(node);
   }
 
+  function hasLocalWork() {
+    return isDirty() || Boolean(pendingPolygon?.length || recoveredLine || drag || cut || commandPalette?.draft.dirty);
+  }
+
+  function recoveryState() {
+    return {scene:cut ? cut.before : drag?.kind === "line" || drag?.kind === "create" ? gestureBefore : scene, title, version:savedVersion, polygon:pendingPolygon, path:drag?.kind === "line" ? {kind:"line",curve:drag.curve,from:drag.from,to:drag.to} : recoveredLine, command:commandPalette?.draft || null};
+  }
+
+  function restoreRecovery(state) {
+    const validPoints = points => points === null || Array.isArray(points) && points.length <= 256 && points.every(point => Array.isArray(point) && point.length === 2 && point.every(value => Number.isFinite(value) && Math.abs(value) <= 100000));
+    if (typeof state.title !== "string" || !state.title.trim() || state.title.length > 255 || !Number.isInteger(state.version) || state.version < 1 || !validPoints(state.polygon ?? null) || state.path && (state.path.kind !== "line" || typeof state.path.curve !== "boolean" || !validPoints([state.path.from,state.path.to]))) throw new Error("Invalid recovery draft");
+    scene = migrateScene(state.scene);
+    history.commit(scene); scene = history.present;
+    title = state.title; root.querySelector('[data-drawing-title]').value = title;
+    if (state.version !== savedVersion) root.querySelector("[data-drawing-conflict-actions]").hidden = false;
+    savedVersion = state.version;
+    pendingPolygon = state.polygon || null;
+    recoveredLine = state.path || null;
+    root.querySelector("[data-recovery-path]").hidden = !recoveredLine;
+    tool = pendingPolygon ? "polygon" : "select";
+    commandPalette?.restore(state.command);
+    selection = []; selectedId = null; draw();
+  }
+
   function wire() {
     commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id), parameters:Boolean(action.parameters)})), execute, defaults:creationDefaults, preview:geometryResult, geometry:() => geometryInfo(scene,selection), parents:() => [...root.querySelector('[data-node-parent]').options].map(option => ({value:option.value,label:option.textContent})), ellipse:() => { const node = selected()?.node; return node?.kind === 'ellipse' ? {cx:node.cx,cy:node.cy,rx:node.rx,ry:node.ry} : null; }});
+    recovery = createRecovery(root, {state:recoveryState, restore:restoreRecovery, redraw:draw, unsaved:hasLocalWork, pending:() => inFlight, save, leave:() => {allowLeave = true;}});
+    root.addEventListener("input", () => recovery.schedule());
+    root.querySelector("[data-recovery-path]").addEventListener("click", () => { drag = recoveredLine; recoveredLine = null; root.querySelector('[data-recovery-path]').hidden = true; finishLine(); });
     root.querySelector("[data-drawing-commands]").addEventListener("click", event => commandPalette.open(event.currentTarget));
     const grid = root.querySelector("[data-drawing-grid]");
     grid.addEventListener("click", () => {
@@ -1678,7 +1709,7 @@ export function createController(root) {
     });
     window.addEventListener("blur", () => { spaceDown = false; });
     window.addEventListener("beforeunload", (event) => {
-      if (allowLeave || !isDirty()) return;
+      if (allowLeave || (!hasLocalWork() && !inFlight)) return;
       event.preventDefault();
       event.returnValue = "";
     });

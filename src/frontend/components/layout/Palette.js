@@ -149,17 +149,21 @@
     catch (error) { return null; }
   }
 
+  function navigate(href) {
+    if (window.dispatchEvent(new CustomEvent("rootgdr:navigate", {cancelable:true, detail:{href:href}}))) window.location.assign(href);
+  }
+
   function follow(item) {
     var href = item && localTarget(item.href);
     if (!href || following) return;
-    if (item.method !== "POST") { window.location.assign(href); return; }
+    if (item.method !== "POST") { navigate(href); return; }
     following = true;
     showState("loading");
     fetch(href, {method:"POST", credentials:"same-origin", headers:{Accept:"text/html", "HX-Request":"true"}})
       .then(function (response) {
         if (!response.ok) { showState(response.status === 401 || response.status === 403 ? "unauthorized" : "creation"); return; }
         var target = localTarget(response.headers.get("HX-Redirect"));
-        if (target) window.location.assign(target);
+        if (target) navigate(target);
         else showState("creation");
       })
       .catch(function () { showState(navigator.onLine === false ? "offline" : "creation"); })

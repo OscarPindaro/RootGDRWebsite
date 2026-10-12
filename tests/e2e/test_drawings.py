@@ -610,18 +610,85 @@ def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
     page.locator(".palette__item").filter(
         has_text="Palette navigation target"
     ).first.wait_for()
-    page.on("dialog", lambda dialog: dialog.dismiss())
-    with page.expect_event("dialog") as leaving:
-        page.locator(".palette__item").filter(
-            has_text="Palette navigation target"
-        ).first.click()
-    assert leaving.value.type == "beforeunload"
+    page.locator(".palette__item").filter(
+        has_text="Palette navigation target"
+    ).first.click()
+    page.locator("#drawing-navigation").wait_for(state="visible")
+    page.locator("#drawing-navigation [data-dialog-close]").last.click()
     assert page.url.endswith(identifier)
     assert _local_node_scene(session) == local
     assert (
         session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"] == []
     )
     assert session.expect_api(f"/api/drawings/{target['id']}").status == 200
+
+
+def test_polygon_draft_recovers_and_stale_recovery_cannot_overwrite_newer_server(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-polygon").click()
+    for point in [(100, 100), (200, 100), (150, 200)]:
+        page.mouse.click(*_at(page, *point))
+    page.on("dialog", lambda dialog: dialog.accept())
+    page.reload()
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-recovery-restore]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.tool === 'polygon'"
+    )
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Enter")
+    local = _local_node_scene(session)
+    assert len(local["nodes"]) == 1
+    current = session.expect_api(f"/api/drawings/{identifier}").json()
+    session.expect_api(
+        f"/api/drawings/{identifier}",
+        method="PATCH",
+        data={"expectedVersion": current["version"], "title": "Newer server"},
+    )
+    page.reload()
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-recovery-restore]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 1"
+    )
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 409
+    assert _local_node_scene(session) == local
+    assert (
+        session.expect_api(f"/api/drawings/{identifier}").json()["title"]
+        == "Newer server"
+    )
+
+
+def test_local_recovery_restores_work_without_claiming_server_persistence(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (250, 220))
+    local = _local_node_scene(session)
+    page.on("dialog", lambda dialog: dialog.accept())
+    page.reload()
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-recovery-restore]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 1"
+    )
+    assert _local_node_scene(session) == local
+    assert (
+        session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"] == []
+    )
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
 
 
 def test_object_edit_lock_persists_and_fit_does_not_save_geometry(

@@ -117,6 +117,16 @@ library, skeleton, publishing or export capabilities.
   Edge/centre alignment and equal-gap distribution translate normalized selections.
   Compact numeric commands include `move/position/size/angle/pivot/radius/parent/align`
   (Italian aliases accepted); Guided exposes the same actions/validated parameters.
+- Recovery is best-effort browser-local storage, scoped to authenticated user UUID
+  and drawing UUID. It retains completed edits/title and unfinished polygon,
+  dragged line/curve and command drafts, without server autosave. Seven days is a
+  soft age warning; no automatic artwork/cache deletion occurs. Restore/discard
+  is explicit before further authoring; restored scenes pass the admin-only native
+  validation endpoint. A stale draft retains its old expectedVersion and offers
+  Save as copy, so newer server content cannot be overwritten. Storage/access
+  failures preserve work and explain that it is not confirmed server persistence.
+  App links and global search offer Save/Discard/Cancel; pending writes cannot be
+  discarded. Browser reload/back keep the native leave warning and flush recovery.
 - Undo/redo is in-memory and bounded to 60 completed operations. A drag or
   property change is one step; view changes and selection are excluded.
 - A stale save returns 409 and retains local work. **Salva come copia** creates
@@ -181,7 +191,8 @@ specimen in the component showcase.
 
 - No linked scenes/libraries, anchors, skeletons, portrait/document publishing,
   PNG/SVG downloads, card printing, animation, imports or clipping.
-- Explicit saving only: no autosave, offline/crash recovery or persisted undo.
+- Explicit server saving only: local recovery is browser-storage-dependent and
+  undo history is not persisted.
   A failed/ambiguous response does not claim successful persistence; inspect or
   reload server state before treating local work as durable.
 - Circles stay locked until explicitly converted to free ellipses; no circle-to-path

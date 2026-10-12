@@ -1,4 +1,4 @@
-{#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True #}
+{#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True, owner_id=None #}
 {#css editorial/DrawingEditor.css, common/Button.css, common/ButtonGroup.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css, common/Menu.css #}
 {#js common/Dialog.js, common/Menu.js, editorial/DrawingEditor.js #}
 {% set artboard = scene.artboard if scene else None %}
@@ -7,6 +7,7 @@
 <div class="drawing-editor"
      data-drawing-editor
      data-title="{{ title | e }}"
+     {% if owner_id %}data-owner-id="{{ owner_id }}"{% endif %}
      {% if drawing_id %}data-drawing-id="{{ drawing_id }}"{% endif %}
      {% if save_url %}data-save-url="{{ save_url }}"{% endif %}
      {% if version %}data-version="{{ version }}"{% endif %}
@@ -33,6 +34,19 @@
     per modificarla.
   </p>
   <p class="drawing-editor__error" data-drawing-error role="alert" hidden></p>
+  <div class="drawing-editor__actions" data-drawing-recovery hidden>
+    <p class="hint" data-recovery-message role="status"></p>
+    <common.Button size="sm" variant="secondary" data-recovery-restore>Riprendi bozza locale</common.Button>
+    <common.Button size="sm" variant="text" data-recovery-discard>Scarta bozza locale</common.Button>
+  </div>
+  <common.Dialog title="Modifiche non salvate" id="drawing-navigation" manual={{ True }}>
+    <p>Salva sul server prima di uscire, scarta il lavoro locale oppure rimani qui.</p>
+    <common.Button size="sm" variant="primary" data-navigation-save>Salva e continua</common.Button>
+    <common.Button size="sm" variant="secondary" data-navigation-discard>Scarta e continua</common.Button>
+    <common.Button size="sm" variant="text" data-dialog-close>Rimani qui</common.Button>
+    <p class="hint" data-navigation-message role="status"></p>
+  </common.Dialog>
+  <common.Button size="sm" variant="secondary" data-recovery-path hidden>Completa bozza del tratto</common.Button>
   <div class="drawing-editor__actions" data-drawing-conflict-actions hidden>
     <common.Button size="sm" variant="secondary" data-drawing-save-copy>Salva come copia</common.Button>
     <common.Button size="sm" variant="secondary" data-dialog-open="drawing-reload">Ricarica</common.Button>

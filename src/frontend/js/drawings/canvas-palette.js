@@ -54,7 +54,7 @@ export function createCanvasPalette(root, editor) {
   const parameterInput = dialog.querySelector("[data-canvas-command-parameters]");
   const output = dialog.querySelector("[data-canvas-command-status]");
   const preview = dialog.querySelector("[data-canvas-preview]");
-  let mode = "compact", active = 0, choices = [], acceptedKind = null;
+  let mode = "compact", active = 0, choices = [], acceptedKind = null, dirty = false;
 
   function commands() {
     return editor.actions().filter(action => !action.id.startsWith("tool-") && !action.id.startsWith("preset-"));
@@ -166,17 +166,17 @@ export function createCanvasPalette(root, editor) {
 
   function apply(id, parameters) {
     if (!editor.execute(id, parameters)) { output.textContent = "Comando non disponibile o parametri non validi."; return; }
-    acceptedKind = null; input.value = ""; active = 0;
+    acceptedKind = null; input.value = ""; active = 0; dirty = false;
     window.rootGdrDialog.close(dialog);
   }
 
   function choose(action) {
-    if (action.kind) { acceptedKind = action.kind; input.value = ""; active = 0; render(); input.focus(); }
+    if (action.kind) { dirty = true; acceptedKind = action.kind; input.value = ""; active = 0; render(); input.focus(); }
     else if (action.parameters === true) { output.textContent = "Indica i parametri numerici del comando."; }
     else apply(action.id, action.parameters);
   }
 
-  input.addEventListener("input", () => { active = 0; render(); });
+  input.addEventListener("input", () => { dirty = Boolean(input.value || acceptedKind); active = 0; render(); });
   input.addEventListener("keydown", event => {
     if (["ArrowDown", "ArrowUp"].includes(event.key) && choices.length) {
       event.preventDefault();
@@ -197,7 +197,7 @@ export function createCanvasPalette(root, editor) {
   });
   dialog.querySelectorAll("[data-canvas-mode]").forEach(button => button.addEventListener("click", () => setMode(button.dataset.canvasMode)));
   guided.addEventListener("change", render);
-  dialog.querySelectorAll("[data-guided-field]").forEach(field => { field.addEventListener("input", updateGuided); field.addEventListener("change", updateGuided); });
+  dialog.querySelectorAll("[data-guided-field]").forEach(field => { field.addEventListener("input", () => {dirty = true; updateGuided();}); field.addEventListener("change", updateGuided); });
   parameterInput.addEventListener("input", updateGuided);
   dialog.querySelector("[data-canvas-command-apply]").addEventListener("click", () => {
     const action = commands().find(action => action.id === guided.value);
@@ -205,13 +205,26 @@ export function createCanvasPalette(root, editor) {
     if (action?.parameters && parameters === undefined) { output.textContent = "Parametri non validi: usa numeri finiti, un gruppo o un allineamento."; return; }
     apply(guided.value, parameters);
   });
-  dialog.addEventListener("close", () => { acceptedKind = null; input.value = ""; active = 0; });
+  dialog.addEventListener("close", () => { acceptedKind = null; input.value = ""; active = 0; dirty = false; });
   setMode(mode);
   window.addEventListener("resize", position);
 
   return {
     open(opener) { render(); window.rootGdrDialog.open(dialog, opener); updateGuided(); position(); (mode === "compact" ? input : guided).focus(); },
     get mode() { return mode; },
-    get draft() { return {mode, text:input.value, action:guided.value, parameters:parameterInput.value, kind:acceptedKind}; },
+    restore(draft) {
+      if (!draft || typeof draft.text !== "string" || draft.text.length > 255) return;
+      input.value = draft.text; acceptedKind = SHAPES.some(shape => shape.kind === draft.kind) ? draft.kind : null;
+      if (commands().some(action => action.id === draft.action)) guided.value = draft.action;
+      parameterInput.value = typeof draft.parameters === "string" ? draft.parameters.slice(0,255) : "";
+      for (const panel of dialog.querySelectorAll('[data-guided-fields]')) {
+        const fields = Array.isArray(draft.fields) ? draft.fields.slice(0,10).find(entry => entry?.action === panel.dataset.guidedFields) : null;
+        if (!fields) continue;
+        panel.dataset.initialized = "true";
+        panel.querySelectorAll('[data-guided-field]').forEach(field => { const value = fields.values?.[field.dataset.guidedField]; if (typeof value === 'string' && value.length <= 255) field.value = value; });
+      }
+      dirty = Boolean(draft.dirty); setMode(draft.mode);
+    },
+    get draft() { return {mode, text:input.value, action:guided.value, parameters:parameterInput.value, kind:acceptedKind, dirty, fields:[...dialog.querySelectorAll('[data-guided-fields]')].map(panel => ({action:panel.dataset.guidedFields,values:Object.fromEntries([...panel.querySelectorAll('[data-guided-field]')].map(field => [field.dataset.guidedField,field.value]))}))}; },
   };
 }
