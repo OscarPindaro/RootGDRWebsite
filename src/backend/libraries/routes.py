@@ -20,6 +20,7 @@ from .schemas import (
 from .service import (
     asset_response,
     create_asset,
+    promote_asset,
     create_library,
     create_section,
     delete_asset,
@@ -106,6 +107,21 @@ async def create_asset_route(
     db: AsyncSession = Depends(get_db_session, scope="function"),
 ) -> AssetResponse:
     return await asset_response(db, await create_asset(db, library_id, data, user))
+
+
+@router.post(
+    "/{library_id}/assets/{asset_id}/promote",
+    response_model=AssetResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def promote_asset_route(
+    library_id: uuid.UUID,
+    asset_id: uuid.UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db_session, scope="function"),
+) -> AssetResponse:
+    """Copy a world asset into the global library, recording where it came from."""
+    return await asset_response(db, await promote_asset(db, library_id, asset_id, user))
 
 
 @router.get("/{library_id}/assets/{asset_id}", response_model=AssetResponse)

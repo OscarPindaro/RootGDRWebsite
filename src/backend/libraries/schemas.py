@@ -109,6 +109,7 @@ class AssetSummary(AppBaseModel):
 
 class AssetResponse(AssetSummary):
     fragment: SceneFragment
+    promoted_from_asset_id: UUIDField | None = None
 
 
 class LibraryCreate(AppBaseModel):

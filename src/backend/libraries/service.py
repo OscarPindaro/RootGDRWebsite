@@ -319,6 +319,7 @@ async def asset_response(db: AsyncSession, asset: SceneAssetModel) -> AssetRespo
         version=asset.version,
         updated_at=asset.updated_at,
         fragment=asset.fragment,
+        promoted_from_asset_id=asset.promoted_from_asset_id,
     )
 
 
@@ -376,3 +377,72 @@ async def require_no_instance_cycle(
             status_code=status.HTTP_409_CONFLICT,
             detail="The asset cannot reference itself, directly or through another asset",
         )
+
+
+async def promote_asset(
+    db: AsyncSession, library_id: uuid.UUID, asset_id: uuid.UUID, user: User
+) -> SceneAssetModel:
+    """Copy a world asset into the global library.
+
+    The target library is admin-owned, so the right to write it is what the
+    promotion checks, not the right to read the source. The copy is a *new*
+    asset with its own identity: the world asset and every instance that points
+    at it stay exactly as they were, and provenance records where it came from.
+    """
+    source = await get_asset(db, library_id, asset_id, user)
+    global_library = await _global_library_for_write(db, user)
+    if source.section.library_id == global_library.id:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The asset already belongs to the global library",
+        )
+    section = await _section_named(db, global_library, source.section.name)
+    promoted = SceneAssetModel(
+        section=section,
+        name=source.name,
+        created_by_id=user.id,
+        fragment=source.fragment,
+        promoted_from_asset_id=source.id,
+    )
+    db.add(promoted)
+    await db.flush()
+    return promoted
+
+
+async def _global_library_for_write(db: AsyncSession, user: User) -> SceneLibraryModel:
+    if user.role != UserRole.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only an administrator may write the global library",
+        )
+    library = (
+        await db.scalars(
+            select(SceneLibraryModel)
+            .where(SceneLibraryModel.world_id.is_(None))
+            .order_by(SceneLibraryModel.id)
+        )
+    ).first()
+    if library is None:
+        # Nothing has been promoted or authored globally yet; the first promotion
+        # is a reasonable moment to bring the global library into being.
+        library = SceneLibraryModel(name="Libreria globale", world_id=None)
+        db.add(library)
+        await db.flush()
+    return library
+
+
+async def _section_named(
+    db: AsyncSession, library: SceneLibraryModel, name: str
+) -> SceneSectionModel:
+    """The section with this name, created if the library has none yet."""
+    section = await db.scalar(
+        select(SceneSectionModel).where(
+            SceneSectionModel.library_id == library.id,
+            SceneSectionModel.name == name,
+        )
+    )
+    if section is None:
+        section = SceneSectionModel(library=library, name=name)
+        db.add(section)
+        await db.flush()
+    return section

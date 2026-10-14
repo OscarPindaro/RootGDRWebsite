@@ -97,3 +97,9 @@ class SceneAssetModel(
     )
     created_by: Mapped[UserModel | None] = relationship(lazy="joined")
     fragment: Mapped[SceneFragment] = mapped_column(FragmentJSON, nullable=False)
+    # Set when an admin promotes a world asset into the global library. The
+    # promoted asset is a copy: existing instances keep pointing at the original,
+    # so provenance is recorded rather than the link being rewritten.
+    promoted_from_asset_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("scene_assets.id", ondelete="SET NULL"), nullable=True
+    )

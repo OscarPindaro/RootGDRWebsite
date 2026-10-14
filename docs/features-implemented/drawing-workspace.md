@@ -144,6 +144,15 @@ library, skeleton, publishing or export capabilities.
   insert-point action splits the selected cubic segment at its midpoint using
   de Casteljau, preserving appearance and existing endpoint identities. New midpoint
   identity/mode, copy and undo/reopen retain editable multi-segment cubic semantics.
+- **Promotion** copies a world asset into the global library. The right it checks
+  is the right to *write* the global library, which is the administrator's, not
+  the right to read the source — so a world master may author a world library and
+  still cannot publish into the global one. The copy is a new asset with its own
+  identity, the source section is recreated by name, and provenance records the
+  asset it came from; the world asset, and every instance pointing at it, are left
+  exactly as they were. Promoting something already global is a conflict, not a
+  second copy. Nothing rewrites existing instances, so promotion can never change
+  a drawing that already exists.
 - A library asset may not contain itself, directly or through another asset. Both
   writes that could create such a cycle — saving an asset and refreshing an
   instance — refuse it with a conflict, and the refusal changes nothing. A link

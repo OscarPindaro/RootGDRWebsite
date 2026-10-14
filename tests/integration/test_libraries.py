@@ -313,6 +313,120 @@ async def test_an_asset_cannot_contain_itself_directly_or_through_another_asset(
         assert missing.status_code == 201, missing.text
 
 
+async def test_an_admin_promotes_a_world_asset_into_the_global_library(
+    app_config: AppConfig, db_manager: DatabaseManager, actors: dict
+) -> None:
+    """Promotion copies. The world asset and its readers are left alone."""
+    async with _client(_app(app_config, db_manager, actors["admin"])) as client:
+        await _global_library(client)
+        world_library = (
+            await client.post(
+                "/api/libraries",
+                json={
+                    "name": "Boscochiaro",
+                    "scope": "world",
+                    "world_id": str(actors["world_id"]),
+                },
+            )
+        ).json()
+        section = (
+            await client.post(
+                f"/api/libraries/{world_library['id']}/sections", json={"name": "Armi"}
+            )
+        ).json()
+        source = await client.post(
+            f"/api/libraries/{world_library['id']}/assets",
+            json={
+                "sectionId": section["id"],
+                "name": "Spada di Altus",
+                "fragment": _fragment(),
+            },
+        )
+        assert source.status_code == 201, source.text
+        source_id = source.json()["id"]
+
+        promoted = await client.post(
+            f"/api/libraries/{world_library['id']}/assets/{source_id}/promote"
+        )
+        assert promoted.status_code == 201, promoted.text
+        copy = promoted.json()
+        assert copy["promotedFromAssetId"] == source_id
+        assert copy["name"] == "Spada di Altus"
+        assert copy["sectionName"] == "Armi", "the section is recreated by name"
+        assert copy["fragment"] == source.json()["fragment"]
+
+        # The original is untouched and still readable where it lives.
+        original = await client.get(
+            f"/api/libraries/{world_library['id']}/assets/{source_id}"
+        )
+        assert original.status_code == 200
+        assert original.json()["promotedFromAssetId"] is None
+        assert original.json()["version"] == source.json()["version"]
+
+        # The copy is in the global library, next to the one every admin has.
+        global_library = next(
+            entry
+            for entry in (await client.get("/api/libraries")).json()
+            if entry["scope"] == "global"
+        )
+        listing = await client.get(f"/api/libraries/{global_library['id']}/assets")
+        assert [entry["name"] for entry in listing.json()["data"]] == ["Spada di Altus"]
+
+        # Promoting a global asset again is a conflict, not a second copy.
+        again = await client.post(
+            f"/api/libraries/{global_library['id']}/assets/{copy['id']}/promote"
+        )
+        assert again.status_code == 409, again.text
+
+
+async def test_a_world_master_cannot_promote_into_the_global_library(
+    app_config: AppConfig, db_manager: DatabaseManager, actors: dict
+) -> None:
+    """The global library is admin-owned, so writing it needs that right."""
+    async with _client(_app(app_config, db_manager, actors["admin"])) as client:
+        world_library = (
+            await client.post(
+                "/api/libraries",
+                json={
+                    "name": "Boscochiaro",
+                    "scope": "world",
+                    "world_id": str(actors["world_id"]),
+                },
+            )
+        ).json()
+        section = (
+            await client.post(
+                f"/api/libraries/{world_library['id']}/sections", json={"name": "Armi"}
+            )
+        ).json()
+        source = (
+            await client.post(
+                f"/api/libraries/{world_library['id']}/assets",
+                json={
+                    "sectionId": section["id"],
+                    "name": "Spada di Altus",
+                    "fragment": _fragment(),
+                },
+            )
+        ).json()
+
+    async with _client(_app(app_config, db_manager, actors["master"])) as client:
+        # The master reads their own world library...
+        assert (
+            await client.get(f"/api/libraries/{world_library['id']}/assets")
+        ).status_code == 200
+        # ...but promotion writes the global one, which is not theirs.
+        refused = await client.post(
+            f"/api/libraries/{world_library['id']}/assets/{source['id']}/promote"
+        )
+        assert refused.status_code == 403, refused.text
+
+    async with _client(_app(app_config, db_manager, actors["admin"])) as client:
+        global_library = await _global_library(client)
+        listing = await client.get(f"/api/libraries/{global_library['id']}/assets")
+        assert listing.json()["total"] == 0, "the refusal wrote nothing"
+
+
 async def test_a_member_neither_sees_nor_founds_a_library(
     app_config: AppConfig, db_manager: DatabaseManager, actors: dict
 ) -> None:
