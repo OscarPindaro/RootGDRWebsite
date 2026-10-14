@@ -144,6 +144,15 @@ library, skeleton, publishing or export capabilities.
   insert-point action splits the selected cubic segment at its midpoint using
   de Casteljau, preserving appearance and existing endpoint identities. New midpoint
   identity/mode, copy and undo/reopen retain editable multi-segment cubic semantics.
+- A library asset may not contain itself, directly or through another asset. Both
+  writes that could create such a cycle — saving an asset and refreshing an
+  instance — refuse it with a conflict, and the refusal changes nothing. A link
+  to an asset that does not exist yet is allowed, because the source may be
+  authored later and the drawing already holds the artwork. Refreshing a linked
+  instance against a source that has been deleted reports it and leaves the
+  resolved artwork exactly as it is; a revision whose merge would break the
+  drawing's constraints is refused the same way. Both are reported, never
+  silently applied or silently dropped.
 - An inserted asset is a copy by default. Choosing **Collega all'originale**
   instead makes it a *linked instance*: one node that keeps the source library
   and asset ids, the revision it was resolved at, and the subtree the library

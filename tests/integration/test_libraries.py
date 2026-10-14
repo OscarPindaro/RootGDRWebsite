@@ -215,6 +215,104 @@ async def test_an_admin_authors_a_library_that_survives_a_new_session(
         )
 
 
+def _fragment_linking(asset_id: str) -> dict:
+    """A fragment that contains one linked instance of another asset."""
+    return {
+        "schemaVersion": 6,
+        "nodes": [
+            {
+                "kind": "instance",
+                "id": "instance-1",
+                "name": "Copia",
+                "source": {
+                    "libraryId": "11111111-1111-1111-1111-111111111111",
+                    "assetId": asset_id,
+                },
+                "revision": 1,
+                "overrides": [],
+                "nodes": [
+                    {
+                        "kind": "polygon",
+                        "id": "inner",
+                        "name": "Lama",
+                        "points": [[0, 0], [10, 0], [5, 10]],
+                    }
+                ],
+            }
+        ],
+    }
+
+
+async def test_an_asset_cannot_contain_itself_directly_or_through_another_asset(
+    app_config: AppConfig, db_manager: DatabaseManager, actors: dict
+) -> None:
+    """A cycle cannot be rendered or refreshed, so neither write may create one."""
+    async with _client(_app(app_config, db_manager, actors["admin"])) as client:
+        library = await _global_library(client)
+        section = await client.post(
+            f"/api/libraries/{library['id']}/sections", json={"name": "NPC"}
+        )
+        first = await client.post(
+            f"/api/libraries/{library['id']}/assets",
+            json={
+                "sectionId": section.json()["id"],
+                "name": "Primo",
+                "fragment": _fragment(),
+            },
+        )
+        assert first.status_code == 201, first.text
+        first_id = first.json()["id"]
+
+        # Directly: an asset that links to itself.
+        direct = await client.patch(
+            f"/api/libraries/{library['id']}/assets/{first_id}",
+            json={
+                "expectedVersion": first.json()["version"],
+                "fragment": _fragment_linking(first_id),
+            },
+        )
+        assert direct.status_code == 409, direct.text
+        assert "itself" in direct.json()["detail"]
+
+        # Indirectly: second links to first, then first links to second.
+        second = await client.post(
+            f"/api/libraries/{library['id']}/assets",
+            json={
+                "sectionId": section.json()["id"],
+                "name": "Secondo",
+                "fragment": _fragment_linking(first_id),
+            },
+        )
+        assert second.status_code == 201, second.text
+        loop = await client.patch(
+            f"/api/libraries/{library['id']}/assets/{first_id}",
+            json={
+                "expectedVersion": first.json()["version"],
+                "fragment": _fragment_linking(second.json()["id"]),
+            },
+        )
+        assert loop.status_code == 409, loop.text
+
+        # The refusals changed nothing.
+        unchanged = await client.get(
+            f"/api/libraries/{library['id']}/assets/{first_id}"
+        )
+        assert unchanged.json()["fragment"]["nodes"][0]["kind"] == "polygon"
+        assert unchanged.json()["version"] == first.json()["version"]
+
+        # A link to an asset that does not exist is allowed: the source may be
+        # authored later, and the drawing keeps the artwork it already has.
+        missing = await client.post(
+            f"/api/libraries/{library['id']}/assets",
+            json={
+                "sectionId": section.json()["id"],
+                "name": "Orfano",
+                "fragment": _fragment_linking("99999999-9999-9999-9999-999999999999"),
+            },
+        )
+        assert missing.status_code == 201, missing.text
+
+
 async def test_a_member_neither_sees_nor_founds_a_library(
     app_config: AppConfig, db_manager: DatabaseManager, actors: dict
 ) -> None:

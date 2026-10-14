@@ -21,6 +21,8 @@ export function createLibraryPanel(root, editor) {
   const insertButton = panel.querySelector("[data-library-insert]");
   const linkInput = panel.querySelector("[data-library-link]");
   const detachButton = panel.querySelector("[data-library-detach]");
+  const refreshButton = panel.querySelector("[data-library-refresh]");
+  const linkState = panel.querySelector("[data-library-link-state]");
   const saveButton = panel.querySelector("[data-library-save]");
   let libraries = [], assets = [];
 
@@ -46,8 +48,12 @@ export function createLibraryPanel(root, editor) {
   }
 
   function syncAssets() {
-    // Detaching is offered only for a single linked instance.
-    detachButton.hidden = !editor.linked;
+    // Detaching and refreshing are offered only for a single linked instance.
+    const linked = Boolean(editor.linked);
+    detachButton.hidden = !linked;
+    refreshButton.hidden = !linked;
+    linkState.hidden = !linked;
+    linkState.textContent = linked ? `Collegato alla revisione ${editor.linkedRevision}.` : "";
     assetSelect.replaceChildren(...assets.map(asset => new Option(asset.name, asset.id)));
     // Inserting needs no selection; saving one does, and only when it is
     // actually editable.
@@ -121,6 +127,25 @@ export function createLibraryPanel(root, editor) {
   insertButton.addEventListener("click", insert);
   saveButton.addEventListener("click", saveSelection);
   detachButton.addEventListener("click", () => editor.detach());
+
+  refreshButton.addEventListener("click", async () => {
+    const source = editor.linkedSource;
+    if (!source) return;
+    let asset;
+    try {
+      asset = await json(`/api/libraries/${source.libraryId}/assets/${source.assetId}`);
+    } catch {
+      // A source that is gone is reported, never silently emptied: the resolved
+      // artwork stays exactly as it is.
+      say("La sorgente non esiste più: l’arte collegata resta invariata.");
+      return;
+    }
+    if (!editor.refreshInstance(asset.fragment.nodes, asset.version)) {
+      say("La nuova revisione non è compatibile con i vincoli della tavola.");
+      return;
+    }
+    say(`Aggiornato alla revisione ${asset.version}.`);
+  });
   root.addEventListener("input", syncAssets);
 
   return {

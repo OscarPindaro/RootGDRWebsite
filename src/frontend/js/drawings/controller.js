@@ -1752,7 +1752,17 @@ export function createController(root) {
 
   function wire() {
     commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id), parameters:Boolean(action.parameters)})), execute, defaults:creationDefaults, preview:geometryResult, geometry:() => geometryInfo(scene,selection), parents:() => [...root.querySelector('[data-node-parent]').options].map(option => ({value:option.value,label:option.textContent})), ellipse:() => { const node = selected()?.node; return node?.kind === 'ellipse' ? {cx:node.cx,cy:node.cy,rx:node.rx,ry:node.ry} : null; }});
-    library = createLibraryPanel(root, {canExecute, get selection() { return [...selection]; }, insertFragment, selectionFragment, get linked() { return selection.length === 1 && selected()?.node.kind === "instance"; }, detach: () => execute("detach-instance")});
+    library = createLibraryPanel(root, {canExecute, get selection() { return [...selection]; }, insertFragment, selectionFragment, get linked() { return selection.length === 1 && selected()?.node.kind === "instance"; },
+    get linkedSource() { return selection.length === 1 ? selected()?.node.source ?? null : null; },
+    get linkedRevision() { return selection.length === 1 ? selected()?.node.revision ?? null : null; },
+    refreshInstance(nodes, revision) {
+      const next = refreshInstance(scene, selectedId, nodes, revision);
+      if (!next) return false;
+      announce("");
+      commit(next);
+      return true;
+    },
+    detach: () => execute("detach-instance")});
     library.load();
     recovery = createRecovery(root, {state:recoveryState, restore:restoreRecovery, redraw:draw, unsaved:hasLocalWork, pending:() => inFlight, save, leave:() => {allowLeave = true;}});
     root.addEventListener("input", () => recovery.schedule());

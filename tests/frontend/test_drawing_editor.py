@@ -205,7 +205,12 @@ def _open_library(page) -> None:
     )
 
 
-def _library_routes(component) -> None:
+def _library_routes(component, detail_responses=None) -> None:
+    """Serve the library endpoints.
+
+    ``detail_responses`` replaces the single-asset answers, one per request, so a
+    test can serve a source that changes or disappears between two reads.
+    """
     component.route_json("GET", "/api/libraries", body=_library_body())
     component.route_json(
         "GET",
@@ -213,7 +218,10 @@ def _library_routes(component) -> None:
         body={"data": [_asset_body()], "total": 1, "page": 1, "pageSize": 100},
     )
     component.route_json(
-        "GET", f"/api/libraries/{_LIBRARY}/assets/{_ASSET}", body=_asset_body(True)
+        "GET",
+        f"/api/libraries/{_LIBRARY}/assets/{_ASSET}",
+        body=_asset_body(True),
+        responses=detail_responses,
     )
 
 
@@ -366,6 +374,71 @@ def test_a_linked_instance_can_be_made_independent(component):
     assert _scene_of(page)["nodes"][1]["kind"] == "instance", (
         "detaching is one undo step"
     )
+
+
+def _linked_instance_page(component, detail_responses=None):
+    _library_routes(component, detail_responses=detail_responses)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.locator("[data-library-link]").check()
+    page.locator("[data-library-insert]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2"
+    )
+    return page
+
+
+def test_a_linked_instance_refreshes_to_the_library_revision(component):
+    newer = _asset_body(True)
+    newer["version"] = 2
+    longer = dict(newer["fragment"]["nodes"][0])
+    longer["points"] = [[0, 0], [80, 0], [40, 12]]
+    newer["fragment"] = {"schemaVersion": 6, "nodes": [longer]}
+    page = _linked_instance_page(
+        component,
+        detail_responses=[
+            {"status": 200, "body": _asset_body(True)},
+            {"status": 200, "body": newer},
+        ],
+    )
+
+    page.locator("[data-library-refresh]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes[1].revision === 2"
+    )
+
+    instance = _scene_of(page)["nodes"][1]
+    assert instance["revision"] == 2
+    assert instance["nodes"][0]["points"] == [[0, 0], [80, 0], [40, 12]]
+    assert "revisione 2" in page.locator("[data-library-status]").inner_text()
+
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][1]["revision"] == 1, "a refresh is one undo step"
+
+
+def test_a_missing_source_is_reported_and_leaves_the_artwork_alone(component):
+    # The 404 is the point of the test: the client asks for a source that is gone.
+    component.allow_console_errors("status of 404")
+    page = _linked_instance_page(
+        component,
+        detail_responses=[
+            {"status": 200, "body": _asset_body(True)},
+            {"status": 404, "body": {"detail": "Asset not found"}},
+        ],
+    )
+    before = _scene_of(page)["nodes"][1]
+
+    page.locator("[data-library-refresh]").click()
+    page.wait_for_timeout(400)
+
+    assert "non esiste più" in page.locator("[data-library-status]").inner_text()
+    after = _scene_of(page)["nodes"][1]
+    assert after == before, "the resolved artwork is untouched"
+    assert after["nodes"][0]["points"] == before["nodes"][0]["points"]
 
 
 def test_saving_the_selection_sends_a_native_fragment(component):

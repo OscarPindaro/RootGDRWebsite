@@ -243,6 +243,9 @@ async def create_asset(
         created_by_id=user.id,
         fragment=data.fragment,
     )
+    await db.flush()
+    # Only now does the asset have the identity a cycle would point at.
+    await require_no_instance_cycle(db, asset.id, data.fragment)
     db.add(asset)
     await db.flush()
     return asset
@@ -285,6 +288,7 @@ async def update_asset(
             )
         asset.section = section
     if data.fragment is not None:
+        await require_no_instance_cycle(db, asset.id, data.fragment)
         asset.fragment = data.fragment
     await db.flush()
     # The row's updated_at is written by the database, so the attribute is
@@ -316,3 +320,59 @@ async def asset_response(db: AsyncSession, asset: SceneAssetModel) -> AssetRespo
         updated_at=asset.updated_at,
         fragment=asset.fragment,
     )
+
+
+def _instance_sources(nodes: list[dict[str, Any]]) -> list[uuid.UUID]:
+    """Every asset referenced by an instance anywhere in a fragment."""
+    found: list[uuid.UUID] = []
+    stack = list(nodes)
+    while stack:
+        node = stack.pop()
+        if not isinstance(node, dict):
+            continue
+        if node.get("kind") == "instance":
+            source = node.get("source") or {}
+            asset_id = source.get("assetId")
+            if asset_id:
+                found.append(uuid.UUID(str(asset_id)))
+        children = node.get("nodes")
+        if isinstance(children, list):
+            stack.extend(children)
+    return found
+
+
+async def _reaches(
+    db: AsyncSession, start: list[uuid.UUID], target: uuid.UUID, seen: set[uuid.UUID]
+) -> bool:
+    """Whether any referenced asset already leads back to ``target``."""
+    for asset_id in start:
+        if asset_id == target:
+            return True
+        if asset_id in seen:
+            continue
+        seen.add(asset_id)
+        row = await db.get(SceneAssetModel, asset_id)
+        if row is None:
+            continue
+        nodes = row.fragment.model_dump(by_alias=True)["nodes"]
+        if await _reaches(db, _instance_sources(nodes), target, seen):
+            return True
+    return False
+
+
+async def require_no_instance_cycle(
+    db: AsyncSession, asset_id: uuid.UUID | None, fragment: SceneFragment
+) -> None:
+    """Refuse a fragment that would make an asset contain itself.
+
+    A cycle cannot be rendered or refreshed, and the two operations that could
+    create one are saving an asset and refreshing an instance. Both call this.
+    """
+    if asset_id is None:
+        return
+    nodes = fragment.model_dump(by_alias=True)["nodes"]
+    if await _reaches(db, _instance_sources(nodes), asset_id, set()):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="The asset cannot reference itself, directly or through another asset",
+        )
