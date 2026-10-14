@@ -163,7 +163,7 @@ def _asset_body(with_fragment: bool = False) -> dict:
     }
     if with_fragment:
         body["fragment"] = {
-            "schemaVersion": 5,
+            "schemaVersion": 6,
             "nodes": [
                 {
                     "kind": "polygon",
@@ -302,6 +302,72 @@ def test_inserting_an_asset_adds_an_independent_copy_as_one_undo_step(component)
     assert "Inserito" in page.locator("[data-library-status]").inner_text()
 
 
+def test_an_asset_can_be_inserted_linked_to_its_original(component):
+    _library_routes(component)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.locator("[data-library-link]").check()
+    page.locator("[data-library-insert]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2"
+    )
+
+    linked = _scene_of(page)["nodes"][1]
+    assert linked["kind"] == "instance", "a linked insert is one instance node"
+    assert (
+        linked["source"]["libraryId"]
+        == page.locator("[data-library-library]").input_value()
+    )
+    assert (
+        linked["source"]["assetId"]
+        == page.locator("[data-library-asset]").input_value()
+    )
+    assert linked["revision"] == 1, "the revision it was resolved at"
+    assert linked["overrides"] == []
+    assert [child["name"] for child in linked["nodes"]] == ["Becco"]
+    assert "collegato" in page.locator("[data-library-status]").inner_text()
+
+    # Editing inside the instance is recorded as a local override, which is what
+    # lets a refresh keep the change. The rule itself is covered by the algorithm
+    # tests; here it is enough that the panel offers the choice and the document
+    # keeps the link.
+    assert page.locator("[data-library-link]").is_checked()
+
+
+def test_a_linked_instance_can_be_made_independent(component):
+    _library_routes(component)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.locator("[data-library-link]").check()
+    page.locator("[data-library-insert]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2"
+    )
+    page.locator("[data-library-detach]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2 && !document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.some(n => n.kind === 'instance')"
+    )
+
+    nodes = _scene_of(page)["nodes"]
+    assert [node["kind"] for node in nodes] == ["polygon", "polygon"], (
+        "the artwork stays, the link goes"
+    )
+    assert nodes[1]["name"] == "Becco"
+
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][1]["kind"] == "instance", (
+        "detaching is one undo step"
+    )
+
+
 def test_saving_the_selection_sends_a_native_fragment(component):
     _library_routes(component)
     sent = {}
@@ -335,7 +401,7 @@ def test_saving_the_selection_sends_a_native_fragment(component):
     assert payload["name"] == "Riquadro comune"
     assert payload["sectionId"] == _SECTION
     fragment = payload["fragment"]
-    assert fragment["schemaVersion"] == 5
+    assert fragment["schemaVersion"] == 6
     assert fragment["nodes"][0]["points"] == [
         [100.0, 100.0],
         [400.0, 100.0],
@@ -453,7 +519,7 @@ def test_the_scene_travels_as_json_for_the_client(component):
     payload = page.evaluate(
         "() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"
     )
-    assert payload["schemaVersion"] == 5
+    assert payload["schemaVersion"] == 6
     assert [node["id"] for node in payload["nodes"]] == ["head", "beak"]
     assert payload["nodes"][1]["points"][1] == [296.0, 120.0]
 
@@ -969,7 +1035,7 @@ def test_the_tree_rename_keeps_working_after_a_save(component):
     payload = page.evaluate(
         """() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"""
     )
-    assert payload["schemaVersion"] == 5
+    assert payload["schemaVersion"] == 6
     assert _scene_of(page)["nodes"][0]["name"] == "Corpo"
 
 

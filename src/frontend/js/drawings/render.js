@@ -6,7 +6,7 @@
    transform applied, so a handle stays the same size on screen. */
 
 import { apply, multiply } from "./geometry.js";
-import { nodeFrame, nodeCenter, pathHandles, selectionCorners } from "./scene.js";
+import { isContainer, nodeFrame, nodeCenter, pathHandles, selectionCorners } from "./scene.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -89,7 +89,7 @@ function shapeElement(node, view) {
         "stroke-linecap": "round",
       })
     );
-  } else if (node.kind === "group") {
+  } else if (node.kind === "group" || node.kind === "instance") {
     for (const child of node.nodes) group.appendChild(shapeElement(child, view));
   }
   return group;
@@ -253,7 +253,7 @@ function normalize(vector) {
 function findById(nodes, id) {
   for (const node of nodes) {
     if (node.id === id) return node;
-    if (node.kind === "group") {
+    if (node.kind === "group" || node.kind === "instance") {
       const nested = findById(node.nodes, id);
       if (nested) return nested;
     }

@@ -2,8 +2,10 @@ import pytest
 from pydantic import ValidationError
 
 from backend.drawings.schemas import (
+    SCENE_FORMAT_VERSION,
     EllipseNode,
     GroupNode,
+    InstanceNode,
     PathNode,
     PolygonNode,
     SceneDocument,
@@ -69,7 +71,7 @@ def test_legacy_native_migration_is_deterministic_and_does_not_infer_locks():
     }
     first = SceneDocument.model_validate(legacy)
     second = SceneDocument.model_validate(legacy)
-    assert first.schema_version == 5
+    assert first.schema_version == SCENE_FORMAT_VERSION
     assert first == second
     assert first.nodes[0].constraint is None
     assert first.nodes[0].point_ids == ["v0", "v1", "v2"]
@@ -208,7 +210,7 @@ def test_transform_pivots_round_trip_and_version_two_keeps_geometry_locks():
         ],
     }
     migrated = SceneDocument.model_validate(old)
-    assert migrated.schema_version == 5
+    assert migrated.schema_version == SCENE_FORMAT_VERSION
     assert migrated.nodes[0].point_ids == ["a", "b", "c", "d"]
     assert migrated.nodes[0].constraint.kind == "square"
     assert migrated.nodes[0].pivot is None
@@ -268,3 +270,75 @@ def test_curve_and_anchor_identities_round_trip():
     )
     assert scene.nodes[0].point_ids == ["h0", "h1", "h2", "h3"]
     assert SceneDocument.model_validate(scene.model_dump(by_alias=True)) == scene
+
+
+def _instance(**overrides):
+    payload = {
+        "kind": "instance",
+        "id": "instance-1",
+        "name": "Spada",
+        "source": {
+            "libraryId": "11111111-1111-1111-1111-111111111111",
+            "assetId": "22222222-2222-2222-2222-222222222222",
+        },
+        "revision": 2,
+        "overrides": ["transform"],
+        "nodes": [
+            {
+                "kind": "polygon",
+                "id": "blade",
+                "name": "Lama",
+                "points": [[0, 0], [40, 0], [20, 6]],
+            }
+        ],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_a_version_five_scene_migrates_to_the_instance_format():
+    scene = SceneDocument.model_validate({"schemaVersion": 6, "nodes": []})
+
+    assert scene.schema_version == SCENE_FORMAT_VERSION == 6
+
+
+def test_an_instance_carries_its_source_revision_and_local_overrides():
+    scene = SceneDocument.model_validate({"nodes": [_instance()]})
+    node = scene.nodes[0]
+
+    assert isinstance(node, InstanceNode)
+    assert node.revision == 2
+    assert node.overrides == ["transform"]
+    assert [child.id for child in node.nodes] == ["blade"]
+    assert SceneDocument.model_validate(scene.model_dump(by_alias=True)) == scene
+
+
+def test_an_instance_needs_a_source_a_child_and_distinct_overrides():
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(source=None)]})
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(nodes=[])]})
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(revision=0)]})
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(overrides=["fill", "fill"])]})
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(overrides=["shape"])]})
+
+
+def test_a_legacy_scene_cannot_smuggle_instance_metadata():
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate(
+            {
+                "schemaVersion": 4,
+                "nodes": [
+                    {
+                        "kind": "group",
+                        "id": "g",
+                        "name": "G",
+                        "nodes": [],
+                        **_instance(),
+                    }
+                ],
+            }
+        )

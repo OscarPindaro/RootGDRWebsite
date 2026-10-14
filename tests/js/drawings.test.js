@@ -51,7 +51,7 @@ import { visibleRuns } from "../../src/frontend/js/drawings/render.js";
 const IDENTITY = [1, 0, 0, 1, 0, 0];
 
 function sceneWith(nodes) {
-  return { schemaVersion: 5, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
+  return { schemaVersion: 6, artboard: { width: 640, height: 480, background: "#fffdf6" }, nodes };
 }
 
 function triangle(id = "a") {
@@ -452,7 +452,7 @@ test("native migration preserves legacy geometry and assigns stable scoped ident
   delete legacy.nodes[0].pointIds;
   delete legacy.nodes[0].constraint;
   const migrated = migrateScene(legacy);
-  assert.equal(migrated.schemaVersion, 5);
+  assert.equal(migrated.schemaVersion, 6);
   assert.equal(legacy.schemaVersion, 1);
   assert.deepEqual(migrated.nodes[0].points, legacy.nodes[0].points);
   assert.deepEqual(migrated.nodes[0].pointIds, ["v0","v1","v2"]);
@@ -641,6 +641,67 @@ test("an accepted variant can be restated by any name its family answers to", as
   // A word that belongs to no part of the family is still refused.
   assert.equal(parseCompact("quadrato","triangle_isosceles"),null);
   assert.equal(parseCompact("rettangolo","regular_polygon"),null);
+});
+
+test("a linked instance keeps its source, records overrides and refreshes around them", async () => {
+  const {createInstance, noteOverride, owningInstance, refreshInstance, createRect, detachInstance, findNode, walk} = await import("../../src/frontend/js/drawings/scene.js");
+  const source={libraryId:"lib-1", assetId:"asset-1"};
+  const blade=createRect("Lama",[0,0],[100,10]);
+  const hilt=createRect("Elsa",[0,10],[20,30]);
+  const scene=sceneWith([createInstance("Spada",source,3,[blade,hilt])]);
+  const instance=scene.nodes[0];
+  assert.equal(instance.kind,"instance");
+  assert.equal(instance.revision,3);
+  assert.deepEqual(instance.overrides,[]);
+  assert.equal(instance.nodes.length,2);
+  assert.equal(owningInstance(scene,blade.id),instance.id);
+  assert.equal(owningInstance(scene,instance.id),null);
+
+  // A local colour change is recorded, not just applied.
+  const recoloured=noteOverride(scene,blade.id,"fill");
+  findNode(recoloured,blade.id).node.fill="#d1402a";
+  assert.deepEqual(findNode(recoloured,instance.id).node.overrides,["fill"]);
+  assert.deepEqual(noteOverride(recoloured,blade.id,"fill").nodes[0].overrides,["fill"],"recorded once");
+
+  // The library moves on: a longer blade under the same identity, a new node,
+  // a new colour.
+  const longer={...createRect("Lama",[0,0],[180,10]), id:blade.id, pointIds:blade.pointIds};
+  longer.fill="#000000";
+  const refreshed=refreshInstance(recoloured,instance.id,[longer,hilt,createRect("Pomello",[0,30],[10,40])],4);
+  const merged=findNode(refreshed,instance.id).node;
+  assert.equal(merged.revision,4);
+  assert.equal(merged.nodes.length,3,"the new node arrives");
+  const mergedBlade=merged.nodes.find(node=>node.id===blade.id);
+  assert.deepEqual(mergedBlade.points,[[0,0],[180,0],[180,10],[0,10]],"geometry comes from the library");
+  assert.equal(mergedBlade.fill,"#d1402a","the local colour is kept");
+  assert.equal(merged.nodes.find(node=>node.id===hilt.id).fill,hilt.fill);
+
+  // A source that no longer holds an overridden node simply brings the new set.
+  const without=refreshInstance(recoloured,instance.id,[longer],5);
+  assert.equal(findNode(without,instance.id).node.nodes.length,1);
+  assert.equal(refreshInstance(scene,instance.id,[],4),null);
+  assert.equal(refreshInstance(scene,instance.id,[longer],0),null);
+  assert.equal(refreshInstance(scene,blade.id,[longer],4),null,"only an instance refreshes");
+});
+
+test("making an instance independent keeps the artwork where it was", async () => {
+  const {createInstance, detachInstance, createRect, findNode, walk} = await import("../../src/frontend/js/drawings/scene.js");
+  const instance=createInstance("Spada",{libraryId:"l",assetId:"a"},1,[createRect("Lama",[0,0],[100,10]),createRect("Elsa",[0,10],[20,30])]);
+  instance.transform=[2,0,0,2,10,20];
+  instance.opacity=0.5;
+  const scene=sceneWith([instance]);
+  const result=detachInstance(scene,instance.id);
+  assert.ok(result);
+  assert.equal(result.scene.nodes.length,2,"the instance is replaced by its children");
+  assert.ok(result.scene.nodes.every(node=>node.kind==="polygon"));
+  assert.ok(result.scene.nodes.every(node=>node.transform[0]===2 && node.transform[4]===10),"the placement is composed in");
+  assert.ok(result.scene.nodes.every(node=>node.opacity===0.5));
+  assert.deepEqual(result.ids,result.scene.nodes.map(node=>node.id));
+  assert.ok(!findNode(result.scene,instance.id),"the link is gone");
+  const ids=[]; walk(result.scene.nodes,node=>ids.push(node.id));
+  assert.equal(new Set(ids).size,ids.length);
+  assert.equal(detachInstance(scene,"nope"),null);
+  assert.equal(detachInstance(scene,result.scene.nodes[0].id),null,"only an instance detaches");
 });
 
 test("a library fragment is inserted as an independent copy with fresh identities", async () => {

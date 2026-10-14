@@ -19,6 +19,8 @@ export function createLibraryPanel(root, editor) {
   const nameInput = panel.querySelector("[data-library-name]");
   const status = panel.querySelector("[data-library-status]");
   const insertButton = panel.querySelector("[data-library-insert]");
+  const linkInput = panel.querySelector("[data-library-link]");
+  const detachButton = panel.querySelector("[data-library-detach]");
   const saveButton = panel.querySelector("[data-library-save]");
   let libraries = [], assets = [];
 
@@ -44,6 +46,8 @@ export function createLibraryPanel(root, editor) {
   }
 
   function syncAssets() {
+    // Detaching is offered only for a single linked instance.
+    detachButton.hidden = !editor.linked;
     assetSelect.replaceChildren(...assets.map(asset => new Option(asset.name, asset.id)));
     // Inserting needs no selection; saving one does, and only when it is
     // actually editable.
@@ -86,8 +90,9 @@ export function createLibraryPanel(root, editor) {
     if (!assetSelect.value) return;
     try {
       const asset = await json(`/api/libraries/${librarySelect.value}/assets/${assetSelect.value}`);
-      if (!editor.insertFragment(asset.fragment.nodes)) { say("L’elemento non è stato inserito."); return; }
-      say(`Inserito «${asset.name}».`);
+      const link = linkInput.checked ? {name: asset.name, libraryId: librarySelect.value, assetId: assetSelect.value, revision: asset.version} : null;
+      if (!editor.insertFragment(asset.fragment.nodes, link)) { say("L’elemento non è stato inserito."); return; }
+      say(link ? `Inserito «${asset.name}» collegato all’originale.` : `Inserito «${asset.name}» come copia indipendente.`);
     } catch (error) {
       say("Non è stato possibile inserire l’elemento.");
     }
@@ -115,6 +120,7 @@ export function createLibraryPanel(root, editor) {
   sectionSelect.addEventListener("change", loadAssets);
   insertButton.addEventListener("click", insert);
   saveButton.addEventListener("click", saveSelection);
+  detachButton.addEventListener("click", () => editor.detach());
   root.addEventListener("input", syncAssets);
 
   return {

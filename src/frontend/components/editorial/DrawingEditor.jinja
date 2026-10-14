@@ -358,7 +358,9 @@
           <label class="drawing-editor__field-label" for="drawing-library-asset">Elemento</label>
           <select class="drawing-editor__name" id="drawing-library-asset" data-library-asset aria-label="Elemento della libreria"></select>
         </div>
+        <label class="drawing-editor__toggle"><input type="checkbox" data-library-link /> Collega all’originale</label>
         <common.Button size="xs" variant="secondary" data-library-insert disabled>Inserisci nell’arte</common.Button>
+        <common.Button size="xs" variant="secondary" data-library-detach hidden>Rendi indipendente</common.Button>
         <div class="drawing-editor__field">
           <label class="drawing-editor__field-label" for="drawing-library-name">Salva selezione come</label>
           <input class="drawing-editor__name" type="text" id="drawing-library-name" data-library-name maxlength="255" aria-label="Nome del nuovo elemento" placeholder="Becco di Altus" />

@@ -144,6 +144,19 @@ library, skeleton, publishing or export capabilities.
   insert-point action splits the selected cubic segment at its midpoint using
   de Casteljau, preserving appearance and existing endpoint identities. New midpoint
   identity/mode, copy and undo/reopen retain editable multi-segment cubic semantics.
+- An inserted asset is a copy by default. Choosing **Collega all'originale**
+  instead makes it a *linked instance*: one node that keeps the source library
+  and asset ids, the revision it was resolved at, and the subtree the library
+  drew at that moment. The subtree is stored, not fetched, so a drawing renders
+  and stays editable with the library gone, and a missing source is reported
+  rather than dropped. Edits inside a linked copy — placement, fill, outline,
+  opacity, visibility — are recorded as local *overrides* on the instance, and
+  refreshing from the library takes the new revision while keeping exactly those
+  aspects and everything else from the source. Nodes are matched by their source
+  identity, so a fragment that gained or lost a node still merges. **Rendi
+  indipendente** breaks the link: the children become plain nodes with fresh
+  identities, the instance's own transform, opacity and visibility composed into
+  them so nothing moves, and the whole thing is one undo step.
 - A **library** holds reusable authored parts. A library is global or belongs to
   one world, and it is divided into sections the librarian creates. An asset
   stores a *scene fragment*: native nodes with their geometry, styles,
@@ -251,7 +264,7 @@ specimen in the component showcase.
 
 ## Limits
 
-- No linked instances yet: an inserted asset is an independent copy. No anchors,
+- No anchors,
   skeletons, portrait/document publishing,
   PNG/SVG downloads, card printing, animation, imports or clipping.
 - Explicit server saving only: local recovery is browser-storage-dependent and

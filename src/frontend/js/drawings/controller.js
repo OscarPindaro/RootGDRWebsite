@@ -24,6 +24,12 @@ import {
   createEllipse,
   createPath,
   cloneScene,
+  createInstance,
+  detachInstance,
+  isContainer,
+  noteOverride,
+  owningInstance,
+  refreshInstance,
   constraintsValid,
   cutNodesByLine,
   withFreshIds,
@@ -191,7 +197,7 @@ export function createController(root) {
     const parts = [];
     const visit = (nodes, depth, inheritedHidden) => nodes.forEach((node) => {
       parts.push([node.id, depth, node.name, node.visible, node.editLocked, inheritedHidden, collapsed.has(node.id)].join(":"));
-      if (node.kind === "group") visit(node.nodes, depth + 1, inheritedHidden || !node.visible);
+      if (isContainer(node)) visit(node.nodes, depth + 1, inheritedHidden || !node.visible);
     });
     visit(scene.nodes, 0, false);
     return parts.join("|");
@@ -232,7 +238,7 @@ export function createController(root) {
       row.setAttribute("aria-selected", String(selection.includes(node.id)));
       row.setAttribute("aria-label", node.name);
       if (inheritedHidden || !node.visible) row.classList.add("is-muted");
-      if (node.kind === "group") {
+      if (isContainer(node)) {
         const branch = document.createElement("button");
         branch.type = "button";
         branch.className = "drawing-editor__branch";
@@ -270,7 +276,7 @@ export function createController(root) {
       eye.appendChild(root.querySelector(node.visible ? "[data-scene-eye]" : "[data-scene-eye-off]").content.cloneNode(true));
       row.appendChild(eye);
       item.appendChild(row);
-      if (node.kind === "group") {
+      if (isContainer(node)) {
         const children = document.createElement("ul");
         children.className = "drawing-editor__children";
         children.setAttribute("role", "group");
@@ -715,7 +721,7 @@ export function createController(root) {
 
   function defaultMode() {
     if (!selection.length) return "select";
-    return selection.length === 1 && selected()?.node.kind !== "group" ? "vertex" : "transform";
+    return selection.length === 1 && !isContainer(selected()?.node) ? "vertex" : "transform";
   }
 
   function setMode(next) {
@@ -1068,7 +1074,11 @@ export function createController(root) {
     else if (finished.kind === "line") finishLine();
     else if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate" || finished.kind === "vertex" || finished.kind === "path" || finished.kind === "ellipse" || finished.kind === "pivot") {
       drag = null;
-      commit(scene);
+      let next = scene;
+      if (finished.kind === "move" || finished.kind === "scale" || finished.kind === "rotate") {
+        for (const id of selection) next = noteOverride(next, id, "transform");
+      }
+      commit(next);
     } else {
       drag = null;
     }
@@ -1366,7 +1376,12 @@ export function createController(root) {
 
   function applyStyle(patch) {
     if (!selectedId || !editableSelection(scene,selection)) return;
-    commit(patchNode(scene, selectedId, patch));
+    const fields = {fill:"fill", stroke:"stroke", opacity:"opacity", visible:"visible"};
+    let next = patchNode(scene, selectedId, patch);
+    if (next !== scene) {
+      for (const key of Object.keys(patch)) if (fields[key]) next = noteOverride(next, selectedId, fields[key]);
+      commit(next);
+    }
   }
 
   function creationDefaults() {
@@ -1450,14 +1465,20 @@ export function createController(root) {
    * Insert a library fragment. Every identity is renewed, so the copy is
    * independent of the library original; linking an instance comes later.
    */
-  function insertFragment(nodes) {
+  function insertFragment(nodes, link = null) {
     if (!editable || root.dataset.recoveryPending || !Array.isArray(nodes) || !nodes.length) return false;
     let next = scene;
     const ids = [];
-    for (const node of nodes) {
-      const copy = withFreshIds(node);
+    if (link) {
+      const copy = createInstance(link.name, {libraryId:link.libraryId, assetId:link.assetId}, link.revision, nodes);
       next = addNode(next, copy);
       ids.push(copy.id);
+    } else {
+      for (const node of nodes) {
+        const copy = withFreshIds(node);
+        next = addNode(next, copy);
+        ids.push(copy.id);
+      }
     }
     if (!constraintsValid(next)) { announce("L’elemento non è compatibile con questa tavola."); return false; }
     announce("");
@@ -1485,6 +1506,23 @@ export function createController(root) {
 
   const actions = {
     "create-preset": { label: "Crea forma", enabled: () => true, run: createCommand },
+    "detach-instance": {label:"Rendi indipendente", enabled:() => selection.length === 1 && selected()?.node.kind === "instance", run:() => {
+      const result = detachInstance(scene, selectedId);
+      if (!result) { announce("Non è stato possibile rendere indipendente l’istanza."); return false; }
+      announce("");
+      commit(result.scene);
+      setSelection(result.ids);
+      return true;
+    }},
+    "refresh-instance": {label:"Aggiorna dalla libreria", parameters:true, enabled:() => selection.length === 1 && selected()?.node.kind === "instance", run: (parameters = {}) => {
+      const node = selected()?.node;
+      if (node?.kind !== "instance" || !Array.isArray(parameters.nodes) || !parameters.nodes.length) { announce("Aggiornamento non valido."); return false; }
+      const next = refreshInstance(scene, selectedId, parameters.nodes, parameters.revision ?? node.revision);
+      if (!next) { announce("L’aggiornamento non è compatibile con i vincoli della tavola."); return false; }
+      announce("");
+      commit(next);
+      return true;
+    }},
     "curve-mode": {label:"Comportamento ancora", parameters:true, enabled:() => selection.length === 1 && selected()?.node.kind === "path", run:parameters => curveCommand("mode",parameters)},
     "curve-insert": {label:"Inserisci punto sulla curva", enabled:() => selection.length === 1 && selected()?.node.kind === "path" && pathCommands(selected().node.d).some(command => command.name === "C"), run:() => curveCommand("insert")},
     "select-all": {label:"Seleziona tutto", enabled:() => scene.nodes.length > 0, run:() => { setSelection(scene.nodes.filter(node => node.visible !== false && node.opacity !== 0 && editableSelection(scene,[node.id])).map(node => node.id)); mode = defaultMode(); draw(); }},
@@ -1527,7 +1565,7 @@ export function createController(root) {
     parent: {label:"Genitore", parameters:true, enabled:() => selection.length === 1, run:parameters => geometryCommand("parent",parameters)},
     align: {label:"Allinea", parameters:true, enabled:() => selection.length > 1, run:parameters => geometryCommand("align",parameters)},
     select: { label: "Seleziona", enabled: () => true, run: () => setMode("select") },
-    edit: { label: "Modifica forma", enabled: () => selection.length === 1 && selected()?.node.kind !== "group", run: () => setMode("vertex") },
+    edit: { label: "Modifica forma", enabled: () => selection.length === 1 && !isContainer(selected()?.node), run: () => setMode("vertex") },
     transform: { label: "Trasforma", enabled: () => selection.length > 0, run: () => setMode("transform") },
     undo: { label: "Annulla", enabled: () => history.canUndo, run: undo },
     redo: { label: "Ripeti", enabled: () => history.canRedo, run: redo },
@@ -1714,7 +1752,7 @@ export function createController(root) {
 
   function wire() {
     commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id), parameters:Boolean(action.parameters)})), execute, defaults:creationDefaults, preview:geometryResult, geometry:() => geometryInfo(scene,selection), parents:() => [...root.querySelector('[data-node-parent]').options].map(option => ({value:option.value,label:option.textContent})), ellipse:() => { const node = selected()?.node; return node?.kind === 'ellipse' ? {cx:node.cx,cy:node.cy,rx:node.rx,ry:node.ry} : null; }});
-    library = createLibraryPanel(root, {canExecute, get selection() { return [...selection]; }, insertFragment, selectionFragment});
+    library = createLibraryPanel(root, {canExecute, get selection() { return [...selection]; }, insertFragment, selectionFragment, get linked() { return selection.length === 1 && selected()?.node.kind === "instance"; }, detach: () => execute("detach-instance")});
     library.load();
     recovery = createRecovery(root, {state:recoveryState, restore:restoreRecovery, redraw:draw, unsaved:hasLocalWork, pending:() => inFlight, save, leave:() => {allowLeave = true;}});
     root.addEventListener("input", () => recovery.schedule());

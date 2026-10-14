@@ -63,7 +63,7 @@ def _client(app: FastAPI) -> AsyncClient:
 
 def _fragment(node_id: str = "beak") -> dict:
     return {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "nodes": [
             PolygonNode(
                 id=node_id,
@@ -349,7 +349,7 @@ async def test_an_asset_update_is_versioned_and_validated(
             url,
             json={
                 "expectedVersion": renamed.json()["version"],
-                "fragment": {"schemaVersion": 5, "nodes": []},
+                "fragment": {"schemaVersion": 6, "nodes": []},
             },
         )
         assert broken.status_code == 422

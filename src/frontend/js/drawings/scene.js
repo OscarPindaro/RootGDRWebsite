@@ -17,19 +17,30 @@ export function newId(prefix = "n") {
   return `${prefix}-${sequence.toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** A node that owns children: a group, or a linked instance of a library asset. */
+export function isContainer(node) {
+  return node?.kind === "group" || node?.kind === "instance";
+}
+
 export function cloneScene(scene) {
   return JSON.parse(JSON.stringify(scene));
 }
 
 export function migrateScene(scene) {
   const next = cloneScene(scene);
-  if (![1, 2, 3, 4, 5].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
-  next.schemaVersion = 5;
+  if (![1, 2, 3, 4, 5, 6].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
+  next.schemaVersion = 6;
+  walk(next.nodes, node => {
+    if (node.kind !== "instance") return;
+    node.revision ??= 1;
+    node.overrides ??= [];
+    node.source ??= {libraryId: "", assetId: ""};
+  });
   walk(next.nodes, node => {
     node.pivot ??= null;
     node.editLocked ??= false;
     node.anchors ??= [];
-    if (node.kind !== "group") node.constraint ??= null;
+    if (!isContainer(node)) node.constraint ??= null;
     if (node.kind === "polygon") node.pointIds ??= node.points.map((_, index) => `v${index}`);
     if (node.kind === "path") { node.pointIds ??= pathHandles(node.d).map((_, index) => `h${index}`); node.anchorModes ??= []; }
   });
@@ -79,7 +90,7 @@ export function constraintsValid(scene) {
 export function walk(nodes, visit, parent = null) {
   nodes.forEach((node, index) => {
     visit(node, nodes, index, parent);
-    if (node.kind === "group") walk(node.nodes, visit, node);
+    if (isContainer(node)) walk(node.nodes, visit, node);
   });
 }
 
@@ -105,7 +116,7 @@ export function editableSelection(scene, ids) {
     const found = findNode(scene,id);
     if (!found || editLocked(scene,id)) return false;
     let locked = false;
-    if (found.node.kind === "group") walk(found.node.nodes, node => { locked ||= Boolean(node.editLocked); });
+    if (isContainer(found.node)) walk(found.node.nodes, node => { locked ||= Boolean(node.editLocked); });
     return !locked;
   });
 }
@@ -123,7 +134,7 @@ export function visibilityIssues(scene, id) {
   }
   if (hiddenParent) issues.push("hidden-parent");
   if (!opacity) issues.push("zero-opacity");
-  if (node.kind === "group") {
+  if (isContainer(node)) {
     if (!node.nodes.length) issues.push("empty-group");
   } else if (!node.fill && (!node.stroke || !node.strokeWidth || (node.kind === "polygon" && node.edgeVisible?.every(value => !value)))) issues.push("no-paint");
   return issues;
@@ -140,7 +151,7 @@ export function worldPoints(node) {
 }
 
 export function nodeBounds(node) {
-  if (node.kind === "group") {
+  if (isContainer(node)) {
     const boxes = node.nodes.map((child) => {
       const box = nodeBounds(child);
       const corners = [
@@ -177,7 +188,7 @@ export function nodeBounds(node) {
 export function contentBounds(scene) {
   const ids = [];
   walk(scene.nodes, node => {
-    if (node.visible !== false && node.opacity !== 0 && node.kind !== "group") ids.push(node.id);
+    if (node.visible !== false && node.opacity !== 0 && !isContainer(node)) ids.push(node.id);
   });
   const corners = ids.flatMap(id => selectionCorners(scene, [id]));
   return corners.length ? bounds(corners) : null;
@@ -325,7 +336,7 @@ export function nodeFrame(scene, id) {
     for (const node of nodes) {
       const world = multiply(parent, node.transform);
       if (node.id === id) return { node, parent, world };
-      if (node.kind === "group") {
+      if (isContainer(node)) {
         const found = visit(node.nodes, world);
         if (found) return found;
       }
@@ -341,7 +352,7 @@ export function nodeAt(scene, worldPoint, tolerance = 6) {
     for (const node of nodes) {
       if (node.visible === false || node.opacity === 0 || node.editLocked) continue;
       const world = multiply(parent, node.transform);
-      if (node.kind === "group") {
+      if (isContainer(node)) {
         visit(node.nodes, world);
         continue;
       }
@@ -588,7 +599,7 @@ export function withFreshIds(node) {
     if (target.pointIds) target.pointIds = target.pointIds.map(() => newId("v"));
     if (target.anchors) target.anchors = target.anchors.map(anchor => ({...anchor, id: newId("a")}));
     if (target.anchorModes) target.anchorModes = [];
-    if (target.kind === "group") target.nodes.forEach(relabel);
+    if (isContainer(target)) target.nodes.forEach(relabel);
   };
   relabel(copy);
   return copy;
@@ -728,7 +739,7 @@ export function validPolygon(points) {
 export function depthOf(nodes, id, depth = 1) {
   for (const node of nodes) {
     if (node.id === id) return depth;
-    if (node.kind === "group") {
+    if (isContainer(node)) {
       const nested = depthOf(node.nodes, id, depth + 1);
       if (nested) return nested;
     }
@@ -755,7 +766,7 @@ export function groupNodes(scene, ids) {
   const siblings = found[0].siblings;
   if (!found.every((entry) => entry.siblings === siblings)) return null;
   const deepest = Math.max(...ids.map((id) => depthOf(next.nodes, id)));
-  const height = node => node.kind === "group" ? 1 + Math.max(0, ...node.nodes.map(height)) : 0;
+  const height = node => isContainer(node) ? 1 + Math.max(0, ...node.nodes.map(height)) : 0;
   if (deepest + Math.max(...found.map(entry => height(entry.node))) > MAX_DEPTH) return null;
   const positions = found.map(entry => entry.index).sort((a, b) => a - b);
   if (positions.some((position, i) => position !== positions[0] + i)) return null;
@@ -809,7 +820,7 @@ export function reparentNode(scene, id, parentId = null) {
   const target = parentId ? findNode(scene, parentId) : null;
   if (!source || (parentId && (!target || target.node.kind !== "group"))) return null;
   const descendants = [];
-  if (source.node.kind === "group") walk(source.node.nodes, node => descendants.push(node.id));
+  if (isContainer(source.node)) walk(source.node.nodes, node => descendants.push(node.id));
   if (parentId === id || descendants.includes(parentId)) return null;
   if ((source.parent?.id || null) === parentId) return {scene: cloneScene(scene), id};
   const world = nodeFrame(scene, id).world;
@@ -820,7 +831,7 @@ export function reparentNode(scene, id, parentId = null) {
   node.transform = multiply(invert(parentWorld), world);
   const destination = parentId ? findNode(next, parentId).node.nodes : next.nodes;
   destination.push(node);
-  const height = nodes => Math.max(0, ...nodes.map(n => n.kind === "group" ? 1 + height(n.nodes) : 0));
+  const height = nodes => Math.max(0, ...nodes.map(n => isContainer(n) ? 1 + height(n.nodes) : 0));
   if (height(next.nodes) > MAX_DEPTH || !constraintsValid(next)) return null;
   return {scene: next, id};
 }
@@ -1066,6 +1077,110 @@ export function cutNodesByLine(scene, ids, line) {
     cut = true;
   }
   return cut && constraintsValid(next) ? next : null;
+}
+
+/* ---------- linked instances ---------- */
+
+/** A linked instance: the resolved subtree plus where it came from. */
+export function createInstance(name, source, revision, nodes) {
+  return {
+    kind: "instance",
+    id: newId("instance"),
+    name,
+    transform: [1, 0, 0, 1, 0, 0],
+    opacity: 1,
+    visible: true,
+    pivot: null,
+    editLocked: false,
+    anchors: [],
+    source: {...source},
+    revision,
+    overrides: [],
+    nodes: cloneScene(nodes),
+  };
+}
+
+/** The instance that owns `id`, if the node sits inside a linked copy. */
+export function owningInstance(scene, id) {
+  let owner = null;
+  const visit = (nodes, current) => {
+    for (const node of nodes) {
+      if (node.id === id) { owner = current; return true; }
+      if (isContainer(node) && visit(node.nodes, node.kind === "instance" ? node.id : current)) return true;
+    }
+    return false;
+  };
+  visit(scene.nodes, null);
+  return owner;
+}
+
+/**
+ * Record that the author changed one aspect of a linked instance locally.
+ *
+ * The override is a note, not a value: the value stays in the resolved subtree,
+ * which is what makes a refresh able to keep it.
+ */
+export function noteOverride(scene, nodeId, field) {
+  const owner = owningInstance(scene, nodeId);
+  if (!owner) return scene;
+  const next = cloneScene(scene);
+  const instance = findNode(next, owner).node;
+  if (!instance.overrides.includes(field)) instance.overrides.push(field);
+  return next;
+}
+
+/**
+ * Take the library's new revision, keeping what the author changed locally.
+ *
+ * Nodes are matched by their source identity, so a fragment that gained or lost
+ * a node still merges: an unmatched node arrives as the library drew it.
+ */
+export function refreshInstance(scene, id, nodes, revision) {
+  const found = findNode(scene, id);
+  if (!found || found.node.kind !== "instance" || !Array.isArray(nodes) || !nodes.length) return null;
+  if (!Number.isInteger(revision) || revision < 1) return null;
+  const next = cloneScene(scene);
+  const target = findNode(next, id).node;
+  const overrides = new Set(target.overrides || []);
+  const before = new Map();
+  walk(target.nodes, node => before.set(node.id, node));
+  const merged = cloneScene(nodes);
+  walk(merged, node => {
+    const local = before.get(node.id);
+    if (!local) return;
+    for (const field of overrides) {
+      if (field === "transform") node.transform = [...local.transform];
+      else if (field === "opacity") node.opacity = local.opacity;
+      else if (field === "visible") node.visible = local.visible;
+      else if (field === "fill") node.fill = local.fill;
+      else if (field === "stroke") node.stroke = local.stroke;
+    }
+  });
+  target.nodes = merged;
+  target.revision = revision;
+  return constraintsValid(next) ? next : null;
+}
+
+/**
+ * Make an instance independent: the link goes, the artwork stays.
+ *
+ * The children become plain nodes with fresh identities, and the instance's own
+ * transform, opacity and visibility are composed into them so nothing moves.
+ */
+export function detachInstance(scene, id) {
+  const found = findNode(scene, id);
+  if (!found || found.node.kind !== "instance") return null;
+  const next = cloneScene(scene);
+  const target = findNode(next, id);
+  const children = target.node.nodes.map(node => {
+    const copy = withFreshIds(node);
+    copy.transform = multiply(target.node.transform, copy.transform);
+    copy.opacity = target.node.opacity * copy.opacity;
+    copy.visible = target.node.visible && copy.visible;
+    return copy;
+  });
+  target.siblings.splice(target.index, 1, ...children);
+  return constraintsValid(next) ? {scene: next, ids: children.map(child => child.id)} : null;
 }
 
 /* ---------- history ---------- */

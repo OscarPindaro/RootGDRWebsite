@@ -22,7 +22,7 @@ from pydantic import ConfigDict, Field, model_validator
 from ..concurrency import VersionedResponse, VersionedUpdate
 from ..schemas import AppBaseModel, TimestampMixin, UUIDField
 
-SCENE_FORMAT_VERSION = 5
+SCENE_FORMAT_VERSION = 6
 
 # Bounds: a drawing is a bounded illustration, not an unlimited scene. The
 # numbers are generous for the intended artwork and keep a request cheap to
@@ -85,6 +85,9 @@ class NativeAnchor(AppBaseModel):
     name: Annotated[str, Field(min_length=1, max_length=120)]
     position: Point
     angle: Annotated[float, Field(ge=-360, le=360)] = 0
+
+
+Override = Literal["transform", "opacity", "fill", "stroke", "visible"]
 
 
 class NodeBase(AppBaseModel):
@@ -250,9 +253,44 @@ class GroupNode(NodeBase):
     nodes: list[Node] = Field(default_factory=list)
 
 
-Node = PolygonNode | EllipseNode | PathNode | GroupNode
+class InstanceSource(AppBaseModel):
+    """Which library asset a linked instance came from."""
+
+    model_config = AppBaseModel.model_config | DOMAIN
+
+    library_id: UUIDField
+    asset_id: UUIDField
+
+
+class InstanceNode(NodeBase):
+    """A linked copy of a library asset.
+
+    The resolved subtree is stored, not fetched: a drawing must render and stay
+    editable without the library, and a missing source has to be reported rather
+    than silently dropping artwork. ``overrides`` records what the author changed
+    locally, so refreshing from the library keeps those changes and takes
+    everything else from the source.
+    """
+
+    kind: Literal["instance"] = "instance"
+    source: InstanceSource
+    revision: Annotated[int, Field(ge=1)] = 1
+    overrides: Annotated[list[Override], Field(max_length=8)] = Field(
+        default_factory=list
+    )
+    nodes: list[Node] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _overrides_are_unique(self) -> InstanceNode:
+        if len(set(self.overrides)) != len(self.overrides):
+            raise ValueError("overrides must be unique")
+        return self
+
+
+Node = PolygonNode | EllipseNode | PathNode | GroupNode | InstanceNode
 
 GroupNode.model_rebuild()
+InstanceNode.model_rebuild()
 
 
 class SceneDocument(AppBaseModel):
@@ -274,7 +312,7 @@ class SceneDocument(AppBaseModel):
         version = value.get(
             "schemaVersion", value.get("schema_version", SCENE_FORMAT_VERSION)
         )
-        if version not in (1, 2, 3, 4):
+        if version not in (1, 2, 3, 4, 5):
             return value
         if not isinstance(value.get("nodes", []), list):
             raise ValueError("drawing nodes must be a list")
@@ -301,9 +339,13 @@ class SceneDocument(AppBaseModel):
                 raise ValueError(
                     "legacy versions cannot contain version 4 edit-lock metadata"
                 )
-            if "anchorModes" in node or "anchor_modes" in node:
+            if version <= 4 and ("anchorModes" in node or "anchor_modes" in node):
                 raise ValueError(
                     "legacy versions cannot contain version 5 curve metadata"
+                )
+            if "source" in node or "overrides" in node:
+                raise ValueError(
+                    "legacy versions cannot contain version 6 instance metadata"
                 )
             if node.get("kind") == "group":
                 if not isinstance(node.get("nodes", []), list):

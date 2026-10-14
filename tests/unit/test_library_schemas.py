@@ -15,7 +15,7 @@ from backend.libraries.schemas import (
     SceneFragment,
     fragment_node_count,
 )
-from backend.drawings.schemas import GroupNode, PolygonNode
+from backend.drawings.schemas import SCENE_FORMAT_VERSION, GroupNode, PolygonNode
 
 
 def _triangle(node_id: str = "t1") -> PolygonNode:
@@ -29,7 +29,7 @@ def test_a_fragment_keeps_native_geometry_and_identities():
         nodes=[_triangle(), GroupNode(id="g1", name="Gruppo", nodes=[_triangle("t2")])]
     )
 
-    assert fragment.schema_version == 5
+    assert fragment.schema_version == SCENE_FORMAT_VERSION
     assert fragment.nodes[0].constraint is None
     assert fragment.nodes[0].point_ids
     assert fragment_node_count(fragment.nodes) == 3, "the group counts too"

@@ -29,6 +29,7 @@ from src.backend.dependencies import get_db_session
 from src.backend.drawings.exceptions import DrawingNotFoundException
 from src.backend.drawings.models import DrawingModel
 from src.backend.drawings.schemas import (
+    SCENE_FORMAT_VERSION,
     Artboard,
     DrawingCreate,
     DrawingUpdate,
@@ -505,7 +506,7 @@ async def test_legacy_rows_upgrade_in_memory_until_explicit_save(
     app = _app(app_config, db_manager, users["admin"])
     async with await _client(app) as client:
         read = (await client.get(f"/api/drawings/{identifier}")).json()
-        assert read["scene"]["schemaVersion"] == 5
+        assert read["scene"]["schemaVersion"] == 6
         assert read["scene"]["nodes"][0]["constraint"] is None
         assert read["scene"]["nodes"][0]["pointIds"] == ["v0", "v1", "v2"]
         async with db_manager.async_session_maker() as session:
@@ -529,7 +530,60 @@ async def test_legacy_rows_upgrade_in_memory_until_explicit_save(
                 text("SELECT document FROM drawings WHERE id = :id"), {"id": identifier}
             )
         ).scalar_one()
-        assert stored["schema_version"] == 5
+        assert stored["schema_version"] == SCENE_FORMAT_VERSION
+
+
+async def test_a_linked_instance_survives_a_save_and_reopen(
+    app_config, db_manager, users
+):
+    """The link is document state: it must come back exactly as it was saved."""
+    app = _app(app_config, db_manager, users["admin"])
+    source = {
+        "libraryId": "11111111-1111-1111-1111-111111111111",
+        "assetId": "22222222-2222-2222-2222-222222222222",
+    }
+    scene = {
+        "schemaVersion": 6,
+        "nodes": [
+            {
+                "kind": "instance",
+                "id": "instance-1",
+                "name": "Spada",
+                "transform": [1, 0, 0, 1, 30, 40],
+                "source": source,
+                "revision": 7,
+                "overrides": ["fill"],
+                "nodes": [
+                    {
+                        "kind": "polygon",
+                        "id": "blade",
+                        "name": "Lama",
+                        "points": [[0, 0], [40, 0], [20, 6]],
+                        "fill": "#d1402a",
+                    }
+                ],
+            }
+        ],
+    }
+    async with await _client(app) as client:
+        created = await client.post(
+            "/api/drawings/", json={"title": "Istanza", "scene": scene}
+        )
+        assert created.status_code == 201, created.text
+        read = created.json()
+        saved = await client.patch(
+            f"/api/drawings/{read['id']}",
+            json={"expectedVersion": read["version"], "scene": scene},
+        )
+        assert saved.status_code == 200, saved.text
+        reopened = (await client.get(f"/api/drawings/{read['id']}")).json()["scene"]
+    instance = reopened["nodes"][0]
+    assert instance["kind"] == "instance"
+    assert instance["source"] == source
+    assert instance["revision"] == 7
+    assert instance["overrides"] == ["fill"]
+    assert instance["nodes"][0]["fill"] == "#d1402a"
+    assert reopened["schemaVersion"] == 6
 
 
 async def test_recovery_validation_is_admin_only_and_never_creates_a_drawing(
@@ -574,7 +628,7 @@ async def test_native_pivot_metadata_is_persisted_without_changing_geometry(
         )
         assert saved.status_code == 200
         reopened = (await client.get(f"/api/drawings/{read['id']}")).json()
-        assert reopened["scene"]["schemaVersion"] == 5
+        assert reopened["scene"]["schemaVersion"] == 6
         assert reopened["scene"]["nodes"][0]["pivot"] == [25, 35]
         assert reopened["scene"]["nodes"][0]["points"] == original_points
 
