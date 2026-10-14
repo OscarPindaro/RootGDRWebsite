@@ -576,6 +576,24 @@ function renameIds(node, name) {
   return node;
 }
 
+/**
+ * A copy of a node with fresh identities everywhere: the node, its points, its
+ * anchors and every descendant. Inserting library artwork must not collide with
+ * what the drawing already uses.
+ */
+export function withFreshIds(node) {
+  const copy = cloneScene(node);
+  const relabel = (target) => {
+    target.id = newId(target.kind);
+    if (target.pointIds) target.pointIds = target.pointIds.map(() => newId("v"));
+    if (target.anchors) target.anchors = target.anchors.map(anchor => ({...anchor, id: newId("a")}));
+    if (target.anchorModes) target.anchorModes = [];
+    if (target.kind === "group") target.nodes.forEach(relabel);
+  };
+  relabel(copy);
+  return copy;
+}
+
 /** Move a node one step towards the front (delta > 0) or the back. */
 export function reorderNode(scene, id, delta) {
   const next = cloneScene(scene);

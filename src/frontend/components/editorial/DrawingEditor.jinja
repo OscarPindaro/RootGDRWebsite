@@ -1,4 +1,4 @@
-{#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True, owner_id=None #}
+{#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True, owner_id=None, library_url=None #}
 {#css editorial/DrawingEditor.css, common/Button.css, common/ButtonGroup.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css, common/Menu.css #}
 {#js common/Dialog.js, common/Menu.js, editorial/DrawingEditor.js #}
 {% set artboard = scene.artboard if scene else None %}
@@ -343,6 +343,30 @@
           {% endfor %}
         </ul>
       </section>
+
+      {% if library_url %}<section class="drawing-editor__panel" aria-label="Libreria" data-library data-library-url="{{ library_url }}">
+        <h3 class="drawing-editor__panel-title">Libreria</h3>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-library">Libreria</label>
+          <select class="drawing-editor__name" id="drawing-library" data-library-library aria-label="Libreria"></select>
+        </div>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-library-section">Sezione</label>
+          <select class="drawing-editor__name" id="drawing-library-section" data-library-section aria-label="Sezione della libreria"></select>
+        </div>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-library-asset">Elemento</label>
+          <select class="drawing-editor__name" id="drawing-library-asset" data-library-asset aria-label="Elemento della libreria"></select>
+        </div>
+        <common.Button size="xs" variant="secondary" data-library-insert disabled>Inserisci nell’arte</common.Button>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-library-name">Salva selezione come</label>
+          <input class="drawing-editor__name" type="text" id="drawing-library-name" data-library-name maxlength="255" aria-label="Nome del nuovo elemento" placeholder="Becco di Altus" />
+        </div>
+        <common.Button size="xs" variant="secondary" data-library-save disabled>Salva nella libreria</common.Button>
+        <p class="hint" data-library-status role="status" aria-live="polite"></p>
+        <p class="hint" data-library-empty hidden>Nessun elemento in questa sezione.</p>
+      </section>{% endif %}
 
       <section class="drawing-editor__panel" aria-label="Proprietà" data-testid="drawing-inspector">
         <h3 class="drawing-editor__panel-title">Proprietà</h3>

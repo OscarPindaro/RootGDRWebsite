@@ -643,6 +643,28 @@ test("an accepted variant can be restated by any name its family answers to", as
   assert.equal(parseCompact("rettangolo","regular_polygon"),null);
 });
 
+test("a library fragment is inserted as an independent copy with fresh identities", async () => {
+  const {withFreshIds, createRect, createPath, createPolygon} = await import("../../src/frontend/js/drawings/scene.js");
+  const original=createRect("Becco",[0,0],[100,100]);
+  const copy=withFreshIds(original);
+  assert.notEqual(copy.id,original.id);
+  assert.equal(copy.name,"Becco","the name is kept");
+  assert.deepEqual(copy.points,original.points);
+  assert.equal(copy.pointIds.length,4);
+  assert.equal(new Set(copy.pointIds).size,4);
+  assert.ok(copy.pointIds.every(id=>!original.pointIds.includes(id)),"fresh point identities");
+  assert.notEqual(copy.transform,undefined);
+
+  // A group is relabelled all the way down.
+  const group={kind:"group",id:"g",name:"Corpo",transform:[1,0,0,1,0,0],opacity:1,visible:true,pivot:null,editLocked:false,anchors:[{id:"a1",name:"mano",point:[0,0]}],nodes:[createRect("Braccio",[0,0],[10,10])]};
+  const groupCopy=withFreshIds(group);
+  assert.notEqual(groupCopy.id,"g");
+  assert.notEqual(groupCopy.nodes[0].id,group.nodes[0].id);
+  assert.equal(groupCopy.nodes[0].pointIds.every(id=>!group.nodes[0].pointIds.includes(id)),true);
+  assert.notEqual(groupCopy.anchors[0].id,"a1");
+  assert.equal(groupCopy.anchors[0].name,"mano","an anchor keeps its meaning");
+});
+
 test("the artboard is editable and content bounds are the export alternative", async () => {
   const {patchArtboard, contentBounds, createRect, createEllipse} = await import("../../src/frontend/js/drawings/scene.js");
   const scene=sceneWith([{...createRect("Box",[0,0],[100,100]),id:"box"}]);

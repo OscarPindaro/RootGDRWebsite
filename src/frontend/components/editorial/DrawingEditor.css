@@ -155,6 +155,7 @@
 
 .drawing-editor__paint { padding: var(--sp-2); }
 
+
 /* The rail is narrower than the inspector, so a paint row groups its controls
    to the left and wraps instead of spreading them across the column. */
 .drawing-editor__paint .drawing-editor__field {

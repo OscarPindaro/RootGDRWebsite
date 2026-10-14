@@ -13,6 +13,7 @@
     :drawing_id="drawing.id"
     :version="drawing.version"
     :owner_id="current_user.id if current_user else None"
+    library_url="/api/libraries"
     :scene="scene"
     :save_url="'/api/drawings/' ~ drawing.id" />
 </layout.Page>

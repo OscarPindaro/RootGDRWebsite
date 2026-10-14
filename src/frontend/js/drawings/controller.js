@@ -23,7 +23,10 @@ import {
   addNode,
   createEllipse,
   createPath,
+  cloneScene,
+  constraintsValid,
   cutNodesByLine,
+  withFreshIds,
   createPolygon,
   createRect,
   createPreset,
@@ -66,6 +69,7 @@ import { render } from "./render.js";
 import { createCanvasPalette } from "./canvas-palette.js";
 import { createRecovery } from "./recovery.js";
 import { createPreferences } from "./preferences.js";
+import { createLibraryPanel } from "./library.js";
 
 const PALETTE = [
   "#ffffff", "#000000",
@@ -122,7 +126,7 @@ export function createController(root) {
   const saveUrl = root.dataset.saveUrl || null;
   const contextMenu = root.querySelector("#drawing-context-menu");
   let contextPosition = null, contextOpener = svg;
-  let commandPalette = null, recovery = null, recoveredLine = null, lastTreeShape = null;
+  let commandPalette = null, recovery = null, recoveredLine = null, lastTreeShape = null, library = null;
   const preferences = createPreferences(root);
   let autosave = preferences.read("autosave", false) === true;
   let gridStyle = preferences.read("gridStyle", "lines");
@@ -1442,6 +1446,34 @@ export function createController(root) {
     commit(patchNode(scene,selectedId,next)); return true;
   }
 
+  /**
+   * Insert a library fragment. Every identity is renewed, so the copy is
+   * independent of the library original; linking an instance comes later.
+   */
+  function insertFragment(nodes) {
+    if (!editable || root.dataset.recoveryPending || !Array.isArray(nodes) || !nodes.length) return false;
+    let next = scene;
+    const ids = [];
+    for (const node of nodes) {
+      const copy = withFreshIds(node);
+      next = addNode(next, copy);
+      ids.push(copy.id);
+    }
+    if (!constraintsValid(next)) { announce("L’elemento non è compatibile con questa tavola."); return false; }
+    announce("");
+    commit(next);
+    setSelection(ids);
+    setTool("select");
+    return true;
+  }
+
+  /** The selected nodes as a library fragment, or null when nothing usable is selected. */
+  function selectionFragment() {
+    const found = selection.map(id => findNode(scene, id)?.node).filter(Boolean);
+    if (!found.length) return null;
+    return {schemaVersion: scene.schemaVersion, nodes: found.map(node => cloneScene(node))};
+  }
+
   function fitViewport(target) {
     const ids = target === "selection" ? selection : scene.nodes.filter(node => node.visible !== false).map(node => node.id);
     const points = ids.flatMap(id => worldCorners(findNode(scene,id).node));
@@ -1541,6 +1573,7 @@ export function createController(root) {
     const found = selected();
     const node = found ? found.node : null;
     const mutable = editableSelection(scene,selection) && !root.dataset.recoveryPending;
+    library?.refresh();
     root.querySelector('[data-drawing-title]').disabled = Boolean(root.dataset.recoveryPending);
     root.querySelectorAll("[data-drawing-autosave]").forEach(item => item.setAttribute("aria-checked", String(autosave)));
     root.querySelectorAll("[data-drawing-grid-dots]").forEach(item => item.setAttribute("aria-checked", String(gridStyle === "dots")));
@@ -1681,6 +1714,8 @@ export function createController(root) {
 
   function wire() {
     commandPalette = createCanvasPalette(root, {actions:() => Object.entries(actions).map(([id, action]) => ({id, label:action.label, enabled:canExecute(id), parameters:Boolean(action.parameters)})), execute, defaults:creationDefaults, preview:geometryResult, geometry:() => geometryInfo(scene,selection), parents:() => [...root.querySelector('[data-node-parent]').options].map(option => ({value:option.value,label:option.textContent})), ellipse:() => { const node = selected()?.node; return node?.kind === 'ellipse' ? {cx:node.cx,cy:node.cy,rx:node.rx,ry:node.ry} : null; }});
+    library = createLibraryPanel(root, {canExecute, get selection() { return [...selection]; }, insertFragment, selectionFragment});
+    library.load();
     recovery = createRecovery(root, {state:recoveryState, restore:restoreRecovery, redraw:draw, unsaved:hasLocalWork, pending:() => inFlight, save, leave:() => {allowLeave = true;}});
     root.addEventListener("input", () => recovery.schedule());
     root.querySelector("[data-recovery-path]").addEventListener("click", () => { drag = recoveredLine; recoveredLine = null; root.querySelector('[data-recovery-path]').hidden = true; finishLine(); });

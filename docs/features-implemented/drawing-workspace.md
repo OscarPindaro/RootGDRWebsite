@@ -144,6 +144,18 @@ library, skeleton, publishing or export capabilities.
   insert-point action splits the selected cubic segment at its midpoint using
   de Casteljau, preserving appearance and existing endpoint identities. New midpoint
   identity/mode, copy and undo/reopen retain editable multi-segment cubic semantics.
+- A **library** holds reusable authored parts. A library is global or belongs to
+  one world, and it is divided into sections the librarian creates. An asset
+  stores a *scene fragment*: native nodes with their geometry, styles,
+  constraints and identities, never a rendered preview, so inserting one brings
+  editable artwork. The editor's library panel saves the current selection as an
+  asset and inserts an asset as an **independent copy with fresh identities** —
+  linking an instance to its source is a later ticket. Read and write follow one
+  narrow rule: an administrator may use any library, a world library is also open
+  to that world's master, and nobody else sees it at all. A library a caller may
+  not read is reported as absent rather than forbidden, so its existence is not
+  leaked, and listing returns bounded metadata (id, name, section, node count,
+  version) with the geometry only on the single-asset read.
 - The artboard is an editable rectangle: its width, height and background are
   document data, set from the inspector and undoable like any other change. It is
   a **soft guide**, not a clip — the editor shows a quarter of the artboard's size
@@ -239,7 +251,8 @@ specimen in the component showcase.
 
 ## Limits
 
-- No linked scenes/libraries, anchors, skeletons, portrait/document publishing,
+- No linked instances yet: an inserted asset is an independent copy. No anchors,
+  skeletons, portrait/document publishing,
   PNG/SVG downloads, card printing, animation, imports or clipping.
 - Explicit server saving only: local recovery is browser-storage-dependent and
   undo history is not persisted.

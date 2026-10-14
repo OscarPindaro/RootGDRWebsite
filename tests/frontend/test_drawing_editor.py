@@ -122,6 +122,230 @@ def test_the_layers_list_marks_the_selected_object(component):
     assert page.locator(".drawing-editor__layer.is-selected").count() == 1
 
 
+_LIBRARY = "01a13000-0000-7000-8000-000000000001"
+_SECTION = "01a13000-0000-7000-8000-000000000002"
+_ASSET = "01a13000-0000-7000-8000-000000000003"
+
+
+def _library_body() -> list:
+    return [
+        {
+            "id": _LIBRARY,
+            "name": "Parti comuni",
+            "scope": "global",
+            "worldId": None,
+            "version": 1,
+            "createdAt": "2026-10-12T00:00:00+00:00",
+            "updatedAt": "2026-10-12T00:00:00+00:00",
+            "sections": [
+                {
+                    "id": _SECTION,
+                    "name": "NPC",
+                    "position": 0,
+                    "assetCount": 1,
+                    "createdAt": "2026-10-12T00:00:00+00:00",
+                    "updatedAt": "2026-10-12T00:00:00+00:00",
+                }
+            ],
+        }
+    ]
+
+
+def _asset_body(with_fragment: bool = False) -> dict:
+    body = {
+        "id": _ASSET,
+        "name": "Becco di Altus",
+        "sectionId": _SECTION,
+        "sectionName": "NPC",
+        "nodeCount": 1,
+        "version": 1,
+        "updatedAt": "2026-10-12T00:00:00+00:00",
+    }
+    if with_fragment:
+        body["fragment"] = {
+            "schemaVersion": 5,
+            "nodes": [
+                {
+                    "kind": "polygon",
+                    "id": "library-beak",
+                    "name": "Becco",
+                    "transform": [1, 0, 0, 1, 0, 0],
+                    "opacity": 1,
+                    "visible": True,
+                    "pivot": None,
+                    "editLocked": False,
+                    "anchors": [],
+                    "fill": "#d97a26",
+                    "stroke": "#17150f",
+                    "strokeWidth": 4,
+                    "constraint": None,
+                    "points": [[0, 0], [40, 0], [20, 30]],
+                    "pointIds": ["a", "b", "c"],
+                    "edgeVisible": None,
+                }
+            ],
+        }
+    return body
+
+
+def _options(page, selector: str) -> list[str]:
+    """The option labels in a select, read from the DOM.
+
+    A closed disclosure does not render its contents, so reading text through
+    the rendered box would be empty even though the options are there.
+    """
+    return page.locator(selector).evaluate("el => [...el.options].map(o => o.text)")
+
+
+def _open_library(page) -> None:
+    """Wait for the panel's first listing."""
+    page.locator("[data-library]").wait_for(state="visible")
+    page.wait_for_function(
+        "() => document.querySelectorAll('[data-library-library] option').length > 0"
+    )
+
+
+def _library_routes(component) -> None:
+    component.route_json("GET", "/api/libraries", body=_library_body())
+    component.route_json(
+        "GET",
+        f"/api/libraries/{_LIBRARY}/assets",
+        body={"data": [_asset_body()], "total": 1, "page": 1, "pageSize": 100},
+    )
+    component.route_json(
+        "GET", f"/api/libraries/{_LIBRARY}/assets/{_ASSET}", body=_asset_body(True)
+    )
+
+
+def test_an_account_without_a_library_is_told_so(component):
+    component.route_json("GET", "/api/libraries", body=[])
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    page.wait_for_timeout(300)
+
+    assert "Nessuna libreria" in page.locator("[data-library-status]").inner_text()
+    assert _options(page, "[data-library-library]") == []
+
+
+def test_the_library_surface_does_not_exist_without_the_server_offering_it(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.wait_for_timeout(300)
+
+    assert page.locator("[data-library]").count() == 0
+    assert [
+        path
+        for _method, path in component.requests()
+        if path.startswith("/api/libraries")
+    ] == []
+
+
+def test_the_library_panel_asks_for_nothing_until_it_is_opened(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.wait_for_timeout(300)
+
+    assert page.locator("[data-library]").is_hidden()
+    assert [
+        path
+        for _method, path in component.requests()
+        if path.startswith("/api/libraries")
+    ] == []
+
+
+def test_the_library_panel_lists_a_section_and_its_assets(component):
+    _library_routes(component)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    panel = page.locator("[data-library]")
+    page.wait_for_timeout(600)
+    panel.wait_for(state="visible")
+
+    assert _options(page, "[data-library-library]") == ["Parti comuni"]
+    assert _options(page, "[data-library-section]") == ["NPC"]
+    assert _options(page, "[data-library-asset]") == ["Becco di Altus"]
+    assert page.locator("[data-library-insert]").is_enabled()
+
+
+def test_inserting_an_asset_adds_an_independent_copy_as_one_undo_step(component):
+    _library_routes(component)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.locator("[data-library-insert]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2"
+    )
+
+    nodes = _scene_of(page)["nodes"]
+    assert nodes[0]["id"] == "box", "the drawing is untouched"
+    assert nodes[1]["name"] == "Becco"
+    assert nodes[1]["pointIds"] != ["a", "b", "c"], "the copy gets its own identities"
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection.length"
+        )
+        == 1
+    )
+
+    page.get_by_test_id("drawing-undo").click()
+    assert len(_scene_of(page)["nodes"]) == 1
+    assert "Inserito" in page.locator("[data-library-status]").inner_text()
+
+
+def test_saving_the_selection_sends_a_native_fragment(component):
+    _library_routes(component)
+    sent = {}
+    component.route_json(
+        "POST",
+        f"/api/libraries/{_LIBRARY}/assets",
+        body=_asset_body(),
+        status=201,
+    )
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.evaluate(
+        """() => {
+            const real = window.fetch;
+            window.fetch = (url, options) => {
+                if (options && options.method === 'POST') window.__posted = options.body;
+                return real(url, options);
+            };
+        }"""
+    )
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-library-name]").fill("Riquadro comune")
+    page.locator("[data-library-save]").click()
+    page.wait_for_function("() => window.__posted !== undefined")
+
+    payload = page.evaluate("() => JSON.parse(window.__posted)")
+    assert payload["name"] == "Riquadro comune"
+    assert payload["sectionId"] == _SECTION
+    fragment = payload["fragment"]
+    assert fragment["schemaVersion"] == 5
+    assert fragment["nodes"][0]["points"] == [
+        [100.0, 100.0],
+        [400.0, 100.0],
+        [400.0, 400.0],
+        [100.0, 400.0],
+    ]
+    assert fragment["nodes"][0]["pointIds"] == _scene_of(page)["nodes"][0]["pointIds"]
+    del sent
+
+
 def test_the_artboard_is_editable_and_stays_a_soft_guide(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
@@ -267,12 +491,13 @@ def test_the_read_only_specimen_hides_its_commands(component):
 # --- drawing: tools, history, styles ---------------------------------------
 
 
-def _live_props(scene=None) -> dict:
+def _live_props(scene=None, library_url=None) -> dict:
     return {
         "title": "Nuova tavola",
         "drawing_id": None,
         "scene": scene if scene is not None else SceneDocument(),
         "editable": True,
+        "library_url": library_url,
     }
 
 
@@ -1096,6 +1321,7 @@ def test_the_grid_style_survives_a_reload(component):
 
 
 def test_autosave_is_a_checkable_menu_item_that_starts_off(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     item = page.locator("[data-drawing-autosave]")
@@ -1107,6 +1333,7 @@ def test_autosave_is_a_checkable_menu_item_that_starts_off(component):
 
 
 def test_autosave_waits_for_two_idle_seconds_and_saves_once(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     # The server echoes what it stored, so a successful save settles the editor.
@@ -1156,6 +1383,7 @@ def test_autosave_stays_quiet_when_it_is_off(component):
             "scene": _scene().model_dump(by_alias=True),
         },
     )
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.evaluate(
@@ -1177,6 +1405,7 @@ def test_autosave_stays_quiet_when_it_is_off(component):
 
 
 def test_the_editor_page_mounts_and_reports_the_saved_state(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
 
@@ -1194,6 +1423,7 @@ def test_saving_sends_the_document_and_the_version_it_was_read_at(component):
             "scene": _scene().model_dump(by_alias=True),
         },
     )
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.evaluate(
@@ -1223,6 +1453,7 @@ def test_saving_sends_the_document_and_the_version_it_was_read_at(component):
 def test_a_conflicting_save_is_reported_and_keeps_the_local_scene(component):
     component.allow_console_errors("409")
     component.route_json("PATCH", f"/api/drawings/{DRAWING_ID}", status=409)
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
 
@@ -1237,6 +1468,7 @@ def test_a_conflicting_save_is_reported_and_keeps_the_local_scene(component):
 def test_a_failed_save_never_claims_success(component):
     component.allow_console_errors("500")
     component.route_json("PATCH", f"/api/drawings/{DRAWING_ID}", status=500)
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
 
@@ -1531,6 +1763,7 @@ def test_the_ellipse_radius_row_keeps_its_accessible_label(component):
 
 
 def test_phone_preview_has_no_overflow_or_active_editing_controls(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     page.set_viewport_size(PHONE)
     page.reload()
@@ -1687,6 +1920,7 @@ def test_style_change_is_one_undo_action(component):
 
 
 def test_save_keeps_edits_made_while_request_is_in_flight(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.evaluate(
@@ -1705,6 +1939,7 @@ def test_save_keeps_edits_made_while_request_is_in_flight(component):
 
 
 def test_rename_drawing_is_sent_on_explicit_save(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.evaluate(
@@ -1719,6 +1954,7 @@ def test_rename_drawing_is_sent_on_explicit_save(component):
 def test_conflict_offers_copy_and_explicit_reload_confirmation(component):
     component.allow_console_errors("409")
     component.route_json("PATCH", f"/api/drawings/{DRAWING_ID}", status=409)
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.get_by_test_id("drawing-save").click()
@@ -1790,6 +2026,7 @@ def test_editor_shortcuts_do_not_own_unrelated_controls_or_typing(component):
 
 
 def test_save_shortcut_works_from_the_document_title(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.evaluate(
