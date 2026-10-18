@@ -37,6 +37,8 @@ def main() -> None:
             archive.write(path, path.name)
         for path in sorted(ROOT.glob("*.md")):
             archive.write(path, path.name)
+        for path in sorted((ROOT / "edits").glob("*.json")):
+            archive.write(path, str(path.relative_to(ROOT)))
         archive.write(ROOT / "BIZARRE_LICENSE.txt", "BIZARRE_LICENSE.txt")
         for path in sorted(output.rglob("*")):
             if path.is_file() and path.suffix != ".zip":

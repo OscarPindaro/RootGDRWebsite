@@ -1,0 +1,52 @@
+{
+  "id": "luciano-geometric-wings-v1",
+  "scene": "Luciano",
+  "description": "The viewer-left projecting wing is a triangle. The viewer-right wing is a quadrilateral separated from the blue body beneath it.",
+  "operations": [
+    {"op": "define_anchor", "id": "left-wing-root", "point": [145.15, 148.54]},
+    {"op": "define_anchor", "id": "left-wing-fold", "point": [75.12, 208.97]},
+    {"op": "define_anchor", "id": "right-wing-root", "point": [252.1, 151.11]},
+    {"op": "define_anchor", "id": "right-wing-inner", "point": [250.6, 266.84]},
+    {"op": "define_anchor", "id": "right-wing-outer", "point": [329.76, 320.1]},
+    {
+      "op": "replace_polygon",
+      "shape": "region-098-0",
+      "label": "Ala sinistra · triangolo",
+      "points": [[20.49, 134.51], {"anchor": "left-wing-root"}, {"anchor": "left-wing-fold"}]
+    },
+    {
+      "op": "replace_polygon",
+      "shape": "region-131-0",
+      "label": "Piega sotto l’ala sinistra",
+      "points": [
+        {"anchor": "left-wing-root"}, {"anchor": "left-wing-fold"},
+        [73.07, 237.44], [86.14, 235.96], [111.02, 210.82], [132.96, 195.2]
+      ]
+    },
+    {"op": "splice_vertices", "shape": "region-121-0", "start": 1, "delete": 1, "points": [{"anchor": "left-wing-root"}]},
+    {
+      "op": "split_polygon",
+      "shape": "region-126-0",
+      "pieces": [
+        {
+          "id": "luciano-right-underwing",
+          "label": "Corpo sotto l’ala destra",
+          "points": [
+            {"anchor": "right-wing-inner"}, [274.33, 285], [291.84, 321.77],
+            [302.36, 332.64], [314.9, 320.1], {"anchor": "right-wing-outer"}
+          ]
+        },
+        {
+          "id": "region-126-0",
+          "label": "Ala destra · quadrilatero",
+          "points": [
+            {"anchor": "right-wing-root"}, [336.49, 233.6],
+            {"anchor": "right-wing-outer"}, {"anchor": "right-wing-inner"}
+          ]
+        }
+      ]
+    },
+    {"op": "splice_vertices", "shape": "region-115-0", "start": 10, "delete": 1, "points": [{"anchor": "right-wing-root"}]},
+    {"op": "splice_vertices", "shape": "region-156-0", "start": 6, "delete": 1, "points": [{"anchor": "right-wing-inner"}]}
+  ]
+}

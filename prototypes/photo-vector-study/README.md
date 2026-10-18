@@ -247,7 +247,9 @@ are not directly comparable to the other models' confidence scores.
 ## Reconstruction as independent shapes
 
 `reconstruct_shapes.py` consumes the automatic contour JSON and ink masks.
-It never reads the hand-authored points from `drawings.py`.
+It never reads the hand-authored points from `drawings.py`. It saves that detected
+scene as `*-detected.json`, then applies the explicit user-guided recipes in
+`edits/`. `--no-edits` renders the purely automatic reconstruction.
 
 ```sh
 uv run --no-project --python 3.12 reconstruct_shapes.py
@@ -273,7 +275,76 @@ curve controls in the OpenCV crop's coordinate space. Its
 application's native drawing schema. It contains visible shapes, not recovered
 anatomical parts, hidden limbs or a rig.
 
-`output/shapes/index.html` compares the old trace with the new reconstruction.
+`output/shapes/index.html` compares the reference photograph, the first OpenCV
+trace, and the corrected reconstruction. Click the photo to open the unmodified
+source JPEG. The first trace keeps the marker's uneven ink boundary; the final
+version uses fitted shapes and independently specified outlines.
 Click a shape to select it; **Separa gli oggetti** temporarily spreads them apart.
 These inspection controls do not change the saved SVG or JSON. The gallery links
 to the PNG comparison, individual SVG/JSON files, and a coloured object map.
+
+## User-guided geometric corrections
+
+The 2026-10-18 recipes record Oscar's added information:
+
+- Outlines are 35% thicker, including small details.
+- Altus's yellow collar is a three-vertex triangle. Its corners are shared with
+  the head, both cape panels and the chest; adjacent boundaries meet exactly.
+- Luciano's viewer-left wing is a triangle. The viewer-right wing is a convex
+  quadrilateral, split from the blue area beneath it. That split has a shared
+  edge, and wing attachment points are shared with neighbouring pieces.
+
+These are interpretations guided by the user's descriptions, recorded in JSON.
+They are not new automatic detections. The raw detected scene remains available,
+and the recipe can be inspected, changed, or omitted without retracing the photo.
+Shape IDs and source-region references survive where a shape is replaced.
+
+`study_scene.py` owns the typed scene format. `shape_edits.py` exposes small tools
+an agent can call without loading OpenCV or a pose model:
+
+```sh
+uv run --no-project shape_edits.py inspect output/shapes/altus.json --shape region-160-0
+uv run --no-project shape_edits.py schema
+uv run --no-project shape_edits.py apply output/shapes/altus-detected.json \
+  --plan edits/altus.json --output /tmp/altus-corrected.json
+```
+
+The available operations define/move shared anchors, scale strokes, replace a
+polygon, splice vertices and split a polygon into independently named pieces.
+For example, moving `collar-tip` updates all four attached vertices:
+
+```json
+{
+  "id": "raise-collar-tip",
+  "scene": "Altus",
+  "description": "Move the shared collar/cape/chest point upward.",
+  "operations": [
+    {"op": "move_anchor", "id": "collar-tip", "point": [181.11, 195]}
+  ]
+}
+```
+
+Plans are applied to a copy and validated before writing. Missing shapes,
+invalid geometry and broken shared points are rejected. Replaying the identical
+plan is a no-op, so stroke widths do not accumulate. Changing an already-applied
+plan requires replaying from `*-detected.json`; replacing a bound shape cannot
+silently discard its shared anchors.
+
+This is an experimental CLI and a shared-vertex constraint, not a general
+constraint solver, an MCP service or a native canvas feature. Future edits can
+extend the operation set while retaining explicit provenance.
+
+Validation uses the repository harness:
+
+```sh
+uv run harness test unit -- tests/unit/test_photo_shape_edits.py -q
+uv run harness test frontend -- tests/frontend/test_photo_vector_study.py -q
+```
+
+The browser check opens the tracked gallery, checks images, selection, exploded
+view and overflow, and writes desktop/phone screenshots to
+`/tmp/photo-vector-study-checks/`. After regeneration, run
+`uv run --no-project package_study.py` before committing the review assets.
+
+The next character-generation experiment and the proposed 1,000-example dataset
+are recorded in [NEXT_EXPERIMENT.md](NEXT_EXPERIMENT.md).

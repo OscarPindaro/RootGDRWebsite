@@ -5,14 +5,15 @@
   "width": 513,
   "height": 628,
   "method": "Voronoi stroke-centre recovery, line fitting and ink skeleton curves",
-  "interpretation": "Detected shapes, not inferred anatomical parts or hidden geometry.",
+  "interpretation": "Detected shapes; user-guided edits are recorded separately.",
   "shapes": [
     {
       "id": "region-167-0",
       "source_region": "region-167",
+      "label": null,
       "fill": "#787f9a",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -192,9 +193,10 @@
     {
       "id": "region-052-0",
       "source_region": "region-052",
+      "label": null,
       "fill": "#787f9a",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -282,9 +284,10 @@
     {
       "id": "region-344-0",
       "source_region": "region-344",
+      "label": null,
       "fill": "#c52d30",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -356,9 +359,10 @@
     {
       "id": "region-312-0",
       "source_region": "region-312",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -402,9 +406,10 @@
     {
       "id": "region-290-0",
       "source_region": "region-290",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -472,9 +477,10 @@
     {
       "id": "region-075-0",
       "source_region": "region-075",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -510,9 +516,10 @@
     {
       "id": "region-045-0",
       "source_region": "region-045",
+      "label": null,
       "fill": "#c52d30",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -544,9 +551,10 @@
     {
       "id": "region-005-0",
       "source_region": "region-005",
+      "label": null,
       "fill": "#c52d30",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -586,9 +594,10 @@
     {
       "id": "region-510-0",
       "source_region": "region-510",
+      "label": null,
       "fill": "#80442b",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -632,9 +641,10 @@
     {
       "id": "region-190-0",
       "source_region": "region-190",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -682,9 +692,10 @@
     {
       "id": "region-514-0",
       "source_region": "region-514",
+      "label": null,
       "fill": "#80442b",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -736,9 +747,10 @@
     {
       "id": "region-344-color-1-0",
       "source_region": "region-344-color-1",
+      "label": null,
       "fill": "#598211",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -786,9 +798,10 @@
     {
       "id": "region-152-0",
       "source_region": "region-152",
+      "label": null,
       "fill": "#2885c7",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -864,9 +877,10 @@
     {
       "id": "region-348-0",
       "source_region": "region-348",
+      "label": null,
       "fill": "#80442b",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -910,9 +924,10 @@
     {
       "id": "region-142-0",
       "source_region": "region-142",
+      "label": null,
       "fill": "#2885c7",
       "stroke": "#302d2b",
-      "stroke_width": 5.51,
+      "stroke_width": 7.439,
       "kind": "polygon",
       "points": [
         [
@@ -976,9 +991,10 @@
     {
       "id": "region-117-0",
       "source_region": "region-117",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 5.41,
+      "stroke_width": 7.304,
       "kind": "polygon",
       "points": [
         [
@@ -1038,9 +1054,10 @@
     {
       "id": "region-132-0",
       "source_region": "region-132",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 5.22,
+      "stroke_width": 7.047,
       "kind": "polygon",
       "points": [
         [
@@ -1084,9 +1101,10 @@
     {
       "id": "region-111-0",
       "source_region": "region-111",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 5.15,
+      "stroke_width": 6.953,
       "kind": "polygon",
       "points": [
         [
@@ -1130,9 +1148,10 @@
     {
       "id": "region-145-0",
       "source_region": "region-145",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 5.08,
+      "stroke_width": 6.858,
       "kind": "polygon",
       "points": [
         [
@@ -1176,9 +1195,10 @@
     {
       "id": "region-137-0",
       "source_region": "region-137",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 4.83,
+      "stroke_width": 6.521,
       "kind": "polygon",
       "points": [
         [
@@ -1218,9 +1238,10 @@
     {
       "id": "region-136-0",
       "source_region": "region-136",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 4.53,
+      "stroke_width": 6.116,
       "kind": "polygon",
       "points": [
         [
@@ -1256,9 +1277,10 @@
     {
       "id": "region-138-0",
       "source_region": "region-138",
+      "label": null,
       "fill": "#e1ddcd",
       "stroke": "#302d2b",
-      "stroke_width": 4.49,
+      "stroke_width": 6.062,
       "kind": "polygon",
       "points": [
         [
@@ -1302,9 +1324,10 @@
     {
       "id": "region-094-0",
       "source_region": "region-094",
+      "label": null,
       "fill": "#787f9a",
       "stroke": "#302d2b",
-      "stroke_width": 3.79,
+      "stroke_width": 5.117,
       "kind": "polygon",
       "points": [
         [
@@ -1336,9 +1359,10 @@
     {
       "id": "region-195-0",
       "source_region": "region-195",
+      "label": null,
       "fill": "#959292",
       "stroke": "#302d2b",
-      "stroke_width": 3.69,
+      "stroke_width": 4.982,
       "kind": "polygon",
       "points": [
         [
@@ -1370,9 +1394,10 @@
     {
       "id": "region-172-0",
       "source_region": "region-172",
+      "label": null,
       "fill": "#959292",
       "stroke": "#302d2b",
-      "stroke_width": 3.55,
+      "stroke_width": 4.793,
       "kind": "polygon",
       "points": [
         [
@@ -1408,9 +1433,10 @@
     {
       "id": "region-142-color-2-0",
       "source_region": "region-142-color-2",
+      "label": null,
       "fill": "#bad2e0",
       "stroke": "#302d2b",
-      "stroke_width": 3.09,
+      "stroke_width": 4.171,
       "kind": "polygon",
       "points": [
         [
@@ -1442,9 +1468,10 @@
     {
       "id": "ink-detail-0",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1464,9 +1491,10 @@
     {
       "id": "ink-detail-1",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1482,9 +1510,10 @@
     {
       "id": "ink-detail-2",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1500,9 +1529,10 @@
     {
       "id": "ink-detail-3",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "bezier",
       "start": [
         345.0,
@@ -1556,9 +1586,10 @@
     {
       "id": "ink-detail-4",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "bezier",
       "start": [
         223.0,
@@ -1668,9 +1699,10 @@
     {
       "id": "ink-detail-5",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1686,9 +1718,10 @@
     {
       "id": "ink-detail-6",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1704,9 +1737,10 @@
     {
       "id": "ink-detail-7",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1722,9 +1756,10 @@
     {
       "id": "ink-detail-8",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "bezier",
       "start": [
         238.0,
@@ -1862,9 +1897,10 @@
     {
       "id": "ink-detail-9",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1880,9 +1916,10 @@
     {
       "id": "ink-detail-10",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1898,9 +1935,10 @@
     {
       "id": "ink-detail-11",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1916,9 +1954,10 @@
     {
       "id": "ink-detail-12",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1934,9 +1973,10 @@
     {
       "id": "ink-detail-13",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1952,9 +1992,10 @@
     {
       "id": "ink-detail-14",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1970,9 +2011,10 @@
     {
       "id": "ink-detail-15",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1988,9 +2030,10 @@
     {
       "id": "ink-detail-16",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2006,9 +2049,10 @@
     {
       "id": "ink-detail-17",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2024,9 +2068,10 @@
     {
       "id": "ink-detail-18",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2042,9 +2087,10 @@
     {
       "id": "ink-detail-19",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2060,9 +2106,10 @@
     {
       "id": "ink-detail-20",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2078,9 +2125,10 @@
     {
       "id": "ink-detail-21",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2096,9 +2144,10 @@
     {
       "id": "ink-detail-22",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2114,9 +2163,10 @@
     {
       "id": "ink-detail-23",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2132,9 +2182,10 @@
     {
       "id": "ink-detail-24",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2150,9 +2201,10 @@
     {
       "id": "ink-detail-25",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2168,9 +2220,10 @@
     {
       "id": "ink-detail-26",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2186,9 +2239,10 @@
     {
       "id": "ink-detail-27",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2204,9 +2258,10 @@
     {
       "id": "ink-detail-28",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2222,9 +2277,10 @@
     {
       "id": "ink-detail-29",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2240,9 +2296,10 @@
     {
       "id": "ink-detail-30",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2258,9 +2315,10 @@
     {
       "id": "ink-detail-31",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2276,9 +2334,10 @@
     {
       "id": "ink-detail-32",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2294,9 +2353,10 @@
     {
       "id": "ink-detail-33",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2312,9 +2372,10 @@
     {
       "id": "ink-detail-34",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2330,9 +2391,10 @@
     {
       "id": "ink-detail-35",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2348,9 +2410,10 @@
     {
       "id": "ink-detail-36",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2366,9 +2429,10 @@
     {
       "id": "ink-detail-37",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2384,9 +2448,10 @@
     {
       "id": "ink-detail-38",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -2398,6 +2463,14 @@
           425.5138244628906
         ]
       ]
+    }
+  ],
+  "anchors": [],
+  "edits": [
+    {
+      "id": "stronger-outlines-v1",
+      "sha256": "e03dce01176d3744798934bd68a573a6e608e215713fe4411379d822152ea217",
+      "description": "Oscar requested thicker, more definite outlines."
     }
   ]
 }

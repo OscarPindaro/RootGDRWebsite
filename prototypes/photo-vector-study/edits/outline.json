@@ -1,0 +1,7 @@
+{
+  "id": "stronger-outlines-v1",
+  "description": "Oscar requested thicker, more definite outlines.",
+  "operations": [
+    {"op": "scale_strokes", "factor": 1.35}
+  ]
+}

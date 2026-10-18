@@ -12,66 +12,19 @@ Consumes the OpenCV trace, never the manually authored drawings.py coordinates.
 
 import argparse
 from pathlib import Path
-from typing import Annotated, Literal
 import xml.etree.ElementTree as ET
 
 import cairosvg
 import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont, ImageOps
-from pydantic import BaseModel, Field
 from shapely.geometry import Polygon as GeometryPolygon
 
 from opencv_trace import Trace
+from shape_edits import EditPlan, apply_plan
+from study_scene import INK, Bezier, Cubic, Ellipse, Point, Polygon, Scene, ShapeStyle
 
 ROOT = Path(__file__).resolve().parent
-INK = "#302d2b"
-Point = tuple[float, float]
-
-
-class ShapeStyle(BaseModel):
-    id: str
-    source_region: str
-    fill: str
-    stroke: str = INK
-    stroke_width: float = 6
-
-
-class Polygon(ShapeStyle):
-    kind: Literal["polygon", "polyline"]
-    points: list[Point]
-
-
-class Ellipse(ShapeStyle):
-    kind: Literal["ellipse"] = "ellipse"
-    center: Point
-    radii: Point
-    rotation: float
-
-
-class Cubic(BaseModel):
-    control1: Point
-    control2: Point
-    end: Point
-
-
-class Bezier(ShapeStyle):
-    kind: Literal["bezier"] = "bezier"
-    start: Point
-    segments: list[Cubic]
-
-
-class Scene(BaseModel):
-    format: Literal["photo-shape-study"] = "photo-shape-study"
-    version: Literal[1] = 1
-    name: str
-    width: int
-    height: int
-    method: str = "Voronoi stroke-centre recovery, line fitting and ink skeleton curves"
-    interpretation: str = (
-        "Detected shapes, not inferred anatomical parts or hidden geometry."
-    )
-    shapes: list[Annotated[Polygon | Ellipse | Bezier, Field(discriminator="kind")]]
 
 
 def fit_polygon(contour: np.ndarray) -> list[Point]:
@@ -345,11 +298,12 @@ def svg(scene: Scene, parts: bool = False) -> bytes:
             {
                 "id": shape.id,
                 "data-kind": shape.kind,
+                "data-label": shape.label or shape.id,
                 "data-source": shape.source_region,
                 "tabindex": "0",
             },
         )
-        ET.SubElement(group, "title").text = f"{shape.id} · {shape.kind}"
+        ET.SubElement(group, "title").text = f"{shape.label or shape.id} · {shape.kind}"
         style = {
             "fill": colors[index % len(colors)]
             if parts and shape.fill != "none"
@@ -404,7 +358,7 @@ def present(scenes: list[Scene], output: Path, inputs: Path) -> None:
     title, small = ImageFont.truetype(font, 30), ImageFont.truetype(font, 18)
     draw.text(
         (30, 25),
-        "Dal contorno alle forme · ricostruzione automatica",
+        "Dal contorno alle forme · correzioni guidate",
         font=title,
         fill=INK,
     )
@@ -441,11 +395,16 @@ def present(scenes: list[Scene], output: Path, inputs: Path) -> None:
         )
         inline = svg(scene).decode()
         cards.append(f"""
-        <article><h2>{scene.name}</h2><p>{len(scene.shapes)} oggetti separati · {curves} curve Bézier</p>
-        <div class="figures"><figure><img src="../opencv/{slug}-polygons.png" alt="Contorni OpenCV">
-        <figcaption>Prima estrazione</figcaption></figure>
-        <figure class="interactive">{inline}<figcaption class="selection">Seleziona una forma</figcaption></figure></div>
+        <article><h2>{scene.name}</h2><p>{len(scene.shapes)} oggetti separati · {curves} curve Bézier · {len(scene.anchors)} punti condivisi</p>
+        <div class="figures">
+        <figure class="reference"><a href="../references/{slug}.jpg" target="_blank">
+        <img src="../opencv/{slug}-rectified.png" alt="Fotografia originale di {scene.name}, ritagliata e raddrizzata"></a>
+        <figcaption>Foto di riferimento · apri originale</figcaption></figure>
+        <figure><img src="../opencv/{slug}-polygons.png" alt="Prima estrazione OpenCV di {scene.name}">
+        <figcaption>Prima estrazione OpenCV</figcaption></figure>
+        <figure class="interactive">{inline}<figcaption class="selection">Forme corrette · seleziona un oggetto</figcaption></figure></div>
         <nav><a href="{slug}.svg" download>SVG a forme</a><a href="{slug}.json" download>Scena JSON</a>
+        <a href="{slug}-detected.json" download>Prima delle correzioni</a>
         <a href="{slug}-parts.svg" target="_blank">Mappa degli oggetti</a>
         <button type="button" class="explode">Separa gli oggetti</button></nav></article>""")
     board.save(output / "comparison.png")
@@ -454,7 +413,7 @@ def present(scenes: list[Scene], output: Path, inputs: Path) -> None:
     ink.text((30, 25), "OpenCV → forme indipendenti", font=title, fill=INK)
     ink.text(
         (30, 80),
-        "Poligoni, ellissi e curve Bézier · bordi ricostruiti · nessun vertice tracciato a mano",
+        "Estrazione OpenCV · contorni più marcati · correzioni guidate con punti condivisi",
         font=small,
         fill="#786e61",
     )
@@ -483,22 +442,23 @@ def present(scenes: list[Scene], output: Path, inputs: Path) -> None:
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>Ricostruzione a forme</title>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#f4f0e5;color:#302d2b;font:16px/1.6 system-ui}
-main{max-width:1250px;margin:auto;padding:30px}h1{font:44px Georgia,serif}h2{font:30px Georgia,serif}
-p{max-width:900px}article{border-top:1px solid #c9bfac;padding:20px 0}.figures{display:grid;grid-template-columns:1fr 1fr;gap:24px}
-figure{margin:0;min-width:0}figure img,figure svg{width:100%;height:610px;object-fit:contain}figcaption{text-align:center}
-.interactive svg{overflow:visible;padding:24px}
-svg g{cursor:pointer}svg g:hover>*:not(title),svg g.selected>*:not(title){stroke:#ed843e;stroke-width:4}
+main{max-width:1560px;margin:auto;padding:30px}h1{font:44px Georgia,serif}h2{font:30px Georgia,serif}
+p{max-width:950px}article{border-top:1px solid #c9bfac;padding:20px 0}.figures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+figure{margin:0;min-width:0}figure img,figure svg{width:100%;height:570px;object-fit:contain}figcaption{text-align:center}
+.reference a{display:block}
+svg g{cursor:pointer}svg g:hover>*:not(title),svg g.selected>*:not(title){stroke:#ed843e}
 nav{display:flex;gap:24px;flex-wrap:wrap}a,button{color:#365b70;min-height:44px;display:inline-flex;align-items:center}
 button{font:inherit;background:transparent;border:1px solid #b8ad97;padding:0 12px;cursor:pointer}
 button:focus-visible,a:focus-visible,svg g:focus-visible{outline:3px solid #008ed0;outline-offset:4px}
-@media(max-width:650px){main{padding:20px 14px}.figures{gap:8px}figure img,figure svg{height:350px}}
+@media(max-width:650px){main{padding:20px 14px}.figures{grid-template-columns:1fr 1fr;gap:16px 8px}.reference{grid-column:1/-1}figure img,figure svg{height:350px}figcaption{font-size:13px}}
 </style><main><p>Root GDR · studio 04</p><h1>Dai contorni alle forme.</h1>
 <p>Le regioni rilevate diventano oggetti indipendenti: poligoni con bordi regolari,
 piccole ellissi quando riconoscibili e curve Bézier per alcuni dettagli interni.
 Puoi selezionare gli oggetti o separarli per vedere la composizione.</p>
-<p>Geometria ricavata automaticamente dai pixel. Nessun punto della prima versione
-disegnata a mano viene usato. Le forme non sono ancora parti anatomiche e i confini
-nascosti non vengono inventati.</p>
+<p>La <strong>prima estrazione</strong> segue le regioni di colore e conserva parte
+del contorno del pennarello. La ricostruzione a destra raddrizza i bordi e applica
+le tue indicazioni: colletto triangolare per Altus, ali geometriche per Luciano.
+I punti condivisi tengono unite le forme vicine. Le correzioni sono registrate e ripetibili.</p>
 <nav><a href="comparison.png" target="_blank">Confronto PNG completo</a>
 <a href="../study.zip" download>Scarica SVG, JSON e codice</a>
 <a href="../pose-comparison/">Confronto dei modelli di posa</a></nav>
@@ -511,7 +471,8 @@ for (const figure of document.querySelectorAll('.interactive')) {
     if (!group) return;
     svg.querySelectorAll('.selected').forEach(node => node.classList.remove('selected'));
     group.classList.add('selected');
-    figure.querySelector('.selection').textContent = group.id + ' · ' + group.dataset.kind;
+    const kinds = {polygon:'poligono',polyline:'linea',ellipse:'ellisse',bezier:'curva Bézier'};
+    figure.querySelector('.selection').textContent = group.dataset.label + ' · ' + kinds[group.dataset.kind];
   };
   svg.addEventListener('click', select);
   svg.addEventListener('keydown', event => {if (event.key === 'Enter') select(event)});
@@ -522,11 +483,13 @@ for (const button of document.querySelectorAll('.explode')) {
     const separated = button.getAttribute('aria-pressed') !== 'true';
     button.setAttribute('aria-pressed', String(separated));
     button.textContent = separated ? 'Ricomponi' : 'Separa gli oggetti';
-    const box = svg.viewBox.baseVal;
+    svg.dataset.baseViewBox ||= svg.getAttribute('viewBox');
+    const [x, y, width, height] = svg.dataset.baseViewBox.split(' ').map(Number);
+    svg.setAttribute('viewBox', separated ? `-60 -60 ${width+120} ${height+120}` : svg.dataset.baseViewBox);
     for (const group of svg.querySelectorAll('g')) {
       const bounds = group.getBBox();
-      const dx = bounds.x + bounds.width/2 - box.width/2;
-      const dy = bounds.y + bounds.height/2 - box.height/2;
+      const dx = bounds.x + bounds.width/2 - width/2;
+      const dy = bounds.y + bounds.height/2 - height/2;
       const distance = Math.max(1, Math.hypot(dx, dy));
       group.setAttribute('transform', separated ? `translate(${dx/distance*45} ${dy/distance*45})` : '');
     }
@@ -540,6 +503,8 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, default=ROOT / "output/opencv")
     parser.add_argument("--output", type=Path, default=ROOT / "output/shapes")
+    parser.add_argument("--edits", type=Path, default=ROOT / "edits")
+    parser.add_argument("--no-edits", action="store_true")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     scenes = []
@@ -549,6 +514,15 @@ def main() -> None:
         )
         ink = cv2.imread(str(args.input / f"{slug}-ink.png"), cv2.IMREAD_GRAYSCALE)
         scene = reconstruct(trace, ink)
+        (args.output / f"{slug}-detected.json").write_text(
+            scene.model_dump_json(indent=2) + "\n"
+        )
+        if not args.no_edits:
+            for plan_path in (args.edits / "outline.json", args.edits / f"{slug}.json"):
+                if plan_path.exists():
+                    scene = apply_plan(
+                        scene, EditPlan.model_validate_json(plan_path.read_text())
+                    )
         scenes.append(scene)
         (args.output / f"{slug}.json").write_text(scene.model_dump_json(indent=2))
         data = svg(scene)

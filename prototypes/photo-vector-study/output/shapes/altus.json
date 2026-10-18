@@ -5,18 +5,19 @@
   "width": 370,
   "height": 597,
   "method": "Voronoi stroke-centre recovery, line fitting and ink skeleton curves",
-  "interpretation": "Detected shapes, not inferred anatomical parts or hidden geometry.",
+  "interpretation": "Detected shapes; user-guided edits are recorded separately.",
   "shapes": [
     {
       "id": "region-164-0",
       "source_region": "region-164",
+      "label": null,
       "fill": "#0779a0",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          143.2,
+          150.0,
           154.0
         ],
         [
@@ -44,26 +45,27 @@
           287.14
         ],
         [
-          171.79,
-          192.03
+          181.11,
+          199.59
         ]
       ]
     },
     {
       "id": "region-156-0",
       "source_region": "region-156",
+      "label": null,
       "fill": "#0779a0",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          215.84,
+          213.0,
           150.0
         ],
         [
-          197.91,
-          182.65
+          181.11,
+          199.59
         ],
         [
           284.57,
@@ -110,9 +112,10 @@
     {
       "id": "region-025-0",
       "source_region": "region-025",
+      "label": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -125,7 +128,11 @@
         ],
         [
           150.0,
-          155.0
+          154.0
+        ],
+        [
+          213.0,
+          150.0
         ],
         [
           263.4,
@@ -156,9 +163,10 @@
     {
       "id": "region-194-0",
       "source_region": "region-194",
+      "label": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -198,25 +206,18 @@
           297.98
         ],
         [
-          199.02,
-          185.48
-        ],
-        [
-          181.01,
-          200.59
-        ],
-        [
-          170.82,
-          194.66
+          181.11,
+          199.59
         ]
       ]
     },
     {
       "id": "region-262-0",
       "source_region": "region-262",
+      "label": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -248,9 +249,10 @@
     {
       "id": "region-257-0",
       "source_region": "region-257",
+      "label": null,
       "fill": "#312cab",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -286,9 +288,10 @@
     {
       "id": "region-243-0",
       "source_region": "region-243",
+      "label": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -340,9 +343,10 @@
     {
       "id": "region-239-0",
       "source_region": "region-239",
+      "label": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -390,9 +394,10 @@
     {
       "id": "region-263-0",
       "source_region": "region-263",
+      "label": null,
       "fill": "#a4a7ba",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -420,9 +425,10 @@
     {
       "id": "region-261-0",
       "source_region": "region-261",
+      "label": null,
       "fill": "#312cab",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -470,9 +476,10 @@
     {
       "id": "region-235-0",
       "source_region": "region-235",
+      "label": null,
       "fill": "#e8b910",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -532,9 +539,10 @@
     {
       "id": "region-234-0",
       "source_region": "region-234",
+      "label": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -582,59 +590,33 @@
     {
       "id": "region-160-0",
       "source_region": "region-160",
+      "label": "Colletto triangolare",
       "fill": "#e8b910",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          210.48,
-          150.84
+          150.0,
+          154.0
         ],
         [
-          156.79,
-          153.5
-        ],
-        [
-          148.89,
-          156.38
-        ],
-        [
-          151.26,
-          165.31
-        ],
-        [
-          171.06,
-          188.22
-        ],
-        [
-          172.26,
-          194.42
+          213.0,
+          150.0
         ],
         [
           181.11,
           199.59
-        ],
-        [
-          195.47,
-          187.56
-        ],
-        [
-          197.47,
-          180.57
-        ],
-        [
-          211.11,
-          158.33
         ]
       ]
     },
     {
       "id": "region-120-0",
       "source_region": "region-120",
+      "label": null,
       "fill": "#b43032",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -686,9 +668,10 @@
     {
       "id": "region-018-0",
       "source_region": "region-018",
+      "label": null,
       "fill": "#b43032",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -740,9 +723,10 @@
     {
       "id": "region-064-0",
       "source_region": "region-064",
+      "label": null,
       "fill": "#b43032",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -786,9 +770,10 @@
     {
       "id": "region-223-0",
       "source_region": "region-223",
+      "label": null,
       "fill": "#e8b910",
       "stroke": "#302d2b",
-      "stroke_width": 5.51,
+      "stroke_width": 7.439,
       "kind": "polygon",
       "points": [
         [
@@ -836,9 +821,10 @@
     {
       "id": "region-085-0",
       "source_region": "region-085",
+      "label": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
-      "stroke_width": 5.44,
+      "stroke_width": 7.344,
       "kind": "polygon",
       "points": [
         [
@@ -886,9 +872,10 @@
     {
       "id": "region-100-0",
       "source_region": "region-100",
+      "label": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
-      "stroke_width": 5.21,
+      "stroke_width": 7.034,
       "kind": "polygon",
       "points": [
         [
@@ -940,9 +927,10 @@
     {
       "id": "region-073-0",
       "source_region": "region-073",
+      "label": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
-      "stroke_width": 4.17,
+      "stroke_width": 5.63,
       "kind": "polygon",
       "points": [
         [
@@ -978,9 +966,10 @@
     {
       "id": "region-156-color-1-0",
       "source_region": "region-156-color-1",
+      "label": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
-      "stroke_width": 3.11,
+      "stroke_width": 4.199,
       "kind": "polygon",
       "points": [
         [
@@ -1012,9 +1001,10 @@
     {
       "id": "ink-detail-0",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1030,9 +1020,10 @@
     {
       "id": "ink-detail-1",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1044,6 +1035,87 @@
           325.0571594238281
         ]
       ]
+    }
+  ],
+  "anchors": [
+    {
+      "id": "collar-left",
+      "point": [
+        150.0,
+        154.0
+      ],
+      "vertices": [
+        {
+          "shape": "region-160-0",
+          "index": 0
+        },
+        {
+          "shape": "region-164-0",
+          "index": 0
+        },
+        {
+          "shape": "region-025-0",
+          "index": 2
+        }
+      ]
+    },
+    {
+      "id": "collar-right",
+      "point": [
+        213.0,
+        150.0
+      ],
+      "vertices": [
+        {
+          "shape": "region-160-0",
+          "index": 1
+        },
+        {
+          "shape": "region-156-0",
+          "index": 0
+        },
+        {
+          "shape": "region-025-0",
+          "index": 3
+        }
+      ]
+    },
+    {
+      "id": "collar-tip",
+      "point": [
+        181.11,
+        199.59
+      ],
+      "vertices": [
+        {
+          "shape": "region-160-0",
+          "index": 2
+        },
+        {
+          "shape": "region-164-0",
+          "index": 7
+        },
+        {
+          "shape": "region-156-0",
+          "index": 1
+        },
+        {
+          "shape": "region-194-0",
+          "index": 9
+        }
+      ]
+    }
+  ],
+  "edits": [
+    {
+      "id": "stronger-outlines-v1",
+      "sha256": "e03dce01176d3744798934bd68a573a6e608e215713fe4411379d822152ea217",
+      "description": "Oscar requested thicker, more definite outlines."
+    },
+    {
+      "id": "altus-triangular-collar-v1",
+      "sha256": "1f50ff329fdfd9d4038a2824e23c3860aafa75464aba786bfa86b02d9b82f04d",
+      "description": "Interpret the yellow collar as a triangle and share its corners with the head, cape panels and chest."
     }
   ]
 }

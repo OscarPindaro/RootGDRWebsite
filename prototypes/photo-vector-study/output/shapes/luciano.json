@@ -5,14 +5,15 @@
   "width": 359,
   "height": 479,
   "method": "Voronoi stroke-centre recovery, line fitting and ink skeleton curves",
-  "interpretation": "Detected shapes, not inferred anatomical parts or hidden geometry.",
+  "interpretation": "Detected shapes; user-guided edits are recorded separately.",
   "shapes": [
     {
       "id": "region-028-0",
       "source_region": "region-028",
+      "label": null,
       "fill": "#076abc",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -70,32 +71,21 @@
       ]
     },
     {
-      "id": "region-126-0",
+      "id": "luciano-right-underwing",
       "source_region": "region-126",
+      "label": "Corpo sotto l’ala destra",
       "fill": "#076abc",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
-        [
-          252.1,
-          151.11
-        ],
-        [
-          245.21,
-          181.36
-        ],
-        [
-          250.6,
-          191.81
-        ],
         [
           250.6,
           266.84
         ],
         [
           274.33,
-          282.79
+          285.0
         ],
         [
           291.84,
@@ -112,23 +102,43 @@
         [
           329.76,
           320.1
+        ]
+      ]
+    },
+    {
+      "id": "region-126-0",
+      "source_region": "region-126",
+      "label": "Ala destra · quadrilatero",
+      "fill": "#076abc",
+      "stroke": "#302d2b",
+      "stroke_width": 8.1,
+      "kind": "polygon",
+      "points": [
+        [
+          252.1,
+          151.11
         ],
         [
           336.49,
           233.6
         ],
         [
-          275.14,
-          167.51
+          329.76,
+          320.1
+        ],
+        [
+          250.6,
+          266.84
         ]
       ]
     },
     {
       "id": "region-150-0",
       "source_region": "region-150",
+      "label": null,
       "fill": "#d22b33",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -156,9 +166,10 @@
     {
       "id": "region-156-0",
       "source_region": "region-156",
+      "label": null,
       "fill": "#d22b33",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -186,7 +197,7 @@
           274.91
         ],
         [
-          250.0,
+          250.6,
           266.84
         ],
         [
@@ -198,9 +209,10 @@
     {
       "id": "region-145-0",
       "source_region": "region-145",
+      "label": null,
       "fill": "#d22b33",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -232,9 +244,10 @@
     {
       "id": "region-098-0",
       "source_region": "region-098",
+      "label": "Ala sinistra · triangolo",
       "fill": "#076abc",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -242,37 +255,22 @@
           134.51
         ],
         [
-          52.0,
-          181.0
-        ],
-        [
-          75.12,
-          208.97
-        ],
-        [
-          136.0,
-          163.0
-        ],
-        [
           145.15,
           148.54
         ],
         [
-          135.85,
-          143.8
-        ],
-        [
-          37.98,
-          133.03
+          75.12,
+          208.97
         ]
       ]
     },
     {
       "id": "region-155-0",
       "source_region": "region-155",
+      "label": null,
       "fill": "#ded9d0",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -300,9 +298,10 @@
     {
       "id": "region-147-0",
       "source_region": "region-147",
+      "label": null,
       "fill": "#ded9d0",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -334,9 +333,10 @@
     {
       "id": "region-019-0",
       "source_region": "region-019",
+      "label": null,
       "fill": "#ded9d0",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -396,9 +396,10 @@
     {
       "id": "region-167-0",
       "source_region": "region-167",
+      "label": null,
       "fill": "#d22b33",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -434,22 +435,19 @@
     {
       "id": "region-131-0",
       "source_region": "region-131",
+      "label": "Piega sotto l’ala sinistra",
       "fill": "#076abc",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          136.8,
-          163.08
+          145.15,
+          148.54
         ],
         [
-          125.07,
-          168.98
-        ],
-        [
-          77.47,
-          208.55
+          75.12,
+          208.97
         ],
         [
           73.07,
@@ -466,19 +464,16 @@
         [
           132.96,
           195.2
-        ],
-        [
-          138.05,
-          172.54
         ]
       ]
     },
     {
       "id": "region-190-0",
       "source_region": "region-190",
+      "label": null,
       "fill": "#d22b33",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -526,9 +521,10 @@
     {
       "id": "region-183-0",
       "source_region": "region-183",
+      "label": null,
       "fill": "#ded9d0",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -568,9 +564,10 @@
     {
       "id": "region-162-0",
       "source_region": "region-162",
+      "label": null,
       "fill": "#ded9d0",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -614,9 +611,10 @@
     {
       "id": "region-115-0",
       "source_region": "region-115",
+      "label": null,
       "fill": "#b6403c",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -660,17 +658,18 @@
           164.8
         ],
         [
-          250.89,
-          154.78
+          252.1,
+          151.11
         ]
       ]
     },
     {
       "id": "region-121-0",
       "source_region": "region-121",
+      "label": null,
       "fill": "#b6403c",
       "stroke": "#302d2b",
-      "stroke_width": 6.0,
+      "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
@@ -678,8 +677,8 @@
           149.0
         ],
         [
-          145.85,
-          149.0
+          145.15,
+          148.54
         ],
         [
           136.93,
@@ -718,9 +717,10 @@
     {
       "id": "region-273-0",
       "source_region": "region-273",
+      "label": null,
       "fill": "#a17829",
       "stroke": "#302d2b",
-      "stroke_width": 5.7,
+      "stroke_width": 7.695,
       "kind": "polygon",
       "points": [
         [
@@ -776,9 +776,10 @@
     {
       "id": "region-139-0",
       "source_region": "region-139",
+      "label": null,
       "fill": "#165786",
       "stroke": "#302d2b",
-      "stroke_width": 5.55,
+      "stroke_width": 7.493,
       "kind": "polygon",
       "points": [
         [
@@ -818,9 +819,10 @@
     {
       "id": "region-271-0",
       "source_region": "region-271",
+      "label": null,
       "fill": "#c48818",
       "stroke": "#302d2b",
-      "stroke_width": 5.16,
+      "stroke_width": 6.966,
       "kind": "polygon",
       "points": [
         [
@@ -864,9 +866,10 @@
     {
       "id": "region-245-0",
       "source_region": "region-245",
+      "label": null,
       "fill": "#c48818",
       "stroke": "#302d2b",
-      "stroke_width": 5.09,
+      "stroke_width": 6.872,
       "kind": "polygon",
       "points": [
         [
@@ -902,9 +905,10 @@
     {
       "id": "region-246-0",
       "source_region": "region-246",
+      "label": null,
       "fill": "#a17829",
       "stroke": "#302d2b",
-      "stroke_width": 4.59,
+      "stroke_width": 6.197,
       "kind": "polygon",
       "points": [
         [
@@ -944,9 +948,10 @@
     {
       "id": "region-008-0",
       "source_region": "region-008",
+      "label": null,
       "fill": "#983942",
       "stroke": "#302d2b",
-      "stroke_width": 4.03,
+      "stroke_width": 5.441,
       "kind": "ellipse",
       "center": [
         223.5646209716797,
@@ -961,9 +966,10 @@
     {
       "id": "region-028-color-1-0",
       "source_region": "region-028-color-1",
+      "label": null,
       "fill": "#ded9d0",
       "stroke": "#302d2b",
-      "stroke_width": 2.9,
+      "stroke_width": 3.915,
       "kind": "polygon",
       "points": [
         [
@@ -995,9 +1001,10 @@
     {
       "id": "ink-detail-0",
       "source_region": "interior-ink",
+      "label": null,
       "fill": "none",
       "stroke": "#302d2b",
-      "stroke_width": 3.0,
+      "stroke_width": 4.05,
       "kind": "polyline",
       "points": [
         [
@@ -1009,6 +1016,113 @@
           310.3877868652344
         ]
       ]
+    }
+  ],
+  "anchors": [
+    {
+      "id": "left-wing-root",
+      "point": [
+        145.15,
+        148.54
+      ],
+      "vertices": [
+        {
+          "shape": "region-098-0",
+          "index": 1
+        },
+        {
+          "shape": "region-131-0",
+          "index": 0
+        },
+        {
+          "shape": "region-121-0",
+          "index": 1
+        }
+      ]
+    },
+    {
+      "id": "left-wing-fold",
+      "point": [
+        75.12,
+        208.97
+      ],
+      "vertices": [
+        {
+          "shape": "region-098-0",
+          "index": 2
+        },
+        {
+          "shape": "region-131-0",
+          "index": 1
+        }
+      ]
+    },
+    {
+      "id": "right-wing-root",
+      "point": [
+        252.1,
+        151.11
+      ],
+      "vertices": [
+        {
+          "shape": "region-126-0",
+          "index": 0
+        },
+        {
+          "shape": "region-115-0",
+          "index": 10
+        }
+      ]
+    },
+    {
+      "id": "right-wing-inner",
+      "point": [
+        250.6,
+        266.84
+      ],
+      "vertices": [
+        {
+          "shape": "luciano-right-underwing",
+          "index": 0
+        },
+        {
+          "shape": "region-126-0",
+          "index": 3
+        },
+        {
+          "shape": "region-156-0",
+          "index": 6
+        }
+      ]
+    },
+    {
+      "id": "right-wing-outer",
+      "point": [
+        329.76,
+        320.1
+      ],
+      "vertices": [
+        {
+          "shape": "luciano-right-underwing",
+          "index": 5
+        },
+        {
+          "shape": "region-126-0",
+          "index": 2
+        }
+      ]
+    }
+  ],
+  "edits": [
+    {
+      "id": "stronger-outlines-v1",
+      "sha256": "e03dce01176d3744798934bd68a573a6e608e215713fe4411379d822152ea217",
+      "description": "Oscar requested thicker, more definite outlines."
+    },
+    {
+      "id": "luciano-geometric-wings-v1",
+      "sha256": "f4ef49edfbc9631c27bf4c14ac6e7936cbca6badd07ad73a9327db4ccf0a215b",
+      "description": "The viewer-left projecting wing is a triangle. The viewer-right wing is a quadrilateral separated from the blue body beneath it."
     }
   ]
 }
