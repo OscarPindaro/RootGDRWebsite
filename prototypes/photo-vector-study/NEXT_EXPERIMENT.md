@@ -7,14 +7,16 @@ model is claimed here.
 ## First visual trial
 
 Oscar clarified the first step after reviewing the clothed drafts:
-**start naked, with no objects and one continuous body polygon**. The head must
-join the neck. The skeleton defines bone positions; flesh comes from two points
-on each important joint's bisector, at an authored offset.
+**start naked, with no objects and one continuous body polygon**. His next
+correction specifies OpenPose COCO_18, a separate head shape aligned to the pose,
+pointed hands, and no drawn neck column or invented pubic point. The skeleton
+defines bone positions; flesh comes from paired bisector offsets on the limbs.
 
 `body_skin.py` implements that contour walk; `generate_bodies.py` renders five
 construction examples. `output/generated/index.html` can show the skeleton,
 bisector cross-sections and their skin endpoints. It does not render separate
-limb polygons or joint seams. The earlier clothed draft was set aside.
+limb polygons or joint seams. The head has a separate asset/pivot transform for
+future animation. The earlier clothed draft was set aside.
 
 Review this foundation before adding clothing, props or generating 1,000 examples.
 New character appearance and layering are subsequent steps, after continuous

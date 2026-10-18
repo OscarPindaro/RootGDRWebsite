@@ -374,18 +374,25 @@ come from the extraction. `wolf-postprocessed.svg/json` preserve the earlier
 uniform-stroke alternative. The first extraction remains directly linked and
 labelled as the preferred reference.
 
-## Continuous skin from a skeleton
+## Continuous skin from OpenPose
 
 Oscar rejected the separate-limb clothing draft and clarified the construction:
-the naked body is one closed polygon, with the head attached through the neck.
-Clothes and objects are deferred.
+the naked body is one closed polygon. In the follow-up correction, he requested
+OpenPose input, a separate head asset, no drawn neck column, pointed hands and no
+added pubic protrusion. Clothes and objects remain deferred.
 
 ```sh
 uv run --no-project generate_bodies.py
 ```
 
-`edits/naked-poses.json` declares five poses and flesh offsets. `body_skin.py`
-calculates a cross-section at each major joint. For incoming/outgoing unit bone
+`edits/naked-poses.json` declares five OpenPose **COCO_18** frames and flesh offsets.
+Each frame uses standard `version`/`people`/`pose_keypoints_2d` JSON with 18
+`x,y,confidence` triples. Coordinates are authored, not inferred. Body landmarks
+and Nose are supplied; unmodeled eye/ear landmarks have zero confidence.
+`*-openpose.json` exports the bare standard frame. `openpose_rig.py` owns this
+boundary; BODY_25 and incomplete-body frames are not supported by this study.
+
+`body_skin.py` calculates a cross-section at each limb joint. For incoming/outgoing unit bone
 directions `u` and `v`, its bisector direction is the perpendicular to
 `normalize(u + v)`; the two skin points are `joint ± offset * bisector`.
 This is the same unoriented line as the joint angle's internal bisector. A
@@ -393,15 +400,28 @@ straight joint naturally gets a perpendicular section. Fully folded-back
 directions are rejected. Endpoints use their one neighboring bone.
 
 The offset is measured along the bisector; there is no miter correction.
-Shoulders, elbows, wrists, hands, hips, knees, ankles, toes and the neck have
-independent widths; `overrides` can change an individual joint. The body contour
-walk connects each chain's paired sections, caps its extremity, then returns
-along the opposite side. The neck continues into an authored head profile.
+Shoulders, elbows, wrists, hips, knees, ankles and foot ends have independent
+widths; `overrides` uses OpenPose names such as `RElbow`. The body contour
+walk connects each chain's paired sections, terminates each hand in one tip,
+then returns along the opposite side. It closes across the shoulders and joins
+the inner hip endpoints directly. There is no custom pubic point or extra neck
+geometry. Foot-end sections and hand tips are geometric controls, not extra
+OpenPose joints.
 There are no rendered limb rectangles, no polygon unions, and no internal seams.
 
-Each example exports one body polygon plus small eye overlays, a scene JSON,
-the rig/offset target, a clean SVG and an optional construction-guide SVG.
-The target records every bone, bisector, offset and contour vertex source.
+`head_attachment.py` builds the head as a separate asset, with its own local
+profile and Nose reference. Its pivot is OpenPose Neck; rotation and uniform scale
+map that local reference onto the current Nose coordinate. A small overlap into
+the shoulders prevents a gap, without adding a neck column. The head and all
+facial marks are grouped under `head-object` in the SVG for later animation.
+Changing only Nose changes the head transform without altering the body contour.
+The target stores the local asset, pivot, rotation and scale; there are no custom
+`head`, `jaw`, `pelvis` or `crotch` skeleton nodes.
+
+Each example exports one body polygon, a separate head and facial overlays,
+a scene JSON, the OpenPose frame, the rig/offset target, a clean SVG and an
+optional construction-guide SVG. The target records every standard bone,
+bisector, offset, hand tip and contour vertex source.
 `output/generated/index.html` switches the guides on/off; examples share a
 common coordinate scale. All files are local and tracked, except temporary
 drafts and model/download caches.

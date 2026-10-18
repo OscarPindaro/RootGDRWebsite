@@ -1,14 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 820" width="520" height="820" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Base eretta">
-  <g id="body" data-kind="polygon" data-label="Corpo continuo" data-part="body" data-source="bisector-skin" tabindex="0">
-    <title>Corpo continuo · polygon</title>
-    <polygon fill="#bd9a61" stroke="#302d2b" stroke-width="6.0" points="243,245 197,245 191,119 369,192 385,250 359,221 321,245 277,245 277,290 342.919,302.567 387.25,419.857 395.833,508.088 403.479,534.156 375.905,539.022 374.167,511.912 352.75,430.143 307.081,337.433 318.419,489.613 338.884,612.9 333.395,729.567 356.578,741.845 349.422,756.155 316.605,740.433 301.116,617.1 281.581,520.387 260,535 238.419,520.387 218.884,617.1 203.395,740.433 170.578,756.155 163.422,741.845 186.605,729.567 181.116,612.9 201.581,489.613 212.919,337.433 167.25,430.143 145.833,511.912 144.095,539.022 116.521,534.156 124.167,508.088 132.75,419.857 177.081,302.567 243,290" />
-  </g>
-  <g id="eye-0" data-kind="ellipse" data-label="Occhio" data-part="face" data-source="head-profile" tabindex="0">
-    <title>Occhio · ellipse</title>
-    <ellipse fill="#f4edd8" stroke="#302d2b" stroke-width="2.5" cx="233.0" cy="173.0" rx="7.0" ry="6.0" transform="rotate(0.0 233.0 173.0)" />
-  </g>
-  <g id="pupil-0" data-kind="ellipse" data-label="Pupilla" data-part="face" data-source="head-profile" tabindex="0">
-    <title>Pupilla · ellipse</title>
-    <ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="234.0" cy="173.0" rx="2.0" ry="3.0" transform="rotate(0.0 234.0 173.0)" />
-  </g>
-</svg>
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" viewBox="0 0 520 820" width="520" height="820" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Base eretta">
+  <ns0:g id="body" data-kind="polygon" data-label="Corpo continuo" data-part="body" data-source="bisector-skin" tabindex="0">
+    <ns0:title>Corpo continuo &#183; polygon</ns0:title>
+    <ns0:polygon fill="#bd9a61" stroke="#302d2b" stroke-width="6.0" points="338.762,299.129 387.25,419.857 395.833,508.088 389.692,536.589 374.167,511.912 352.75,430.143 311.238,340.871 323.539,500.317 338.884,612.9 333.395,729.567 356.578,741.845 349.422,756.155 316.605,740.433 301.116,617.1 276.461,509.683 243.539,509.683 218.884,617.1 203.395,740.433 170.578,756.155 163.422,741.845 186.605,729.567 181.116,612.9 196.461,500.317 208.762,340.871 167.25,430.143 145.833,511.912 130.308,536.589 124.167,508.088 132.75,419.857 181.238,299.129" />
+  </ns0:g>
+  <ns0:g id="head-object" data-anchor="Neck" data-aim="Nose" data-pivot="260.0 320.0"><ns0:g id="head" data-kind="polygon" data-label="Testa indipendente" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Testa indipendente &#183; polygon</ns0:title>
+    <ns0:polygon fill="#bd9a61" stroke="#302d2b" stroke-width="6.0" points="184.4,310.4 177.2,159.2 390.8,246.8 410,316.4 378.8,281.6 333.2,310.4" />
+  </ns0:g>
+  <ns0:g id="eye-0" data-kind="ellipse" data-label="Occhio" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Occhio &#183; ellipse</ns0:title>
+    <ns0:ellipse fill="#f4edd8" stroke="#302d2b" stroke-width="2.5" cx="227.60000000000002" cy="218.0" rx="8.4" ry="7.199999999999999" transform="rotate(6.3611093629270335e-15 227.60000000000002 218.0)" />
+  </ns0:g>
+  <ns0:g id="pupil-0" data-kind="ellipse" data-label="Pupilla" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Pupilla &#183; ellipse</ns0:title>
+    <ns0:ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="228.8" cy="218.0" rx="2.4" ry="3.5999999999999996" transform="rotate(6.3611093629270335e-15 228.8 218.0)" />
+  </ns0:g>
+  <ns0:g id="nose-mark" data-kind="ellipse" data-label="Riferimento Nose" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Riferimento Nose &#183; ellipse</ns0:title>
+    <ns0:ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="360.8" cy="242.0" rx="3.5999999999999996" ry="2.4" transform="rotate(6.3611093629270335e-15 360.8 242.0)" />
+  </ns0:g>
+</ns0:g></ns0:svg>

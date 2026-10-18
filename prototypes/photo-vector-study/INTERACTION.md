@@ -55,6 +55,9 @@ requested no phone tests or long suites for this cycle.
 After reviewing the dressed drafts, Oscar clarified that the base body must be
 one continuous polygon, not independently outlined limbs. Start naked, with no
 objects. Each joint supplies two flesh points on its bisector at a declared
-offset; connecting those sections defines the body boundary. The head must
-continue into the neck. For this representation, edit rig positions and offsets
+offset; connecting those sections defines the body boundary. The subsequent
+correction uses OpenPose COCO_18, without custom head/jaw/pubic bones. The head
+is a separately attached shape following Neck/Nose, not part of the body contour.
+No physical neck column is added. Hands end in points; the inner hips join
+directly without an extra central protrusion. Edit rig positions and offsets
 and regenerate the skin before adding clothing or props.

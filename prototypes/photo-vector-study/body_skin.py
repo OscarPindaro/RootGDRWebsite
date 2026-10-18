@@ -9,18 +9,18 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from head_attachment import HeadAttachment, HeadKind, attach_head
+from openpose_rig import CONNECTIONS, OpenPoseFrame
 from shape_edits import validate_scene
-from study_scene import Ellipse, Point, Polygon, Scene
+from study_scene import Point, Polygon, Scene
 
 
 class Thickness(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    neck: float = Field(default=17, gt=0)
-    jaw: float = Field(default=17, gt=0)
     shoulder: float = Field(default=25, gt=0)
     elbow: float = Field(default=18, gt=0)
     wrist: float = Field(default=11, gt=0)
-    hand: float = Field(default=14, gt=0)
+    hand_length: float = Field(default=27, gt=0)
     hip: float = Field(default=24, gt=0)
     knee: float = Field(default=19, gt=0)
     ankle: float = Field(default=10, gt=0)
@@ -31,9 +31,9 @@ class Pose(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: str
     name: str
-    head_kind: Literal["bird", "wolf", "plain"]
+    head_kind: HeadKind
     color: str
-    joints: dict[str, Point]
+    openpose: OpenPoseFrame
     thickness: Thickness = Field(default_factory=Thickness)
     overrides: dict[str, float] = Field(default_factory=dict)
 
@@ -45,6 +45,7 @@ class Section(BaseModel):
     offset: float
     left: Point
     right: Point
+    source_keypoint: str | None = None
 
 
 class Bone(BaseModel):
@@ -55,7 +56,8 @@ class Bone(BaseModel):
 
 class SkinTarget(BaseModel):
     format: Literal["continuous-skin-target"] = "continuous-skin-target"
-    version: Literal[1] = 1
+    version: Literal[2] = 2
+    pose_model: Literal["COCO_18"] = "COCO_18"
     width: int
     height: int
     pose: Pose
@@ -64,6 +66,8 @@ class SkinTarget(BaseModel):
     bones: list[Bone]
     body_vertices: list[Point]
     vertex_sources: list[str]
+    hand_tips: dict[str, Point]
+    head_attachment: HeadAttachment
     method: str = "One closed contour; two flesh points on each joint's bisector."
     offset_definition: str = (
         "Distance along the bisector, not a miter-corrected perpendicular bone radius."
@@ -107,145 +111,82 @@ def cross_section(
 
 
 def build_skin(pose: Pose) -> tuple[Scene, SkinTarget]:
-    joints = pose.joints.copy()
+    joints = pose.openpose.points()
+    geometry = joints.copy()
     sections: dict[str, Section] = {}
-    bones = []
-    chains = []
-    for side in ("right", "left"):
-        wrist, elbow = joints[f"wrist-{side}"], joints[f"elbow-{side}"]
+    hand_tips = {}
+    for side, direction_x in (("L", 1), ("R", -1)):
+        wrist, elbow = joints[f"{side}Wrist"], joints[f"{side}Elbow"]
         direction = unit((wrist[0] - elbow[0], wrist[1] - elbow[1]))
-        joints[f"hand-{side}"] = (
-            wrist[0] + direction[0] * 27,
-            wrist[1] + direction[1] * 27,
+        hand_tips[f"{side}Wrist"] = (
+            wrist[0] + direction[0] * pose.thickness.hand_length,
+            wrist[1] + direction[1] * pose.thickness.hand_length,
         )
-        ankle = joints[f"ankle-{side}"]
-        joints[f"toe-{side}"] = (
-            ankle[0] + (28 if side == "right" else -28),
+        ankle = joints[f"{side}Ankle"]
+        geometry[f"{side}FootEnd"] = (
+            ankle[0] + direction_x * 28,
             ankle[1] + 14,
         )
-        chains.extend(
-            [
-                [
-                    "neck",
-                    f"shoulder-{side}",
-                    f"elbow-{side}",
-                    f"wrist-{side}",
-                    f"hand-{side}",
-                ],
-                [
-                    "pelvis",
-                    f"hip-{side}",
-                    f"knee-{side}",
-                    f"ankle-{side}",
-                    f"toe-{side}",
-                ],
-            ]
-        )
-    chains = [chains[0], chains[1], chains[3], chains[2]]
+    # OpenPose anatomical left is the image-right chain in these frontal examples.
+    chains = [
+        ["Neck", "LShoulder", "LElbow", "LWrist"],
+        ["Neck", "LHip", "LKnee", "LAnkle", "LFootEnd"],
+        ["Neck", "RHip", "RKnee", "RAnkle", "RFootEnd"],
+        ["Neck", "RShoulder", "RElbow", "RWrist"],
+    ]
     radii = {
-        "neck": pose.thickness.neck,
-        "jaw": pose.thickness.jaw,
-        "shoulder": pose.thickness.shoulder,
-        "elbow": pose.thickness.elbow,
-        "wrist": pose.thickness.wrist,
-        "hand": pose.thickness.hand,
-        "hip": pose.thickness.hip,
-        "knee": pose.thickness.knee,
-        "ankle": pose.thickness.ankle,
-        "toe": pose.thickness.toe,
+        "Shoulder": pose.thickness.shoulder,
+        "Elbow": pose.thickness.elbow,
+        "Wrist": pose.thickness.wrist,
+        "Hip": pose.thickness.hip,
+        "Knee": pose.thickness.knee,
+        "Ankle": pose.thickness.ankle,
+        "FootEnd": pose.thickness.toe,
     }
     for chain in chains:
         for index in range(1, len(chain)):
             name, parent = chain[index], chain[index - 1]
-            following = joints[chain[index + 1]] if index + 1 < len(chain) else None
-            role = name.split("-")[0]
-            radius = pose.overrides.get(name, radii[role])
+            following = geometry[chain[index + 1]] if index + 1 < len(chain) else None
+            radius = pose.overrides.get(name, radii[name[1:]])
             sections[name] = cross_section(
-                name, joints[name], joints[parent], following, radius
+                name, geometry[name], geometry[parent], following, radius
             )
-            a, b = joints[parent], joints[name]
-            bones.append(
-                Bone(start=parent, end=name, length=hypot(b[0] - a[0], b[1] - a[1]))
+            sections[name].source_keypoint = (
+                name if name in joints else name[0] + "Ankle"
             )
-    for name, parent, child in (("neck", "pelvis", "jaw"), ("jaw", "neck", "head")):
-        sections[name] = cross_section(
-            name,
-            joints[name],
-            joints[parent],
-            joints[child],
-            pose.overrides.get(name, radii[name]),
+    bones = [
+        Bone(
+            start=a,
+            end=b,
+            length=hypot(joints[b][0] - joints[a][0], joints[b][1] - joints[a][1]),
         )
-        a, b = joints[parent], joints[name]
-        bones.append(
-            Bone(start=parent, end=name, length=hypot(b[0] - a[0], b[1] - a[1]))
-        )
-    a, b = joints["jaw"], joints["head"]
-    bones.append(Bone(start="jaw", end="head", length=hypot(b[0] - a[0], b[1] - a[1])))
-    a, b = joints["pelvis"], joints["crotch"]
-    bones.append(
-        Bone(start="pelvis", end="crotch", length=hypot(b[0] - a[0], b[1] - a[1]))
-    )
-    jaw = sections["jaw"]
-    right = jaw.bisector
-    down = -right[1], right[0]
+        for a, b in CONNECTIONS
+        if a in joints and b in joints
+    ]
 
-    def head_point(x: float, y: float) -> Point:
-        return jaw.center[0] + x * right[0] + y * down[0], jaw.center[1] + x * right[
-            1
-        ] + y * down[1]
-
-    if pose.head_kind == "bird":
-        head = [(-63, 0), (-69, -126), (109, -53), (125, 5), (99, -24), (61, 0)]
-    elif pose.head_kind == "wolf":
-        head = [
-            (-67, 0),
-            (-88, -42),
-            (-77, -37),
-            (-86, -77),
-            (-74, -65),
-            (-73, -112),
-            (-57, -158),
-            (-24, -132),
-            (31, -132),
-            (59, -158),
-            (75, -112),
-            (81, -77),
-            (109, -95),
-            (124, -79),
-            (117, -25),
-            (61, 0),
-        ]
-    else:
-        head = [(-40, 0), (-54, -58), (-43, -111), (39, -111), (54, -58), (40, 0)]
-    vertices: list[Point] = [jaw.right]
-    sources = ["jaw:right"]
-    for point in head:
-        vertices.append(head_point(*point))
-        sources.append("head-profile")
-    vertices.extend([jaw.left, sections["neck"].left])
-    sources.extend(["jaw:left", "neck:left"])
-    # Follow each entire chain along one side, cap it, then return along the
-    # opposite side. Root cross-section edges never become interior seams.
-    for index, chain in enumerate(chains):
-        if index == 2:
-            vertices.append(joints["crotch"])
-            sources.append("crotch")
+    vertices: list[Point] = []
+    sources = []
+    # The loop closes directly across the shoulder envelope. Between the inner
+    # hips it uses one plain segment: no invented central pubic control point.
+    for chain in chains:
         for side, names in (
             ("right", chain[1:]),
             ("left", list(reversed(chain[1:]))),
         ):
+            if side == "left" and chain[-1].endswith("Wrist"):
+                wrist = chain[-1]
+                vertices.append(hand_tips[wrist])
+                sources.append(wrist + ":tip")
             for name in names:
                 section = sections[name]
                 vertices.append(section.right if side == "right" else section.left)
                 sources.append(name + ":" + side)
-    vertices.append(sections["neck"].right)
-    sources.append("neck:right")
     scene = Scene(
         name=pose.name,
         width=520,
         height=820,
         method="Continuous skin from joint bisectors and an explicitly traversed boundary",
-        interpretation="Naked construction study: one body polygon including the attached head and neck.",
+        interpretation="COCO_18-driven continuous body; separate head asset, no neck column or pubic point.",
         shapes=[
             Polygon(
                 id="body",
@@ -259,36 +200,13 @@ def build_skin(pose: Pose) -> tuple[Scene, SkinTarget]:
             )
         ],
     )
-    # Small facial marks are overlays; they do not split the skin contour.
-    eyes = [(-27, -72)] if pose.head_kind == "bird" else [(-25, -77), (29, -77)]
-    for index, (x, y) in enumerate(eyes):
-        center = head_point(x, y)
-        scene.shapes.append(
-            Ellipse(
-                id=f"eye-{index}",
-                part="face",
-                label="Occhio",
-                source_region="head-profile",
-                center=center,
-                radii=(7, 6),
-                rotation=0,
-                fill="#f4edd8",
-                stroke_width=2.5,
-            )
-        )
-        scene.shapes.append(
-            Ellipse(
-                id=f"pupil-{index}",
-                part="face",
-                label="Pupilla",
-                source_region="head-profile",
-                center=(center[0] + 1, center[1]),
-                radii=(2, 3),
-                rotation=0,
-                fill="#302d2b",
-                stroke_width=1,
-            )
-        )
+    head_shapes, attachment = attach_head(
+        pose.head_kind,
+        pose.color,
+        joints["Neck"],
+        joints["Nose"],
+    )
+    scene.shapes.extend(head_shapes)
     validate_scene(scene)
     target = SkinTarget(
         width=scene.width,
@@ -299,5 +217,7 @@ def build_skin(pose: Pose) -> tuple[Scene, SkinTarget]:
         bones=bones,
         body_vertices=vertices,
         vertex_sources=sources,
+        hand_tips=hand_tips,
+        head_attachment=attachment,
     )
     return scene, target

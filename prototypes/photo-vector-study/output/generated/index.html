@@ -15,10 +15,11 @@ a:focus-visible,input:focus-visible{outline:3px solid #d26936;outline-offset:4px
 @media(max-width:1100px){.grid{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){main{padding:20px 14px}.grid{grid-template-columns:1fr}}
 </style><main><p>Root GDR · studio della pelle continua</p>
-<h1>Il corpo è un solo contorno.</h1>
-<p>Prima lo scheletro. A ogni articolazione, due punti sulla bisettrice a distanza
-X dal centro. Collegando quei punti si ottiene la pelle, senza rettangoli separati
-per braccia e gambe. Un solo poligono chiuso comprende corpo, mani, piedi, collo e testa.</p>
+<h1>Corpo continuo, testa indipendente.</h1>
+<p>Lo scheletro usa il formato OpenPose COCO_18. Il corpo resta un solo poligono,
+senza colonna del collo né punto pubico aggiunto. Le mani terminano a punta.
+La testa è una forma separata: il suo pivot segue Neck e l’orientamento segue Nose.
+Può muoversi senza riscrivere il corpo.</p>
 <div class="controls"><label><input id="guides" type="checkbox">Mostra scheletro, bisettrici e punti della pelle</label>
 <a href="preview.png" target="_blank">Tavola PNG</a><a href="../shapes/">Studio dalle fotografie</a>
 <a href="../study.zip" download>Scarica lo studio</a></div>
@@ -27,32 +28,39 @@ per braccia e gambe. Un solo poligono chiuso comprende corpo, mani, piedi, collo
 Le guide non sono bordi del corpo e non compaiono nell’SVG pulito.
 Tutti gli esempi usano la stessa scala.</p>
 <section class="grid">
-        <article><h2>Base eretta</h2><p>Un solo poligono per tutto il corpo, compresi collo e testa.</p>
+        <article><h2>Base eretta</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
         <figure><img data-id="upright" src="upright.svg" alt="Base eretta"></figure>
         <nav><a href="upright.svg" download>SVG</a><a href="upright.json" download>Scena</a>
         <a href="upright-target.json" download>Giunti e offset</a>
+        <a href="upright-openpose.json" download>OpenPose JSON</a>
         <a href="upright-construction.svg" target="_blank">Costruzione</a></nav></article>
-        <article><h2>Braccia piegate</h2><p>Un solo poligono per tutto il corpo, compresi collo e testa.</p>
+        <article><h2>Braccia piegate</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
         <figure><img data-id="bent-arms" src="bent-arms.svg" alt="Braccia piegate"></figure>
         <nav><a href="bent-arms.svg" download>SVG</a><a href="bent-arms.json" download>Scena</a>
         <a href="bent-arms-target.json" download>Giunti e offset</a>
+        <a href="bent-arms-openpose.json" download>OpenPose JSON</a>
         <a href="bent-arms-construction.svg" target="_blank">Costruzione</a></nav></article>
-        <article><h2>Braccio alzato</h2><p>Un solo poligono per tutto il corpo, compresi collo e testa.</p>
+        <article><h2>Braccio alzato</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
         <figure><img data-id="raised-arm" src="raised-arm.svg" alt="Braccio alzato"></figure>
         <nav><a href="raised-arm.svg" download>SVG</a><a href="raised-arm.json" download>Scena</a>
         <a href="raised-arm-target.json" download>Giunti e offset</a>
+        <a href="raised-arm-openpose.json" download>OpenPose JSON</a>
         <a href="raised-arm-construction.svg" target="_blank">Costruzione</a></nav></article>
-        <article><h2>Passo largo</h2><p>Un solo poligono per tutto il corpo, compresi collo e testa.</p>
+        <article><h2>Passo largo</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
         <figure><img data-id="wide-step" src="wide-step.svg" alt="Passo largo"></figure>
         <nav><a href="wide-step.svg" download>SVG</a><a href="wide-step.json" download>Scena</a>
         <a href="wide-step-target.json" download>Giunti e offset</a>
+        <a href="wide-step-openpose.json" download>OpenPose JSON</a>
         <a href="wide-step-construction.svg" target="_blank">Costruzione</a></nav></article>
-        <article><h2>Offset maggiori</h2><p>Un solo poligono per tutto il corpo, compresi collo e testa.</p>
+        <article><h2>Offset maggiori</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
         <figure><img data-id="wide-body" src="wide-body.svg" alt="Offset maggiori"></figure>
         <nav><a href="wide-body.svg" download>SVG</a><a href="wide-body.json" download>Scena</a>
         <a href="wide-body-target.json" download>Giunti e offset</a>
+        <a href="wide-body-openpose.json" download>OpenPose JSON</a>
         <a href="wide-body-construction.svg" target="_blank">Costruzione</a></nav></article></section>
-<p>Le pose, i profili delle teste e gli spessori sono dichiarati. Il contorno è
+<p>Neck è un riferimento OpenPose al centro delle spalle, non un collo da disegnare.
+Nose posiziona e orienta la forma della testa; non esistono ossa personalizzate
+“head”, “jaw” o “crotch”. Le pose, i profili delle teste e gli spessori sono dichiarati. Il contorno è
 calcolato da quelle informazioni. Gli offset sono misurati lungo la bisettrice;
 non viene applicata una correzione miter che allunghi gli angoli.
 Pose con arti che si attraversano o ripiegati completamente richiedono una gestione

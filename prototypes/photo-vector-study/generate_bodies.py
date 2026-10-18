@@ -2,7 +2,7 @@
 # requires-python = ">=3.12"
 # dependencies = ["pydantic==2.12.5", "pillow==12.0.0", "cairosvg==2.8.2"]
 # ///
-"""Naked construction studies: one body contour, bisectors and explicit offsets."""
+"""OpenPose-driven skin with pointed hands and a separately attached head."""
 
 from pathlib import Path
 import xml.etree.ElementTree as ET
@@ -13,9 +13,29 @@ from pydantic import TypeAdapter
 
 from body_skin import Pose, SkinTarget, build_skin
 from scene_svg import svg
+from study_scene import Scene
 
 ROOT = Path(__file__).resolve().parent
 NS = "{http://www.w3.org/2000/svg}"
+
+
+def asset_svg(scene: Scene, target: SkinTarget) -> bytes:
+    root = ET.fromstring(svg(scene))
+    head = ET.Element(
+        NS + "g",
+        {
+            "id": target.head_attachment.svg_group,
+            "data-anchor": "Neck",
+            "data-aim": "Nose",
+            "data-pivot": f"{target.head_attachment.pivot[0]} {target.head_attachment.pivot[1]}",
+        },
+    )
+    for group in list(root):
+        if group.attrib.get("data-part") == "head":
+            root.remove(group)
+            head.append(group)
+    root.append(head)
+    return ET.tostring(root) + b"\n"
 
 
 def construction_svg(data: bytes, target: SkinTarget) -> bytes:
@@ -78,6 +98,20 @@ def construction_svg(data: bytes, target: SkinTarget) -> bytes:
             },
         )
         ET.SubElement(dot, NS + "title").text = name
+    for name, (x, y) in target.hand_tips.items():
+        dot = ET.SubElement(
+            guides,
+            NS + "circle",
+            {
+                "cx": str(x),
+                "cy": str(y),
+                "r": "3",
+                "fill": "#d26936",
+            },
+        )
+        ET.SubElement(
+            dot, NS + "title"
+        ).text = f"Hand tip from {name}; not an extra pose keypoint"
     return ET.tostring(root) + b"\n"
 
 
@@ -88,11 +122,14 @@ def gallery(poses: list[Pose], targets: list[SkinTarget], output: Path) -> None:
     font = "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf"
     title, small = ImageFont.truetype(font, 32), ImageFont.truetype(font, 17)
     ink.text(
-        (30, 25), "Una sola pelle · scheletro e bisettrici", font=title, fill="#302d2b"
+        (30, 25),
+        "OpenPose · corpo continuo e testa separata",
+        font=title,
+        fill="#302d2b",
     )
     ink.text(
         (30, 82),
-        "Nessun abito o oggetto · testa e collo uniti · nessuna giuntura interna",
+        "COCO_18 · nessun collo aggiunto · mani a punta · nessuna sporgenza centrale",
         font=small,
         fill="#786e61",
     )
@@ -117,15 +154,16 @@ def gallery(poses: list[Pose], targets: list[SkinTarget], output: Path) -> None:
         ink.text((25 + index * 375, 900), pose.name, font=small, fill="#302d2b")
         ink.text(
             (25 + index * 375, 934),
-            f"1 contorno · {len(target.body_vertices)} vertici",
+            f"Corpo: {len(target.body_vertices)} vertici · testa indipendente",
             font=small,
             fill="#786e61",
         )
         cards.append(f"""
-        <article><h2>{pose.name}</h2><p>Un solo poligono per tutto il corpo, compresi collo e testa.</p>
+        <article><h2>{pose.name}</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
         <figure><img data-id="{pose.id}" src="{pose.id}.svg" alt="{pose.name}"></figure>
         <nav><a href="{pose.id}.svg" download>SVG</a><a href="{pose.id}.json" download>Scena</a>
         <a href="{pose.id}-target.json" download>Giunti e offset</a>
+        <a href="{pose.id}-openpose.json" download>OpenPose JSON</a>
         <a href="{pose.id}-construction.svg" target="_blank">Costruzione</a></nav></article>""")
     board.save(output / "preview.png")
     (output / "index.html").write_text(
@@ -146,10 +184,11 @@ a:focus-visible,input:focus-visible{outline:3px solid #d26936;outline-offset:4px
 @media(max-width:1100px){.grid{grid-template-columns:1fr 1fr}}
 @media(max-width:650px){main{padding:20px 14px}.grid{grid-template-columns:1fr}}
 </style><main><p>Root GDR · studio della pelle continua</p>
-<h1>Il corpo è un solo contorno.</h1>
-<p>Prima lo scheletro. A ogni articolazione, due punti sulla bisettrice a distanza
-X dal centro. Collegando quei punti si ottiene la pelle, senza rettangoli separati
-per braccia e gambe. Un solo poligono chiuso comprende corpo, mani, piedi, collo e testa.</p>
+<h1>Corpo continuo, testa indipendente.</h1>
+<p>Lo scheletro usa il formato OpenPose COCO_18. Il corpo resta un solo poligono,
+senza colonna del collo né punto pubico aggiunto. Le mani terminano a punta.
+La testa è una forma separata: il suo pivot segue Neck e l’orientamento segue Nose.
+Può muoversi senza riscrivere il corpo.</p>
 <div class="controls"><label><input id="guides" type="checkbox">Mostra scheletro, bisettrici e punti della pelle</label>
 <a href="preview.png" target="_blank">Tavola PNG</a><a href="../shapes/">Studio dalle fotografie</a>
 <a href="../study.zip" download>Scarica lo studio</a></div>
@@ -158,7 +197,9 @@ per braccia e gambe. Un solo poligono chiuso comprende corpo, mani, piedi, collo
 Le guide non sono bordi del corpo e non compaiono nell’SVG pulito.
 Tutti gli esempi usano la stessa scala.</p>
 <section class="grid">CARDS</section>
-<p>Le pose, i profili delle teste e gli spessori sono dichiarati. Il contorno è
+<p>Neck è un riferimento OpenPose al centro delle spalle, non un collo da disegnare.
+Nose posiziona e orienta la forma della testa; non esistono ossa personalizzate
+“head”, “jaw” o “crotch”. Le pose, i profili delle teste e gli spessori sono dichiarati. Il contorno è
 calcolato da quelle informazioni. Gli offset sono misurati lungo la bisettrice;
 non viene applicata una correzione miter che allunghi gli angoli.
 Pose con arti che si attraversano o ripiegati completamente richiedono una gestione
@@ -184,7 +225,7 @@ def main() -> None:
     for pose in poses:
         scene, target = build_skin(pose)
         targets.append(target)
-        data = svg(scene)
+        data = asset_svg(scene, target)
         (output / f"{pose.id}.svg").write_bytes(data)
         (output / f"{pose.id}-construction.svg").write_bytes(
             construction_svg(data, target)
@@ -192,6 +233,9 @@ def main() -> None:
         (output / f"{pose.id}.json").write_text(scene.model_dump_json(indent=2) + "\n")
         (output / f"{pose.id}-target.json").write_text(
             target.model_dump_json(indent=2) + "\n"
+        )
+        (output / f"{pose.id}-openpose.json").write_text(
+            pose.openpose.model_dump_json(indent=2) + "\n"
         )
         cairosvg.svg2png(
             bytestring=data,

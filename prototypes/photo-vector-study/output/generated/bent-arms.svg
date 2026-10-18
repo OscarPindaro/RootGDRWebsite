@@ -1,22 +1,30 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 820" width="520" height="820" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Braccia piegate">
-  <g id="body" data-kind="polygon" data-label="Corpo continuo" data-part="body" data-source="bisector-skin" tabindex="0">
-    <title>Corpo continuo · polygon</title>
-    <polygon fill="#8faaa1" stroke="#302d2b" stroke-width="6.0" points="243,250 193,250 172,208 183,213 174,173 186,185 187,138 203,92 236,118 291,118 319,92 335,138 341,173 369,155 384,171 377,225 321,250 277,250 277,295 341.895,306.573 382.265,412.209 399.251,312.663 402.055,285.642 429.416,291.59 420.749,317.337 387.735,447.791 308.105,343.427 318.419,489.613 338.884,612.9 333.395,729.567 356.578,741.845 349.422,756.155 316.605,740.433 301.116,617.1 281.581,520.387 260,535 238.419,520.387 218.884,617.1 203.395,740.433 170.578,756.155 163.422,741.845 186.605,729.567 181.116,612.9 201.581,489.613 211.895,343.427 132.265,447.791 99.2511,317.337 90.5839,291.59 117.945,285.642 120.749,312.663 137.735,412.209 178.105,306.573 243,295" />
-  </g>
-  <g id="eye-0" data-kind="ellipse" data-label="Occhio" data-part="face" data-source="head-profile" tabindex="0">
-    <title>Occhio · ellipse</title>
-    <ellipse fill="#f4edd8" stroke="#302d2b" stroke-width="2.5" cx="235.0" cy="173.0" rx="7.0" ry="6.0" transform="rotate(0.0 235.0 173.0)" />
-  </g>
-  <g id="pupil-0" data-kind="ellipse" data-label="Pupilla" data-part="face" data-source="head-profile" tabindex="0">
-    <title>Pupilla · ellipse</title>
-    <ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="236.0" cy="173.0" rx="2.0" ry="3.0" transform="rotate(0.0 236.0 173.0)" />
-  </g>
-  <g id="eye-1" data-kind="ellipse" data-label="Occhio" data-part="face" data-source="head-profile" tabindex="0">
-    <title>Occhio · ellipse</title>
-    <ellipse fill="#f4edd8" stroke="#302d2b" stroke-width="2.5" cx="289.0" cy="173.0" rx="7.0" ry="6.0" transform="rotate(0.0 289.0 173.0)" />
-  </g>
-  <g id="pupil-1" data-kind="ellipse" data-label="Pupilla" data-part="face" data-source="head-profile" tabindex="0">
-    <title>Pupilla · ellipse</title>
-    <ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="290.0" cy="173.0" rx="2.0" ry="3.0" transform="rotate(0.0 290.0 173.0)" />
-  </g>
-</svg>
+<ns0:svg xmlns:ns0="http://www.w3.org/2000/svg" viewBox="0 0 520 820" width="520" height="820" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Braccia piegate">
+  <ns0:g id="body" data-kind="polygon" data-label="Corpo continuo" data-part="body" data-source="bisector-skin" tabindex="0">
+    <ns0:title>Corpo continuo &#183; polygon</ns0:title>
+    <ns0:polygon fill="#8faaa1" stroke="#302d2b" stroke-width="6.0" points="337.548,303.377 382.265,412.209 399.251,312.663 415.736,288.616 420.749,317.337 387.735,447.791 312.452,346.623 323.525,500.249 338.884,612.9 333.395,729.567 356.578,741.845 349.422,756.155 316.605,740.433 301.116,617.1 276.475,509.751 243.525,509.751 218.884,617.1 203.395,740.433 170.578,756.155 163.422,741.845 186.605,729.567 181.116,612.9 196.475,500.249 207.548,346.623 132.265,447.791 99.2511,317.337 104.264,288.616 120.749,312.663 137.735,412.209 182.452,303.377" />
+  </ns0:g>
+  <ns0:g id="head-object" data-anchor="Neck" data-aim="Nose" data-pivot="260.0 325.0"><ns0:g id="head" data-kind="polygon" data-label="Testa indipendente" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Testa indipendente &#183; polygon</ns0:title>
+    <ns0:polygon fill="#8faaa1" stroke="#302d2b" stroke-width="6.0" points="186.3,316.2 163.2,270 175.3,275.5 165.4,231.5 178.6,244.7 179.7,193 197.3,142.4 233.6,171 294.1,171 324.9,142.4 342.5,193 349.1,231.5 379.9,211.7 396.4,229.3 388.7,288.7 327.1,316.2" />
+  </ns0:g>
+  <ns0:g id="eye-0" data-kind="ellipse" data-label="Occhio" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Occhio &#183; ellipse</ns0:title>
+    <ns0:ellipse fill="#f4edd8" stroke="#302d2b" stroke-width="2.5" cx="232.5" cy="231.5" rx="7.699999999999999" ry="6.6" transform="rotate(0.0 232.5 231.5)" />
+  </ns0:g>
+  <ns0:g id="pupil-0" data-kind="ellipse" data-label="Pupilla" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Pupilla &#183; ellipse</ns0:title>
+    <ns0:ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="233.6" cy="231.5" rx="2.1999999999999997" ry="3.3" transform="rotate(0.0 233.6 231.5)" />
+  </ns0:g>
+  <ns0:g id="eye-1" data-kind="ellipse" data-label="Occhio" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Occhio &#183; ellipse</ns0:title>
+    <ns0:ellipse fill="#f4edd8" stroke="#302d2b" stroke-width="2.5" cx="291.9" cy="231.5" rx="7.699999999999999" ry="6.6" transform="rotate(0.0 291.9 231.5)" />
+  </ns0:g>
+  <ns0:g id="pupil-1" data-kind="ellipse" data-label="Pupilla" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Pupilla &#183; ellipse</ns0:title>
+    <ns0:ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="293.0" cy="231.5" rx="2.1999999999999997" ry="3.3" transform="rotate(0.0 293.0 231.5)" />
+  </ns0:g>
+  <ns0:g id="nose-mark" data-kind="ellipse" data-label="Riferimento Nose" data-part="head" data-source="head-asset" tabindex="0">
+    <ns0:title>Riferimento Nose &#183; ellipse</ns0:title>
+    <ns0:ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="392.0" cy="229.3" rx="3.3" ry="2.1999999999999997" transform="rotate(0.0 392.0 229.3)" />
+  </ns0:g>
+</ns0:g></ns0:svg>

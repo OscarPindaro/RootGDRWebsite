@@ -1,6 +1,7 @@
 {
   "format": "continuous-skin-target",
-  "version": 1,
+  "version": 2,
+  "pose_model": "COCO_18",
   "width": 520,
   "height": 820,
   "pose": {
@@ -8,83 +9,80 @@
     "name": "Offset maggiori",
     "head_kind": "plain",
     "color": "#9da580",
-    "joints": {
-      "neck": [
-        260.0,
-        300.0
-      ],
-      "jaw": [
-        260.0,
-        250.0
-      ],
-      "head": [
-        260.0,
-        185.0
-      ],
-      "pelvis": [
-        260.0,
-        500.0
-      ],
-      "crotch": [
-        260.0,
-        555.0
-      ],
-      "shoulder-left": [
-        180.0,
-        335.0
-      ],
-      "elbow-left": [
-        130.0,
-        445.0
-      ],
-      "wrist-left": [
-        135.0,
-        535.0
-      ],
-      "shoulder-right": [
-        340.0,
-        335.0
-      ],
-      "elbow-right": [
-        390.0,
-        445.0
-      ],
-      "wrist-right": [
-        385.0,
-        535.0
-      ],
-      "hip-left": [
-        205.0,
-        515.0
-      ],
-      "knee-left": [
-        185.0,
-        630.0
-      ],
-      "ankle-left": [
-        185.0,
-        745.0
-      ],
-      "hip-right": [
-        315.0,
-        515.0
-      ],
-      "knee-right": [
-        335.0,
-        630.0
-      ],
-      "ankle-right": [
-        335.0,
-        745.0
+    "openpose": {
+      "version": 1.3,
+      "people": [
+        {
+          "person_id": [
+            -1
+          ],
+          "pose_keypoints_2d": [
+            260.0,
+            247.5,
+            1.0,
+            260.0,
+            335.0,
+            1.0,
+            180.0,
+            335.0,
+            1.0,
+            130.0,
+            445.0,
+            1.0,
+            135.0,
+            535.0,
+            1.0,
+            340.0,
+            335.0,
+            1.0,
+            390.0,
+            445.0,
+            1.0,
+            385.0,
+            535.0,
+            1.0,
+            205.0,
+            515.0,
+            1.0,
+            185.0,
+            630.0,
+            1.0,
+            185.0,
+            745.0,
+            1.0,
+            315.0,
+            515.0,
+            1.0,
+            335.0,
+            630.0,
+            1.0,
+            335.0,
+            745.0,
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "face_keypoints_2d": [],
+          "hand_left_keypoints_2d": [],
+          "hand_right_keypoints_2d": []
+        }
       ]
     },
     "thickness": {
-      "neck": 21.0,
-      "jaw": 21.0,
       "shoulder": 33.0,
       "elbow": 24.0,
       "wrist": 14.0,
-      "hand": 17.0,
+      "hand_length": 27.0,
       "hip": 31.0,
       "knee": 25.0,
       "ankle": 13.0,
@@ -93,114 +91,87 @@
     "overrides": {}
   },
   "joints": {
-    "neck": [
+    "Nose": [
       260.0,
-      300.0
+      247.5
     ],
-    "jaw": [
+    "Neck": [
       260.0,
-      250.0
+      335.0
     ],
-    "head": [
-      260.0,
-      185.0
-    ],
-    "pelvis": [
-      260.0,
-      500.0
-    ],
-    "crotch": [
-      260.0,
-      555.0
-    ],
-    "shoulder-left": [
+    "RShoulder": [
       180.0,
       335.0
     ],
-    "elbow-left": [
+    "RElbow": [
       130.0,
       445.0
     ],
-    "wrist-left": [
+    "RWrist": [
       135.0,
       535.0
     ],
-    "shoulder-right": [
+    "LShoulder": [
       340.0,
       335.0
     ],
-    "elbow-right": [
+    "LElbow": [
       390.0,
       445.0
     ],
-    "wrist-right": [
+    "LWrist": [
       385.0,
       535.0
     ],
-    "hip-left": [
+    "RHip": [
       205.0,
       515.0
     ],
-    "knee-left": [
+    "RKnee": [
       185.0,
       630.0
     ],
-    "ankle-left": [
+    "RAnkle": [
       185.0,
       745.0
     ],
-    "hip-right": [
+    "LHip": [
       315.0,
       515.0
     ],
-    "knee-right": [
+    "LKnee": [
       335.0,
       630.0
     ],
-    "ankle-right": [
+    "LAnkle": [
       335.0,
       745.0
-    ],
-    "hand-right": [
-      383.5023094701919,
-      561.9584295365462
-    ],
-    "toe-right": [
-      363.0,
-      759.0
-    ],
-    "hand-left": [
-      136.49769052980812,
-      561.9584295365462
-    ],
-    "toe-left": [
-      157.0,
-      759.0
     ]
   },
   "sections": [
     {
-      "joint": "shoulder-right",
+      "joint": "LShoulder",
       "center": [
         340.0,
         335.0
       ],
       "bisector": [
-        -0.7020624713661662,
-        0.7121153602466604
+        -0.5413857477339129,
+        0.8407743289079371
       ],
       "offset": 33.0,
       "left": [
-        316.83193844491655,
-        358.4998068881398
+        322.13427032478086,
+        362.74555285396195
       ],
       "right": [
-        363.16806155508345,
-        311.5001931118602
-      ]
+        357.86572967521914,
+        307.25444714603805
+      ],
+      "source_keypoint": "LShoulder"
     },
     {
-      "joint": "elbow-right",
+      "joint": "LElbow",
       "center": [
         390.0,
         445.0
@@ -217,17 +188,18 @@
       "right": [
         413.5879741757806,
         440.57196722203753
-      ]
+      ],
+      "source_keypoint": "LElbow"
     },
     {
-      "joint": "wrist-right",
+      "joint": "LWrist",
       "center": [
         385.0,
         535.0
       ],
       "bisector": [
         -0.9984603532054125,
-        -0.055470019622522446
+        -0.05547001962252291
       ],
       "offset": 14.0,
       "left": [
@@ -237,50 +209,32 @@
       "right": [
         398.9784449448758,
         535.7765802747153
-      ]
+      ],
+      "source_keypoint": "LWrist"
     },
     {
-      "joint": "hand-right",
-      "center": [
-        383.5023094701919,
-        561.9584295365462
-      ],
-      "bisector": [
-        -0.9984603532054125,
-        -0.05547001962252198
-      ],
-      "offset": 17.0,
-      "left": [
-        366.5284834656999,
-        561.0154392029633
-      ],
-      "right": [
-        400.47613547468393,
-        562.9014198701291
-      ]
-    },
-    {
-      "joint": "hip-right",
+      "joint": "LHip",
       "center": [
         315.0,
         515.0
       ],
       "bisector": [
-        -0.7395683182085574,
-        0.6730814978159525
+        -0.9726612314589332,
+        0.2322286132602777
       ],
       "offset": 31.0,
       "left": [
-        292.0733821355347,
-        535.8655264322945
+        284.8475018247731,
+        522.1990870110686
       ],
       "right": [
-        337.9266178644653,
-        494.13447356770547
-      ]
+        345.1524981752269,
+        507.8009129889314
+      ],
+      "source_keypoint": "LHip"
     },
     {
-      "joint": "knee-right",
+      "joint": "LKnee",
       "center": [
         335.0,
         630.0
@@ -297,10 +251,11 @@
       "right": [
         359.9074019797559,
         627.8502728966561
-      ]
+      ],
+      "source_keypoint": "LKnee"
     },
     {
-      "joint": "ankle-right",
+      "joint": "LAnkle",
       "center": [
         335.0,
         745.0
@@ -317,10 +272,11 @@
       "right": [
         346.0584605085765,
         738.1654955424513
-      ]
+      ],
+      "source_keypoint": "LAnkle"
     },
     {
-      "joint": "toe-right",
+      "joint": "LFootEnd",
       "center": [
         363.0,
         759.0
@@ -337,30 +293,32 @@
       "right": [
         367.91934955049953,
         749.1613008990009
-      ]
+      ],
+      "source_keypoint": "LAnkle"
     },
     {
-      "joint": "hip-left",
+      "joint": "RHip",
       "center": [
         205.0,
         515.0
       ],
       "bisector": [
-        -0.7395683182085574,
-        -0.6730814978159525
+        -0.9726612314589332,
+        -0.2322286132602777
       ],
       "offset": 31.0,
       "left": [
-        182.07338213553473,
-        494.13447356770547
+        174.84750182477308,
+        507.8009129889314
       ],
       "right": [
-        227.92661786446527,
-        535.8655264322945
-      ]
+        235.15249817522692,
+        522.1990870110686
+      ],
+      "source_keypoint": "RHip"
     },
     {
-      "joint": "knee-left",
+      "joint": "RKnee",
       "center": [
         185.0,
         630.0
@@ -377,10 +335,11 @@
       "right": [
         209.9074019797559,
         632.1497271033439
-      ]
+      ],
+      "source_keypoint": "RKnee"
     },
     {
-      "joint": "ankle-left",
+      "joint": "RAnkle",
       "center": [
         185.0,
         745.0
@@ -397,10 +356,11 @@
       "right": [
         196.05846050857653,
         751.8345044575487
-      ]
+      ],
+      "source_keypoint": "RAnkle"
     },
     {
-      "joint": "toe-left",
+      "joint": "RFootEnd",
       "center": [
         157.0,
         759.0
@@ -417,30 +377,32 @@
       "right": [
         161.91934955049953,
         768.8386991009991
-      ]
+      ],
+      "source_keypoint": "RAnkle"
     },
     {
-      "joint": "shoulder-left",
+      "joint": "RShoulder",
       "center": [
         180.0,
         335.0
       ],
       "bisector": [
-        -0.7020624713661662,
-        -0.7121153602466604
+        -0.5413857477339129,
+        -0.8407743289079371
       ],
       "offset": 33.0,
       "left": [
-        156.83193844491652,
-        311.5001931118602
+        162.13427032478089,
+        307.25444714603805
       ],
       "right": [
-        203.16806155508348,
-        358.4998068881398
-      ]
+        197.86572967521911,
+        362.74555285396195
+      ],
+      "source_keypoint": "RShoulder"
     },
     {
-      "joint": "elbow-left",
+      "joint": "RElbow",
       "center": [
         130.0,
         445.0
@@ -457,17 +419,18 @@
       "right": [
         153.58797417578054,
         449.42803277796247
-      ]
+      ],
+      "source_keypoint": "RElbow"
     },
     {
-      "joint": "wrist-left",
+      "joint": "RWrist",
       "center": [
         135.0,
         535.0
       ],
       "bisector": [
-        -0.9984603532054124,
-        0.05547001962252297
+        -0.9984603532054125,
+        0.05547001962252291
       ],
       "offset": 14.0,
       "left": [
@@ -477,211 +440,81 @@
       "right": [
         148.97844494487578,
         534.2234197252847
-      ]
-    },
-    {
-      "joint": "hand-left",
-      "center": [
-        136.49769052980812,
-        561.9584295365462
       ],
-      "bisector": [
-        -0.9984603532054124,
-        0.05547001962252303
-      ],
-      "offset": 17.0,
-      "left": [
-        119.52386452531611,
-        562.9014198701291
-      ],
-      "right": [
-        153.47151653430012,
-        561.0154392029633
-      ]
-    },
-    {
-      "joint": "neck",
-      "center": [
-        260.0,
-        300.0
-      ],
-      "bisector": [
-        1.0,
-        0.0
-      ],
-      "offset": 21.0,
-      "left": [
-        281.0,
-        300.0
-      ],
-      "right": [
-        239.0,
-        300.0
-      ]
-    },
-    {
-      "joint": "jaw",
-      "center": [
-        260.0,
-        250.0
-      ],
-      "bisector": [
-        1.0,
-        0.0
-      ],
-      "offset": 21.0,
-      "left": [
-        281.0,
-        250.0
-      ],
-      "right": [
-        239.0,
-        250.0
-      ]
+      "source_keypoint": "RWrist"
     }
   ],
   "bones": [
     {
-      "start": "neck",
-      "end": "shoulder-right",
-      "length": 87.32124598286491
+      "start": "Neck",
+      "end": "RShoulder",
+      "length": 80.0
     },
     {
-      "start": "shoulder-right",
-      "end": "elbow-right",
+      "start": "Neck",
+      "end": "LShoulder",
+      "length": 80.0
+    },
+    {
+      "start": "RShoulder",
+      "end": "RElbow",
       "length": 120.83045973594572
     },
     {
-      "start": "elbow-right",
-      "end": "wrist-right",
+      "start": "RElbow",
+      "end": "RWrist",
       "length": 90.13878188659973
     },
     {
-      "start": "wrist-right",
-      "end": "hand-right",
-      "length": 27.000000000000053
-    },
-    {
-      "start": "pelvis",
-      "end": "hip-right",
-      "length": 57.0087712549569
-    },
-    {
-      "start": "hip-right",
-      "end": "knee-right",
-      "length": 116.72617529928752
-    },
-    {
-      "start": "knee-right",
-      "end": "ankle-right",
-      "length": 115.0
-    },
-    {
-      "start": "ankle-right",
-      "end": "toe-right",
-      "length": 31.304951684997057
-    },
-    {
-      "start": "pelvis",
-      "end": "hip-left",
-      "length": 57.0087712549569
-    },
-    {
-      "start": "hip-left",
-      "end": "knee-left",
-      "length": 116.72617529928752
-    },
-    {
-      "start": "knee-left",
-      "end": "ankle-left",
-      "length": 115.0
-    },
-    {
-      "start": "ankle-left",
-      "end": "toe-left",
-      "length": 31.304951684997057
-    },
-    {
-      "start": "neck",
-      "end": "shoulder-left",
-      "length": 87.32124598286491
-    },
-    {
-      "start": "shoulder-left",
-      "end": "elbow-left",
+      "start": "LShoulder",
+      "end": "LElbow",
       "length": 120.83045973594572
     },
     {
-      "start": "elbow-left",
-      "end": "wrist-left",
+      "start": "LElbow",
+      "end": "LWrist",
       "length": 90.13878188659973
     },
     {
-      "start": "wrist-left",
-      "end": "hand-left",
-      "length": 27.000000000000057
+      "start": "Neck",
+      "end": "RHip",
+      "length": 188.2153022471871
     },
     {
-      "start": "pelvis",
-      "end": "neck",
-      "length": 200.0
+      "start": "RHip",
+      "end": "RKnee",
+      "length": 116.72617529928752
     },
     {
-      "start": "neck",
-      "end": "jaw",
-      "length": 50.0
+      "start": "RKnee",
+      "end": "RAnkle",
+      "length": 115.0
     },
     {
-      "start": "jaw",
-      "end": "head",
-      "length": 65.0
+      "start": "Neck",
+      "end": "LHip",
+      "length": 188.2153022471871
     },
     {
-      "start": "pelvis",
-      "end": "crotch",
-      "length": 55.0
+      "start": "LHip",
+      "end": "LKnee",
+      "length": 116.72617529928752
+    },
+    {
+      "start": "LKnee",
+      "end": "LAnkle",
+      "length": 115.0
+    },
+    {
+      "start": "Neck",
+      "end": "Nose",
+      "length": 87.5
     }
   ],
   "body_vertices": [
     [
-      239.0,
-      250.0
-    ],
-    [
-      220.0,
-      250.0
-    ],
-    [
-      206.0,
-      192.0
-    ],
-    [
-      217.0,
-      139.0
-    ],
-    [
-      299.0,
-      139.0
-    ],
-    [
-      314.0,
-      192.0
-    ],
-    [
-      300.0,
-      250.0
-    ],
-    [
-      281.0,
-      250.0
-    ],
-    [
-      281.0,
-      300.0
-    ],
-    [
-      363.16806155508345,
-      311.5001931118602
+      357.86572967521914,
+      307.25444714603805
     ],
     [
       413.5879741757806,
@@ -692,12 +525,8 @@
       535.7765802747153
     ],
     [
-      400.47613547468393,
-      562.9014198701291
-    ],
-    [
-      366.5284834656999,
-      561.0154392029633
+      383.5023094701919,
+      561.9584295365462
     ],
     [
       371.0215550551242,
@@ -708,12 +537,12 @@
       449.42803277796247
     ],
     [
-      316.83193844491655,
-      358.4998068881398
+      322.13427032478086,
+      362.74555285396195
     ],
     [
-      337.9266178644653,
-      494.13447356770547
+      345.1524981752269,
+      507.8009129889314
     ],
     [
       359.9074019797559,
@@ -740,16 +569,12 @@
       632.1497271033439
     ],
     [
-      292.0733821355347,
-      535.8655264322945
+      284.8475018247731,
+      522.1990870110686
     ],
     [
-      260.0,
-      555.0
-    ],
-    [
-      227.92661786446527,
-      535.8655264322945
+      235.15249817522692,
+      522.1990870110686
     ],
     [
       209.9074019797559,
@@ -776,12 +601,12 @@
       627.8502728966561
     ],
     [
-      182.07338213553473,
-      494.13447356770547
+      174.84750182477308,
+      507.8009129889314
     ],
     [
-      203.16806155508348,
-      358.4998068881398
+      197.86572967521911,
+      362.74555285396195
     ],
     [
       153.58797417578054,
@@ -792,12 +617,8 @@
       534.2234197252847
     ],
     [
-      153.47151653430012,
-      561.0154392029633
-    ],
-    [
-      119.52386452531611,
-      562.9014198701291
+      136.49769052980812,
+      561.9584295365462
     ],
     [
       121.02155505512422,
@@ -808,59 +629,114 @@
       440.57196722203753
     ],
     [
-      156.83193844491652,
-      311.5001931118602
-    ],
-    [
-      239.0,
-      300.0
+      162.13427032478089,
+      307.25444714603805
     ]
   ],
   "vertex_sources": [
-    "jaw:right",
-    "head-profile",
-    "head-profile",
-    "head-profile",
-    "head-profile",
-    "head-profile",
-    "head-profile",
-    "jaw:left",
-    "neck:left",
-    "shoulder-right:right",
-    "elbow-right:right",
-    "wrist-right:right",
-    "hand-right:right",
-    "hand-right:left",
-    "wrist-right:left",
-    "elbow-right:left",
-    "shoulder-right:left",
-    "hip-right:right",
-    "knee-right:right",
-    "ankle-right:right",
-    "toe-right:right",
-    "toe-right:left",
-    "ankle-right:left",
-    "knee-right:left",
-    "hip-right:left",
-    "crotch",
-    "hip-left:right",
-    "knee-left:right",
-    "ankle-left:right",
-    "toe-left:right",
-    "toe-left:left",
-    "ankle-left:left",
-    "knee-left:left",
-    "hip-left:left",
-    "shoulder-left:right",
-    "elbow-left:right",
-    "wrist-left:right",
-    "hand-left:right",
-    "hand-left:left",
-    "wrist-left:left",
-    "elbow-left:left",
-    "shoulder-left:left",
-    "neck:right"
+    "LShoulder:right",
+    "LElbow:right",
+    "LWrist:right",
+    "LWrist:tip",
+    "LWrist:left",
+    "LElbow:left",
+    "LShoulder:left",
+    "LHip:right",
+    "LKnee:right",
+    "LAnkle:right",
+    "LFootEnd:right",
+    "LFootEnd:left",
+    "LAnkle:left",
+    "LKnee:left",
+    "LHip:left",
+    "RHip:right",
+    "RKnee:right",
+    "RAnkle:right",
+    "RFootEnd:right",
+    "RFootEnd:left",
+    "RAnkle:left",
+    "RKnee:left",
+    "RHip:left",
+    "RShoulder:right",
+    "RElbow:right",
+    "RWrist:right",
+    "RWrist:tip",
+    "RWrist:left",
+    "RElbow:left",
+    "RShoulder:left"
   ],
+  "hand_tips": {
+    "LWrist": [
+      383.5023094701919,
+      561.9584295365462
+    ],
+    "RWrist": [
+      136.49769052980812,
+      561.9584295365462
+    ]
+  },
+  "head_attachment": {
+    "part": "head",
+    "anchor": "Neck",
+    "aim": "Nose",
+    "svg_group": "head-object",
+    "pivot": [
+      260.0,
+      335.0
+    ],
+    "rotation_degrees": 0.0,
+    "scale": 1.25,
+    "local_asset": {
+      "outline": [
+        [
+          -40.0,
+          -8.0
+        ],
+        [
+          -54.0,
+          -66.0
+        ],
+        [
+          -43.0,
+          -119.0
+        ],
+        [
+          39.0,
+          -119.0
+        ],
+        [
+          54.0,
+          -66.0
+        ],
+        [
+          40.0,
+          -8.0
+        ]
+      ],
+      "nose": [
+        0.0,
+        -70.0
+      ],
+      "eyes": [
+        [
+          -25.0,
+          -85.0
+        ],
+        [
+          29.0,
+          -85.0
+        ]
+      ]
+    },
+    "shape_ids": [
+      "head",
+      "eye-0",
+      "pupil-0",
+      "eye-1",
+      "pupil-1",
+      "nose-mark"
+    ]
+  },
   "method": "One closed contour; two flesh points on each joint's bisector.",
   "offset_definition": "Distance along the bisector, not a miter-corrected perpendicular bone radius."
 }
