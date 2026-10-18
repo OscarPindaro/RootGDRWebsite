@@ -373,3 +373,41 @@ the region classification are manual interpretations; the remaining contours
 come from the extraction. `wolf-postprocessed.svg/json` preserve the earlier
 uniform-stroke alternative. The first extraction remains directly linked and
 labelled as the preferred reference.
+
+## Continuous skin from a skeleton
+
+Oscar rejected the separate-limb clothing draft and clarified the construction:
+the naked body is one closed polygon, with the head attached through the neck.
+Clothes and objects are deferred.
+
+```sh
+uv run --no-project generate_bodies.py
+```
+
+`edits/naked-poses.json` declares five poses and flesh offsets. `body_skin.py`
+calculates a cross-section at each major joint. For incoming/outgoing unit bone
+directions `u` and `v`, its bisector direction is the perpendicular to
+`normalize(u + v)`; the two skin points are `joint ± offset * bisector`.
+This is the same unoriented line as the joint angle's internal bisector. A
+straight joint naturally gets a perpendicular section. Fully folded-back
+directions are rejected. Endpoints use their one neighboring bone.
+
+The offset is measured along the bisector; there is no miter correction.
+Shoulders, elbows, wrists, hands, hips, knees, ankles, toes and the neck have
+independent widths; `overrides` can change an individual joint. The body contour
+walk connects each chain's paired sections, caps its extremity, then returns
+along the opposite side. The neck continues into an authored head profile.
+There are no rendered limb rectangles, no polygon unions, and no internal seams.
+
+Each example exports one body polygon plus small eye overlays, a scene JSON,
+the rig/offset target, a clean SVG and an optional construction-guide SVG.
+The target records every bone, bisector, offset and contour vertex source.
+`output/generated/index.html` switches the guides on/off; examples share a
+common coordinate scale. All files are local and tracked, except temporary
+drafts and model/download caches.
+
+This is the first geometry construction, not IK or skin deformation software.
+Moving a joint regenerates the outline but does not solve fixed-length posing.
+Self-crossing bodies and fully folded limbs are rejected; self-occlusion and
+more anatomical hands/feet remain later work. No clothing, objects, phone tests
+or long suites were added to this iteration.

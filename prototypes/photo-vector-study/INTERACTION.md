@@ -49,3 +49,12 @@ workflow or a public MCP tool. It is the working prototype for that interaction.
 
 During visual iteration, use short geometry/render checks. Oscar explicitly
 requested no phone tests or long suites for this cycle.
+
+## Generated body foundation
+
+After reviewing the dressed drafts, Oscar clarified that the base body must be
+one continuous polygon, not independently outlined limbs. Start naked, with no
+objects. Each joint supplies two flesh points on its bisector at a declared
+offset; connecting those sections defines the body boundary. The head must
+continue into the neck. For this representation, edit rig positions and offsets
+and regenerate the skin before adding clothing or props.

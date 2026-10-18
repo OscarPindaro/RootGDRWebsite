@@ -6,11 +6,19 @@ model is claimed here.
 
 ## First visual trial
 
-Generate a small contact sheet of about twelve **new** characters in the same
-geometric language as Altus, Luciano and Tacito. Use a declared skeleton, a head
-family, body proportions, and independently attached clothes/props. Vary poses
-as well as appearance. Inspect this batch before scaling toward 1,000 examples.
-The first question is whether the generated characters are worth drawing.
+Oscar clarified the first step after reviewing the clothed drafts:
+**start naked, with no objects and one continuous body polygon**. The head must
+join the neck. The skeleton defines bone positions; flesh comes from two points
+on each important joint's bisector, at an authored offset.
+
+`body_skin.py` implements that contour walk; `generate_bodies.py` renders five
+construction examples. `output/generated/index.html` can show the skeleton,
+bisector cross-sections and their skin endpoints. It does not render separate
+limb polygons or joint seams. The earlier clothed draft was set aside.
+
+Review this foundation before adding clothing, props or generating 1,000 examples.
+New character appearance and layering are subsequent steps, after continuous
+skin construction is accepted.
 
 Use the examples' visual vocabulary: triangular/bent beaks, angular wolf heads,
 octagonal bird bodies, strong outlines, flat colours, capes, hats and swords.
@@ -51,6 +59,6 @@ occluded joints separately, and evaluate on drawings outside the generated style
 The intended loop is: import → inspect detected geometry/pose → add a description
 → apply a typed edit plan → validate shared points → render and compare.
 The current `shape_edits.py` CLI is the first prototype of that interface.
-Later tools may add named body-part groups, skeleton binding, clothing attachment,
-transforms and regeneration of selected parts. Native canvas integration and a
+Later tools may add semantic regions on the continuous skin, clothing attachment,
+transforms and regeneration from rig parameters. Native canvas integration and a
 full MCP service remain separate implementation work.

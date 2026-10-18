@@ -1,0 +1,61 @@
+[
+  {
+    "id": "upright", "name": "Base eretta", "head_kind": "bird", "color": "#bd9a61",
+    "joints": {
+      "neck": [260,290], "jaw": [260,245], "head": [260,185],
+      "pelvis": [260,490], "crotch": [260,535],
+      "shoulder-left": [195,320], "elbow-left": [150,425], "wrist-left": [135,510],
+      "shoulder-right": [325,320], "elbow-right": [370,425], "wrist-right": [385,510],
+      "hip-left": [220,505], "knee-left": [200,615], "ankle-left": [195,735],
+      "hip-right": [300,505], "knee-right": [320,615], "ankle-right": [325,735]
+    }
+  },
+  {
+    "id": "bent-arms", "name": "Braccia piegate", "head_kind": "wolf", "color": "#8faaa1",
+    "joints": {
+      "neck": [260,295], "jaw": [260,250], "head": [260,185],
+      "pelvis": [260,490], "crotch": [260,535],
+      "shoulder-left": [195,325], "elbow-left": [135,430], "wrist-left": [110,315],
+      "shoulder-right": [325,325], "elbow-right": [385,430], "wrist-right": [410,315],
+      "hip-left": [220,505], "knee-left": [200,615], "ankle-left": [195,735],
+      "hip-right": [300,505], "knee-right": [320,615], "ankle-right": [325,735]
+    }
+  },
+  {
+    "id": "raised-arm", "name": "Braccio alzato", "head_kind": "plain", "color": "#a1abb9",
+    "joints": {
+      "neck": [260,295], "jaw": [260,250], "head": [260,190],
+      "pelvis": [260,490], "crotch": [260,535],
+      "shoulder-left": [195,325], "elbow-left": [150,425], "wrist-left": [135,510],
+      "shoulder-right": [325,325], "elbow-right": [395,265], "wrist-right": [405,145],
+      "hip-left": [220,505], "knee-left": [200,615], "ankle-left": [195,735],
+      "hip-right": [300,505], "knee-right": [320,615], "ankle-right": [325,735]
+    }
+  },
+  {
+    "id": "wide-step", "name": "Passo largo", "head_kind": "bird", "color": "#b6a17d",
+    "joints": {
+      "neck": [255,290], "jaw": [248,245], "head": [240,185],
+      "pelvis": [270,490], "crotch": [270,535],
+      "shoulder-left": [190,325], "elbow-left": [135,385], "wrist-left": [100,450],
+      "shoulder-right": [320,315], "elbow-right": [390,385], "wrist-right": [430,460],
+      "hip-left": [230,505], "knee-left": [170,615], "ankle-left": [125,725],
+      "hip-right": [310,500], "knee-right": [370,595], "ankle-right": [415,705]
+    }
+  },
+  {
+    "id": "wide-body", "name": "Offset maggiori", "head_kind": "plain", "color": "#9da580",
+    "thickness": {
+      "neck": 21, "jaw": 21, "shoulder": 33, "elbow": 24, "wrist": 14, "hand": 17,
+      "hip": 31, "knee": 25, "ankle": 13, "toe": 11
+    },
+    "joints": {
+      "neck": [260,300], "jaw": [260,250], "head": [260,185],
+      "pelvis": [260,500], "crotch": [260,555],
+      "shoulder-left": [180,335], "elbow-left": [130,445], "wrist-left": [135,535],
+      "shoulder-right": [340,335], "elbow-right": [390,445], "wrist-right": [385,535],
+      "hip-left": [205,515], "knee-left": [185,630], "ankle-left": [185,745],
+      "hip-right": [315,515], "knee-right": [335,630], "ankle-right": [335,745]
+    }
+  }
+]

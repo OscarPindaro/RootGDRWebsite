@@ -1,0 +1,210 @@
+# /// script
+# requires-python = ">=3.12"
+# dependencies = ["pydantic==2.12.5", "pillow==12.0.0", "cairosvg==2.8.2"]
+# ///
+"""Naked construction studies: one body contour, bisectors and explicit offsets."""
+
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+import cairosvg
+from PIL import Image, ImageDraw, ImageFont, ImageOps
+from pydantic import TypeAdapter
+
+from body_skin import Pose, SkinTarget, build_skin
+from scene_svg import svg
+
+ROOT = Path(__file__).resolve().parent
+NS = "{http://www.w3.org/2000/svg}"
+
+
+def construction_svg(data: bytes, target: SkinTarget) -> bytes:
+    root = ET.fromstring(data)
+    guides = ET.SubElement(
+        root, NS + "g", {"id": "construction", "fill": "none", "stroke-width": "2"}
+    )
+    for bone in target.bones:
+        a, b = target.joints[bone.start], target.joints[bone.end]
+        ET.SubElement(
+            guides,
+            NS + "line",
+            {
+                "x1": str(a[0]),
+                "y1": str(a[1]),
+                "x2": str(b[0]),
+                "y2": str(b[1]),
+                "stroke": "#285d86",
+                "stroke-dasharray": "5 4",
+            },
+        )
+    for section in target.sections:
+        ET.SubElement(
+            guides,
+            NS + "line",
+            {
+                "x1": str(section.left[0]),
+                "y1": str(section.left[1]),
+                "x2": str(section.right[0]),
+                "y2": str(section.right[1]),
+                "stroke": "#d26936",
+            },
+        )
+        for x, y in (section.left, section.right):
+            dot = ET.SubElement(
+                guides,
+                NS + "circle",
+                {
+                    "cx": str(x),
+                    "cy": str(y),
+                    "r": "3",
+                    "fill": "#fff7db",
+                    "stroke": "#d26936",
+                },
+            )
+            ET.SubElement(
+                dot, NS + "title"
+            ).text = f"{section.joint}: offset {section.offset:g}"
+    for name, (x, y) in target.joints.items():
+        dot = ET.SubElement(
+            guides,
+            NS + "circle",
+            {
+                "cx": str(x),
+                "cy": str(y),
+                "r": "3",
+                "fill": "#285d86",
+                "stroke": "#fff7db",
+                "stroke-width": "1",
+            },
+        )
+        ET.SubElement(dot, NS + "title").text = name
+    return ET.tostring(root) + b"\n"
+
+
+def gallery(poses: list[Pose], targets: list[SkinTarget], output: Path) -> None:
+    cards = []
+    board = Image.new("RGB", (1900, 990), "#f4f0e5")
+    ink = ImageDraw.Draw(board)
+    font = "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf"
+    title, small = ImageFont.truetype(font, 32), ImageFont.truetype(font, 17)
+    ink.text(
+        (30, 25), "Una sola pelle · scheletro e bisettrici", font=title, fill="#302d2b"
+    )
+    ink.text(
+        (30, 82),
+        "Nessun abito o oggetto · testa e collo uniti · nessuna giuntura interna",
+        font=small,
+        fill="#786e61",
+    )
+    bounds = [Image.open(output / f"{pose.id}.png").getbbox() for pose in poses]
+    common = (
+        min(b[0] for b in bounds),
+        min(b[1] for b in bounds),
+        max(b[2] for b in bounds),
+        max(b[3] for b in bounds),
+    )
+    for index, (pose, target) in enumerate(zip(poses, targets, strict=True)):
+        original = Image.open(output / f"{pose.id}.png")
+        image = ImageOps.contain(original.crop(common), (345, 725))
+        board.paste(
+            image,
+            (
+                25 + index * 375 + (345 - image.width) // 2,
+                135 + (725 - image.height) // 2,
+            ),
+            image,
+        )
+        ink.text((25 + index * 375, 900), pose.name, font=small, fill="#302d2b")
+        ink.text(
+            (25 + index * 375, 934),
+            f"1 contorno · {len(target.body_vertices)} vertici",
+            font=small,
+            fill="#786e61",
+        )
+        cards.append(f"""
+        <article><h2>{pose.name}</h2><p>Un solo poligono per tutto il corpo, compresi collo e testa.</p>
+        <figure><img data-id="{pose.id}" src="{pose.id}.svg" alt="{pose.name}"></figure>
+        <nav><a href="{pose.id}.svg" download>SVG</a><a href="{pose.id}.json" download>Scena</a>
+        <a href="{pose.id}-target.json" download>Giunti e offset</a>
+        <a href="{pose.id}-construction.svg" target="_blank">Costruzione</a></nav></article>""")
+    board.save(output / "preview.png")
+    (output / "index.html").write_text(
+        """<!doctype html><html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Corpo continuo dalle bisettrici</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f0e5;color:#302d2b;font:16px/1.5 Georgia,serif}
+main{max-width:1600px;margin:auto;padding:34px}h1{font-size:44px;font-weight:normal;margin:18px 0}
+p{max-width:940px;color:#706453}.controls{display:flex;flex-wrap:wrap;gap:28px;margin:24px 0}
+label,nav,.legend{font:14px/1.5 system-ui,sans-serif}
+label{display:flex;gap:10px;align-items:center;min-height:44px;cursor:pointer}input{width:20px;height:20px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+article{background:#faf7ef;border:1px solid #cfc4b1;padding:22px}h2{font-weight:normal;font-size:28px}
+figure{margin:0}img{width:100%;height:620px;object-fit:contain}nav{display:flex;flex-wrap:wrap;gap:20px}
+a{display:inline-flex;align-items:center;min-height:44px;color:#365b70}
+a:focus-visible,input:focus-visible{outline:3px solid #d26936;outline-offset:4px}
+.bone{color:#285d86}.flesh{color:#bb572a}
+@media(max-width:1100px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){main{padding:20px 14px}.grid{grid-template-columns:1fr}}
+</style><main><p>Root GDR · studio della pelle continua</p>
+<h1>Il corpo è un solo contorno.</h1>
+<p>Prima lo scheletro. A ogni articolazione, due punti sulla bisettrice a distanza
+X dal centro. Collegando quei punti si ottiene la pelle, senza rettangoli separati
+per braccia e gambe. Un solo poligono chiuso comprende corpo, mani, piedi, collo e testa.</p>
+<div class="controls"><label><input id="guides" type="checkbox">Mostra scheletro, bisettrici e punti della pelle</label>
+<a href="preview.png" target="_blank">Tavola PNG</a><a href="../shapes/">Studio dalle fotografie</a>
+<a href="../study.zip" download>Scarica lo studio</a></div>
+<p class="legend"><span class="bone">Blu: ossa e centri dei giunti.</span>
+<span class="flesh">Arancio: bisettrici e due estremi dell’offset.</span>
+Le guide non sono bordi del corpo e non compaiono nell’SVG pulito.
+Tutti gli esempi usano la stessa scala.</p>
+<section class="grid">CARDS</section>
+<p>Le pose, i profili delle teste e gli spessori sono dichiarati. Il contorno è
+calcolato da quelle informazioni. Gli offset sono misurati lungo la bisettrice;
+non viene applicata una correzione miter che allunghi gli angoli.
+Pose con arti che si attraversano o ripiegati completamente richiedono una gestione
+successiva: questo studio le rifiuta, invece di alterare il corpo in silenzio.</p>
+</main><script>
+document.querySelector('#guides').addEventListener('change', event => {
+  for (const image of document.querySelectorAll('img[data-id]')) {
+    image.src = image.dataset.id + (event.target.checked ? '-construction.svg' : '.svg');
+  }
+});
+</script></html>""".replace("CARDS", "".join(cards))
+        + "\n"
+    )
+
+
+def main() -> None:
+    poses = TypeAdapter(list[Pose]).validate_json(
+        (ROOT / "edits/naked-poses.json").read_text()
+    )
+    output = ROOT / "output/generated"
+    output.mkdir(parents=True, exist_ok=True)
+    targets = []
+    for pose in poses:
+        scene, target = build_skin(pose)
+        targets.append(target)
+        data = svg(scene)
+        (output / f"{pose.id}.svg").write_bytes(data)
+        (output / f"{pose.id}-construction.svg").write_bytes(
+            construction_svg(data, target)
+        )
+        (output / f"{pose.id}.json").write_text(scene.model_dump_json(indent=2) + "\n")
+        (output / f"{pose.id}-target.json").write_text(
+            target.model_dump_json(indent=2) + "\n"
+        )
+        cairosvg.svg2png(
+            bytestring=data,
+            write_to=str(output / f"{pose.id}.png"),
+            output_width=scene.width,
+            output_height=scene.height,
+        )
+        print(
+            f"{pose.id}: one skin contour, {len(target.sections)} cross-sections",
+            flush=True,
+        )
+    gallery(poses, targets, output)
+
+
+if __name__ == "__main__":
+    main()

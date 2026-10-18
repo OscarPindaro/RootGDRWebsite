@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 820" width="520" height="820" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Base eretta">
+  <g id="body" data-kind="polygon" data-label="Corpo continuo" data-part="body" data-source="bisector-skin" tabindex="0">
+    <title>Corpo continuo · polygon</title>
+    <polygon fill="#bd9a61" stroke="#302d2b" stroke-width="6.0" points="243,245 197,245 191,119 369,192 385,250 359,221 321,245 277,245 277,290 342.919,302.567 387.25,419.857 395.833,508.088 403.479,534.156 375.905,539.022 374.167,511.912 352.75,430.143 307.081,337.433 318.419,489.613 338.884,612.9 333.395,729.567 356.578,741.845 349.422,756.155 316.605,740.433 301.116,617.1 281.581,520.387 260,535 238.419,520.387 218.884,617.1 203.395,740.433 170.578,756.155 163.422,741.845 186.605,729.567 181.116,612.9 201.581,489.613 212.919,337.433 167.25,430.143 145.833,511.912 144.095,539.022 116.521,534.156 124.167,508.088 132.75,419.857 177.081,302.567 243,290" />
+  </g>
+  <g id="eye-0" data-kind="ellipse" data-label="Occhio" data-part="face" data-source="head-profile" tabindex="0">
+    <title>Occhio · ellipse</title>
+    <ellipse fill="#f4edd8" stroke="#302d2b" stroke-width="2.5" cx="233.0" cy="173.0" rx="7.0" ry="6.0" transform="rotate(0.0 233.0 173.0)" />
+  </g>
+  <g id="pupil-0" data-kind="ellipse" data-label="Pupilla" data-part="face" data-source="head-profile" tabindex="0">
+    <title>Pupilla · ellipse</title>
+    <ellipse fill="#302d2b" stroke="#302d2b" stroke-width="1.0" cx="234.0" cy="173.0" rx="2.0" ry="3.0" transform="rotate(0.0 234.0 173.0)" />
+  </g>
+</svg>
