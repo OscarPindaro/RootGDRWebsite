@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio OpenCV · dalle foto ai contorni</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f0e5;color:#302d2b;font:16px/1.6 system-ui}
+main{max-width:1500px;margin:auto;padding:30px}
+h1{font:46px/1.15 Georgia,serif}h2{font:30px Georgia,serif;margin-bottom:0}
+.intro{max-width:900px;color:#706557}article{border-top:1px solid #c9bfac;padding:16px 0 28px}
+article p{color:#706557}a{color:#365b70;display:inline-flex;align-items:center;min-height:44px}
+a:focus-visible{outline:3px solid #008ed0;outline-offset:4px}
+.figures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+figure{margin:0}img{width:100%;height:560px;object-fit:contain}
+figcaption{text-align:center;font-size:14px;color:#706557}
+nav{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:20px}
+@media(max-width:700px){main{padding:20px 14px}h1{font-size:34px}.figures{gap:8px}img{height:300px}figcaption{font-size:11px}}
+</style><main>
+<p>Root GDR · studio 02</p><h1>Questa volta, i contorni li trova OpenCV.</h1>
+<p class="intro">Rilevamento del foglio, correzione della prospettiva, isolamento del
+disegno e separazione delle regioni tramite i bordi scuri. Tutti i vertici e i
+colori vengono dai pixel. Gli stessi parametri sono usati per i tre personaggi.
+Altus conserva il mantello. Le regioni non hanno ancora significato anatomico.</p>
+<nav><a href="comparison.png" target="_blank">Confronto PNG completo</a>
+<a href="../study.zip" download>Scarica SVG, PNG e codice Python</a>
+<a href="../humanart/">Nuova prova di posa con HumanArt</a>
+<a href="../index.html">Prima prova manuale</a></nav>
+
+        <article><h2>Altus</h2>
+        <p>21 regioni di riempimento + sagoma d’inchiostro</p>
+        <div class="figures"><figure><img src="altus-rectified.png" alt="Altus: Foto raddrizzata"><figcaption>Foto raddrizzata</figcaption></figure><figure><img src="altus-contours.png" alt="Altus: Contorni fedeli · max 0,8 px"><figcaption>Contorni fedeli · max 0,8 px</figcaption></figure><figure><img src="altus-polygons.png" alt="Altus: Poligoni semplificati · max 3 px"><figcaption>Poligoni semplificati · max 3 px</figcaption></figure></div>
+        <nav><a href="altus-contours.svg" download>SVG dei contorni</a>
+        <a href="altus-polygons.svg" download>SVG semplificato</a>
+        <a href="altus-polygons.json" download>Coordinate JSON</a>
+        <a href="altus-detection.png" target="_blank">Rilevamento del foglio</a>
+        <a href="altus-regions.png" target="_blank">Mappa delle regioni</a></nav></article>
+        <article><h2>Luciano</h2>
+        <p>23 regioni di riempimento + sagoma d’inchiostro</p>
+        <div class="figures"><figure><img src="luciano-rectified.png" alt="Luciano: Foto raddrizzata"><figcaption>Foto raddrizzata</figcaption></figure><figure><img src="luciano-contours.png" alt="Luciano: Contorni fedeli · max 0,8 px"><figcaption>Contorni fedeli · max 0,8 px</figcaption></figure><figure><img src="luciano-polygons.png" alt="Luciano: Poligoni semplificati · max 3 px"><figcaption>Poligoni semplificati · max 3 px</figcaption></figure></div>
+        <nav><a href="luciano-contours.svg" download>SVG dei contorni</a>
+        <a href="luciano-polygons.svg" download>SVG semplificato</a>
+        <a href="luciano-polygons.json" download>Coordinate JSON</a>
+        <a href="luciano-detection.png" target="_blank">Rilevamento del foglio</a>
+        <a href="luciano-regions.png" target="_blank">Mappa delle regioni</a></nav></article>
+        <article><h2>Tacito</h2>
+        <p>26 regioni di riempimento + sagoma d’inchiostro</p>
+        <div class="figures"><figure><img src="wolf-rectified.png" alt="Tacito: Foto raddrizzata"><figcaption>Foto raddrizzata</figcaption></figure><figure><img src="wolf-contours.png" alt="Tacito: Contorni fedeli · max 0,8 px"><figcaption>Contorni fedeli · max 0,8 px</figcaption></figure><figure><img src="wolf-polygons.png" alt="Tacito: Poligoni semplificati · max 3 px"><figcaption>Poligoni semplificati · max 3 px</figcaption></figure></div>
+        <nav><a href="wolf-contours.svg" download>SVG dei contorni</a>
+        <a href="wolf-polygons.svg" download>SVG semplificato</a>
+        <a href="wolf-polygons.json" download>Coordinate JSON</a>
+        <a href="wolf-detection.png" target="_blank">Rilevamento del foglio</a>
+        <a href="wolf-regions.png" target="_blank">Mappa delle regioni</a></nav></article>
+<p class="intro">La soglia di semplificazione è espressa nei pixel della foto
+raddrizzata. Una soglia bassa conserva curve e irregolarità; una più alta riduce
+i vertici. Le zone chiare chiuse sono conservate: il programma non sa ancora
+distinguere la carta visibile da una parte bianca del personaggio.</p>
+
+        <article><h2>La posa di Tacito</h2>
+        <p>Con soglie standard, nessun rilevamento. Con soglie 0,25 e un margine
+        aggiunto alla foto isolata, MediaPipe restituisce questa posa:
+        testa e parte superiore del corpo finiscono all’altezza dei pantaloni.
+        Il risultato non è utilizzabile per animare il personaggio.</p>
+        <div class="figures"><figure>
+        <img src="wolf-pose-padded-0.25.png" alt="Posa errata rilevata su Tacito">
+        <figcaption>Tentativo automatico, da scartare</figcaption></figure>
+        <figure><img src="wolf-pose-human-control-0.5.png"
+        alt="Posa corretta sulla fotografia di controllo">
+        <figcaption>Controllo su una fotografia umana</figcaption></figure></div>
+        <p><a href="pose-results.json" download>Risultati della verifica</a></p>
+        </article>
+</main></html>

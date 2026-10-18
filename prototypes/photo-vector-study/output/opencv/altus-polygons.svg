@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="370" height="597" viewBox="0 0 370 597" role="img" aria-labelledby="title">
+  <title id="title">Altus — OpenCV</title>
+  <desc>Automatically detected image regions. No semantic body parts or skeleton inferred.</desc>
+  <g id="ink-silhouette">
+    <title>ink-silhouette</title>
+    <path d="M 102,15 L 98,20 L 57,33 L 42,45 L 72,63 L 44,79 L 85,104 L 84,108 L 52,121 L 47,128 L 96,157 L 39,233 L 18,277 L 15,418 L 19,488 L 32,495 L 96,454 L 79,521 L 85,528 L 148,457 L 148,530 L 181,576 L 195,581 L 230,540 L 234,470 L 279,540 L 293,542 L 285,473 L 295,479 L 299,493 L 304,495 L 310,487 L 339,371 L 346,309 L 354,306 L 348,284 L 244,156 L 262,152 L 282,182 L 289,187 L 298,186 L 304,176 L 294,131 L 287,118 L 144,42 Z" fill="#3e3b3e" fill-rule="evenodd" />
+  </g>
+  <g id="region-018">
+    <title>region-018</title>
+    <path d="M 95,56 L 93,33 L 90,30 L 82,30 L 58,43 L 58,47 L 62,51 L 82,59 L 91,60 Z" fill="#b43032" fill-rule="evenodd" />
+  </g>
+  <g id="region-025">
+    <title>region-025</title>
+    <path d="M 233,117 L 234,116 L 236,116 L 237,117 L 239,117 L 240,118 L 240,119 L 239,120 L 238,120 L 237,119 L 236,119 L 235,118 L 234,118 Z M 124,65 L 129,64 L 190,105 L 190,112 L 168,117 L 128,115 L 123,97 Z M 105,38 L 110,143 L 114,148 L 262,141 L 284,164 L 288,163 L 281,131 L 108,35 Z" fill="#096cb9" fill-rule="evenodd" />
+  </g>
+  <g id="region-064">
+    <title>region-064</title>
+    <path d="M 61,79 L 66,88 L 74,89 L 91,100 L 96,99 L 96,73 L 90,68 L 69,73 Z" fill="#b43032" fill-rule="evenodd" />
+  </g>
+  <g id="region-073">
+    <title>region-073</title>
+    <path d="M 132,77 L 132,85 L 133,86 L 140,83 L 142,81 L 141,80 L 137,79 L 133,76 Z" fill="#d7d1ca" fill-rule="evenodd" />
+  </g>
+  <g id="region-085">
+    <title>region-085</title>
+    <path d="M 142,86 L 139,88 L 139,96 L 142,102 L 147,107 L 152,103 L 152,93 L 148,87 Z" fill="#d7d1ca" fill-rule="evenodd" />
+  </g>
+  <g id="region-100">
+    <title>region-100</title>
+    <path d="M 156,108 L 162,110 L 182,108 L 163,96 L 160,97 L 159,104 Z" fill="#d7d1ca" fill-rule="evenodd" />
+  </g>
+  <g id="region-120">
+    <title>region-120</title>
+    <path d="M 64,125 L 68,132 L 76,134 L 85,143 L 97,146 L 100,143 L 99,117 L 96,113 L 73,119 Z" fill="#b43032" fill-rule="evenodd" />
+  </g>
+  <g id="region-156-color-1">
+    <title>region-156-color-1</title>
+    <path d="M 244,154 L 243,155 L 237,155 L 236,156 L 235,156 L 236,157 L 236,158 L 237,159 L 238,159 L 241,156 L 244,155 Z" fill="#d7d1ca" fill-rule="evenodd" />
+  </g>
+  <g id="region-156">
+    <title>region-156</title>
+    <path d="M 220,155 L 203,183 L 250,241 L 290,300 L 293,365 L 302,440 L 307,446 L 338,295 L 287,233 L 236,155 Z" fill="#0779a0" fill-rule="evenodd" />
+  </g>
+  <g id="region-160">
+    <title>region-160</title>
+    <path d="M 204,156 L 161,157 L 156,163 L 163,174 L 174,182 L 179,192 L 183,193 L 205,160 Z" fill="#e8b910" fill-rule="evenodd" />
+  </g>
+  <g id="region-164">
+    <title>region-164</title>
+    <path d="M 140,159 L 103,163 L 96,179 L 29,271 L 28,458 L 32,462 L 87,284 L 164,193 L 161,183 Z" fill="#0779a0" fill-rule="evenodd" />
+  </g>
+  <g id="region-194">
+    <title>region-194</title>
+    <path d="M 113,271 L 117,276 L 172,274 L 182,254 L 196,241 L 204,251 L 207,269 L 253,270 L 247,275 L 212,276 L 206,280 L 210,285 L 276,317 L 279,311 L 260,274 L 197,194 L 181,208 L 172,202 Z" fill="#096cb9" fill-rule="evenodd" />
+  </g>
+  <g id="region-223">
+    <title>region-223</title>
+    <path d="M 191,252 L 186,258 L 182,271 L 185,273 L 188,273 L 190,271 L 202,271 L 203,268 L 198,257 L 194,252 Z" fill="#e8b910" fill-rule="evenodd" />
+  </g>
+  <g id="region-234">
+    <title>region-234</title>
+    <path d="M 90,314 L 98,316 L 172,282 L 107,281 L 94,296 Z" fill="#096cb9" fill-rule="evenodd" />
+  </g>
+  <g id="region-235">
+    <title>region-235</title>
+    <path d="M 223,315 L 205,303 L 210,291 L 196,280 L 181,288 L 186,300 L 155,322 L 175,325 L 200,319 L 210,321 Z" fill="#e8b910" fill-rule="evenodd" />
+  </g>
+  <g id="region-239">
+    <title>region-239</title>
+    <path d="M 174,291 L 115,318 L 134,368 L 96,493 L 99,496 L 149,440 L 152,336 L 137,325 L 176,296 Z" fill="#096cb9" fill-rule="evenodd" />
+  </g>
+  <g id="region-243">
+    <title>region-243</title>
+    <path d="M 218,295 L 215,299 L 243,321 L 231,331 L 233,444 L 278,515 L 277,491 L 249,369 L 263,321 Z" fill="#096cb9" fill-rule="evenodd" />
+  </g>
+  <g id="region-257">
+    <title>region-257</title>
+    <path d="M 104,322 L 87,329 L 44,474 L 81,451 L 97,446 L 104,434 L 123,363 Z" fill="#312cab" fill-rule="evenodd" />
+  </g>
+  <g id="region-261">
+    <title>region-261</title>
+    <path d="M 275,331 L 260,371 L 270,396 L 277,445 L 291,458 L 295,454 L 279,335 Z" fill="#312cab" fill-rule="evenodd" />
+  </g>
+  <g id="region-262">
+    <title>region-262</title>
+    <path d="M 191,332 L 163,336 L 160,528 L 187,562 L 192,485 Z" fill="#d7d1ca" fill-rule="evenodd" />
+  </g>
+  <g id="region-263">
+    <title>region-263</title>
+    <path d="M 220,332 L 199,334 L 203,417 L 198,558 L 221,533 Z" fill="#a4a7ba" fill-rule="evenodd" />
+  </g>
+</svg>

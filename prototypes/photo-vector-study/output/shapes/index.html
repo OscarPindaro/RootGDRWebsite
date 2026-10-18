@@ -1,0 +1,526 @@
+<!doctype html><html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Ricostruzione a forme</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f0e5;color:#302d2b;font:16px/1.6 system-ui}
+main{max-width:1250px;margin:auto;padding:30px}h1{font:44px Georgia,serif}h2{font:30px Georgia,serif}
+p{max-width:900px}article{border-top:1px solid #c9bfac;padding:20px 0}.figures{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+figure{margin:0;min-width:0}figure img,figure svg{width:100%;height:610px;object-fit:contain}figcaption{text-align:center}
+.interactive svg{overflow:visible;padding:24px}
+svg g{cursor:pointer}svg g:hover>*:not(title),svg g.selected>*:not(title){stroke:#ed843e;stroke-width:4}
+nav{display:flex;gap:24px;flex-wrap:wrap}a,button{color:#365b70;min-height:44px;display:inline-flex;align-items:center}
+button{font:inherit;background:transparent;border:1px solid #b8ad97;padding:0 12px;cursor:pointer}
+button:focus-visible,a:focus-visible,svg g:focus-visible{outline:3px solid #008ed0;outline-offset:4px}
+@media(max-width:650px){main{padding:20px 14px}.figures{gap:8px}figure img,figure svg{height:350px}}
+</style><main><p>Root GDR · studio 04</p><h1>Dai contorni alle forme.</h1>
+<p>Le regioni rilevate diventano oggetti indipendenti: poligoni con bordi regolari,
+piccole ellissi quando riconoscibili e curve Bézier per alcuni dettagli interni.
+Puoi selezionare gli oggetti o separarli per vedere la composizione.</p>
+<p>Geometria ricavata automaticamente dai pixel. Nessun punto della prima versione
+disegnata a mano viene usato. Le forme non sono ancora parti anatomiche e i confini
+nascosti non vengono inventati.</p>
+<nav><a href="comparison.png" target="_blank">Confronto PNG completo</a>
+<a href="../study.zip" download>Scarica SVG, JSON e codice</a>
+<a href="../pose-comparison/">Confronto dei modelli di posa</a></nav>
+
+        <article><h2>Altus</h2><p>23 oggetti separati · 0 curve Bézier</p>
+        <div class="figures"><figure><img src="../opencv/altus-polygons.png" alt="Contorni OpenCV">
+        <figcaption>Prima estrazione</figcaption></figure>
+        <figure class="interactive"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 370 597" width="370" height="597" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Altus">
+  <g id="region-164-0" data-kind="polygon" data-source="region-164" tabindex="0">
+    <title>region-164-0 · polygon</title>
+    <polygon fill="#0779a0" stroke="#302d2b" stroke-width="6.0" points="143.2,154 105.65,154 22.62,268.16 22.62,461.98 31.4,474.64 41.73,456.43 92.15,287.14 171.79,192.03" />
+  </g>
+  <g id="region-156-0" data-kind="polygon" data-source="region-156" tabindex="0">
+    <title>region-156-0 · polygon</title>
+    <polygon fill="#0779a0" stroke="#302d2b" stroke-width="6.0" points="215.84,150 197.91,182.65 284.57,299.48 282.78,320.62 298.9,446.49 306.55,457.08 313.67,448.71 332,372 343.52,290.98 249.98,170.02 235.35,155.98 236.44,150" />
+  </g>
+  <g id="region-025-0" data-kind="polygon" data-source="region-025" tabindex="0">
+    <title>region-025-0 · polygon</title>
+    <polygon fill="#096cb9" stroke="#302d2b" stroke-width="6.0" points="99.09,26.9 106.5,153 150,155 263.4,146.86 283.05,172.34 293.2,175.45 293.2,153.35 285.84,124.88 109.28,28.37" />
+  </g>
+  <g id="region-194-0" data-kind="polygon" data-source="region-194" tabindex="0">
+    <title>region-194-0 · polygon</title>
+    <polygon fill="#096cb9" stroke="#302d2b" stroke-width="6.0" points="105.31,272.02 115.43,277.3 177,277.3 182.14,256.37 198.43,242.83 207.48,284.06 276.17,323.2 282.8,323.2 282.8,297.98 199.02,185.48 181.01,200.59 170.82,194.66" />
+  </g>
+  <g id="region-262-0" data-kind="polygon" data-source="region-262" tabindex="0">
+    <title>region-262-0 · polygon</title>
+    <polygon fill="#d7d1ca" stroke="#302d2b" stroke-width="6.0" points="155.93,331.5 155.93,530.66 185.01,568.95 194.8,570.77 198,391 194.55,327.84" />
+  </g>
+  <g id="region-257-0" data-kind="polygon" data-source="region-257" tabindex="0">
+    <title>region-257-0 · polygon</title>
+    <polygon fill="#312cab" stroke="#302d2b" stroke-width="6.0" points="108.59,317.66 83.53,323.7 82.71,324.69 34.15,481.42 47.94,479.15 105.7,442.29 129,366.22" />
+  </g>
+  <g id="region-243-0" data-kind="polygon" data-source="region-243" tabindex="0">
+    <title>region-243-0 · polygon</title>
+    <polygon fill="#096cb9" stroke="#302d2b" stroke-width="6.0" points="216,289.63 210.4,299.98 232.77,316.9 227.53,323.51 230,457 270.49,516.83 286.75,529.46 277.83,458.7 275.39,454.65 254.75,367.01 270.79,321.18" />
+  </g>
+  <g id="region-239-0" data-kind="polygon" data-source="region-239" tabindex="0">
+    <title>region-239-0 · polygon</title>
+    <polygon fill="#096cb9" stroke="#302d2b" stroke-width="6.0" points="175.32,286.06 108.71,315.6 129.84,366.15 91.82,491.36 93.33,505.23 103.14,500.48 155.88,439.67 155.88,330.47 145.68,322.1 180.44,298.11" />
+  </g>
+  <g id="region-263-0" data-kind="polygon" data-source="region-263" tabindex="0">
+    <title>region-263-0 · polygon</title>
+    <polygon fill="#a4a7ba" stroke="#302d2b" stroke-width="6.0" points="226.57,324.82 196.31,328.01 196.31,568.76 227.2,534.49 230,458" />
+  </g>
+  <g id="region-261-0" data-kind="polygon" data-source="region-261" tabindex="0">
+    <title>region-261-0 · polygon</title>
+    <polygon fill="#312cab" stroke="#302d2b" stroke-width="6.0" points="270.93,323.7 255.05,369.3 264.44,399.06 273.78,450.27 281.9,463.33 302.42,467.69 305.2,457.27 297.84,446.04 283.1,330.17 280.64,325.34" />
+  </g>
+  <g id="region-235-0" data-kind="polygon" data-source="region-235" tabindex="0">
+    <title>region-235-0 · polygon</title>
+    <polygon fill="#e8b910" stroke="#302d2b" stroke-width="6.0" points="231.24,317.39 209.49,299.89 214.03,291.28 202,281.49 202,276.35 196.18,276.03 179.2,279.9 176.95,286.92 181.64,298.56 154.23,316.78 147.85,323.5 157.2,330.26 226.28,324.1" />
+  </g>
+  <g id="region-234-0" data-kind="polygon" data-source="region-234" tabindex="0">
+    <title>region-234-0 · polygon</title>
+    <polygon fill="#096cb9" stroke="#302d2b" stroke-width="6.0" points="85,320.6 93.59,321.07 109.69,315.83 131.9,303.27 175.65,285.62 179.32,278.5 116.16,278.5 105.9,274.1 93.68,286.32 85,309.04" />
+  </g>
+  <g id="region-160-0" data-kind="polygon" data-source="region-160" tabindex="0">
+    <title>region-160-0 · polygon</title>
+    <polygon fill="#e8b910" stroke="#302d2b" stroke-width="6.0" points="210.48,150.84 156.79,153.5 148.89,156.38 151.26,165.31 171.06,188.22 172.26,194.42 181.11,199.59 195.47,187.56 197.47,180.57 211.11,158.33" />
+  </g>
+  <g id="region-120-0" data-kind="polygon" data-source="region-120" tabindex="0">
+    <title>region-120-0 · polygon</title>
+    <polygon fill="#b43032" stroke="#302d2b" stroke-width="6.0" points="56.83,126.17 58.04,130.08 64.28,135.03 71.89,137.68 85.96,146.44 105.16,152.57 103.73,113.72 100.39,107 91.71,107 78,115 61.98,121.02" />
+  </g>
+  <g id="region-018-0" data-kind="polygon" data-source="region-018" tabindex="0">
+    <title>region-018-0 · polygon</title>
+    <polygon fill="#b43032" stroke="#302d2b" stroke-width="6.0" points="100.91,28.8 93.02,24.63 81.52,26.79 55.31,39.27 51.4,46.65 57.61,52.86 72.31,58.24 79.28,64 97.75,64 99.93,55.54 98.76,34" />
+  </g>
+  <g id="region-064-0" data-kind="polygon" data-source="region-064" tabindex="0">
+    <title>region-064-0 · polygon</title>
+    <polygon fill="#b43032" stroke="#302d2b" stroke-width="6.0" points="54.56,79.44 60.88,88.24 82.19,98.02 91.29,106 102.46,106 100.96,71.52 98.12,65 80.03,65 59.04,74.96" />
+  </g>
+  <g id="region-223-0" data-kind="polygon" data-source="region-223" tabindex="0">
+    <title>region-223-0 · polygon</title>
+    <polygon fill="#e8b910" stroke="#302d2b" stroke-width="5.51" points="196.12,247.72 190.78,248.97 184.06,256.83 178.88,269.44 179.35,278 185.59,278 194.33,274.93 202.86,275.39 205.44,273.8 199.9,253.86" />
+  </g>
+  <g id="region-085-0" data-kind="polygon" data-source="region-085" tabindex="0">
+    <title>region-085-0 · polygon</title>
+    <polygon fill="#d7d1ca" stroke="#302d2b" stroke-width="5.44" points="147.04,82.29 140.71,84.89 132,93.84 132,100.98 135.49,106.65 146.54,111 150.03,111 154.79,103.11 156.99,89.99 150.33,83.33" />
+  </g>
+  <g id="region-100-0" data-kind="polygon" data-source="region-100" tabindex="0">
+    <title>region-100-0 · polygon</title>
+    <polygon fill="#d7d1ca" stroke="#302d2b" stroke-width="5.21" points="151.86,109.29 152.65,111.75 160.32,112.87 182.33,111.73 185,110.07 185,106.56 174,98 163.64,92.17 158.93,91.07 157.25,92.75 155.84,103.17" />
+  </g>
+  <g id="region-073-0" data-kind="polygon" data-source="region-073" tabindex="0">
+    <title>region-073-0 · polygon</title>
+    <polygon fill="#d7d1ca" stroke="#302d2b" stroke-width="4.17" points="131.26,71.93 128,73.66 128,87.78 131.07,93.35 138.53,85.46 146.47,81.04 143.81,77.79" />
+  </g>
+  <g id="region-156-color-1-0" data-kind="polygon" data-source="region-156-color-1" tabindex="0">
+    <title>region-156-color-1-0 · polygon</title>
+    <polygon fill="#d7d1ca" stroke="#302d2b" stroke-width="3.11" points="243.17,148.68 237.34,150.59 236.14,157.14 238.03,159.03 242.41,159.57 244.72,153.94" />
+  </g>
+  <g id="ink-detail-0" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-0 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="244.908,270.719 216.98,272.718" />
+  </g>
+  <g id="ink-detail-1" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-1 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="241.183,319.02 240.523,325.057" />
+  </g>
+</svg><figcaption class="selection">Seleziona una forma</figcaption></figure></div>
+        <nav><a href="altus.svg" download>SVG a forme</a><a href="altus.json" download>Scena JSON</a>
+        <a href="altus-parts.svg" target="_blank">Mappa degli oggetti</a>
+        <button type="button" class="explode">Separa gli oggetti</button></nav></article>
+        <article><h2>Luciano</h2><p>24 oggetti separati · 0 curve Bézier</p>
+        <div class="figures"><figure><img src="../opencv/luciano-polygons.png" alt="Contorni OpenCV">
+        <figcaption>Prima estrazione</figcaption></figure>
+        <figure class="interactive"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 359 479" width="359" height="479" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Luciano">
+  <g id="region-028-0" data-kind="polygon" data-source="region-028" tabindex="0">
+    <title>region-028-0 · polygon</title>
+    <polygon fill="#076abc" stroke="#302d2b" stroke-width="6.0" points="191.78,51.29 154.2,67.72 123.22,112.29 177.63,104.46 179.21,132.3 158.55,147.84 147.18,201.85 215.4,218.3 234.64,142.62 221,128.28 221,108.5 233.39,87.42 217.93,55.69" />
+  </g>
+  <g id="region-126-0" data-kind="polygon" data-source="region-126" tabindex="0">
+    <title>region-126-0 · polygon</title>
+    <polygon fill="#076abc" stroke="#302d2b" stroke-width="6.0" points="252.1,151.11 245.21,181.36 250.6,191.81 250.6,266.84 274.33,282.79 291.84,321.77 302.36,332.64 314.9,320.1 329.76,320.1 336.49,233.6 275.14,167.51" />
+  </g>
+  <g id="region-150-0" data-kind="polygon" data-source="region-150" tabindex="0">
+    <title>region-150-0 · polygon</title>
+    <polygon fill="#d22b33" stroke="#302d2b" stroke-width="6.0" points="199.36,214.88 165.34,207.26 123.66,402.81 164.79,404.28 205.85,225.43" />
+  </g>
+  <g id="region-156-0" data-kind="polygon" data-source="region-156" tabindex="0">
+    <title>region-156-0 · polygon</title>
+    <polygon fill="#d22b33" stroke="#302d2b" stroke-width="6.0" points="230.76,219.15 224.86,221.44 184.3,395.91 186.61,403.72 237.38,399.9 260.2,274.91 250,266.84 250,236.24" />
+  </g>
+  <g id="region-145-0" data-kind="polygon" data-source="region-145" tabindex="0">
+    <title>region-145-0 · polygon</title>
+    <polygon fill="#d22b33" stroke="#302d2b" stroke-width="6.0" points="130.11,197.42 102.4,219.67 93,297 81.85,350.4 112,392.14 146.89,203.39" />
+  </g>
+  <g id="region-098-0" data-kind="polygon" data-source="region-098" tabindex="0">
+    <title>region-098-0 · polygon</title>
+    <polygon fill="#076abc" stroke="#302d2b" stroke-width="6.0" points="20.49,134.51 52,181 75.12,208.97 136,163 145.15,148.54 135.85,143.8 37.98,133.03" />
+  </g>
+  <g id="region-155-0" data-kind="polygon" data-source="region-155" tabindex="0">
+    <title>region-155-0 · polygon</title>
+    <polygon fill="#ded9d0" stroke="#302d2b" stroke-width="6.0" points="219.79,217.83 208.14,218.87 166.2,403 181.63,403 223.45,223.44" />
+  </g>
+  <g id="region-147-0" data-kind="polygon" data-source="region-147" tabindex="0">
+    <title>region-147-0 · polygon</title>
+    <polygon fill="#ded9d0" stroke="#302d2b" stroke-width="6.0" points="151.88,203.96 147.44,205.7 113.36,390.3 120.24,401.68 123.9,396.65 164.22,208.07" />
+  </g>
+  <g id="region-019-0" data-kind="polygon" data-source="region-019" tabindex="0">
+    <title>region-019-0 · polygon</title>
+    <polygon fill="#ded9d0" stroke="#302d2b" stroke-width="6.0" points="176,38.77 176,45.72 183.2,51.95 204.42,50.74 219.42,58.18 235.21,88.33 247.02,89.03 257,78.81 257,68.22 249.83,54.25 229.78,37.03 218.57,34.1 182.82,34.1" />
+  </g>
+  <g id="region-167-0" data-kind="polygon" data-source="region-167" tabindex="0">
+    <title>region-167-0 · polygon</title>
+    <polygon fill="#d22b33" stroke="#302d2b" stroke-width="6.0" points="86.53,236.88 71.1,238.88 50.66,302.07 55.32,314.84 69.14,330.61 74.5,325.95 88.88,243.79" />
+  </g>
+  <g id="region-131-0" data-kind="polygon" data-source="region-131" tabindex="0">
+    <title>region-131-0 · polygon</title>
+    <polygon fill="#076abc" stroke="#302d2b" stroke-width="6.0" points="136.8,163.08 125.07,168.98 77.47,208.55 73.07,237.44 86.14,235.96 111.02,210.82 132.96,195.2 138.05,172.54" />
+  </g>
+  <g id="region-190-0" data-kind="polygon" data-source="region-190" tabindex="0">
+    <title>region-190-0 · polygon</title>
+    <polygon fill="#d22b33" stroke="#302d2b" stroke-width="6.0" points="277.71,289.68 272.17,291.5 268.98,301.04 262.55,346.77 256.73,367.85 258.07,376.44 265.94,373.26 294.69,344.29 301.88,334.07 289.62,320.17" />
+  </g>
+  <g id="region-183-0" data-kind="polygon" data-source="region-183" tabindex="0">
+    <title>region-183-0 · polygon</title>
+    <polygon fill="#ded9d0" stroke="#302d2b" stroke-width="6.0" points="266.28,276.45 260.6,278.15 240,384 240,401.04 257.22,380.35 256.42,372.95 268.99,298.37 274.15,286.25" />
+  </g>
+  <g id="region-162-0" data-kind="polygon" data-source="region-162" tabindex="0">
+    <title>region-162-0 · polygon</title>
+    <polygon fill="#ded9d0" stroke="#302d2b" stroke-width="6.0" points="99,224.48 87.05,235.82 89.92,243.67 75.43,326.08 69.35,331.92 77.94,345.04 82.17,341.28 87.19,323.85 99,250" />
+  </g>
+  <g id="region-115-0" data-kind="polygon" data-source="region-115" tabindex="0">
+    <title>region-115-0 · polygon</title>
+    <polygon fill="#b6403c" stroke="#302d2b" stroke-width="6.0" points="238.78,143.21 233.93,147.53 228.88,171.9 221.13,194.69 219,216.87 224.19,220.94 230.81,217.56 237.44,191.43 246.1,177.93 246.1,164.8 250.89,154.78" />
+  </g>
+  <g id="region-121-0" data-kind="polygon" data-source="region-121" tabindex="0">
+    <title>region-121-0 · polygon</title>
+    <polygon fill="#b6403c" stroke="#302d2b" stroke-width="6.0" points="154.65,149 145.85,149 136.93,163.31 139,167.34 139,172.78 133.4,197.3 141.47,201.11 146.7,199.4 153.56,166.53 156.22,158.97" />
+  </g>
+  <g id="region-273-0" data-kind="polygon" data-source="region-273" tabindex="0">
+    <title>region-273-0 · polygon</title>
+    <polygon fill="#a17829" stroke="#302d2b" stroke-width="5.7" points="132.57,428.38 127.56,427.21 109,441.82 109,447.27 115.02,449.02 118,452 118,455.88 120.05,459.2 124.02,457.98 131,451 141.4,451 139.85,441.82" />
+  </g>
+  <g id="region-139-0" data-kind="polygon" data-source="region-139" tabindex="0">
+    <title>region-139-0 · polygon</title>
+    <polygon fill="#165786" stroke="#302d2b" stroke-width="5.55" points="245.07,182.32 238.68,190.66 232.05,216.36 234.03,221.24 242.57,229 246.17,229 249,225.04 249,190.87" />
+  </g>
+  <g id="region-271-0" data-kind="polygon" data-source="region-271" tabindex="0">
+    <title>region-271-0 · polygon</title>
+    <polygon fill="#c48818" stroke="#302d2b" stroke-width="5.16" points="231.81,423.26 225.84,438.55 227.05,449.29 229.73,450.14 238.08,445.09 248.03,446.01 250.92,436.5 248.38,432.38 243.96,427.96" />
+  </g>
+  <g id="region-245-0" data-kind="polygon" data-source="region-245" tabindex="0">
+    <title>region-245-0 · polygon</title>
+    <polygon fill="#c48818" stroke="#302d2b" stroke-width="5.09" points="149.86,405.44 143.05,402.86 127,405.19 127,425.49 133.29,428.05 138.16,425.05 149.23,412.79" />
+  </g>
+  <g id="region-246-0" data-kind="polygon" data-source="region-246" tabindex="0">
+    <title>region-246-0 · polygon</title>
+    <polygon fill="#a17829" stroke="#302d2b" stroke-width="4.59" points="225.22,401 219.74,404.02 221,412.62 224.7,419.93 230.71,424.11 233.81,422.19 236.06,416.27 237.35,401" />
+  </g>
+  <g id="region-008-0" data-kind="ellipse" data-source="region-008" tabindex="0">
+    <title>region-008-0 · ellipse</title>
+    <ellipse fill="#983942" stroke="#302d2b" stroke-width="4.03" cx="223.5646209716797" cy="26.933828353881836" rx="7.487318515777588" ry="8.36207389831543" transform="rotate(167.28221130371094 223.5646209716797 26.933828353881836)" />
+  </g>
+  <g id="region-028-color-1-0" data-kind="polygon" data-source="region-028-color-1" tabindex="0">
+    <title>region-028-color-1-0 · polygon</title>
+    <polygon fill="#ded9d0" stroke="#302d2b" stroke-width="2.9" points="191.77,73.77 191.35,73.35 180.67,78.38 179.87,79.87 182.88,82.88 187.4,80.57" />
+  </g>
+  <g id="ink-detail-0" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-0 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="297.42,298.601 309.626,310.388" />
+  </g>
+</svg><figcaption class="selection">Seleziona una forma</figcaption></figure></div>
+        <nav><a href="luciano.svg" download>SVG a forme</a><a href="luciano.json" download>Scena JSON</a>
+        <a href="luciano-parts.svg" target="_blank">Mappa degli oggetti</a>
+        <button type="button" class="explode">Separa gli oggetti</button></nav></article>
+        <article><h2>Tacito</h2><p>65 oggetti separati · 3 curve Bézier</p>
+        <div class="figures"><figure><img src="../opencv/wolf-polygons.png" alt="Contorni OpenCV">
+        <figcaption>Prima estrazione</figcaption></figure>
+        <figure class="interactive"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 513 628" width="513" height="628" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Tacito">
+  <g id="region-167-0" data-kind="polygon" data-source="region-167" tabindex="0">
+    <title>region-167-0 · polygon</title>
+    <polygon fill="#787f9a" stroke="#302d2b" stroke-width="6.0" points="42.38,218.96 65.41,252.11 149.53,338.36 170,319.49 174.9,323.76 189,387 199.5,363.85 205.8,305.5 221.31,288.09 224.93,286.89 288.31,280.78 303.1,310.06 303.1,381.22 312.67,392.41 327.9,323.93 334.35,318.32 348.19,337.84 460.81,256.99 473.49,221.23 464.41,203.93 451.85,199.15 448.61,202.39 459.99,214.02 455.14,223.21 440.9,207.56 440.9,226.16 428.99,239.08 410.6,220.5 399.44,235.45 407.08,254.89 351.2,283.06 324.05,218.56 187.48,218.56 153.13,278.14 143.32,279.66 109.02,244.27 117.36,224.93 113.01,215.78 104.87,210.58 94.47,225.66 84.42,220.61 74.56,188.56 50.01,195.7" />
+  </g>
+  <g id="region-052-0" data-kind="polygon" data-source="region-052" tabindex="0">
+    <title>region-052-0 · polygon</title>
+    <polygon fill="#787f9a" stroke="#302d2b" stroke-width="6.0" points="374.82,125.23 364.86,116.18 347.38,121.28 323.48,60.43 299.12,91.4 247.73,91.4 246.84,107.79 234.36,105.25 233.04,100.71 200.88,68.26 180.1,97.02 180.1,147.24 173.38,158.42 166.73,198.76 178.44,217.4 332.43,217.4 370,186 314.57,189.83 310.66,168.88 377.2,140.62" />
+  </g>
+  <g id="region-344-0" data-kind="polygon" data-source="region-344" tabindex="0">
+    <title>region-344-0 · polygon</title>
+    <polygon fill="#c52d30" stroke="#302d2b" stroke-width="6.0" points="190.09,408.22 153.85,503.65 168.49,561.9 210.34,556.72 213.9,506.72 255.77,453.73 290.57,512.37 280.9,553.48 285.46,568.04 316.91,564.42 339.21,496.62 317.07,434.9 313.55,431.84 228.66,435.85 219.49,427.81 227.48,412.13" />
+  </g>
+  <g id="region-312-0" data-kind="polygon" data-source="region-312" tabindex="0">
+    <title>region-312-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="6.0" points="330.84,316.47 310,390 310,414 318.18,414 363.29,458.19 446.39,474.98 441.04,390.57 370.54,322.22 348.76,339.32" />
+  </g>
+  <g id="region-290-0" data-kind="polygon" data-source="region-290" tabindex="0">
+    <title>region-290-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="6.0" points="287.97,282.17 222.63,287.68 206.83,305.42 200.47,363.67 191,394.45 191,407.23 228.2,411.37 234.01,400.26 244.49,404.1 265.04,400.54 273.85,413.8 309,413.8 309,389.86 302,380.89 302,309.88" />
+  </g>
+  <g id="region-075-0" data-kind="polygon" data-source="region-075" tabindex="0">
+    <title>region-075-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="6.0" points="157.64,78.19 76.07,156.86 166,252.68 182.69,226.05 165.17,197.3 179,147 179.1,100.03" />
+  </g>
+  <g id="region-045-0" data-kind="polygon" data-source="region-045" tabindex="0">
+    <title>region-045-0 · polygon</title>
+    <polygon fill="#c52d30" stroke="#302d2b" stroke-width="6.0" points="169.18,66 128.97,66 119.35,71.43 54.51,131.15 57.9,163.56 67.13,164.35" />
+  </g>
+  <g id="region-005-0" data-kind="polygon" data-source="region-005" tabindex="0">
+    <title>region-005-0 · polygon</title>
+    <polygon fill="#c52d30" stroke="#302d2b" stroke-width="6.0" points="33.66,17.84 19.92,29.91 69.06,94.92 77.57,101.3 72.78,107.78 75.42,110.42 110.13,81.25 98.65,81.25" />
+  </g>
+  <g id="region-510-0" data-kind="polygon" data-source="region-510" tabindex="0">
+    <title>region-510-0 · polygon</title>
+    <polygon fill="#80442b" stroke="#302d2b" stroke-width="6.0" points="210.7,557.76 169.02,562.87 165.72,578.99 145.71,593.38 138.76,602.03 145.54,605.61 192.01,605.61 208.7,601.78 210.7,595.53" />
+  </g>
+  <g id="region-190-0" data-kind="polygon" data-source="region-190" tabindex="0">
+    <title>region-190-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="6.0" points="107.83,206.02 105.87,208.71 119.11,222.35 110.52,243.54 134.94,270.86 145.02,278 152.74,278 166.4,252.25 119.77,206.82 114.63,211.08" />
+  </g>
+  <g id="region-514-0" data-kind="polygon" data-source="region-514" tabindex="0">
+    <title>region-514-0 · polygon</title>
+    <polygon fill="#80442b" stroke="#302d2b" stroke-width="6.0" points="288.79,569.23 290.16,601.19 298.15,604.76 320,607 347.78,605.93 356.29,602.94 351.03,594.04 332.1,578.63 325.22,576.3 317.58,566.1 306.92,566.1" />
+  </g>
+  <g id="region-344-color-1-0" data-kind="polygon" data-source="region-344-color-1" tabindex="0">
+    <title>region-344-color-1-0 · polygon</title>
+    <polygon fill="#598211" stroke="#302d2b" stroke-width="6.0" points="220.5,427.41 228.55,434.85 263.93,433.59 267.76,431.22 269.15,407.04 265.13,401.9 251.51,403.26 247.06,406.74 241.39,403.25 234.25,401.87" />
+  </g>
+  <g id="region-152-0" data-kind="polygon" data-source="region-152" tabindex="0">
+    <title>region-152-0 · polygon</title>
+    <polygon fill="#2885c7" stroke="#302d2b" stroke-width="6.0" points="484.92,180.15 482.18,183.99 476.19,183.26 484.16,199.73 480.43,205.41 470.98,190.33 466.97,188.99 480.14,213.36 477.59,216.48 472.38,215.11 474.03,225.97 485.54,232.02 488.34,224.62 492.78,222.32 497,201.09 497,191.36 491.23,183.35" />
+  </g>
+  <g id="region-348-0" data-kind="polygon" data-source="region-348" tabindex="0">
+    <title>region-348-0 · polygon</title>
+    <polygon fill="#80442b" stroke="#302d2b" stroke-width="6.0" points="312,426.62 308.18,412.93 300.5,415.17 271.69,413.95 269,419.01 269,430.17 273.41,432 306.11,432 312,430.26" />
+  </g>
+  <g id="region-142-0" data-kind="polygon" data-source="region-142" tabindex="0">
+    <title>region-142-0 · polygon</title>
+    <polygon fill="#2885c7" stroke="#302d2b" stroke-width="5.51" points="26.22,169 24.73,201.98 30.37,206.45 33.79,217.75 38,207.8 38,189.36 41.83,184 47.13,184 48.57,181.31 32.42,179.56 30.7,176.3 33.91,173.09 48,175 36,169" />
+  </g>
+  <g id="region-117-0" data-kind="polygon" data-source="region-117" tabindex="0">
+    <title>region-117-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="5.41" points="252.66,134.37 247.85,124.02 248.67,115.67 247.35,114.35 240.47,117.15 231.78,115.1 216.9,115.1 215.02,116.98 219.24,127.56 231.25,130.67 236.6,133 242.59,133 247.66,135.1" />
+  </g>
+  <g id="region-132-0" data-kind="polygon" data-source="region-132" tabindex="0">
+    <title>region-132-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="5.22" points="376.63,140.81 368.86,145.87 356.88,149.67 347.35,154.9 354.25,161.19 361.86,174.45 364.18,172.76 369.93,159.93 378.3,153.36" />
+  </g>
+  <g id="region-111-0" data-kind="polygon" data-source="region-111" tabindex="0">
+    <title>region-111-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="5.15" points="318.64,113.64 317,112 311.8,112 291.71,119.12 286.43,134.38 291.54,135.13 296.04,132.65 312.74,128.26 315.62,125.38" />
+  </g>
+  <g id="region-145-0" data-kind="polygon" data-source="region-145" tabindex="0">
+    <title>region-145-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="5.08" points="324.21,164.06 316.04,166.96 312.45,170.55 314.36,187.3 316.4,188.56 329.71,187.05 339,184.23 339,182.11 326.27,168.09" />
+  </g>
+  <g id="region-137-0" data-kind="polygon" data-source="region-137" tabindex="0">
+    <title>region-137-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="4.83" points="350.33,157.41 346.78,160.01 347.79,163.2 339.98,181.25 340.57,185.24 360.19,182.33 362.51,181.37 361.85,175.34" />
+  </g>
+  <g id="region-136-0" data-kind="polygon" data-source="region-136" tabindex="0">
+    <title>region-136-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="4.53" points="346.5,155.67 340.1,157.06 325.75,163.89 326.91,167.65 338.06,180.17 339.92,179.18 346.5,163.73" />
+  </g>
+  <g id="region-138-0" data-kind="polygon" data-source="region-138" tabindex="0">
+    <title>region-138-0 · polygon</title>
+    <polygon fill="#e1ddcd" stroke="#302d2b" stroke-width="4.49" points="375.77,156.77 371.02,159.69 365.21,172.79 363,175 363,180.38 370.1,185.19 374.16,183.93 376.96,178.86 378.21,159.21" />
+  </g>
+  <g id="region-094-0" data-kind="polygon" data-source="region-094" tabindex="0">
+    <title>region-094-0 · polygon</title>
+    <polygon fill="#787f9a" stroke="#302d2b" stroke-width="3.79" points="245.42,92.35 232.67,94.38 234.55,103.71 240.82,106.09 246.17,105.51 247.02,99.64" />
+  </g>
+  <g id="region-195-0" data-kind="polygon" data-source="region-195" tabindex="0">
+    <title>region-195-0 · polygon</title>
+    <polygon fill="#959292" stroke="#302d2b" stroke-width="3.69" points="443.59,205.14 442.93,208.31 454.44,221.56 458.38,217.62 456.07,209.62 448.02,203.78" />
+  </g>
+  <g id="region-172-0" data-kind="polygon" data-source="region-172" tabindex="0">
+    <title>region-172-0 · polygon</title>
+    <polygon fill="#959292" stroke="#302d2b" stroke-width="3.55" points="91.05,194.9 85.78,192 79.66,192 76.81,197.37 77.79,202.79 79.91,204.91 87.82,200.15" />
+  </g>
+  <g id="region-142-color-2-0" data-kind="polygon" data-source="region-142-color-2" tabindex="0">
+    <title>region-142-color-2-0 · polygon</title>
+    <polygon fill="#bad2e0" stroke="#302d2b" stroke-width="3.09" points="43.99,205.73 39.51,205.32 36.24,215.24 37.17,216.17 42.95,215.54 44.84,207.32" />
+  </g>
+  <g id="ink-detail-0" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-0 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="298,102 283,106 276,124" />
+  </g>
+  <g id="ink-detail-1" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-1 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="126.559,122.511 148.908,148.081" />
+  </g>
+  <g id="ink-detail-2" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-2 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="360.404,128.629 365.184,133.831" />
+  </g>
+  <g id="ink-detail-3" data-kind="bezier" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-3 · bezier</title>
+    <path fill="none" stroke="#302d2b" stroke-width="3.0" d="M 345,130 C 343.333,129.833 339,127.5 335,129 C 331,130.5 325.833,136.333 321,139 C 316.167,141.667 308.5,144 306,145 " />
+  </g>
+  <g id="ink-detail-4" data-kind="bezier" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-4 · bezier</title>
+    <path fill="none" stroke="#302d2b" stroke-width="3.0" d="M 223,146 C 222.833,145.167 224.167,142.167 222,141 C 219.833,139.833 212.833,138.667 210,139 C 207.167,139.333 205.833,140.833 205,143 C 204.167,145.167 204.667,149.667 205,152 C 205.333,154.333 205.833,155.333 207,157 C 208.167,158.667 208,160.333 212,162 C 216,163.667 227.833,166.167 231,167 " />
+  </g>
+  <g id="ink-detail-5" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-5 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="244.364,147.179 237.256,161.634" />
+  </g>
+  <g id="ink-detail-6" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-6 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="158.228,154.852 161.409,159.734" />
+  </g>
+  <g id="ink-detail-7" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-7 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="237.946,161.928 231.052,167.07" />
+  </g>
+  <g id="ink-detail-8" data-kind="bezier" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-8 · bezier</title>
+    <path fill="none" stroke="#302d2b" stroke-width="3.0" d="M 238,162 C 239.833,162 245.333,161.333 249,162 C 252.667,162.667 256.667,163.667 260,166 C 263.333,168.333 267.333,172.833 269,176 C 270.667,179.167 271.333,182.333 270,185 C 268.667,187.667 263.833,190.833 261,192 C 258.167,193.167 255.333,192.667 253,192 C 250.667,191.333 248,189.333 247,188 C 246,186.667 246.667,185 247,184 C 247.333,183 248.667,182.333 249,182 " />
+  </g>
+  <g id="ink-detail-9" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-9 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="231.596,167.274 222.428,187.197" />
+  </g>
+  <g id="ink-detail-10" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-10 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="181.748,175.046 182.837,181.03" />
+  </g>
+  <g id="ink-detail-11" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-11 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="297.26,241.381 288.324,247.475" />
+  </g>
+  <g id="ink-detail-12" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-12 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="279.759,246.079 281.725,252.09" />
+  </g>
+  <g id="ink-detail-13" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-13 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="287.972,249.924 282.028,252.076" />
+  </g>
+  <g id="ink-detail-14" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-14 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="288.622,249.585 293.394,256.737" />
+  </g>
+  <g id="ink-detail-15" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-15 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="272.775,252.124 275.594,257.224" />
+  </g>
+  <g id="ink-detail-16" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-16 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="282.03,256.163 276.046,257.252" />
+  </g>
+  <g id="ink-detail-17" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-17 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="282.457,255.656 287.148,261.889" />
+  </g>
+  <g id="ink-detail-18" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-18 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="275.642,259.55 267.817,265.769" />
+  </g>
+  <g id="ink-detail-19" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-19 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="302.279,263.453 332.512,311.563" />
+  </g>
+  <g id="ink-detail-20" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-20 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="210.113,266.942 172.693,311.128" />
+  </g>
+  <g id="ink-detail-21" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-21 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="276.446,306.269 267.598,320.962" />
+  </g>
+  <g id="ink-detail-22" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-22 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="258.084,314.873 265.967,320.05" />
+  </g>
+  <g id="ink-detail-23" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-23 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="267.343,323.941 273.429,331.662" />
+  </g>
+  <g id="ink-detail-24" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-24 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="266.008,325.007 258.707,333.6" />
+  </g>
+  <g id="ink-detail-25" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-25 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="253.637,328.278 257.528,333.361" />
+  </g>
+  <g id="ink-detail-26" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-26 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="257.264,337.423 247.733,349.575" />
+  </g>
+  <g id="ink-detail-27" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-27 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="258.479,337.487 263.145,341.845" />
+  </g>
+  <g id="ink-detail-28" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-28 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="246.746,351.803 236.802,364.622" />
+  </g>
+  <g id="ink-detail-29" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-29 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="247.286,351.852 252.432,361.776" />
+  </g>
+  <g id="ink-detail-30" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-30 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="334.115,354.901 343.801,366.171" />
+  </g>
+  <g id="ink-detail-31" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-31 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="230.866,359.122 235.611,364.353" />
+  </g>
+  <g id="ink-detail-32" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-32 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="236,364 236,370" />
+  </g>
+  <g id="ink-detail-33" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-33 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="235.179,369.128 224.888,378.819" />
+  </g>
+  <g id="ink-detail-34" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-34 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="349.02,369.982 368.389,391.652" />
+  </g>
+  <g id="ink-detail-35" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-35 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="225.716,379.728 218.875,386.881" />
+  </g>
+  <g id="ink-detail-36" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-36 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="226.123,379.922 229.99,386.006" />
+  </g>
+  <g id="ink-detail-37" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-37 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="371.76,395.293 432.454,460.578" />
+  </g>
+  <g id="ink-detail-38" data-kind="polyline" data-source="interior-ink" tabindex="0">
+    <title>ink-detail-38 · polyline</title>
+    <polyline fill="none" stroke="#302d2b" stroke-width="3.0" points="207.006,425.375 198.992,425.514" />
+  </g>
+</svg><figcaption class="selection">Seleziona una forma</figcaption></figure></div>
+        <nav><a href="wolf.svg" download>SVG a forme</a><a href="wolf.json" download>Scena JSON</a>
+        <a href="wolf-parts.svg" target="_blank">Mappa degli oggetti</a>
+        <button type="button" class="explode">Separa gli oggetti</button></nav></article>
+</main><script>
+for (const figure of document.querySelectorAll('.interactive')) {
+  const svg = figure.querySelector('svg');
+  const select = event => {
+    const group = event.target.closest('g');
+    if (!group) return;
+    svg.querySelectorAll('.selected').forEach(node => node.classList.remove('selected'));
+    group.classList.add('selected');
+    figure.querySelector('.selection').textContent = group.id + ' · ' + group.dataset.kind;
+  };
+  svg.addEventListener('click', select);
+  svg.addEventListener('keydown', event => {if (event.key === 'Enter') select(event)});
+}
+for (const button of document.querySelectorAll('.explode')) {
+  button.addEventListener('click', () => {
+    const svg = button.closest('article').querySelector('svg');
+    const separated = button.getAttribute('aria-pressed') !== 'true';
+    button.setAttribute('aria-pressed', String(separated));
+    button.textContent = separated ? 'Ricomponi' : 'Separa gli oggetti';
+    const box = svg.viewBox.baseVal;
+    for (const group of svg.querySelectorAll('g')) {
+      const bounds = group.getBBox();
+      const dx = bounds.x + bounds.width/2 - box.width/2;
+      const dy = bounds.y + bounds.height/2 - box.height/2;
+      const distance = Math.max(1, Math.hypot(dx, dy));
+      group.setAttribute('transform', separated ? `translate(${dx/distance*45} ${dy/distance*45})` : '');
+    }
+  });
+}
+</script></html>

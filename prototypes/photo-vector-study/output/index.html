@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dalla carta ai poligoni · Studio 01</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f0e5;color:#302d2b;font:16px/1.5 system-ui,sans-serif}
+main{max-width:1540px;margin:auto;padding:36px 28px}
+.eyebrow{letter-spacing:.13em;text-transform:uppercase;font-size:12px;color:#776d61}
+h1{font:clamp(32px,5vw,56px)/1.1 Georgia,serif;margin:14px 0}
+.intro{max-width:780px;color:#665d53}
+.controls{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:26px 0}
+label{display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer}
+input{width:20px;height:20px;accent-color:#302d2b}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+article{border:1px solid #cfc7b8;background:#faf7f0;padding:22px}
+h2{font:26px/1.2 Georgia,serif;margin:0 0 8px}
+article header span,article p,figcaption{font-size:13px;color:#746a5f}
+article p{min-height:40px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+figure{margin:0;min-width:0}
+figure img{display:block;width:100%;height:390px;object-fit:contain}
+figcaption{margin:12px 0;text-align:center}
+nav{display:flex;gap:0 16px;flex-wrap:wrap;border-top:1px solid #ddd4c6;padding-top:12px}
+a{color:#365b70;text-underline-offset:4px;display:inline-flex;align-items:center;min-height:44px}
+a:focus-visible,input:focus-visible{outline:3px solid #008ed0;outline-offset:4px}
+footer{margin:24px 0;color:#746a5f;font-size:14px;max-width:850px}
+@media(max-width:1100px){.grid{grid-template-columns:1fr}figure img{height:520px}}
+@media(max-width:540px){main{padding:24px 14px}article{padding:16px}figure img{height:300px}.pair{gap:8px}}
+</style>
+<main>
+<div class="eyebrow">Root GDR · laboratorio di disegno · studio 01</div>
+<h1>Dalla carta ai poligoni.</h1>
+<p class="intro">Tre personaggi ricostruiti osservando le tue fotografie.
+Contorni puliti, colori piatti e parti separate. Altus è senza mantello;
+le parti nascoste nel disegno restano da definire.</p>
+<div class="controls">
+<label><input id="parts" type="checkbox">Mostra gruppi e vertici</label>
+<a href="preview.png" target="_blank">Apri la tavola PNG</a>
+<a href="comparison.png" target="_blank">Confronto completo</a>
+<a href="opencv/index.html">Nuova prova automatica con OpenCV</a>
+<a href="humanart/index.html">Pose con modelli HumanArt</a>
+<a href="shapes/index.html">Bordi puliti e oggetti separati</a>
+<a href="pose-comparison/index.html">Confronto dei tre modelli di posa</a>
+</div>
+<section class="grid">
+        <article>
+          <header><h2>Altus Fanfaròn</h2>
+          <span>12 gruppi · 22 poligoni</span></header>
+          <p>Senza mantello · braccia raccolte · spada verso il basso</p>
+          <div class="pair"><figure><img src="altus-reference.png" alt="Foto di Altus Fanfaròn"><figcaption>Fotografia</figcaption></figure><figure>
+          <img class="vector" data-slug="altus" src="altus.svg"
+               alt="Ricostruzione di Altus Fanfaròn">
+          <figcaption>Ricostruzione SVG</figcaption></figure></div>
+          <nav aria-label="File di Altus Fanfaròn">
+          <a href="altus.svg" download>Scarica SVG</a>
+          <a href="altus.png" download>PNG trasparente</a>
+          <a href="altus-parts.svg" target="_blank">Mappa dei gruppi</a>
+          <a href="altus.json" download>Poligoni JSON</a></nav>
+        </article>
+        <article>
+          <header><h2>Luciano Piumalesta</h2>
+          <span>11 gruppi · 20 poligoni</span></header>
+          <p>Corpo ottagonale · ali separate · strisce come poligoni</p>
+          <div class="pair"><figure><img src="luciano-reference.png" alt="Foto di Luciano Piumalesta"><figcaption>Fotografia</figcaption></figure><figure>
+          <img class="vector" data-slug="luciano" src="luciano.svg"
+               alt="Ricostruzione di Luciano Piumalesta">
+          <figcaption>Ricostruzione SVG</figcaption></figure></div>
+          <nav aria-label="File di Luciano Piumalesta">
+          <a href="luciano.svg" download>Scarica SVG</a>
+          <a href="luciano.png" download>PNG trasparente</a>
+          <a href="luciano-parts.svg" target="_blank">Mappa dei gruppi</a>
+          <a href="luciano.json" download>Poligoni JSON</a></nav>
+        </article>
+        <article>
+          <header><h2>Tacito · Genio dell’assalto</h2>
+          <span>15 gruppi · 23 poligoni</span></header>
+          <p>Braccia alzate · gambe piegate · spada dietro il corpo</p>
+          <div class="pair"><figure><img src="wolf-reference.png" alt="Foto di Tacito · Genio dell’assalto"><figcaption>Fotografia</figcaption></figure><figure>
+          <img class="vector" data-slug="wolf" src="wolf.svg"
+               alt="Ricostruzione di Tacito · Genio dell’assalto">
+          <figcaption>Ricostruzione SVG</figcaption></figure></div>
+          <nav aria-label="File di Tacito · Genio dell’assalto">
+          <a href="wolf.svg" download>Scarica SVG</a>
+          <a href="wolf.png" download>PNG trasparente</a>
+          <a href="wolf-parts.svg" target="_blank">Mappa dei gruppi</a>
+          <a href="wolf.json" download>Poligoni JSON</a></nav>
+        </article></section>
+<footer>Questa prima prova è una ricostruzione guidata, con punti scelti osservando
+le immagini. I gruppi descrivono le parti visibili: non sono ancora uno scheletro
+né un’importazione nel canvas. Gli SVG e i PNG dei singoli personaggi hanno
+sfondo trasparente.</footer>
+
+        <details><summary>La prova di stima della posa</summary>
+        <p>MediaPipe non rileva pose con le soglie standard. Abbassandole a 0,25
+        compare questo tentativo su Luciano: i punti non seguono ali e zampe.</p>
+        <a href="luciano-pose-crop-0.25.png" target="_blank">
+        Apri il tentativo di MediaPipe</a> ·
+        <a href="pose-results.json" download>Risultati delle 12 prove</a>
+        </details>
+</main>
+<script>
+document.querySelector('#parts').addEventListener('change', event => {
+  for (const image of document.querySelectorAll('.vector')) {
+    image.src = image.dataset.slug + (event.target.checked ? '-parts.svg' : '.svg');
+  }
+});
+</script></html>

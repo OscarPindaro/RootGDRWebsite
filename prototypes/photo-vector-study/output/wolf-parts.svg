@@ -1,0 +1,327 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="160 245 460 620" width="460" height="620" stroke-linejoin="round" stroke-linecap="round" role="img" aria-labelledby="title description">
+  <title id="title">Tacito · Genio dell’assalto</title>
+  <desc id="description">Polygon reconstruction manually interpreted from the supplied photo. Named groups describe visible parts; they are not an inferred skeleton.</desc>
+  <g data-part="sword" id="sword">
+    <title>sword</title>
+    <polygon id="sword--blade" points="230,391 287,339 570,623 579,713 503,690" fill="#e66b52" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="230.0" cy="391.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="287.0" cy="339.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="570.0" cy="623.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="579.0" cy="713.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="503.0" cy="690.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="sword--blade-bevel" points="260,366 570,625 579,713" fill="#e66b52" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="260.0" cy="366.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="570.0" cy="625.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="579.0" cy="713.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="sword--blade-light" points="260,366 539,672 503,690 230,391" fill="#e66b52" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="260.0" cy="366.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="539.0" cy="672.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="503.0" cy="690.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="230.0" cy="391.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="sword--blade-ridge" points="260,366 539,672 579,713" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="260.0" cy="366.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="539.0" cy="672.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="579.0" cy="713.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="sword--handle" points="182,272 195,263 254,322 235,340" fill="#e66b52" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="182.0" cy="272.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="195.0" cy="263.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="254.0" cy="322.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="235.0" cy="340.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="sword--guard" points="210,365 277,308 313,309 317,317 217,399 208,390" fill="#e66b52" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="210.0" cy="365.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="277.0" cy="308.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="313.0" cy="309.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="317.0" cy="317.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="217.0" cy="399.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="208.0" cy="390.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="left-boot" id="left-boot">
+    <title>left-boot</title>
+    <polygon id="left-boot--boot" points="310,787 349,789 350,843 270,847 305,816" fill="#43a6b5" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="310.0" cy="787.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="349.0" cy="789.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="350.0" cy="843.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="270.0" cy="847.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="305.0" cy="816.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="left-boot--cuff" points="310,803 347,803" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="310.0" cy="803.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="347.0" cy="803.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="left-boot--sole" points="282,837 347,834" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="282.0" cy="837.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="347.0" cy="834.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="right-boot" id="right-boot">
+    <title>right-boot</title>
+    <polygon id="right-boot--boot" points="425,793 459,794 466,817 505,846 428,844" fill="#b1a34d" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="425.0" cy="793.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="459.0" cy="794.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="466.0" cy="817.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="505.0" cy="846.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="428.0" cy="844.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="right-boot--cuff" points="429,808 460,807" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="429.0" cy="808.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="460.0" cy="807.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="right-boot--sole" points="430,835 491,836" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="430.0" cy="835.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="491.0" cy="836.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="left-leg" id="left-leg">
+    <title>left-leg</title>
+    <polygon id="left-leg--trousers" points="330,651 393,658 397,680 351,739 348,790 308,794 296,737" fill="#9682bd" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="330.0" cy="651.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="393.0" cy="658.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="397.0" cy="680.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="351.0" cy="739.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="348.0" cy="790.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="308.0" cy="794.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="296.0" cy="737.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="right-leg" id="right-leg">
+    <title>right-leg</title>
+    <polygon id="right-leg--trousers" points="392,657 448,655 474,725 458,797 422,798 434,741 394,683" fill="#d79852" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="392.0" cy="657.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="448.0" cy="655.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="474.0" cy="725.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="458.0" cy="797.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="422.0" cy="798.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="434.0" cy="741.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="394.0" cy="683.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="right-leg--side-shadow" points="447,667 465,725 449,784 433,787 445,735" fill="#d79852" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="447.0" cy="667.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="465.0" cy="725.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="449.0" cy="784.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="433.0" cy="787.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="445.0" cy="735.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="torso" id="torso">
+    <title>torso</title>
+    <polygon id="torso--body" points="329,451 454,451 476,502 462,554 450,646 330,640 314,536 314,493" fill="#629475" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="329.0" cy="451.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="454.0" cy="451.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="476.0" cy="502.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="462.0" cy="554.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="450.0" cy="646.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="330.0" cy="640.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="314.0" cy="536.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="314.0" cy="493.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="belly" id="belly">
+    <title>belly</title>
+    <polygon id="belly--belly-patch" points="361,518 427,516 442,546 445,640 334,637 345,543" fill="#cd6c9a" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="361.0" cy="518.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="427.0" cy="516.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="442.0" cy="546.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="445.0" cy="640.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="334.0" cy="637.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="345.0" cy="543.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="belly--scar" points="360,614 413,543" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="360.0" cy="614.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="413.0" cy="543.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="belly--stitch-1" points="362,599 371,611" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="362.0" cy="599.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="371.0" cy="611.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="belly--stitch-2" points="371,588 381,600" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="371.0" cy="588.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="381.0" cy="600.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="belly--stitch-3" points="380,575 391,589" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="380.0" cy="575.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="391.0" cy="589.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="belly--stitch-4" points="389,564 400,578" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="389.0" cy="564.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="400.0" cy="578.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="belly--stitch-5" points="399,552 410,566" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="399.0" cy="552.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="410.0" cy="566.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="left-arm-and-hand" id="left-arm-and-hand">
+    <title>left-arm-and-hand</title>
+    <polygon id="left-arm-and-hand--raised-arm" points="329,453 345,478 354,493 297,565 211,477 195,450 198,431 209,423 221,422 216,438 224,444 233,423 243,426 234,445 242,461 249,461 254,443 263,448 266,458 258,475 296,510" fill="#718fc9" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="329.0" cy="453.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="345.0" cy="478.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="354.0" cy="493.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="297.0" cy="565.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="211.0" cy="477.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="195.0" cy="450.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="198.0" cy="431.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="209.0" cy="423.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="221.0" cy="422.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="216.0" cy="438.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="224.0" cy="444.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="233.0" cy="423.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="243.0" cy="426.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="234.0" cy="445.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="242.0" cy="461.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="249.0" cy="461.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="254.0" cy="443.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="263.0" cy="448.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="266.0" cy="458.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="258.0" cy="475.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="296.0" cy="510.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="left-arm-and-hand--shoulder-join" points="331,456 344,466 355,483 347,497 318,478" fill="#718fc9" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="331.0" cy="456.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="344.0" cy="466.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="355.0" cy="483.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="347.0" cy="497.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="318.0" cy="478.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="right-arm-and-hand" id="right-arm-and-hand">
+    <title>right-arm-and-hand</title>
+    <polygon id="right-arm-and-hand--raised-arm" points="454,453 483,516 537,493 530,474 536,459 549,473 561,466 560,446 553,443 570,439 583,445 592,453 595,465 585,496 483,565 438,498" fill="#98aa58" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="454.0" cy="453.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="483.0" cy="516.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="537.0" cy="493.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="530.0" cy="474.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="536.0" cy="459.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="549.0" cy="473.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="561.0" cy="466.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="560.0" cy="446.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="553.0" cy="443.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="570.0" cy="439.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="583.0" cy="445.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="592.0" cy="453.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="595.0" cy="465.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="585.0" cy="496.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="483.0" cy="565.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="438.0" cy="498.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="right-arm-and-hand--shoulder-join" points="450,457 460,465 476,497 464,517 440,487" fill="#98aa58" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="450.0" cy="457.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="460.0" cy="465.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="476.0" cy="497.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="464.0" cy="517.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="440.0" cy="487.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="right-arm-and-hand--finger-fold-1" points="572,446 580,458 578,464" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="572.0" cy="446.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="580.0" cy="458.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="578.0" cy="464.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="right-arm-and-hand--finger-fold-2" points="583,449 588,460" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="583.0" cy="449.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="588.0" cy="460.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="chest-scar" id="chest-scar">
+    <title>chest-scar</title>
+    <polyline id="chest-scar--scar" points="407,494 434,476" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="407.0" cy="494.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="434.0" cy="476.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="chest-scar--stitch-1" points="411,484 416,498" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="411.0" cy="484.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="416.0" cy="498.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="chest-scar--stitch-2" points="418,479 424,493" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="418.0" cy="479.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="424.0" cy="493.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="chest-scar--stitch-3" points="426,475 431,487" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="426.0" cy="475.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="431.0" cy="487.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="belt" id="belt">
+    <title>belt</title>
+    <polygon id="belt--leather" points="335,638 444,642 451,664 327,659" fill="#6db9b1" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="335.0" cy="638.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="444.0" cy="642.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="451.0" cy="664.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="327.0" cy="659.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="belt--belt-seam" points="334,649 444,653" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="334.0" cy="649.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="444.0" cy="653.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="belt--green-buckle" points="372,631 382,630 384,640 390,640 391,632 402,635 403,660 370,664 368,644 375,644" fill="#6db9b1" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="372.0" cy="631.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="382.0" cy="630.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="384.0" cy="640.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="390.0" cy="640.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="391.0" cy="632.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="402.0" cy="635.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="403.0" cy="660.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="370.0" cy="664.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="368.0" cy="644.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="375.0" cy="644.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="head" id="head">
+    <title>head</title>
+    <polygon id="head--wolf-profile" points="326,339 343,311 373,338 436,337 456,311 472,350 478,368 498,359 512,369 504,423 461,452 327,453 313,428 309,410 323,418 317,394 326,402" fill="#c8a6b9" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="326.0" cy="339.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="343.0" cy="311.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="373.0" cy="338.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="436.0" cy="337.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="456.0" cy="311.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="472.0" cy="350.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="478.0" cy="368.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="498.0" cy="359.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="512.0" cy="369.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="504.0" cy="423.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="461.0" cy="452.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="327.0" cy="453.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="313.0" cy="428.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="309.0" cy="410.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="323.0" cy="418.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="317.0" cy="394.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="326.0" cy="402.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="head--snout-top" points="439,386 496,363" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="439.0" cy="386.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="496.0" cy="363.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="head--nose" points="497,360 511,369 506,389 497,389 493,376" fill="#c8a6b9" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="497.0" cy="360.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="511.0" cy="369.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="506.0" cy="389.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="497.0" cy="389.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="493.0" cy="376.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="eyes" id="eyes">
+    <title>eyes</title>
+    <polygon id="eyes--left-eye" points="357,353 384,359 397,377 367,371" fill="#dcab48" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="357.0" cy="353.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="384.0" cy="359.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="397.0" cy="377.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="367.0" cy="371.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polygon id="eyes--right-eye" points="427,357 454,351 448,371 421,378" fill="#dcab48" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="427.0" cy="357.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="454.0" cy="351.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="448.0" cy="371.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="421.0" cy="378.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="eyes--left-brow" points="373,343 384,345 394,363" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="373.0" cy="343.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="384.0" cy="345.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="394.0" cy="363.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="eyes--right-brow" points="423,351 431,342" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="423.0" cy="351.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="431.0" cy="342.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="mouth" id="mouth">
+    <title>mouth</title>
+    <polygon id="mouth--teeth-field" points="446,403 503,389 502,423 446,431" fill="#79949b" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="446.0" cy="403.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="503.0" cy="389.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="502.0" cy="423.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="446.0" cy="431.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="mouth--teeth" points="450,403 465,426 472,397 486,425 493,393" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="450.0" cy="403.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="465.0" cy="426.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="472.0" cy="397.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="486.0" cy="425.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="493.0" cy="393.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+  <g data-part="muzzle-marks" id="muzzle-marks">
+    <title>muzzle-marks</title>
+    <polyline id="muzzle-marks--curl" points="365,387 368,383 362,379 355,378 349,382 349,390 354,397 363,401 380,400 394,403 405,410 409,418 406,425 399,428 391,427 387,423 391,419 397,420" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="365.0" cy="387.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="368.0" cy="383.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="362.0" cy="379.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="355.0" cy="378.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="349.0" cy="382.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="349.0" cy="390.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="354.0" cy="397.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="363.0" cy="401.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="380.0" cy="400.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="394.0" cy="403.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="405.0" cy="410.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="409.0" cy="418.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="406.0" cy="425.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="399.0" cy="428.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="391.0" cy="427.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="387.0" cy="423.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="391.0" cy="419.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="397.0" cy="420.0" r="1.7" fill="#302d2b" stroke="none" />
+    <polyline id="muzzle-marks--diagonal" points="364,423 391,381" fill="none" stroke="#302d2b" stroke-width="1.4" />
+    <circle cx="364.0" cy="423.0" r="1.7" fill="#302d2b" stroke="none" />
+    <circle cx="391.0" cy="381.0" r="1.7" fill="#302d2b" stroke="none" />
+  </g>
+</svg>

@@ -1,0 +1,113 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" width="513" height="628" viewBox="0 0 513 628" role="img" aria-labelledby="title">
+  <title id="title">Tacito — OpenCV</title>
+  <desc>Automatically detected image regions. No semantic body parts or skeleton inferred.</desc>
+  <g id="ink-silhouette">
+    <title>ink-silhouette</title>
+    <path d="M 32,16 L 15,33 L 30,46 L 66,98 L 77,100 L 53,129 L 53,168 L 61,171 L 78,164 L 117,210 L 99,204 L 98,215 L 92,220 L 85,211 L 98,193 L 76,185 L 47,192 L 39,205 L 40,185 L 54,183 L 32,180 L 33,173 L 49,176 L 35,169 L 26,170 L 25,202 L 59,254 L 144,342 L 152,345 L 171,329 L 184,401 L 149,506 L 164,557 L 163,573 L 131,598 L 128,606 L 133,612 L 215,610 L 218,510 L 257,465 L 285,510 L 277,551 L 283,570 L 284,606 L 372,612 L 374,608 L 322,562 L 345,496 L 327,445 L 312,417 L 316,414 L 364,463 L 371,461 L 392,470 L 438,477 L 448,487 L 454,485 L 446,408 L 451,399 L 420,361 L 377,323 L 465,260 L 475,228 L 486,233 L 488,224 L 492,224 L 497,202 L 495,188 L 486,180 L 477,183 L 483,204 L 468,189 L 479,217 L 463,199 L 434,194 L 424,199 L 424,204 L 434,204 L 437,225 L 426,233 L 412,215 L 407,216 L 397,231 L 402,254 L 352,276 L 330,223 L 379,189 L 383,149 L 391,121 L 369,106 L 350,115 L 326,58 L 316,58 L 296,87 L 228,89 L 199,61 L 178,91 L 165,81 L 172,74 L 165,61 L 129,62 L 100,82 L 37,15 Z" fill="#463f3f" fill-rule="evenodd" />
+  </g>
+  <g id="region-005">
+    <title>region-005</title>
+    <path d="M 31,22 L 25,31 L 74,94 L 77,103 L 73,107 L 104,80 L 94,79 Z" fill="#c52d30" fill-rule="evenodd" />
+  </g>
+  <g id="region-045">
+    <title>region-045</title>
+    <path d="M 158,72 L 125,70 L 59,131 L 62,157 L 81,147 L 89,135 Z" fill="#c52d30" fill-rule="evenodd" />
+  </g>
+  <g id="region-052">
+    <title>region-052</title>
+    <path d="M 201,143 L 210,136 L 222,137 L 228,146 L 225,150 L 218,142 L 208,145 L 210,155 L 222,163 L 231,163 L 242,145 L 248,143 L 242,159 L 262,164 L 273,176 L 273,187 L 260,195 L 245,192 L 245,180 L 252,179 L 251,187 L 255,190 L 266,186 L 267,181 L 258,169 L 242,165 L 220,191 L 217,187 L 227,170 L 204,158 Z M 278,102 L 299,99 L 299,107 L 292,116 L 321,105 L 324,110 L 318,129 L 284,141 L 281,136 L 288,122 L 281,128 L 275,125 Z M 368,139 L 358,130 L 357,123 L 308,150 L 301,149 L 309,137 L 342,121 L 321,71 L 304,93 L 249,97 L 261,123 L 260,129 L 251,124 L 257,140 L 219,132 L 211,111 L 240,113 L 231,106 L 232,99 L 219,96 L 202,75 L 183,100 L 184,145 L 190,166 L 177,162 L 186,182 L 176,183 L 181,194 L 172,198 L 182,217 L 216,212 L 332,212 L 363,188 L 321,192 L 310,198 L 306,192 L 307,168 Z" fill="#787f9a" fill-rule="evenodd" />
+  </g>
+  <g id="region-075">
+    <title>region-075</title>
+    <path d="M 129,127 L 130,126 L 133,127 L 143,138 L 143,141 L 145,143 L 146,142 L 148,143 L 150,146 L 147,148 L 137,138 Z M 152,84 L 149,94 L 124,117 L 129,125 L 120,121 L 83,157 L 164,244 L 175,229 L 176,220 L 159,193 L 163,165 L 156,155 L 159,153 L 167,161 L 168,145 L 175,144 L 175,101 L 158,84 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-094">
+    <title>region-094</title>
+    <path d="M 245,98 L 244,97 L 241,97 L 240,98 L 235,98 L 234,99 L 236,101 L 238,101 L 239,100 L 242,100 Z" fill="#787f9a" fill-rule="evenodd" />
+  </g>
+  <g id="region-111">
+    <title>region-111</title>
+    <path d="M 316,114 L 311,114 L 297,119 L 293,122 L 289,132 L 292,133 L 296,130 L 313,125 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-117">
+    <title>region-117</title>
+    <path d="M 218,118 L 220,124 L 226,128 L 247,133 L 250,132 L 243,120 L 231,117 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-132">
+    <title>region-132</title>
+    <path d="M 372,148 L 353,156 L 362,172 L 364,171 L 364,168 L 369,160 L 370,154 L 373,150 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-136">
+    <title>region-136</title>
+    <path d="M 344,160 L 335,163 L 329,167 L 339,178 L 345,164 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-137">
+    <title>region-137</title>
+    <path d="M 351,161 L 347,166 L 346,172 L 342,180 L 343,181 L 360,178 L 358,172 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-138">
+    <title>region-138</title>
+    <path d="M 372,161 L 369,165 L 369,168 L 365,176 L 366,178 L 372,178 L 373,177 L 373,162 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-142-color-2">
+    <title>region-142-color-2</title>
+    <path d="M 40,205 L 39,205 L 39,207 L 38,208 L 38,210 L 37,211 L 37,214 L 36,215 L 36,216 L 37,216 L 37,215 L 39,212 L 39,207 L 40,206 Z" fill="#bad2e0" fill-rule="evenodd" />
+  </g>
+  <g id="region-142">
+    <title>region-142</title>
+    <path d="M 27,169 L 25,202 L 35,216 L 40,185 L 54,183 L 32,180 L 33,173 L 49,176 Z" fill="#2885c7" fill-rule="evenodd" />
+  </g>
+  <g id="region-145">
+    <title>region-145</title>
+    <path d="M 317,171 L 318,182 L 320,185 L 336,181 L 326,170 L 322,169 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-152">
+    <title>region-152</title>
+    <path d="M 484,180 L 482,184 L 477,183 L 483,204 L 468,191 L 480,213 L 479,217 L 475,215 L 477,227 L 486,233 L 494,218 L 497,195 L 491,183 Z" fill="#2885c7" fill-rule="evenodd" />
+  </g>
+  <g id="region-167">
+    <title>region-167</title>
+    <path d="M 300,239 L 292,249 L 296,257 L 292,259 L 286,254 L 288,265 L 279,259 L 279,267 L 275,263 L 268,269 L 265,267 L 273,258 L 272,249 L 279,254 L 279,243 L 284,249 L 285,241 L 290,244 Z M 48,218 L 70,249 L 150,330 L 205,260 L 216,263 L 213,274 L 179,314 L 190,378 L 200,304 L 217,284 L 279,274 L 292,281 L 308,310 L 309,379 L 325,309 L 299,266 L 301,259 L 307,261 L 351,331 L 458,253 L 469,222 L 456,202 L 463,221 L 453,227 L 446,217 L 446,226 L 433,241 L 420,236 L 412,226 L 403,236 L 412,255 L 349,289 L 344,286 L 347,280 L 327,236 L 326,222 L 189,226 L 160,280 L 152,285 L 134,277 L 105,243 L 114,224 L 107,215 L 98,233 L 89,233 L 78,213 L 70,209 L 73,192 L 59,214 L 55,211 L 58,198 L 53,200 Z" fill="#787f9a" fill-rule="evenodd" />
+  </g>
+  <g id="region-172">
+    <title>region-172</title>
+    <path d="M 81,197 L 82,198 L 84,198 L 86,196 L 85,195 L 82,195 L 81,196 Z" fill="#959292" fill-rule="evenodd" />
+  </g>
+  <g id="region-190">
+    <title>region-190</title>
+    <path d="M 108,206 L 121,222 L 115,243 L 148,275 L 160,251 L 117,209 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-195">
+    <title>region-195</title>
+    <path d="M 452,210 L 451,211 L 451,212 L 452,213 L 452,215 L 454,217 L 455,216 L 455,215 L 454,214 L 454,213 L 453,212 L 453,211 Z" fill="#959292" fill-rule="evenodd" />
+  </g>
+  <g id="region-290">
+    <title>region-290</title>
+    <path d="M 278,303 L 269,322 L 276,332 L 273,334 L 267,327 L 261,334 L 265,343 L 258,339 L 250,350 L 254,363 L 246,355 L 239,366 L 241,375 L 235,371 L 229,378 L 231,387 L 225,383 L 218,388 L 223,374 L 234,369 L 230,358 L 236,362 L 244,354 L 242,347 L 248,347 L 256,336 L 251,327 L 258,331 L 264,321 L 257,314 L 267,318 Z M 286,286 L 225,292 L 211,308 L 199,406 L 226,407 L 230,396 L 252,395 L 269,398 L 276,411 L 303,409 L 297,383 L 299,313 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-312">
+    <title>region-312</title>
+    <path d="M 348,369 L 369,390 L 369,394 L 348,372 Z M 334,329 L 329,349 L 346,366 L 342,368 L 328,354 L 314,414 L 320,409 L 370,457 L 431,467 L 371,394 L 414,435 L 440,468 L 439,395 L 370,328 L 348,346 L 342,344 Z" fill="#e1ddcd" fill-rule="evenodd" />
+  </g>
+  <g id="region-344-color-1">
+    <title>region-344-color-1</title>
+    <path d="M 264,407 L 257,408 L 256,418 L 248,416 L 244,419 L 237,407 L 234,421 L 225,426 L 226,433 L 230,435 L 234,432 L 264,429 Z" fill="#598211" fill-rule="evenodd" />
+  </g>
+  <g id="region-344">
+    <title>region-344</title>
+    <path d="M 195,413 L 195,425 L 185,436 L 158,503 L 171,554 L 189,556 L 206,550 L 209,505 L 245,456 L 257,450 L 295,509 L 285,560 L 288,564 L 315,561 L 335,496 L 313,438 L 232,438 L 199,425 L 217,424 L 218,414 Z" fill="#c52d30" fill-rule="evenodd" />
+  </g>
+  <g id="region-348">
+    <title>region-348</title>
+    <path d="M 272,427 L 275,429 L 305,429 L 308,425 L 308,421 L 306,418 L 275,417 Z" fill="#80442b" fill-rule="evenodd" />
+  </g>
+  <g id="region-510">
+    <title>region-510</title>
+    <path d="M 205,565 L 175,565 L 171,581 L 147,600 L 204,597 Z" fill="#80442b" fill-rule="evenodd" />
+  </g>
+  <g id="region-514">
+    <title>region-514</title>
+    <path d="M 294,572 L 295,596 L 300,601 L 347,600 L 313,570 Z" fill="#80442b" fill-rule="evenodd" />
+  </g>
+</svg>

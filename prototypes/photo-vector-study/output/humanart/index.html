@@ -1,0 +1,25 @@
+<!doctype html><html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pose su illustrazioni · HumanArt</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f0e5;color:#302d2b;font:16px/1.6 system-ui}
+main{max-width:1250px;margin:auto;padding:30px}h1{font:42px Georgia,serif}h2{font:28px Georgia,serif}
+p{max-width:900px}article{border-top:1px solid #c9bfac;margin-top:24px}
+.figures{display:grid;grid-template-columns:1fr 1fr;gap:24px}figure{margin:0}
+img{width:100%;height:610px;object-fit:contain}figcaption{text-align:center}
+a{color:#365b70;display:inline-flex;align-items:center;min-height:44px}
+figure a{display:block}a:focus-visible{outline:3px solid #008ed0;outline-offset:4px}
+@media(max-width:650px){main{padding:20px 14px}.figures{gap:8px}img{height:360px}figcaption{font-size:12px}}
+</style><main>
+<p>Root GDR · studio 03</p><h1>Un modello allenato sulle illustrazioni.</h1>
+<p>RTMlib con YOLOX-m e RTMPose-l, entrambi nelle versioni HumanArt.
+A sinistra il modello deve trovare il personaggio; a destra riceve il ritaglio
+prodotto da OpenCV. Nessun punto dello scheletro è stato corretto a mano.</p>
+<p>I punti con punteggio inferiore a 0,3 sono nascosti nella figura, ma restano
+nel JSON. Un punteggio alto non garantisce che un’articolazione sia al posto giusto.</p>
+<p><a href="results.json">Coordinate e punteggi</a> ·
+<a href="comparison.png" target="_blank">Confronto PNG</a> ·
+<a href="../study.zip" download>Scarica risultati e codice</a> ·
+<a href="../opencv/">Esperimento OpenCV</a></p>
+<article><h2>Altus</h2><div class='figures'><figure><a href="altus-isolated-detected.png" target="_blank"><img src="altus-isolated-detected.png" alt="Altus: Rilevamento automatico · 0 pose"></a><figcaption>Rilevamento automatico · 0 pose</figcaption></figure><figure><a href="altus-isolated-crop-assisted.png" target="_blank"><img src="altus-isolated-crop-assisted.png" alt="Altus: Posa richiesta sul ritaglio OpenCV"></a><figcaption>Posa richiesta sul ritaglio OpenCV</figcaption></figure></div></article><article><h2>Luciano</h2><div class='figures'><figure><a href="luciano-isolated-detected.png" target="_blank"><img src="luciano-isolated-detected.png" alt="Luciano: Rilevamento automatico · 1 pose"></a><figcaption>Rilevamento automatico · 1 pose</figcaption></figure><figure><a href="luciano-isolated-crop-assisted.png" target="_blank"><img src="luciano-isolated-crop-assisted.png" alt="Luciano: Posa richiesta sul ritaglio OpenCV"></a><figcaption>Posa richiesta sul ritaglio OpenCV</figcaption></figure></div></article><article><h2>Tacito</h2><div class='figures'><figure><a href="wolf-isolated-detected.png" target="_blank"><img src="wolf-isolated-detected.png" alt="Tacito: Rilevamento automatico · 1 pose"></a><figcaption>Rilevamento automatico · 1 pose</figcaption></figure><figure><a href="wolf-isolated-crop-assisted.png" target="_blank"><img src="wolf-isolated-crop-assisted.png" alt="Tacito: Posa richiesta sul ritaglio OpenCV"></a><figcaption>Posa richiesta sul ritaglio OpenCV</figcaption></figure></div></article>
+</main></html>

@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="150 315 350 475" width="350" height="475" stroke-linejoin="round" stroke-linecap="round" role="img" aria-labelledby="title description">
+  <title id="title">Luciano Piumalesta</title>
+  <desc id="description">Polygon reconstruction manually interpreted from the supplied photo. Named groups describe visible parts; they are not an inferred skeleton.</desc>
+  <g data-part="left-foot" id="left-foot">
+    <title>left-foot</title>
+    <polygon id="left-foot--left-leg" points="273,702 296,707 274,736 267,738" fill="#f5c632" stroke="#302d2b" stroke-width="5.0" />
+    <polygon id="left-foot--left-toes" points="273,733 281,746 291,760 278,754 268,769 267,750 251,757" fill="#f5c632" stroke="#302d2b" stroke-width="5.0" />
+  </g>
+  <g data-part="right-foot" id="right-foot">
+    <title>right-foot</title>
+    <polygon id="right-foot--right-leg" points="362,704 379,705 379,738 372,739" fill="#f5c632" stroke="#302d2b" stroke-width="5.0" />
+    <polygon id="right-foot--right-toes" points="375,734 389,737 402,746 388,745 388,755 379,748 370,761 369,749" fill="#f5c632" stroke="#302d2b" stroke-width="5.0" />
+  </g>
+  <g data-part="body" id="body">
+    <title>body</title>
+    <polygon id="body--octagon" points="288,499 383,514 438,562 448,629 381,710 271,712 198,612 221,544" fill="#ed2939" stroke="#302d2b" stroke-width="8.0" />
+  </g>
+  <g data-part="stripes" id="stripes">
+    <title>stripes</title>
+    <polygon id="stripes--stripe-1" points="238,533 250,526 229,654 218,639" fill="#f5f0df" stroke="#302d2b" stroke-width="5.0" />
+    <polygon id="stripes--stripe-2" points="298,503 314,508 272,710 261,698" fill="#f5f0df" stroke="#302d2b" stroke-width="6.0" />
+    <polygon id="stripes--stripe-3" points="358,515 375,519 330,710 313,711" fill="#f5f0df" stroke="#302d2b" stroke-width="6.0" />
+    <polygon id="stripes--stripe-4" points="402,574 416,589 398,689 381,710" fill="#f5f0df" stroke="#302d2b" stroke-width="6.0" />
+  </g>
+  <g data-part="head-and-neck" id="head-and-neck">
+    <title>head-and-neck</title>
+    <polygon id="head-and-neck--bird-profile" points="273,423 308,377 347,366 368,377 378,398 370,413 368,438 383,454 368,522 297,509 305,456 329,440 328,414 309,415" fill="#008ed0" stroke="#302d2b" stroke-width="7.0" />
+    <polyline id="head-and-neck--beak-seam" points="290,414 301,407 305,398" fill="none" stroke="#302d2b" stroke-width="4.0" />
+  </g>
+  <g data-part="eye" id="eye">
+    <title>eye</title>
+    <polygon id="eye--eye-field" points="318,389 342,380 334,394 321,394" fill="#f5f0df" stroke="#302d2b" stroke-width="4.0" />
+    <polygon id="eye--pupil" points="327,386 338,383 331,392 325,392" fill="#302d2b" stroke="#302d2b" stroke-width="0.0" />
+  </g>
+  <g data-part="left-strap" id="left-strap">
+    <title>left-strap</title>
+    <polygon id="left-strap--red-strap" points="294,452 307,451 296,509 284,507" fill="#ed2939" stroke="#302d2b" stroke-width="5.0" />
+  </g>
+  <g data-part="right-strap" id="right-strap">
+    <title>right-strap</title>
+    <polygon id="right-strap--red-strap" points="379,452 391,459 377,527 366,522" fill="#ed2939" stroke="#302d2b" stroke-width="5.0" />
+  </g>
+  <g data-part="left-wing" id="left-wing">
+    <title>left-wing</title>
+    <polygon id="left-wing--upper-triangle" points="173,439 296,453 227,515" fill="#008ed0" stroke="#302d2b" stroke-width="8.0" />
+    <polygon id="left-wing--fold" points="227,515 289,469 283,508 221,543" fill="#087dbb" stroke="#302d2b" stroke-width="6.0" />
+  </g>
+  <g data-part="right-wing" id="right-wing">
+    <title>right-wing</title>
+    <polygon id="right-wing--wing-tip" points="410,574 451,616 438,635" fill="#087dbb" stroke="#302d2b" stroke-width="6.0" />
+    <polygon id="right-wing--wing" points="395,462 477,542 468,627 398,581" fill="#008ed0" stroke="#302d2b" stroke-width="8.0" />
+  </g>
+  <g data-part="cap" id="cap">
+    <title>cap</title>
+    <polygon id="cap--red-button" points="379,342 378.39,345.44 376.66,348.36 374.06,350.31 371,351 367.94,350.31 365.34,348.36 363.61,345.44 363,342 363.61,338.56 365.34,335.64 367.94,333.69 371,333 374.06,333.69 376.66,335.64 378.39,338.56" fill="#ed2939" stroke="#302d2b" stroke-width="5.0" />
+    <polygon id="cap--white-cap" points="347,366 332,364 325,359 325,353 332,348 349,347 367,350 381,357 393,371 402,386 402,393 395,400 385,402 378,398 373,386 368,377 357,369" fill="#f5f0df" stroke="#302d2b" stroke-width="6.0" />
+  </g>
+</svg>

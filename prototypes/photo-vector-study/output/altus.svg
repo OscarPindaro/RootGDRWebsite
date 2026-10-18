@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="175 250 335 585" width="335" height="585" stroke-linejoin="round" stroke-linecap="round" role="img" aria-labelledby="title description">
+  <title id="title">Altus Fanfaròn</title>
+  <desc id="description">Polygon reconstruction manually interpreted from the supplied photo. Named groups describe visible parts; they are not an inferred skeleton.</desc>
+  <g data-part="tunic" id="tunic">
+    <title>tunic</title>
+    <polygon id="tunic--torso" points="308,402 345,442 376,403 428,518 437,558 396,689 324,689 260,558 276,517" fill="#008ed0" stroke="#302d2b" stroke-width="9.0" />
+  </g>
+  <g data-part="left-coat-tail" id="left-coat-tail">
+    <title>left-coat-tail</title>
+    <polygon id="left-coat-tail--left-panel" points="260,552 346,536 352,620 323,687 255,765 299,610" fill="#008ed0" stroke="#302d2b" stroke-width="8.0" />
+  </g>
+  <g data-part="right-coat-tail" id="right-coat-tail">
+    <title>right-coat-tail</title>
+    <polygon id="right-coat-tail--right-panel" points="371,536 438,556 420,609 458,774 395,689 366,618" fill="#008ed0" stroke="#302d2b" stroke-width="8.0" />
+  </g>
+  <g data-part="left-arm" id="left-arm">
+    <title>left-arm</title>
+    <polygon id="left-arm--upper-arm" points="308,405 338,441 277,518 263,550 257,554 273,514" fill="#087dbb" stroke="#302d2b" stroke-width="7.0" />
+    <polygon id="left-arm--forearm" points="276,518 347,517 353,528 258,561" fill="#008ed0" stroke="#302d2b" stroke-width="7.0" />
+  </g>
+  <g data-part="right-arm" id="right-arm">
+    <title>right-arm</title>
+    <polygon id="right-arm--upper-arm" points="377,405 361,440 425,515 439,552" fill="#087dbb" stroke="#302d2b" stroke-width="7.0" />
+    <polygon id="right-arm--forearm" points="366,514 425,515 440,559 371,533 358,526" fill="#008ed0" stroke="#302d2b" stroke-width="7.0" />
+  </g>
+  <g data-part="sword" id="sword">
+    <title>sword</title>
+    <polygon id="sword--blade" points="326,568 394,567 397,771 362,815 325,771" fill="#eee9dc" stroke="#302d2b" stroke-width="9.0" />
+    <polygon id="sword--blade-shadow" points="364,568 394,567 397,771 362,815" fill="#a6a9bf" stroke="#302d2b" stroke-width="0.0" />
+    <polyline id="sword--blade-ridge" points="364,569 365,794 362,810" fill="none" stroke="#302d2b" stroke-width="6.0" />
+    <polygon id="sword--pommel" points="347,516 359,489 368,516" fill="#f5c632" stroke="#302d2b" stroke-width="6.0" />
+    <polygon id="sword--grip" points="351,516 368,516 369,545 350,545" fill="#f5c632" stroke="#302d2b" stroke-width="6.0" />
+    <polygon id="sword--crossguard" points="351,537 364,529 377,544 405,563 362,571 310,567 337,552" fill="#f5c632" stroke="#302d2b" stroke-width="7.0" />
+  </g>
+  <g data-part="left-hand" id="left-hand">
+    <title>left-hand</title>
+    <polygon id="left-hand--glove" points="333,524 347,519 353,524 348,533 336,538" fill="#008ed0" stroke="#302d2b" stroke-width="4.0" />
+  </g>
+  <g data-part="right-hand" id="right-hand">
+    <title>right-hand</title>
+    <polygon id="right-hand--glove" points="371,521 383,528 377,537 365,530" fill="#008ed0" stroke="#302d2b" stroke-width="4.0" />
+  </g>
+  <g data-part="collar" id="collar">
+    <title>collar</title>
+    <polygon id="collar--gold-triangle" points="309,402 376,401 346,446" fill="#f5c632" stroke="#302d2b" stroke-width="8.0" />
+  </g>
+  <g data-part="crest" id="crest">
+    <title>crest</title>
+    <polygon id="crest--upper-feather" points="264,278 216,298 267,316" fill="#ed2939" stroke="#302d2b" stroke-width="8.0" />
+    <polygon id="crest--middle-feather" points="266,316 218,331 269,354" fill="#ed2939" stroke="#302d2b" stroke-width="8.0" />
+    <polygon id="crest--lower-feather" points="270,354 220,374 274,398" fill="#ed2939" stroke="#302d2b" stroke-width="8.0" />
+  </g>
+  <g data-part="head" id="head">
+    <title>head</title>
+    <polygon id="head--head-and-hooked-beak" points="267,275 444,377 457,427 430,396 274,401" fill="#008ed0" stroke="#302d2b" stroke-width="10.0" />
+    <polyline id="head--beak-seam" points="378,359 420,380" fill="none" stroke="#302d2b" stroke-width="5.0" />
+  </g>
+  <g data-part="eye" id="eye">
+    <title>eye</title>
+    <polygon id="eye--eye-field" points="292,318 299,362 354,362" fill="#f5f0df" stroke="#302d2b" stroke-width="6.0" />
+    <polygon id="eye--pupil" points="323,347 322.09,353.51 319.49,359.02 315.59,362.71 311,364 306.41,362.71 302.51,359.02 299.91,353.51 299,347 299.91,340.49 302.51,334.98 306.41,331.29 311,330 315.59,331.29 319.49,334.98 322.09,340.49" fill="#302d2b" stroke="#302d2b" stroke-width="0.0" />
+    <polygon id="eye--eye-highlight" points="315,347 314.54,350.83 313.24,354.07 311.3,356.24 309,357 306.7,356.24 304.76,354.07 303.46,350.83 303,347 303.46,343.17 304.76,339.93 306.7,337.76 309,337 311.3,337.76 313.24,339.93 314.54,343.17" fill="#f5f0df" stroke="#302d2b" stroke-width="0.0" />
+  </g>
+</svg>

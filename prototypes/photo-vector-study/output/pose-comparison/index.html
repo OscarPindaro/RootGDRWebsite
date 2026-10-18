@@ -1,0 +1,31 @@
+<!doctype html><html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Confronto dei modelli di posa</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f0e5;color:#302d2b;font:16px/1.6 system-ui}
+main{max-width:1500px;margin:auto;padding:30px}h1{font:42px Georgia,serif}h2{font:28px Georgia,serif}
+p{max-width:950px}article{border-top:1px solid #c9bfac;margin-top:28px}
+.figures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}figure{margin:0}
+img{width:100%;height:560px;object-fit:contain}figcaption{text-align:center}
+a{color:#365b70;display:inline-flex;align-items:center;min-height:44px}figure a{display:block}
+@media(max-width:650px){main{padding:20px 14px}.figures{gap:8px}img{height:320px}figcaption{font-size:12px}}
+</style><main><h1>Tre modelli, le stesse figure.</h1>
+<p>Tutti ricevono lo stesso ritaglio prodotto da OpenCV. HumanArt resta il risultato
+più plausibile per Tacito. DWPose recupera parte delle gambe; Bizarre confonde
+diverse articolazioni e include la spada nella posa.</p>
+<p>HumanArt e DWPose mostrano i punti con punteggio ≥ 0,3. Bizarre mostra tutte
+le proposte, come nella visualizzazione originale. I valori dei tre modelli
+non sono probabilità direttamente confrontabili.</p>
+<p>Nei test separati di rilevamento automatico, HumanArt trova Luciano e Tacito;
+DWPose non trova nessuno dei tre. Bizarre è stato provato sul ritaglio, senza
+il suo segmentatore originale. Nessuna articolazione è stata spostata a mano.</p>
+<p><a href="comparison.png" target="_blank">Confronto PNG completo</a> ·
+<a href="../shapes/">Nuova rappresentazione a forme</a> ·
+<a href="../study.zip" download>Scarica risultati e codice</a></p>
+<article><h2>Altus</h2><div class='figures'><figure><a href="../humanart/altus-isolated-crop-assisted.png" target="_blank"><img src="../humanart/altus-isolated-crop-assisted.png" alt="Altus — HumanArt"></a><figcaption>HumanArt</figcaption></figure><figure><a href="../dwpose/altus-crop-assisted.png" target="_blank"><img src="../dwpose/altus-crop-assisted.png" alt="Altus — dghs-imgutils / DWPose"></a><figcaption>dghs-imgutils / DWPose</figcaption></figure><figure><a href="../bizarre/altus-crop-assisted.png" target="_blank"><img src="../bizarre/altus-crop-assisted.png" alt="Altus — Bizarre · feat_match+data"></a><figcaption>Bizarre · feat_match+data</figcaption></figure></div></article><article><h2>Luciano</h2><div class='figures'><figure><a href="../humanart/luciano-isolated-crop-assisted.png" target="_blank"><img src="../humanart/luciano-isolated-crop-assisted.png" alt="Luciano — HumanArt"></a><figcaption>HumanArt</figcaption></figure><figure><a href="../dwpose/luciano-crop-assisted.png" target="_blank"><img src="../dwpose/luciano-crop-assisted.png" alt="Luciano — dghs-imgutils / DWPose"></a><figcaption>dghs-imgutils / DWPose</figcaption></figure><figure><a href="../bizarre/luciano-crop-assisted.png" target="_blank"><img src="../bizarre/luciano-crop-assisted.png" alt="Luciano — Bizarre · feat_match+data"></a><figcaption>Bizarre · feat_match+data</figcaption></figure></div></article><article><h2>Tacito</h2><div class='figures'><figure><a href="../humanart/wolf-isolated-crop-assisted.png" target="_blank"><img src="../humanart/wolf-isolated-crop-assisted.png" alt="Tacito — HumanArt"></a><figcaption>HumanArt</figcaption></figure><figure><a href="../dwpose/wolf-crop-assisted.png" target="_blank"><img src="../dwpose/wolf-crop-assisted.png" alt="Tacito — dghs-imgutils / DWPose"></a><figcaption>dghs-imgutils / DWPose</figcaption></figure><figure><a href="../bizarre/wolf-crop-assisted.png" target="_blank"><img src="../bizarre/wolf-crop-assisted.png" alt="Tacito — Bizarre · feat_match+data"></a><figcaption>Bizarre · feat_match+data</figcaption></figure></div></article>
+<article><h2>Controlli</h2><p>Bizarre riconosce una posa plausibile nel campione anime
+fornito dagli autori; DWPose riconosce la fotografia umana di controllo.</p>
+<div class="figures"><figure><img src="../bizarre/anime-control-crop-assisted.png"
+alt="Controllo anime di Bizarre"><figcaption>Campione originale Bizarre · © Disco Brando</figcaption></figure>
+<figure><img src="../dwpose/control-detected.png" alt="Controllo umano DWPose">
+<figcaption>Fotografia di controllo</figcaption></figure></div></article>
+</main></html>

@@ -1,0 +1,449 @@
+{
+  "model": "Bizarre Pose Estimator feat_match+data",
+  "checkpoint_sha256": "92e8a6765fb470230a4d39c61e244da3fa934e974cd64500fc7d05202decded6",
+  "upstream_commit": "b72005c2521c42c34df5c91c3660abab4a86a00c",
+  "max_reference_forward_error": 0.0,
+  "note": "OpenCV crop replaces segmentation; no character detector is run. Heatmap peaks are not calibrated detection confidences. All 17 body joints are shown, matching the original visualization convention.",
+  "trials": [
+    {
+      "character": "altus",
+      "mode": "crop-assisted",
+      "image_width": 370,
+      "image_height": 597,
+      "joints": [
+        {
+          "name": "nose",
+          "x": 143.4375,
+          "y": 118.8515625,
+          "heatmap_peak": 0.004513770807534456
+        },
+        {
+          "name": "left_eye",
+          "x": 143.4375,
+          "y": 113.71875,
+          "heatmap_peak": 0.0011396212503314018
+        },
+        {
+          "name": "right_eye",
+          "x": 133.171875,
+          "y": 123.984375,
+          "heatmap_peak": 0.005227883346378803
+        },
+        {
+          "name": "left_ear",
+          "x": 148.5703125,
+          "y": 103.453125,
+          "heatmap_peak": 0.009698532521724701
+        },
+        {
+          "name": "right_ear",
+          "x": 133.171875,
+          "y": 123.984375,
+          "heatmap_peak": 0.032510243356227875
+        },
+        {
+          "name": "left_shoulder",
+          "x": 153.703125,
+          "y": 103.453125,
+          "heatmap_peak": 0.030901551246643066
+        },
+        {
+          "name": "right_shoulder",
+          "x": 138.3046875,
+          "y": 123.984375,
+          "heatmap_peak": 0.02448524720966816
+        },
+        {
+          "name": "left_elbow",
+          "x": 179.3671875,
+          "y": 98.3203125,
+          "heatmap_peak": 0.03435123339295387
+        },
+        {
+          "name": "right_elbow",
+          "x": 220.4296875,
+          "y": 252.3046875,
+          "heatmap_peak": 0.01883622072637081
+        },
+        {
+          "name": "left_wrist",
+          "x": 189.6328125,
+          "y": 129.1171875,
+          "heatmap_peak": 0.02890010178089142
+        },
+        {
+          "name": "right_wrist",
+          "x": 184.5,
+          "y": 262.5703125,
+          "heatmap_peak": 0.09506060928106308
+        },
+        {
+          "name": "left_hip",
+          "x": 148.5703125,
+          "y": 288.234375,
+          "heatmap_peak": 0.08090582489967346
+        },
+        {
+          "name": "right_hip",
+          "x": 143.4375,
+          "y": 277.96875,
+          "heatmap_peak": 0.23576058447360992
+        },
+        {
+          "name": "left_knee",
+          "x": 189.6328125,
+          "y": 165.046875,
+          "heatmap_peak": 0.03670515492558479
+        },
+        {
+          "name": "right_knee",
+          "x": 189.6328125,
+          "y": 185.578125,
+          "heatmap_peak": 0.04035468399524689
+        },
+        {
+          "name": "left_ankle",
+          "x": 235.828125,
+          "y": 134.25,
+          "heatmap_peak": 0.06222609430551529
+        },
+        {
+          "name": "right_ankle",
+          "x": 246.09375,
+          "y": 139.3828125,
+          "heatmap_peak": 0.0681988075375557
+        }
+      ]
+    },
+    {
+      "character": "luciano",
+      "mode": "crop-assisted",
+      "image_width": 359,
+      "image_height": 479,
+      "joints": [
+        {
+          "name": "nose",
+          "x": 195.96875,
+          "y": 99.515625,
+          "heatmap_peak": 0.009738477878272533
+        },
+        {
+          "name": "left_eye",
+          "x": 204.203125,
+          "y": 99.515625,
+          "heatmap_peak": 0.0018629254773259163
+        },
+        {
+          "name": "right_eye",
+          "x": 195.96875,
+          "y": 95.3984375,
+          "heatmap_peak": 0.0024361135438084602
+        },
+        {
+          "name": "left_ear",
+          "x": 212.4375,
+          "y": 107.75,
+          "heatmap_peak": 0.008946672081947327
+        },
+        {
+          "name": "right_ear",
+          "x": 195.96875,
+          "y": 103.6328125,
+          "heatmap_peak": 0.012902757152915001
+        },
+        {
+          "name": "left_shoulder",
+          "x": 183.6171875,
+          "y": 128.3359375,
+          "heatmap_peak": 0.04661017283797264
+        },
+        {
+          "name": "right_shoulder",
+          "x": 204.203125,
+          "y": 124.21875,
+          "heatmap_peak": 0.0943056121468544
+        },
+        {
+          "name": "left_elbow",
+          "x": 146.5625,
+          "y": 148.921875,
+          "heatmap_peak": 0.006395762786269188
+        },
+        {
+          "name": "right_elbow",
+          "x": 224.7890625,
+          "y": 169.5078125,
+          "heatmap_peak": 0.0042070974595844746
+        },
+        {
+          "name": "left_wrist",
+          "x": 220.671875,
+          "y": 223.03125,
+          "heatmap_peak": 0.010332846082746983
+        },
+        {
+          "name": "right_wrist",
+          "x": 212.4375,
+          "y": 202.4453125,
+          "heatmap_peak": 0.012483010068535805
+        },
+        {
+          "name": "left_hip",
+          "x": 187.734375,
+          "y": 202.4453125,
+          "heatmap_peak": 0.11467152088880539
+        },
+        {
+          "name": "right_hip",
+          "x": 204.203125,
+          "y": 202.4453125,
+          "heatmap_peak": 0.15601582825183868
+        },
+        {
+          "name": "left_knee",
+          "x": 212.4375,
+          "y": 288.90625,
+          "heatmap_peak": 0.08764003217220306
+        },
+        {
+          "name": "right_knee",
+          "x": 171.265625,
+          "y": 301.2578125,
+          "heatmap_peak": 0.06006641685962677
+        },
+        {
+          "name": "left_ankle",
+          "x": 228.90625,
+          "y": 412.421875,
+          "heatmap_peak": 0.2366349697113037
+        },
+        {
+          "name": "right_ankle",
+          "x": 146.5625,
+          "y": 416.5390625,
+          "heatmap_peak": 0.19857655465602875
+        }
+      ]
+    },
+    {
+      "character": "wolf",
+      "mode": "crop-assisted",
+      "image_width": 513,
+      "image_height": 628,
+      "joints": [
+        {
+          "name": "nose",
+          "x": 251.1015625,
+          "y": 421.46875,
+          "heatmap_peak": 0.00003342873969813809
+        },
+        {
+          "name": "left_eye",
+          "x": 245.703125,
+          "y": 416.0703125,
+          "heatmap_peak": 0.00003300682146800682
+        },
+        {
+          "name": "right_eye",
+          "x": 245.703125,
+          "y": 426.8671875,
+          "heatmap_peak": 0.00003141036722809076
+        },
+        {
+          "name": "left_ear",
+          "x": 251.1015625,
+          "y": 416.0703125,
+          "heatmap_peak": 0.0000694877453497611
+        },
+        {
+          "name": "right_ear",
+          "x": 224.109375,
+          "y": 426.8671875,
+          "heatmap_peak": 0.00015240866923704743
+        },
+        {
+          "name": "left_shoulder",
+          "x": 234.90625,
+          "y": 372.8828125,
+          "heatmap_peak": 0.0007692156359553337
+        },
+        {
+          "name": "right_shoulder",
+          "x": 245.703125,
+          "y": 394.4765625,
+          "heatmap_peak": 0.0015767309814691544
+        },
+        {
+          "name": "left_elbow",
+          "x": 180.921875,
+          "y": 302.703125,
+          "heatmap_peak": 0.0008611689554527402
+        },
+        {
+          "name": "right_elbow",
+          "x": 229.5078125,
+          "y": 421.46875,
+          "heatmap_peak": 0.002940145321190357
+        },
+        {
+          "name": "left_wrist",
+          "x": 89.1484375,
+          "y": 248.71875,
+          "heatmap_peak": 0.003385864431038499
+        },
+        {
+          "name": "right_wrist",
+          "x": 434.6484375,
+          "y": 248.71875,
+          "heatmap_peak": 0.015435897745192051
+        },
+        {
+          "name": "left_hip",
+          "x": 213.3125,
+          "y": 270.3125,
+          "heatmap_peak": 0.1334739774465561
+        },
+        {
+          "name": "right_hip",
+          "x": 213.3125,
+          "y": 270.3125,
+          "heatmap_peak": 0.11528099328279495
+        },
+        {
+          "name": "left_knee",
+          "x": 234.90625,
+          "y": 227.125,
+          "heatmap_peak": 0.09021782130002975
+        },
+        {
+          "name": "right_knee",
+          "x": 332.078125,
+          "y": 302.703125,
+          "heatmap_peak": 0.1364607810974121
+        },
+        {
+          "name": "left_ankle",
+          "x": 305.0859375,
+          "y": 545.6328125,
+          "heatmap_peak": 0.20348921418190002
+        },
+        {
+          "name": "right_ankle",
+          "x": 94.546875,
+          "y": 102.9609375,
+          "heatmap_peak": 0.12255086749792099
+        }
+      ]
+    },
+    {
+      "character": "anime-control",
+      "mode": "crop-assisted",
+      "image_width": 512,
+      "image_height": 512,
+      "joints": [
+        {
+          "name": "nose",
+          "x": 123.546875,
+          "y": 215.9140625,
+          "heatmap_peak": 0.08080743998289108
+        },
+        {
+          "name": "left_eye",
+          "x": 132.34375,
+          "y": 202.71875,
+          "heatmap_peak": 0.061646293848752975
+        },
+        {
+          "name": "right_eye",
+          "x": 105.953125,
+          "y": 207.1171875,
+          "heatmap_peak": 0.06751997768878937
+        },
+        {
+          "name": "left_ear",
+          "x": 141.140625,
+          "y": 207.1171875,
+          "heatmap_peak": 0.1143101155757904
+        },
+        {
+          "name": "right_ear",
+          "x": 92.7578125,
+          "y": 215.9140625,
+          "heatmap_peak": 0.11748243123292923
+        },
+        {
+          "name": "left_shoulder",
+          "x": 149.9375,
+          "y": 242.3046875,
+          "heatmap_peak": 0.19615615904331207
+        },
+        {
+          "name": "right_shoulder",
+          "x": 101.5546875,
+          "y": 259.8984375,
+          "heatmap_peak": 0.22360046207904816
+        },
+        {
+          "name": "left_elbow",
+          "x": 198.3203125,
+          "y": 277.4921875,
+          "heatmap_peak": 0.1182217225432396
+        },
+        {
+          "name": "right_elbow",
+          "x": 88.359375,
+          "y": 286.2890625,
+          "heatmap_peak": 0.11431575566530228
+        },
+        {
+          "name": "left_wrist",
+          "x": 255.5,
+          "y": 259.8984375,
+          "heatmap_peak": 0.23585671186447144
+        },
+        {
+          "name": "right_wrist",
+          "x": 66.3671875,
+          "y": 281.890625,
+          "heatmap_peak": 0.20378972589969635
+        },
+        {
+          "name": "left_hip",
+          "x": 233.5078125,
+          "y": 330.2734375,
+          "heatmap_peak": 0.22368736565113068
+        },
+        {
+          "name": "right_hip",
+          "x": 220.3125,
+          "y": 334.671875,
+          "heatmap_peak": 0.1277238130569458
+        },
+        {
+          "name": "left_knee",
+          "x": 299.484375,
+          "y": 255.5,
+          "heatmap_peak": 0.21737444400787354
+        },
+        {
+          "name": "right_knee",
+          "x": 308.28125,
+          "y": 259.8984375,
+          "heatmap_peak": 0.171829953789711
+        },
+        {
+          "name": "left_ankle",
+          "x": 347.8671875,
+          "y": 361.0625,
+          "heatmap_peak": 0.10169724375009537
+        },
+        {
+          "name": "right_ankle",
+          "x": 413.84375,
+          "y": 330.2734375,
+          "heatmap_peak": 0.15075801312923431
+        }
+      ]
+    }
+  ]
+}
