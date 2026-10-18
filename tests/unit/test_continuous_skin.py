@@ -1,6 +1,7 @@
 """Focused checks for the continuous, bisector-offset skin construction."""
 
 import importlib
+import json
 from math import cos, hypot, radians, sin, sqrt
 from pathlib import Path
 
@@ -139,3 +140,97 @@ def test_openpose_export_has_eighteen_xy_confidence_triples(skin):
     assert len(flat) == 18 * 3
     assert flat[6:9] == [195, 320, 1]  # COCO_18 index 2 is RShoulder.
     assert flat[42:] == [0] * 12  # Unmodeled eye/ear pose landmarks stay missing.
+
+
+def test_torso_profile_changes_skin_but_not_pose_limbs_or_head(skin):
+    pose = TypeAdapter(list[skin.Pose]).validate_json(
+        (STUDY / "edits/naked-poses.json").read_text()
+    )[1]
+    before_scene, before = skin.build_skin(pose)
+    # Verify the saved optional-backend artifact without adding Shapely to the app.
+    before_data = json.loads(before.model_dump_json())
+    after = json.loads((STUDY / "output/torso/broad-chest-target.json").read_text())
+    after_scene = skin.Scene.model_validate_json(
+        (STUDY / "output/torso/broad-chest.json").read_text()
+    )
+    for field in ("joints", "bones", "sections", "hand_tips", "head_attachment"):
+        assert before_data[field] == after[field]
+    assert [s for s in before_scene.shapes if s.part == "head"] == [
+        s for s in after_scene.shapes if s.part == "head"
+    ]
+    assert [s["half_width"] * 2 for s in after["torso_sections"]] == [160, 96]
+    sections = skin.sample_rig(pose).sections
+    torso = next(c for c in after["components"] if c["id"] == "torso")
+    assert tuple(torso["outline"][0]) == sections["RShoulder"].left
+    assert tuple(torso["outline"][1]) == sections["LShoulder"].right
+
+
+def test_equal_chest_and_waist_widths_give_vertical_torso_sides(skin):
+    target = json.loads((STUDY / "output/torso/straight-torso-target.json").read_text())
+    chest, waist = target["torso_sections"]
+    assert chest["left"][0] == waist["left"][0]
+    assert chest["right"][0] == waist["right"][0]
+    assert chest["center"][1] < waist["center"][1]
+
+
+def test_waist_control_cannot_be_above_chest(skin):
+    with pytest.raises(ValueError, match="below the chest"):
+        skin.TorsoProfile(
+            chest=skin.TorsoStation(height=0.6, half_width=80),
+            waist=skin.TorsoStation(height=0.3, half_width=48),
+        )
+
+
+def test_upper_arm_border_is_rendered_without_shoulder_or_elbow_caps(skin):
+    target = json.loads((STUDY / "output/intersections/target.json").read_text())
+    scene = skin.Scene.model_validate_json(
+        (STUDY / "output/intersections/scene.json").read_text()
+    )
+    sections = {s["joint"]: s for s in target["sections"]}
+    shoulder, elbow = sections["RShoulder"], sections["RElbow"]
+    lines = [
+        shape
+        for shape in scene.shapes
+        if shape.source_region == "clipped-occlusion-edge"
+    ]
+    distance = importlib.import_module("polygon_regularizer").distance
+    for fraction in (0.25, 0.5, 0.75):
+        p = tuple(
+            a * (1 - fraction) + b * fraction
+            for a, b in zip(shoulder["right"], elbow["right"])
+        )
+        assert (
+            min(
+                distance(p, a, b)
+                for line in lines
+                for a, b in zip(line.points, line.points[1:])
+            )
+            < 1e-6
+        )
+    for section in (shoulder, elbow):
+        middle = tuple((a + b) / 2 for a, b in zip(section["left"], section["right"]))
+        assert (
+            min(
+                distance(middle, a, b)
+                for line in lines
+                for a, b in zip(line.points, line.points[1:])
+            )
+            > 1
+        )
+
+
+def test_reference_six_is_a_new_intersection_and_twelve_is_retained(skin):
+    target = json.loads((STUDY / "output/intersections/target.json").read_text())
+    distance = importlib.import_module("polygon_regularizer").distance
+    six, twelve = target["reference_markers"]["6"], target["reference_markers"]["12"]
+    for component in target["components"]:
+        if component["id"] in {"torso", "arm-R"}:
+            points = component["outline"]
+            assert six not in points
+            assert (
+                min(
+                    distance(six, a, b) for a, b in zip(points, points[1:] + points[:1])
+                )
+                < 1e-6
+            )
+    assert twelve in target["body_vertices"]

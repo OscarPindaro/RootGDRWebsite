@@ -407,7 +407,8 @@ then returns along the opposite side. It closes across the shoulders and joins
 the inner hip endpoints directly. There is no custom pubic point or extra neck
 geometry. Foot-end sections and hand tips are geometric controls, not extra
 OpenPose joints.
-There are no rendered limb rectangles, no polygon unions, and no internal seams.
+The simple chain compiler renders no separate limb rectangles or joint seams.
+Torso profiles now use the intersection compiler described below.
 
 `head_attachment.py` builds the head as a separate asset, with its own local
 profile and Nose reference. Its pivot is OpenPose Neck; rotation and uniform scale
@@ -431,3 +432,68 @@ Moving a joint regenerates the outline but does not solve fixed-length posing.
 Self-crossing bodies and fully folded limbs are rejected; self-occlusion and
 more anatomical hands/feet remain later work. No clothing, objects, phone tests
 or long suites were added to this iteration.
+
+## Chest and waist shape controls
+
+Oscar's J. Como Salvasterzi and Lizaárd al Gaib references clarify that the torso
+profile is independent of the pose: broad/inverted-triangle, stretched hexagon,
+or straight chest/abdomen sides. Their original photos are retained under
+`output/references/j-como.jpg` and `lizaard.jpg`.
+
+`Pose.torso` adds a chest station and an optional waist station. Each has:
+
+- `height`: fraction along Neck → midpoint of the hips;
+- `half_width`: flesh distance on either side of that torso axis.
+
+The stations generate paired contour points perpendicular to the torso axis.
+They are shape controls, not OpenPose landmarks or bones. They keep the body one
+polygon; all limb sections, hand tips, head transforms and OpenPose data remain
+unchanged. Equal chest/waist widths give straight sides; a broad chest and
+narrow waist give the tapered profile. One chest station gives a six-corner
+torso profile between the shoulder line and hips.
+
+```sh
+uv run --no-project generate_bodies.py --torso-study
+```
+
+`edits/torso-profiles.json` selects three profiles on exactly the same bent-arm
+rig. Values are authored demonstrations, not measurements inferred from the
+photos. `output/torso/index.html` compares them; the green guides show the
+shape-control stations separately from the blue skeleton and orange limb
+bisectors. Clean exports contain no guides, clothing or objects.
+
+Invalid input surfaces are rejected rather than silently changing the skeleton.
+The five original base poses remain available under `output/generated/`.
+
+## Shoulder-based intersections and visible arm edges
+
+Oscar's numbered sketch corrected the first torso attempt: the torso starts at
+the **outer shoulder flesh points**, not at the inner arm roots. Its independent
+profile is joined with the continuous arm and leg surfaces. GEOS/Shapely computes
+the union boundary, including holes; there is no fixed armpit point forced into
+the contour.
+
+`body_surface.py` uses `body_skin.sample_rig()` for the same bisector geometry.
+The union is the single rendered skin element. Construction surfaces are retained
+in the target for inspection, not drawn as independently outlined limbs.
+Foreground arm sides are clipped to the torso; portions already on the exterior
+boundary are omitted to avoid duplicate outlines. The open arm-side path includes
+**upper arm, forearm and hand**, but excludes the artificial shoulder root cap.
+There are no elbow cross-section borders. This retains the upper-arm line Oscar
+highlighted in red as well as the forearm edge below it.
+
+```sh
+uv run --no-project generate_intersections.py
+```
+
+`output/intersections/index.html` shows the numbered sketch, clean result and
+construction view. Markers **6** and **12** refer to the sketch, not fixed array
+indices: 6 is a calculated arm/torso boundary crossing, while 12 is a retained
+right chest corner not covered by the raised arm. The pose is authored for the
+example, not inferred from the sketch.
+
+The example places the image-left/OpenPose-R arm in front. Depth is an explicit
+`foreground_arms` choice because OpenPose 2D does not supply it. The compiler's
+short verification checks the union, both markers, the requested upper-arm edge,
+and the absence of artificial shoulder/elbow cap strokes. No phone or long
+test suite is part of this visual iteration.

@@ -17,7 +17,8 @@ def main() -> None:
     output = ROOT / "output"
     for path in sorted(output.rglob("*")):
         if path.suffix in {".svg", ".json", ".html"}:
-            path.write_text(path.read_text().rstrip() + "\n")
+            text = "\n".join(line.rstrip() for line in path.read_text().splitlines())
+            path.write_text(text.rstrip() + "\n")
         elif path.suffix == ".png" and path.stat().st_size > 480 * 1024:
             image = Image.open(path)
             for colors in (256, 128, 96, 64):
@@ -35,8 +36,8 @@ def main() -> None:
     with ZipFile(output / "study.zip", "w", ZIP_DEFLATED) as archive:
         for path in sorted(ROOT.glob("*.py")):
             archive.write(path, path.name)
-        for path in sorted(ROOT.glob("*.md")):
-            archive.write(path, path.name)
+        for name in ("README.md", "INTERACTION.md", "NEXT_EXPERIMENT.md"):
+            archive.write(ROOT / name, name)
         for path in sorted((ROOT / "edits").glob("*.json")):
             archive.write(path, str(path.relative_to(ROOT)))
         archive.write(ROOT / "BIZARRE_LICENSE.txt", "BIZARRE_LICENSE.txt")

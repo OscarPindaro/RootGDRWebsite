@@ -61,3 +61,16 @@ is a separately attached shape following Neck/Nose, not part of the body contour
 No physical neck column is added. Hands end in points; the inner hips join
 directly without an extra central protrusion. Edit rig positions and offsets
 and regenerate the skin before adding clothing or props.
+
+Torso morphology also needs independent controls. Oscar's references distinguish
+Tacito/Altus/Lizaárd's broader, tapered chest from J. Como's straight chest and
+abdomen. A chest-height width station, and optionally a waist station, define
+that silhouette without adding bones to OpenPose. Preserve the same rig while
+comparing profiles so appearance changes are not confused with pose changes.
+
+The numbered sketch clarifies the topology: start the torso at the shoulder
+line, then derive the final contour from intersections with the limb surfaces.
+Preserve an exposed torso corner when no limb covers it. An arm in front of the
+chest keeps its visible side edges through upper arm and forearm, not just below
+the elbow. Do not draw the construction caps across shoulder or elbow sections.
+These visibility/layer choices are separate from the OpenPose joint coordinates.

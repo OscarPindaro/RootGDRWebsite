@@ -1,0 +1,28 @@
+{
+  "base_pose": "bent-arms",
+  "profiles": [
+    {
+      "id": "broad-chest",
+      "name": "Petto largo · addome stretto",
+      "torso": {
+        "chest": {"height": 0.4, "half_width": 80},
+        "waist": {"height": 0.8, "half_width": 48}
+      }
+    },
+    {
+      "id": "stretched-hexagon",
+      "name": "Esagono allungato",
+      "torso": {
+        "chest": {"height": 0.4, "half_width": 74}
+      }
+    },
+    {
+      "id": "straight-torso",
+      "name": "Torace rettilineo",
+      "torso": {
+        "chest": {"height": 0.4, "half_width": 64},
+        "waist": {"height": 0.8, "half_width": 64}
+      }
+    }
+  ]
+}

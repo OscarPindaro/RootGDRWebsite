@@ -1,0 +1,29 @@
+<!doctype html><html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Busto e arti: intersezioni</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f0e5;color:#302d2b;font:17px/1.5 Georgia,serif}
+main{max-width:1500px;margin:auto;padding:30px}h1{font-size:42px;font-weight:normal}
+p{max-width:1000px}.figures{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+figure{margin:0}img{width:100%;height:700px;object-fit:contain}figcaption{font-size:15px}
+a{color:#365b70;display:inline-flex;align-items:center;min-height:44px;margin-right:20px}
+@media(max-width:800px){.figures{grid-template-columns:1fr}main{padding:20px 14px}}
+</style><main><h1>L’ascella viene dall’intersezione.</h1>
+<p>Il busto parte dalle spalle, con la propria sagoma. Le superfici degli arti
+sono costruite dalle bisettrici. L’unione geometrica determina il contorno finale:
+il punto 6 è calcolato dove si incontrano arto e busto; il 12 rimane perché
+il braccio alzato non lo copre. Il braccio davanti conserva il bordo interno
+sia sopra sia sotto il gomito, incluso il tratto indicato in rosso.
+Non vengono disegnate le chiusure di costruzione alla spalla o al gomito.</p>
+<p>6 e 12 richiamano il tuo schema: non sono indici imposti all’array dei vertici.
+La posa è ricostruita a mano per la prova; intersezioni e bordi visibili sono calcolati.</p>
+<section class="figures">
+<figure><a href="../references/numbered-body.png" target="_blank"><img src="../references/numbered-body.png" alt="Schema numerato originale"></a><figcaption>Schema di riferimento</figcaption></figure>
+<figure><img src="body.svg" alt="Unico contorno e bordo dell’avambraccio davanti"><figcaption>Risultato senza guide</figcaption></figure>
+<figure><img src="construction.svg" alt="Superfici, scheletro e intersezioni 6 e 12"><figcaption>Viola: busto · arancio: arti · verde: scheletro</figcaption></figure>
+</section><p><a href="body.svg" download>SVG</a><a href="scene.json" download>Scena</a>
+<a href="target.json" download>Geometria e intersezioni</a><a href="openpose.json" download>OpenPose</a>
+<a href="preview.png">Tavola PNG</a><a href="../torso/">Profili del busto</a></p>
+<p>Le superfici di costruzione non sono parti disegnate separatamente: l’immagine
+ha un unico elemento di pelle, con eventuali fori, più le sole linee di occlusione
+necessarie e la testa indipendente. I fori non vengono riempiti automaticamente.</p>
+</main></html>

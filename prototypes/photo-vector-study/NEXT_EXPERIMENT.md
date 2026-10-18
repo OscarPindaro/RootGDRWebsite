@@ -22,6 +22,12 @@ Review this foundation before adding clothing, props or generating 1,000 example
 New character appearance and layering are subsequent steps, after continuous
 skin construction is accepted.
 
+Torso shape is another independent generator parameter: a chest-width station
+and optional waist-width station distinguish broad/tapered, hexagonal and
+straight profiles. The current `--torso-study` renders those alternatives on
+one unchanged OpenPose rig. Preserve those morphology controls as targets
+alongside the pose when producing a larger dataset.
+
 Use the examples' visual vocabulary: triangular/bent beaks, angular wolf heads,
 octagonal bird bodies, strong outlines, flat colours, capes, hats and swords.
 Generate new combinations and proportions without inventing story canon.

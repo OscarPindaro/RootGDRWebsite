@@ -7,7 +7,7 @@ walk follows the outside of every chain and returns along its inside.
 from math import hypot
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from head_attachment import HeadAttachment, HeadKind, attach_head
 from openpose_rig import CONNECTIONS, OpenPoseFrame
@@ -27,6 +27,24 @@ class Thickness(BaseModel):
     toe: float = Field(default=8, gt=0)
 
 
+class TorsoStation(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    height: float = Field(gt=0, lt=1)
+    half_width: float = Field(gt=0)
+
+
+class TorsoProfile(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    chest: TorsoStation
+    waist: TorsoStation | None = None
+
+    @model_validator(mode="after")
+    def ordered_stations(self):
+        if self.waist and self.waist.height <= self.chest.height:
+            raise ValueError("Waist control must be below the chest control.")
+        return self
+
+
 class Pose(BaseModel):
     model_config = ConfigDict(extra="forbid")
     id: str
@@ -36,6 +54,7 @@ class Pose(BaseModel):
     openpose: OpenPoseFrame
     thickness: Thickness = Field(default_factory=Thickness)
     overrides: dict[str, float] = Field(default_factory=dict)
+    torso: TorsoProfile | None = None
 
 
 class Section(BaseModel):
@@ -54,6 +73,15 @@ class Bone(BaseModel):
     length: float
 
 
+class TorsoSection(BaseModel):
+    control: Literal["chest", "waist"]
+    height: float
+    half_width: float
+    center: Point
+    left: Point
+    right: Point
+
+
 class SkinTarget(BaseModel):
     format: Literal["continuous-skin-target"] = "continuous-skin-target"
     version: Literal[2] = 2
@@ -68,10 +96,19 @@ class SkinTarget(BaseModel):
     vertex_sources: list[str]
     hand_tips: dict[str, Point]
     head_attachment: HeadAttachment
+    torso_sections: list[TorsoSection] = Field(default_factory=list)
     method: str = "One closed contour; two flesh points on each joint's bisector."
     offset_definition: str = (
         "Distance along the bisector, not a miter-corrected perpendicular bone radius."
     )
+
+
+class RigSampling(BaseModel):
+    joints: dict[str, Point]
+    sections: dict[str, Section]
+    bones: list[Bone]
+    hand_tips: dict[str, Point]
+    chains: list[list[str]]
 
 
 def unit(vector: Point) -> Point:
@@ -110,7 +147,7 @@ def cross_section(
     )
 
 
-def build_skin(pose: Pose) -> tuple[Scene, SkinTarget]:
+def sample_rig(pose: Pose) -> RigSampling:
     joints = pose.openpose.points()
     geometry = joints.copy()
     sections: dict[str, Section] = {}
@@ -163,7 +200,23 @@ def build_skin(pose: Pose) -> tuple[Scene, SkinTarget]:
         for a, b in CONNECTIONS
         if a in joints and b in joints
     ]
+    return RigSampling(
+        joints=joints,
+        sections=sections,
+        bones=bones,
+        hand_tips=hand_tips,
+        chains=chains,
+    )
 
+
+def build_skin(pose: Pose) -> tuple[Scene, SkinTarget]:
+    if pose.torso is not None:
+        raise ValueError(
+            "Torso profiles require build_surface(), which computes limb intersections."
+        )
+    sampled = sample_rig(pose)
+    joints, sections, bones = sampled.joints, sampled.sections, sampled.bones
+    hand_tips, chains = sampled.hand_tips, sampled.chains
     vertices: list[Point] = []
     sources = []
     # The loop closes directly across the shoulder envelope. Between the inner

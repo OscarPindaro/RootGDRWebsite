@@ -1,0 +1,85 @@
+<!doctype html><html lang="it"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>Corpo continuo dalle bisettrici</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f0e5;color:#302d2b;font:16px/1.5 Georgia,serif}
+main{max-width:1600px;margin:auto;padding:34px}h1{font-size:44px;font-weight:normal;margin:18px 0}
+p{max-width:940px;color:#706453}.controls{display:flex;flex-wrap:wrap;gap:28px;margin:24px 0}
+label,nav,.legend{font:14px/1.5 system-ui,sans-serif}
+label{display:flex;gap:10px;align-items:center;min-height:44px;cursor:pointer}input{width:20px;height:20px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:22px}
+article{background:#faf7ef;border:1px solid #cfc4b1;padding:22px}h2{font-weight:normal;font-size:28px}
+figure{margin:0}img{width:100%;height:620px;object-fit:contain}nav{display:flex;flex-wrap:wrap;gap:20px}
+a{display:inline-flex;align-items:center;min-height:44px;color:#365b70}
+a:focus-visible,input:focus-visible{outline:3px solid #d26936;outline-offset:4px}
+.bone{color:#285d86}.flesh{color:#bb572a}
+.torso{color:#3d7850}.references{display:flex;gap:28px;flex-wrap:wrap;margin-top:30px}
+.references img{width:250px;height:300px;object-fit:contain}.references figcaption{font-size:14px}
+@media(max-width:1100px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:650px){main{padding:20px 14px}.grid{grid-template-columns:1fr}}
+</style><main><p>Root GDR · studio della pelle continua</p>
+<h1>Tre profili del busto, una sola posa.</h1>
+
+    <p>Stesso OpenPose, stessi arti, stessi offset e stessa testa.
+    Cambiano soltanto i controlli della sagoma: altezza e larghezza del petto,
+    più un controllo opzionale per l’addome. Non sono nuove ossa.
+    Il petto largo richiama Tacito e Lizaárd; il profilo rettilineo richiama J. Como.</p>
+
+<p>Lo scheletro usa il formato OpenPose COCO_18. Il corpo resta un’unica sagoma,
+senza colonna del collo né punto pubico aggiunto. Le mani terminano a punta.
+La testa è una forma separata: il suo pivot segue Neck e l’orientamento segue Nose.
+Può muoversi senza riscrivere il corpo.</p>
+<div class="controls"><label><input id="guides" type="checkbox">Mostra scheletro, bisettrici e punti della pelle</label>
+<a href="preview.png" target="_blank">Tavola PNG</a><a href="../shapes/">Studio dalle fotografie</a>
+<a href="../torso/">Confronto dei profili del busto</a><a href="../generated/">Cinque pose di base</a>
+<a href="../intersections/">Raccordo con intersezioni e bordi davanti</a>
+<a href="../study.zip" download>Scarica lo studio</a></div>
+<p class="legend"><span class="bone">Blu: ossa e centri dei giunti.</span>
+<span class="flesh">Arancio: bisettrici e due estremi dell’offset.</span>
+<span class="torso">Verde: controlli della sagoma del busto, separati dallo scheletro.</span>
+Le guide non sono bordi del corpo e non compaiono nell’SVG pulito.
+Tutti gli esempi usano la stessa scala.</p>
+<section class="grid">
+        <article><h2>Petto largo · addome stretto</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
+        <p>Petto: 160px · Addome: 96px</p>
+        <figure><img data-id="broad-chest" src="broad-chest.svg" alt="Petto largo · addome stretto"></figure>
+        <nav><a href="broad-chest.svg" download>SVG</a><a href="broad-chest.json" download>Scena</a>
+        <a href="broad-chest-target.json" download>Giunti e offset</a>
+        <a href="broad-chest-openpose.json" download>OpenPose JSON</a>
+        <a href="broad-chest-construction.svg" target="_blank">Costruzione</a></nav></article>
+        <article><h2>Esagono allungato</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
+        <p>Petto: 148px</p>
+        <figure><img data-id="stretched-hexagon" src="stretched-hexagon.svg" alt="Esagono allungato"></figure>
+        <nav><a href="stretched-hexagon.svg" download>SVG</a><a href="stretched-hexagon.json" download>Scena</a>
+        <a href="stretched-hexagon-target.json" download>Giunti e offset</a>
+        <a href="stretched-hexagon-openpose.json" download>OpenPose JSON</a>
+        <a href="stretched-hexagon-construction.svg" target="_blank">Costruzione</a></nav></article>
+        <article><h2>Torace rettilineo</h2><p>Corpo continuo e testa indipendente, agganciata alla posa.</p>
+        <p>Petto: 128px · Addome: 128px</p>
+        <figure><img data-id="straight-torso" src="straight-torso.svg" alt="Torace rettilineo"></figure>
+        <nav><a href="straight-torso.svg" download>SVG</a><a href="straight-torso.json" download>Scena</a>
+        <a href="straight-torso-target.json" download>Giunti e offset</a>
+        <a href="straight-torso-openpose.json" download>OpenPose JSON</a>
+        <a href="straight-torso-construction.svg" target="_blank">Costruzione</a></nav></article></section>
+
+    <section class="references"><figure><a href="../references/j-como.jpg" target="_blank">
+    <img src="../references/j-como.jpg" alt="J. Como Salvasterzi, disegno originale"></a>
+    <figcaption>J. Como · fianchi del torace più verticali</figcaption></figure>
+    <figure><a href="../references/lizaard.jpg" target="_blank">
+    <img src="../references/lizaard.jpg" alt="Lizaárd al Gaib, disegno originale"></a>
+    <figcaption>Lizaárd · petto largo e addome stretto</figcaption></figure></section>
+
+<p>Neck è un riferimento OpenPose al centro delle spalle, non un collo da disegnare.
+Nose posiziona e orienta la forma della testa; non esistono ossa personalizzate
+“head”, “jaw” o “crotch”. Le pose, i profili delle teste e gli spessori sono dichiarati. Il contorno è
+calcolato da quelle informazioni. Gli offset sono misurati lungo la bisettrice;
+non viene applicata una correzione miter che allunghi gli angoli.
+Per i profili del busto, le intersezioni tra superfici determinano il contorno
+e gli arti davanti conservano i bordi visibili, senza chiusure artificiali sui giunti.
+Gli arti completamente ripiegati sono ancora rifiutati.</p>
+</main><script>
+document.querySelector('#guides').addEventListener('change', event => {
+  for (const image of document.querySelectorAll('img[data-id]')) {
+    image.src = image.dataset.id + (event.target.checked ? '-construction.svg' : '.svg');
+  }
+});
+</script></html>
