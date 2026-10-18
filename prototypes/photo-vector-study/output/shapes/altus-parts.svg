@@ -1,93 +1,93 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 370 597" width="370" height="597" stroke-linejoin="round" stroke-linecap="round" role="img" aria-label="Altus">
-  <g id="region-164-0" data-kind="polygon" data-label="region-164-0" data-source="region-164" tabindex="0">
-    <title>region-164-0 · polygon</title>
-    <polygon fill="#d48672" stroke="#302d2b" stroke-width="8.1" points="150,154 105.65,154 22.62,268.16 22.62,461.98 31.4,474.64 41.73,456.43 92.15,287.14 181.11,199.59" />
+  <g id="region-164-0" data-kind="polygon" data-label="Mantello sinistro · sette lati" data-part="region-164-0" data-source="region-164" tabindex="0">
+    <title>Mantello sinistro · sette lati · polygon</title>
+    <polygon fill="#d48672" stroke="#302d2b" stroke-width="8.1" points="150,154 105.65,154 22.62,268.16 31.4,474.64 41.73,456.43 92.15,287.14 181.11,199.59" />
   </g>
-  <g id="region-156-0" data-kind="polygon" data-label="region-156-0" data-source="region-156" tabindex="0">
+  <g id="region-156-0" data-kind="polygon" data-label="region-156-0" data-part="region-156-0" data-source="region-156" tabindex="0">
     <title>region-156-0 · polygon</title>
     <polygon fill="#61a2b8" stroke="#302d2b" stroke-width="8.1" points="213,150 181.11,199.59 284.57,299.48 282.78,320.62 298.9,446.49 306.55,457.08 313.67,448.71 332,372 343.52,290.98 249.98,170.02 235.35,155.98 236.44,150" />
   </g>
-  <g id="region-025-0" data-kind="polygon" data-label="region-025-0" data-source="region-025" tabindex="0">
+  <g id="region-025-0" data-kind="polygon" data-label="region-025-0" data-part="region-025-0" data-source="region-025" tabindex="0">
     <title>region-025-0 · polygon</title>
     <polygon fill="#b7ad59" stroke="#302d2b" stroke-width="8.1" points="99.09,26.9 106.5,153 150,154 213,150 263.4,146.86 283.05,172.34 293.2,175.45 293.2,153.35 285.84,124.88 109.28,28.37" />
   </g>
-  <g id="region-194-0" data-kind="polygon" data-label="region-194-0" data-source="region-194" tabindex="0">
+  <g id="region-194-0" data-kind="polygon" data-label="region-194-0" data-part="region-194-0" data-source="region-194" tabindex="0">
     <title>region-194-0 · polygon</title>
     <polygon fill="#9985b9" stroke="#302d2b" stroke-width="8.1" points="105.31,272.02 115.43,277.3 177,277.3 182.14,256.37 198.43,242.83 207.48,284.06 276.17,323.2 282.8,323.2 282.8,297.98 181.11,199.59" />
   </g>
-  <g id="region-262-0" data-kind="polygon" data-label="region-262-0" data-source="region-262" tabindex="0">
-    <title>region-262-0 · polygon</title>
-    <polygon fill="#7ba17a" stroke="#302d2b" stroke-width="8.1" points="155.93,331.5 155.93,530.66 185.01,568.95 194.8,570.77 198,391 194.55,327.84" />
+  <g id="region-262-0" data-kind="polygon" data-label="Lama sinistra · trapezio" data-part="region-262-0" data-source="region-262" tabindex="0">
+    <title>Lama sinistra · trapezio · polygon</title>
+    <polygon fill="#7ba17a" stroke="#302d2b" stroke-width="8.1" points="155.879,331.5 155.981,530.66 194.738,570.77 194.613,327.84" />
   </g>
-  <g id="region-257-0" data-kind="polygon" data-label="region-257-0" data-source="region-257" tabindex="0">
+  <g id="region-257-0" data-kind="polygon" data-label="region-257-0" data-part="region-257-0" data-source="region-257" tabindex="0">
     <title>region-257-0 · polygon</title>
     <polygon fill="#cb89a5" stroke="#302d2b" stroke-width="8.1" points="108.59,317.66 83.53,323.7 82.71,324.69 34.15,481.42 47.94,479.15 105.7,442.29 129,366.22" />
   </g>
-  <g id="region-243-0" data-kind="polygon" data-label="region-243-0" data-source="region-243" tabindex="0">
+  <g id="region-243-0" data-kind="polygon" data-label="region-243-0" data-part="region-243-0" data-source="region-243" tabindex="0">
     <title>region-243-0 · polygon</title>
     <polygon fill="#d48672" stroke="#302d2b" stroke-width="8.1" points="216,289.63 210.4,299.98 232.77,316.9 227.53,323.51 230,457 270.49,516.83 286.75,529.46 277.83,458.7 275.39,454.65 254.75,367.01 270.79,321.18" />
   </g>
-  <g id="region-239-0" data-kind="polygon" data-label="region-239-0" data-source="region-239" tabindex="0">
+  <g id="region-239-0" data-kind="polygon" data-label="region-239-0" data-part="region-239-0" data-source="region-239" tabindex="0">
     <title>region-239-0 · polygon</title>
     <polygon fill="#61a2b8" stroke="#302d2b" stroke-width="8.1" points="175.32,286.06 108.71,315.6 129.84,366.15 91.82,491.36 93.33,505.23 103.14,500.48 155.88,439.67 155.88,330.47 145.68,322.1 180.44,298.11" />
   </g>
-  <g id="region-263-0" data-kind="polygon" data-label="region-263-0" data-source="region-263" tabindex="0">
-    <title>region-263-0 · polygon</title>
-    <polygon fill="#b7ad59" stroke="#302d2b" stroke-width="8.1" points="226.57,324.82 196.31,328.01 196.31,568.76 227.2,534.49 230,458" />
+  <g id="region-263-0" data-kind="polygon" data-label="Lama destra · trapezio" data-part="region-263-0" data-source="region-263" tabindex="0">
+    <title>Lama destra · trapezio · polygon</title>
+    <polygon fill="#b7ad59" stroke="#302d2b" stroke-width="8.1" points="226.727,324.82 196.129,328.01 196.491,568.76 227.042,534.49" />
   </g>
-  <g id="region-261-0" data-kind="polygon" data-label="region-261-0" data-source="region-261" tabindex="0">
+  <g id="region-261-0" data-kind="polygon" data-label="region-261-0" data-part="region-261-0" data-source="region-261" tabindex="0">
     <title>region-261-0 · polygon</title>
     <polygon fill="#9985b9" stroke="#302d2b" stroke-width="8.1" points="270.93,323.7 255.05,369.3 264.44,399.06 273.78,450.27 281.9,463.33 302.42,467.69 305.2,457.27 297.84,446.04 283.1,330.17 280.64,325.34" />
   </g>
-  <g id="region-235-0" data-kind="polygon" data-label="region-235-0" data-source="region-235" tabindex="0">
+  <g id="region-235-0" data-kind="polygon" data-label="region-235-0" data-part="region-235-0" data-source="region-235" tabindex="0">
     <title>region-235-0 · polygon</title>
     <polygon fill="#7ba17a" stroke="#302d2b" stroke-width="8.1" points="231.24,317.39 209.49,299.89 214.03,291.28 202,281.49 202,276.35 196.18,276.03 179.2,279.9 176.95,286.92 181.64,298.56 154.23,316.78 147.85,323.5 157.2,330.26 226.28,324.1" />
   </g>
-  <g id="region-234-0" data-kind="polygon" data-label="region-234-0" data-source="region-234" tabindex="0">
+  <g id="region-234-0" data-kind="polygon" data-label="region-234-0" data-part="region-234-0" data-source="region-234" tabindex="0">
     <title>region-234-0 · polygon</title>
     <polygon fill="#cb89a5" stroke="#302d2b" stroke-width="8.1" points="85,320.6 93.59,321.07 109.69,315.83 131.9,303.27 175.65,285.62 179.32,278.5 116.16,278.5 105.9,274.1 93.68,286.32 85,309.04" />
   </g>
-  <g id="region-160-0" data-kind="polygon" data-label="Colletto triangolare" data-source="region-160" tabindex="0">
+  <g id="region-160-0" data-kind="polygon" data-label="Colletto triangolare" data-part="region-160-0" data-source="region-160" tabindex="0">
     <title>Colletto triangolare · polygon</title>
     <polygon fill="#d48672" stroke="#302d2b" stroke-width="8.1" points="150,154 213,150 181.11,199.59" />
   </g>
-  <g id="region-120-0" data-kind="polygon" data-label="region-120-0" data-source="region-120" tabindex="0">
-    <title>region-120-0 · polygon</title>
-    <polygon fill="#61a2b8" stroke="#302d2b" stroke-width="8.1" points="56.83,126.17 58.04,130.08 64.28,135.03 71.89,137.68 85.96,146.44 105.16,152.57 103.73,113.72 100.39,107 91.71,107 78,115 61.98,121.02" />
+  <g id="region-120-0" data-kind="polygon" data-label="Piuma inferiore · triangolo" data-part="region-120-0" data-source="region-120" tabindex="0">
+    <title>Piuma inferiore · triangolo · polygon</title>
+    <polygon fill="#61a2b8" stroke="#302d2b" stroke-width="8.1" points="52.1836,126.731 105.562,154.684 101.475,104.6" />
   </g>
-  <g id="region-018-0" data-kind="polygon" data-label="region-018-0" data-source="region-018" tabindex="0">
-    <title>region-018-0 · polygon</title>
-    <polygon fill="#b7ad59" stroke="#302d2b" stroke-width="8.1" points="100.91,28.8 93.02,24.63 81.52,26.79 55.31,39.27 51.4,46.65 57.61,52.86 72.31,58.24 79.28,64 97.75,64 99.93,55.54 98.76,34" />
+  <g id="region-018-0" data-kind="polygon" data-label="Piuma superiore · triangolo" data-part="region-018-0" data-source="region-018" tabindex="0">
+    <title>Piuma superiore · triangolo · polygon</title>
+    <polygon fill="#b7ad59" stroke="#302d2b" stroke-width="8.1" points="100.437,23.851 43.1612,46.2244 98.2372,67.3315" />
   </g>
-  <g id="region-064-0" data-kind="polygon" data-label="region-064-0" data-source="region-064" tabindex="0">
-    <title>region-064-0 · polygon</title>
-    <polygon fill="#9985b9" stroke="#302d2b" stroke-width="8.1" points="54.56,79.44 60.88,88.24 82.19,98.02 91.29,106 102.46,106 100.96,71.52 98.12,65 80.03,65 59.04,74.96" />
+  <g id="region-064-0" data-kind="polygon" data-label="Piuma centrale · triangolo" data-part="region-064-0" data-source="region-064" tabindex="0">
+    <title>Piuma centrale · triangolo · polygon</title>
+    <polygon fill="#9985b9" stroke="#302d2b" stroke-width="8.1" points="49.1934,79.1358 102.959,109.463 98.9294,62.3035" />
   </g>
-  <g id="region-223-0" data-kind="polygon" data-label="region-223-0" data-source="region-223" tabindex="0">
+  <g id="region-223-0" data-kind="polygon" data-label="region-223-0" data-part="region-223-0" data-source="region-223" tabindex="0">
     <title>region-223-0 · polygon</title>
     <polygon fill="#7ba17a" stroke="#302d2b" stroke-width="7.439" points="196.12,247.72 190.78,248.97 184.06,256.83 178.88,269.44 179.35,278 185.59,278 194.33,274.93 202.86,275.39 205.44,273.8 199.9,253.86" />
   </g>
-  <g id="region-085-0" data-kind="polygon" data-label="region-085-0" data-source="region-085" tabindex="0">
+  <g id="region-085-0" data-kind="polygon" data-label="region-085-0" data-part="region-085-0" data-source="region-085" tabindex="0">
     <title>region-085-0 · polygon</title>
     <polygon fill="#cb89a5" stroke="#302d2b" stroke-width="7.344" points="147.04,82.29 140.71,84.89 132,93.84 132,100.98 135.49,106.65 146.54,111 150.03,111 154.79,103.11 156.99,89.99 150.33,83.33" />
   </g>
-  <g id="region-100-0" data-kind="polygon" data-label="region-100-0" data-source="region-100" tabindex="0">
+  <g id="region-100-0" data-kind="polygon" data-label="region-100-0" data-part="region-100-0" data-source="region-100" tabindex="0">
     <title>region-100-0 · polygon</title>
     <polygon fill="#d48672" stroke="#302d2b" stroke-width="7.034" points="151.86,109.29 152.65,111.75 160.32,112.87 182.33,111.73 185,110.07 185,106.56 174,98 163.64,92.17 158.93,91.07 157.25,92.75 155.84,103.17" />
   </g>
-  <g id="region-073-0" data-kind="polygon" data-label="region-073-0" data-source="region-073" tabindex="0">
+  <g id="region-073-0" data-kind="polygon" data-label="region-073-0" data-part="region-073-0" data-source="region-073" tabindex="0">
     <title>region-073-0 · polygon</title>
     <polygon fill="#61a2b8" stroke="#302d2b" stroke-width="5.63" points="131.26,71.93 128,73.66 128,87.78 131.07,93.35 138.53,85.46 146.47,81.04 143.81,77.79" />
   </g>
-  <g id="region-156-color-1-0" data-kind="polygon" data-label="region-156-color-1-0" data-source="region-156-color-1" tabindex="0">
+  <g id="region-156-color-1-0" data-kind="polygon" data-label="region-156-color-1-0" data-part="region-156-color-1-0" data-source="region-156-color-1" tabindex="0">
     <title>region-156-color-1-0 · polygon</title>
     <polygon fill="#b7ad59" stroke="#302d2b" stroke-width="4.199" points="243.17,148.68 237.34,150.59 236.14,157.14 238.03,159.03 242.41,159.57 244.72,153.94" />
   </g>
-  <g id="ink-detail-0" data-kind="polyline" data-label="ink-detail-0" data-source="interior-ink" tabindex="0">
+  <g id="ink-detail-0" data-kind="polyline" data-label="ink-detail-0" data-part="ink-detail-0" data-source="interior-ink" tabindex="0">
     <title>ink-detail-0 · polyline</title>
     <polyline fill="none" stroke="#302d2b" stroke-width="4.05" points="244.908,270.719 216.98,272.718" />
   </g>
-  <g id="ink-detail-1" data-kind="polyline" data-label="ink-detail-1" data-source="interior-ink" tabindex="0">
+  <g id="ink-detail-1" data-kind="polyline" data-label="ink-detail-1" data-part="ink-detail-1" data-source="interior-ink" tabindex="0">
     <title>ink-detail-1 · polyline</title>
     <polyline fill="none" stroke="#302d2b" stroke-width="4.05" points="241.183,319.02 240.523,325.057" />
   </g>

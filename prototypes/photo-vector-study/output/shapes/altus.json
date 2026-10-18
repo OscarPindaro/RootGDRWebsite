@@ -10,7 +10,8 @@
     {
       "id": "region-164-0",
       "source_region": "region-164",
-      "label": null,
+      "label": "Mantello sinistro · sette lati",
+      "part": null,
       "fill": "#0779a0",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -27,10 +28,6 @@
         [
           22.62,
           268.16
-        ],
-        [
-          22.62,
-          461.98
         ],
         [
           31.4,
@@ -54,6 +51,7 @@
       "id": "region-156-0",
       "source_region": "region-156",
       "label": null,
+      "part": null,
       "fill": "#0779a0",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -113,6 +111,7 @@
       "id": "region-025-0",
       "source_region": "region-025",
       "label": null,
+      "part": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -164,6 +163,7 @@
       "id": "region-194-0",
       "source_region": "region-194",
       "label": null,
+      "part": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -214,35 +214,28 @@
     {
       "id": "region-262-0",
       "source_region": "region-262",
-      "label": null,
+      "label": "Lama sinistra · trapezio",
+      "part": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          155.93,
-          331.5
+          155.87876098707972,
+          331.5000263651049
         ],
         [
-          155.93,
-          530.66
+          155.9812390129203,
+          530.6599736348951
         ],
         [
-          185.01,
-          568.95
+          194.7375,
+          570.7700321594613
         ],
         [
-          194.8,
-          570.77
-        ],
-        [
-          198.0,
-          391.0
-        ],
-        [
-          194.55,
-          327.84
+          194.6125,
+          327.83996784053863
         ]
       ]
     },
@@ -250,6 +243,7 @@
       "id": "region-257-0",
       "source_region": "region-257",
       "label": null,
+      "part": null,
       "fill": "#312cab",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -289,6 +283,7 @@
       "id": "region-243-0",
       "source_region": "region-243",
       "label": null,
+      "part": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -344,6 +339,7 @@
       "id": "region-239-0",
       "source_region": "region-239",
       "label": null,
+      "part": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -394,31 +390,28 @@
     {
       "id": "region-263-0",
       "source_region": "region-263",
-      "label": null,
+      "label": "Lama destra · trapezio",
+      "part": null,
       "fill": "#a4a7ba",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          226.57,
-          324.82
+          226.7275,
+          324.81976337869975
         ],
         [
-          196.31,
-          328.01
+          196.12915412871627,
+          328.0102716951442
         ],
         [
-          196.31,
-          568.76
+          196.49084587128374,
+          568.7597283048558
         ],
         [
-          227.2,
-          534.49
-        ],
-        [
-          230.0,
-          458.0
+          227.0425,
+          534.4902366213003
         ]
       ]
     },
@@ -426,6 +419,7 @@
       "id": "region-261-0",
       "source_region": "region-261",
       "label": null,
+      "part": null,
       "fill": "#312cab",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -477,6 +471,7 @@
       "id": "region-235-0",
       "source_region": "region-235",
       "label": null,
+      "part": null,
       "fill": "#e8b910",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -540,6 +535,7 @@
       "id": "region-234-0",
       "source_region": "region-234",
       "label": null,
+      "part": null,
       "fill": "#096cb9",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -591,6 +587,7 @@
       "id": "region-160-0",
       "source_region": "region-160",
       "label": "Colletto triangolare",
+      "part": null,
       "fill": "#e8b910",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
@@ -613,157 +610,72 @@
     {
       "id": "region-120-0",
       "source_region": "region-120",
-      "label": null,
+      "label": "Piuma inferiore · triangolo",
+      "part": null,
       "fill": "#b43032",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          56.83,
-          126.17
+          52.183627468382866,
+          126.73113479651539
         ],
         [
-          58.04,
-          130.08
+          105.56234824344276,
+          154.68366558980907
         ],
         [
-          64.28,
-          135.03
-        ],
-        [
-          71.89,
-          137.68
-        ],
-        [
-          85.96,
-          146.44
-        ],
-        [
-          105.16,
-          152.57
-        ],
-        [
-          103.73,
-          113.72
-        ],
-        [
-          100.39,
-          107.0
-        ],
-        [
-          91.71,
-          107.0
-        ],
-        [
-          78.0,
-          115.0
-        ],
-        [
-          61.98,
-          121.02
+          101.4750249844765,
+          104.60032647026834
         ]
       ]
     },
     {
       "id": "region-018-0",
       "source_region": "region-018",
-      "label": null,
+      "label": "Piuma superiore · triangolo",
+      "part": null,
       "fill": "#b43032",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          100.91,
-          28.8
+          100.43713769691273,
+          23.851015581411936
         ],
         [
-          93.02,
-          24.63
+          43.161192516829274,
+          46.22437799635109
         ],
         [
-          81.52,
-          26.79
-        ],
-        [
-          55.31,
-          39.27
-        ],
-        [
-          51.4,
-          46.65
-        ],
-        [
-          57.61,
-          52.86
-        ],
-        [
-          72.31,
-          58.24
-        ],
-        [
-          79.28,
-          64.0
-        ],
-        [
-          97.75,
-          64.0
-        ],
-        [
-          99.93,
-          55.54
-        ],
-        [
-          98.76,
-          34.0
+          98.23722719458993,
+          67.33153713319994
         ]
       ]
     },
     {
       "id": "region-064-0",
       "source_region": "region-064",
-      "label": null,
+      "label": "Piuma centrale · triangolo",
+      "part": null,
       "fill": "#b43032",
       "stroke": "#302d2b",
       "stroke_width": 8.1,
       "kind": "polygon",
       "points": [
         [
-          54.56,
-          79.44
+          49.19338767762417,
+          79.13580021622705
         ],
         [
-          60.88,
-          88.24
+          102.95906425209222,
+          109.46261165464476
         ],
         [
-          82.19,
-          98.02
-        ],
-        [
-          91.29,
-          106.0
-        ],
-        [
-          102.46,
-          106.0
-        ],
-        [
-          100.96,
-          71.52
-        ],
-        [
-          98.12,
-          65.0
-        ],
-        [
-          80.03,
-          65.0
-        ],
-        [
-          59.04,
-          74.96
+          98.92943234104901,
+          62.30346245458369
         ]
       ]
     },
@@ -771,6 +683,7 @@
       "id": "region-223-0",
       "source_region": "region-223",
       "label": null,
+      "part": null,
       "fill": "#e8b910",
       "stroke": "#302d2b",
       "stroke_width": 7.439,
@@ -822,6 +735,7 @@
       "id": "region-085-0",
       "source_region": "region-085",
       "label": null,
+      "part": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
       "stroke_width": 7.344,
@@ -873,6 +787,7 @@
       "id": "region-100-0",
       "source_region": "region-100",
       "label": null,
+      "part": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
       "stroke_width": 7.034,
@@ -928,6 +843,7 @@
       "id": "region-073-0",
       "source_region": "region-073",
       "label": null,
+      "part": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
       "stroke_width": 5.63,
@@ -967,6 +883,7 @@
       "id": "region-156-color-1-0",
       "source_region": "region-156-color-1",
       "label": null,
+      "part": null,
       "fill": "#d7d1ca",
       "stroke": "#302d2b",
       "stroke_width": 4.199,
@@ -1002,6 +919,7 @@
       "id": "ink-detail-0",
       "source_region": "interior-ink",
       "label": null,
+      "part": null,
       "fill": "none",
       "stroke": "#302d2b",
       "stroke_width": 4.05,
@@ -1021,6 +939,7 @@
       "id": "ink-detail-1",
       "source_region": "interior-ink",
       "label": null,
+      "part": null,
       "fill": "none",
       "stroke": "#302d2b",
       "stroke_width": 4.05,
@@ -1093,7 +1012,7 @@
         },
         {
           "shape": "region-164-0",
-          "index": 7
+          "index": 6
         },
         {
           "shape": "region-156-0",
@@ -1116,6 +1035,61 @@
       "id": "altus-triangular-collar-v1",
       "sha256": "1f50ff329fdfd9d4038a2824e23c3860aafa75464aba786bfa86b02d9b82f04d",
       "description": "Interpret the yellow collar as a triangle and share its corners with the head, cape panels and chest."
+    },
+    {
+      "id": "altus-guided-primitive-fit-v1",
+      "sha256": "2597528a4fed18b89c00f3e37c65c27eaf7a0180e35abc9b687dd125aecbb617",
+      "description": "Fit the three red feathers as triangles, both blade faces as trapezoids, and retain seven cape corners including the hem detail."
+    }
+  ],
+  "regularizations": [
+    {
+      "shape": "region-018-0",
+      "primitive": "triangle",
+      "source_vertices": 11,
+      "fitted_vertices": 3,
+      "error_pixels": 8.2497941086272,
+      "relative_area_change": 0.08839603665524579
+    },
+    {
+      "shape": "region-064-0",
+      "primitive": "triangle",
+      "source_vertices": 9,
+      "fitted_vertices": 3,
+      "error_pixels": 5.375227002380792,
+      "relative_area_change": 0.0783127209476635
+    },
+    {
+      "shape": "region-120-0",
+      "primitive": "triangle",
+      "source_vertices": 11,
+      "fitted_vertices": 3,
+      "error_pixels": 4.680133541089032,
+      "relative_area_change": 0.05393314621748321
+    },
+    {
+      "shape": "region-262-0",
+      "primitive": "trapezoid",
+      "source_vertices": 6,
+      "fitted_vertices": 4,
+      "error_pixels": 5.73074382788384,
+      "relative_area_change": 0.06261284676277173
+    },
+    {
+      "shape": "region-263-0",
+      "primitive": "trapezoid",
+      "source_vertices": 5,
+      "fitted_vertices": 4,
+      "error_pixels": 3.0724122104096745,
+      "relative_area_change": 0.04399801923476791
+    },
+    {
+      "shape": "region-164-0",
+      "primitive": "polygon",
+      "source_vertices": 8,
+      "fitted_vertices": 7,
+      "error_pixels": 8.234226985579681,
+      "relative_area_change": 0.04372421071581188
     }
   ]
 }

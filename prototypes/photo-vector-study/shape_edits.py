@@ -12,10 +12,12 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from polygon_regularizer import fit_polygon
 from study_scene import (
     AppliedEdit,
     Point,
     Polygon,
+    PrimitiveFit,
     Scene,
     Shape,
     SharedAnchor,
@@ -78,13 +80,25 @@ class SplitPolygon(Command):
     pieces: list[PolygonPiece] = Field(min_length=2)
 
 
+class RegularizePolygon(Command):
+    op: Literal["regularize_polygon"]
+    shape: str
+    primitive: Literal["triangle", "trapezoid", "polygon"]
+    sides: int | None = Field(default=None, ge=3)
+    preserve_vertices: list[int] = Field(default_factory=list)
+    max_error: float = Field(default=12, gt=0)
+    max_area_change: float = Field(default=0.2, gt=0, le=1)
+    label: str | None = None
+
+
 Operation = Annotated[
     DefineAnchor
     | MoveAnchor
     | ScaleStrokes
     | ReplacePolygon
     | SpliceVertices
-    | SplitPolygon,
+    | SplitPolygon
+    | RegularizePolygon,
     Field(discriminator="op"),
 ]
 
@@ -205,6 +219,37 @@ def apply_plan(scene: Scene, plan: EditPlan) -> Scene:
             target = result.shapes[position]
             if not isinstance(target, Polygon) or target.kind != "polygon":
                 raise ValueError("This operation requires a filled polygon.")
+            if isinstance(operation, RegularizePolygon):
+                references = [
+                    vertex
+                    for anchor in result.anchors
+                    for vertex in anchor.vertices
+                    if vertex.shape == target.id
+                ]
+                fitted = fit_polygon(
+                    target.points,
+                    primitive=operation.primitive,
+                    sides=operation.sides,
+                    pinned={v.index for v in references}
+                    | set(operation.preserve_vertices),
+                    max_error=operation.max_error,
+                    max_area_change=operation.max_area_change,
+                )
+                target.points = fitted.points
+                target.label = operation.label or target.label
+                result.regularizations.append(
+                    PrimitiveFit(
+                        shape=target.id,
+                        primitive=fitted.primitive,
+                        source_vertices=fitted.original_vertices,
+                        fitted_vertices=len(fitted.points),
+                        error_pixels=fitted.error_pixels,
+                        relative_area_change=fitted.relative_area_change,
+                    )
+                )
+                for vertex in references:
+                    vertex.index = fitted.retained_indices.index(vertex.index)
+                continue
             if isinstance(operation, SplitPolygon):
                 removed = set(range(len(target.points)))
                 replacements = [v for piece in operation.pieces for v in piece.points]

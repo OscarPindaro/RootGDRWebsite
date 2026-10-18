@@ -1,0 +1,51 @@
+# Upload, guidance and reversible reconstruction
+
+Oscar's preferred future interaction, recorded 2026-10-18:
+
+1. Upload a drawing or reference.
+2. Preserve the original and show the first extraction.
+3. Let the person explain what a region means: a triangular feather, a
+   trapezoidal blade, a cape with an intentional notch, an object behind a body.
+4. Propose a deterministic fit or an explicit manual correction for that region.
+5. Apply it as a typed, replayable operation; keep touching pieces attached.
+6. Render the alternatives and let the person retain the better representation.
+
+The user should not have to name region IDs or supply numerical coordinates.
+The agent inspects the scene and translates the description into operations.
+Those decisions remain visible in the recipe. Recognition, geometric fitting
+and manual interpretation are different sources of information.
+
+## Regularization
+
+Semantic priors are supplied by the person or agent. Geometry can then be fitted:
+
+- Remove almost-collinear or low-contribution vertices.
+- Fit three contour runs as the sides of a triangle.
+- Fit opposite sides of a four-sided blade as parallel trapezoid bases.
+- Preserve shared attachment corners and explicitly marked details.
+- Refuse a fit if its boundary drift or area change exceeds the chosen limits.
+
+Different regions may need different treatment. A cape may reasonably keep seven
+corners to preserve its hem; forcing five corners may erase an intentional detail.
+Small vertex count is not the only objective.
+
+## Preserve useful detail
+
+Tacito's first extraction was preferred to the uniform-stroke post-processing,
+especially for the head. Keep the original vector contours when fitting loses
+expression. It is valid to regularize a sword while leaving facial details alone.
+
+Objects should have complete geometry and explicit draw order where practical:
+construct the sword, then place the character in front of it. A contour extractor
+cannot observe the blade behind a head; reconstructing that hidden section is an
+authored interpretation. Save that provenance instead of calling it detection.
+
+## Current implementation boundary
+
+`shape_edits.py` provides local inspection, shared anchors and JSON edit plans.
+`polygon_regularizer.py` provides deterministic fitting with caller-selected
+primitive families and tolerances. The interface is not yet a native canvas
+workflow or a public MCP tool. It is the working prototype for that interaction.
+
+During visual iteration, use short geometry/render checks. Oscar explicitly
+requested no phone tests or long suites for this cycle.

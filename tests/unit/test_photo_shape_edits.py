@@ -1,6 +1,7 @@
 """Contracts for shared-vertex edits on the committed drawing examples."""
 
 import importlib
+import json
 from pathlib import Path
 
 import pytest
@@ -126,3 +127,67 @@ def test_luciano_wings_have_requested_geometry_and_shared_split_edge(tools):
     assert wing.points[2] == underwing.points[-1]
     assert wing.points[3] == underwing.points[0]
     tools.validate_scene(scene)
+
+
+def test_primitive_regularizer_removes_nearly_redundant_corner_without_moving_pins(
+    tools,
+):
+    result = tools.fit_polygon(
+        [(0, 0), (100, 0), (50, 100), (49, 98.1)],
+        primitive="triangle",
+        pinned={0, 1, 2},
+        max_error=1,
+    )
+    assert result.points == [(0, 0), (100, 0), (50, 100)]
+    assert result.retained_indices == [0, 1, 2]
+
+
+def test_altus_priors_fit_triangles_parallel_blade_edges_and_keep_cape_detail(tools):
+    scene = load_scene(tools, "altus")
+    shapes = {s.id: s for s in scene.shapes}
+    for name in ("region-018-0", "region-064-0", "region-120-0"):
+        assert len(shapes[name].points) == 3
+    for name in ("region-262-0", "region-263-0"):
+        points = shapes[name].points
+        assert len(points) == 4
+        cross = []
+        for offset in (0, 1):
+            a, b = points[offset], points[(offset + 1) % 4]
+            c, d = points[(offset + 2) % 4], points[(offset + 3) % 4]
+            cross.append(
+                abs((b[0] - a[0]) * (d[1] - c[1]) - (b[1] - a[1]) * (d[0] - c[0]))
+            )
+        assert min(cross) < 1e-6
+    assert len(shapes["region-164-0"].points) == 7
+    assert (31.4, 474.64) in shapes["region-164-0"].points
+    assert (41.73, 456.43) in shapes["region-164-0"].points
+    assert len(scene.regularizations) == 6
+    tools.validate_scene(scene)
+
+
+def test_five_sided_cape_is_rejected_when_it_would_erase_too_much_detail(tools):
+    scene = load_scene(tools, "altus", detected=True)
+    plan = tools.EditPlan.model_validate_json((STUDY / "edits/altus.json").read_text())
+    scene = tools.apply_plan(scene, plan)
+    cape = next(s for s in scene.shapes if s.id == "region-164-0")
+    with pytest.raises(ValueError, match="lose too much detail"):
+        tools.fit_polygon(
+            cape.points,
+            primitive="polygon",
+            sides=5,
+            pinned={0, 2, 4, 5, 7},
+            max_error=12,
+        )
+
+
+def test_tacito_keeps_first_head_contours_and_a_complete_background_sword(tools):
+    scene = load_scene(tools, "wolf")
+    source = json.loads((STUDY / "output/opencv/wolf-contours.json").read_text())
+    original = next(r for r in source["regions"] if r["id"] == "region-052")
+    head = next(s for s in scene.shapes if s.id == "region-052")
+    assert head.loops == [[tuple(p) for p in loop] for loop in original["loops"]]
+    ridge = next(s for s in scene.shapes if s.id == "sword-ridge")
+    assert len(ridge.points) == 2
+    assert ridge.points[1][0] > 400 and ridge.points[1][1] > 450
+    first_body = next(i for i, s in enumerate(scene.shapes) if s.part != "sword")
+    assert all(s.part == "sword" for s in scene.shapes[:first_body])

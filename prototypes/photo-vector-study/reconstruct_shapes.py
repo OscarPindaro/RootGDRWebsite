@@ -21,6 +21,7 @@ from PIL import Image, ImageDraw, ImageFont, ImageOps
 from shapely.geometry import Polygon as GeometryPolygon
 
 from opencv_trace import Trace
+from retained_tacito import build_scene as build_retained_tacito
 from shape_edits import EditPlan, apply_plan
 from study_scene import INK, Bezier, Cubic, Ellipse, Point, Polygon, Scene, ShapeStyle
 
@@ -299,6 +300,7 @@ def svg(scene: Scene, parts: bool = False) -> bytes:
                 "id": shape.id,
                 "data-kind": shape.kind,
                 "data-label": shape.label or shape.id,
+                "data-part": shape.part or shape.id,
                 "data-source": shape.source_region,
                 "tabindex": "0",
             },
@@ -334,7 +336,7 @@ def svg(scene: Scene, parts: bool = False) -> bytes:
                     "transform": f"rotate({shape.rotation} {x} {y})",
                 },
             )
-        else:
+        elif isinstance(shape, Bezier):
             d = f"M {shape.start[0]:g},{shape.start[1]:g} "
             for segment in shape.segments:
                 d += (
@@ -346,6 +348,12 @@ def svg(scene: Scene, parts: bool = False) -> bytes:
                     + " "
                 )
             ET.SubElement(group, "path", {**style, "d": d})
+        else:
+            d = " ".join(
+                "M " + " L ".join(f"{x:g},{y:g}" for x, y in loop) + " Z"
+                for loop in shape.loops
+            )
+            ET.SubElement(group, "path", {**style, "d": d, "fill-rule": "evenodd"})
     ET.indent(root)
     return ET.tostring(root, encoding="utf-8")
 
@@ -363,7 +371,7 @@ def present(scenes: list[Scene], output: Path, inputs: Path) -> None:
         fill=INK,
     )
     for column, label in enumerate(
-        ("Foto raddrizzata", "Prima estrazione OpenCV", "Forme con bordi ricostruiti")
+        ("Foto raddrizzata", "Prima estrazione OpenCV", "Regolarizzazione / livelli")
     ):
         draw.text((30 + column * 560, 85), label, font=small, fill="#786e61")
     for index, (slug, scene) in enumerate(
@@ -394,6 +402,16 @@ def present(scenes: list[Scene], output: Path, inputs: Path) -> None:
             fill="#786e61",
         )
         inline = svg(scene).decode()
+        trace_label = (
+            "Prima estrazione · riferimento preferito"
+            if slug == "wolf"
+            else "Prima estrazione OpenCV"
+        )
+        final_label = (
+            "Variante a livelli · spada dietro"
+            if slug == "wolf"
+            else "Forme regolarizzate · seleziona un oggetto"
+        )
         cards.append(f"""
         <article><h2>{scene.name}</h2><p>{len(scene.shapes)} oggetti separati · {curves} curve Bézier · {len(scene.anchors)} punti condivisi</p>
         <div class="figures">
@@ -401,11 +419,12 @@ def present(scenes: list[Scene], output: Path, inputs: Path) -> None:
         <img src="../opencv/{slug}-rectified.png" alt="Fotografia originale di {scene.name}, ritagliata e raddrizzata"></a>
         <figcaption>Foto di riferimento · apri originale</figcaption></figure>
         <figure><img src="../opencv/{slug}-polygons.png" alt="Prima estrazione OpenCV di {scene.name}">
-        <figcaption>Prima estrazione OpenCV</figcaption></figure>
-        <figure class="interactive">{inline}<figcaption class="selection">Forme corrette · seleziona un oggetto</figcaption></figure></div>
+        <figcaption>{trace_label}</figcaption></figure>
+        <figure class="interactive">{inline}<figcaption class="selection">{final_label}</figcaption></figure></div>
         <nav><a href="{slug}.svg" download>SVG a forme</a><a href="{slug}.json" download>Scena JSON</a>
         <a href="{slug}-detected.json" download>Prima delle correzioni</a>
         <a href="{slug}-parts.svg" target="_blank">Mappa degli oggetti</a>
+        <a href="../opencv/{slug}-contours.svg" target="_blank">Contorni della prima estrazione</a>
         <button type="button" class="explode">Separa gli oggetti</button></nav></article>""")
     board.save(output / "comparison.png")
     preview = Image.new("RGB", (1500, 920), "#f4f0e5")
@@ -459,6 +478,11 @@ Puoi selezionare gli oggetti o separarli per vedere la composizione.</p>
 del contorno del pennarello. La ricostruzione a destra raddrizza i bordi e applica
 le tue indicazioni: colletto triangolare per Altus, ali geometriche per Luciano.
 I punti condivisi tengono unite le forme vicine. Le correzioni sono registrate e ripetibili.</p>
+<p>Le piume rosse di Altus sono adattate a triangoli, le facce della lama a trapezi.
+Il mantello conserva sette lati e il dettaglio dell’orlo.
+Per Tacito manteniamo la prima estrazione come riferimento: la variante a destra
+conserva quei contorni e ricostruisce una spada completa, disegnata dietro il corpo.
+Le parti nascoste della spada sono un’interpretazione guidata.</p>
 <nav><a href="comparison.png" target="_blank">Confronto PNG completo</a>
 <a href="../study.zip" download>Scarica SVG, JSON e codice</a>
 <a href="../pose-comparison/">Confronto dei modelli di posa</a></nav>
@@ -471,7 +495,7 @@ for (const figure of document.querySelectorAll('.interactive')) {
     if (!group) return;
     svg.querySelectorAll('.selected').forEach(node => node.classList.remove('selected'));
     group.classList.add('selected');
-    const kinds = {polygon:'poligono',polyline:'linea',ellipse:'ellisse',bezier:'curva Bézier'};
+    const kinds = {polygon:'poligono',polyline:'linea',ellipse:'ellisse',bezier:'curva Bézier',compound:'contorni conservati'};
     figure.querySelector('.selection').textContent = group.dataset.label + ' · ' + kinds[group.dataset.kind];
   };
   svg.addEventListener('click', select);
@@ -518,11 +542,21 @@ def main() -> None:
             scene.model_dump_json(indent=2) + "\n"
         )
         if not args.no_edits:
-            for plan_path in (args.edits / "outline.json", args.edits / f"{slug}.json"):
+            for plan_path in (
+                args.edits / "outline.json",
+                args.edits / f"{slug}.json",
+                args.edits / f"{slug}-regularize.json",
+            ):
                 if plan_path.exists():
                     scene = apply_plan(
                         scene, EditPlan.model_validate_json(plan_path.read_text())
                     )
+            if slug == "wolf":
+                (args.output / "wolf-postprocessed.json").write_text(
+                    scene.model_dump_json(indent=2) + "\n"
+                )
+                (args.output / "wolf-postprocessed.svg").write_bytes(svg(scene))
+                scene = build_retained_tacito(trace)
         scenes.append(scene)
         (args.output / f"{slug}.json").write_text(scene.model_dump_json(indent=2))
         data = svg(scene)

@@ -12,6 +12,7 @@ class ShapeStyle(BaseModel):
     id: str
     source_region: str
     label: str | None = None
+    part: str | None = None
     fill: str
     stroke: str = INK
     stroke_width: FiniteFloat = Field(default=6, gt=0)
@@ -41,6 +42,11 @@ class Bezier(ShapeStyle):
     segments: list[Cubic]
 
 
+class Compound(ShapeStyle):
+    kind: Literal["compound"] = "compound"
+    loops: list[list[Point]] = Field(min_length=1)
+
+
 class VertexRef(BaseModel):
     shape: str
     index: int = Field(ge=0)
@@ -58,7 +64,16 @@ class AppliedEdit(BaseModel):
     description: str
 
 
-Shape = Annotated[Polygon | Ellipse | Bezier, Field(discriminator="kind")]
+class PrimitiveFit(BaseModel):
+    shape: str
+    primitive: str
+    source_vertices: int
+    fitted_vertices: int
+    error_pixels: float
+    relative_area_change: float
+
+
+Shape = Annotated[Polygon | Ellipse | Bezier | Compound, Field(discriminator="kind")]
 
 
 class Scene(BaseModel):
@@ -73,3 +88,4 @@ class Scene(BaseModel):
     shapes: list[Shape]
     anchors: list[SharedAnchor] = Field(default_factory=list)
     edits: list[AppliedEdit] = Field(default_factory=list)
+    regularizations: list[PrimitiveFit] = Field(default_factory=list)

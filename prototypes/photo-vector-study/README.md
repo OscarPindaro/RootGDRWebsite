@@ -348,3 +348,28 @@ view and overflow, and writes desktop/phone screenshots to
 
 The next character-generation experiment and the proposed 1,000-example dataset
 are recorded in [NEXT_EXPERIMENT.md](NEXT_EXPERIMENT.md).
+
+## Guided regularization and retained contours
+
+The intended upload-and-guidance workflow is recorded in
+[INTERACTION.md](INTERACTION.md). The regularizer is now an actual deterministic
+function, separate from the explicitly positioned collar edit:
+
+- `regularize_polygon` chooses the requested vertex count by removing
+  low-contribution corners, without removing pinned/shared vertices.
+- Unpinned triangle sides are refitted to their original contour runs.
+- Trapezoid fitting makes a selected pair of opposite edges parallel.
+- Boundary error and area-change limits reject excessive simplification.
+
+`edits/altus-regularize.json` applies these priors to the three red feathers,
+both blade faces and the seven-sided left cape. The hem corners are protected.
+The exported scene records each fit's error and area change. A five-sided cape
+candidate that loses the marked detail is deliberately rejected by the check.
+
+Tacito now has a separate retained-contour variant. `retained_tacito.py` keeps
+the first extraction's detailed colour boundaries and authors a complete sword
+behind the character, including one continuous blade ridge. Sword geometry and
+the region classification are manual interpretations; the remaining contours
+come from the extraction. `wolf-postprocessed.svg/json` preserve the earlier
+uniform-stroke alternative. The first extraction remains directly linked and
+labelled as the preferred reference.

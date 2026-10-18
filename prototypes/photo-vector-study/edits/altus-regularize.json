@@ -1,0 +1,13 @@
+{
+  "id": "altus-guided-primitive-fit-v1",
+  "scene": "Altus",
+  "description": "Fit the three red feathers as triangles, both blade faces as trapezoids, and retain seven cape corners including the hem detail.",
+  "operations": [
+    {"op": "regularize_polygon", "shape": "region-018-0", "primitive": "triangle", "label": "Piuma superiore · triangolo", "max_error": 15},
+    {"op": "regularize_polygon", "shape": "region-064-0", "primitive": "triangle", "label": "Piuma centrale · triangolo", "max_error": 15},
+    {"op": "regularize_polygon", "shape": "region-120-0", "primitive": "triangle", "label": "Piuma inferiore · triangolo", "max_error": 15},
+    {"op": "regularize_polygon", "shape": "region-262-0", "primitive": "trapezoid", "label": "Lama sinistra · trapezio", "max_error": 12},
+    {"op": "regularize_polygon", "shape": "region-263-0", "primitive": "trapezoid", "label": "Lama destra · trapezio", "max_error": 12},
+    {"op": "regularize_polygon", "shape": "region-164-0", "primitive": "polygon", "sides": 7, "preserve_vertices": [2, 4, 5], "label": "Mantello sinistro · sette lati", "max_error": 12}
+  ]
+}
