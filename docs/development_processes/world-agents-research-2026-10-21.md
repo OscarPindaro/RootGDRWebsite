@@ -30,8 +30,10 @@ were performed.
   connections must not require rewriting domain tools or stored conversations.
   Implementing every provider now is not required.
 - Agent prompts and configuration need a management surface and versions.
-  A persistent working-file facility is being explored; arbitrary server file
+  Agent work needs an isolated working-file workspace; arbitrary server file
   access and code execution have not been requested.
+- REQ-0016 may be ignored for this work, as explicitly confirmed after the
+  research. Its older delivery requirements do not constrain the new scope.
 
 ## Existing application constraints
 
@@ -66,7 +68,8 @@ Usage is token-priced and plan/account conditions can change; a subscription
 does not justify unlimited agent loops. Do not encode prices in domain logic [2].
 
 The structured-output documentation explicitly says cloud structured outputs
-are currently unsupported. Local Ollama examples do not establish cloud support.
+are currently unsupported. This is documented status, not a live compatibility
+test or a reason to reject Ollama. Local examples do not establish cloud support.
 Function tools, ordinary JSON generation and schema-enforced responses are
 different capabilities. Validate every proposed mutation with Pydantic and
 domain checks, with bounded correction attempts rather than relying on a
@@ -77,10 +80,10 @@ cannot be assumed to transcribe handwriting. No model's suitability for these
 Italian samples was tested. Select a model with the required capabilities or
 configure separate task profiles explicitly; never silently change provider.
 
-### Recommended initial transport
+### Transport candidates
 
-Use Haystack's `OpenAIChatGenerator` against Ollama's hosted `/v1` endpoint as
-the first candidate. It exposes explicit credentials, base URL, model, timeouts,
+Haystack's `OpenAIChatGenerator` against Ollama's hosted `/v1` endpoint is
+one candidate. It exposes explicit credentials, base URL, model, timeouts,
 retries and tool settings. Keep `tools_strict` off unless the endpoint is
 verified to support it. This uses OpenAI's protocol, not OpenAI's hosted models.
 
@@ -89,6 +92,8 @@ configurable, and Ollama Python SDK 0.6.3 reads `OLLAMA_API_KEY`. However,
 integration 7.0.2 has no explicit credential/header constructor parameter.
 It relies on SDK environment behavior, which is less convenient for multiple
 credential profiles. Do not mutate process environment per request [4].
+The user explicitly accepts the native integration. Choose the transport from
+capability/compatibility evidence; neither transport is an approved constraint.
 
 A provider profile should distinguish service identity from protocol:
 provider, adapter, base URL, model ID, credential reference, supported
@@ -114,6 +119,13 @@ Important version boundary: Haystack 3 removed `ToolInvoker`, agent-specific
 breakpoints and `AgentSnapshot`. Mid-agent pause/resume is no longer supported.
 Pipeline debugging snapshots remain, but are not durable application jobs or
 content rollback. Older 2.x examples must not define the new architecture [6].
+
+GitHub follow-up found active work in this area, but not a verified restoration
+of mid-agent snapshots: [async pipeline resume PR #13105](https://github.com/deepset-ai/haystack/pull/13105)
+was closed without merge, as was [Agent schema recovery PR #12990](https://github.com/deepset-ai/haystack/pull/12990).
+Recheck the chosen release at implementation time; do not infer support from
+a closed PR or commit hash alone. Durable orchestration remains a compatibility
+spike, not a reason to abandon Haystack.
 
 Comparison:
 
@@ -204,6 +216,9 @@ An unchanged run-created item can be soft-deleted, but later human edits or new
 references must block automatic removal. Restoring an old state creates a new
 revision. Repeated undo must not repeat compensation. These are recommended
 mechanics, not yet approved conflict-resolution UI.
+Each mutating tool needs a recorded compensation using its captured prior state,
+not merely a mathematical inverse. Reads need no inverse; later edits can make
+compensation unsafe. Group related changes into a single journaled operation.
 
 ## Working files without server access
 
@@ -211,6 +226,10 @@ Offer artifact operations such as list, bounded read/search, create draft and
 save new revision. Use opaque IDs or validated virtual paths within an explicitly
 authorized conversation/world namespace. Reuse the storage abstraction behind
 that boundary; the agent never receives raw storage credentials.
+Recommend a private workspace per user/world/conversation with run-specific
+scratch areas, not one shared directory for an agent definition. A separate
+container is unnecessary for mediated artifact operations; arbitrary code
+execution would require a distinct execution-sandbox design and approval.
 
 Keep original uploads immutable, separate from transcriptions, summaries,
 style examples and disposable scratch artifacts. Record checksums, MIME types,
@@ -249,11 +268,11 @@ Use the supplied Italian handwriting/transcript as acceptance material, with
 user-approved expected facts and style examples. No speaker attribution can be
 recovered reliably from the text alone. Fidelity and task quality remain untested.
 
-Reconcile [REQ-0016](../features-request/REQ-0016-handwritten-draft-transcription-and-content-intake.md)
-before producing tickets: its all-providers-at-once requirement conflicts with
-today's first-provider scope, and its file-access exclusion predates this
-workspace exploration. Its four end-to-end experimental variants remain a
-separate unresolved delivery decision. Do not silently delete that requirement.
+The user explicitly permits ignoring
+[REQ-0016](../features-request/REQ-0016-handwritten-draft-transcription-and-content-intake.md)
+for this work. Do not carry forward its all-providers-at-once, four experimental
+variants or file-access exclusion as requirements. Preserve the historical file;
+the new specification should use the decisions recorded in this discussion.
 [REQ-0017](../features-request/REQ-0017-service-accounts-and-api-credentials.md)
 is for external bot credentials, not a prerequisite for an in-site assistant
 acting as the authenticated user.
@@ -272,6 +291,9 @@ No permanent-purge tool or arbitrary external-action tool is recommended.
    [pricing change, 2026-08-31](https://ollama.com/blog/transparent-pricing).
 3. Ollama [structured outputs](https://docs.ollama.com/capabilities/structured-outputs)
    and [vision](https://docs.ollama.com/capabilities/vision).
+   GitHub follow-up: [documentation PR #15733](https://github.com/ollama/ollama/pull/15733)
+   merged the cloud limitation note; [issue #12362](https://github.com/ollama/ollama/issues/12362)
+   remained open with requests for updates through 2026-10-12.
 4. PyPI version metadata and released wheels inspected in memory, not installed:
    [Haystack 3.4.1](https://pypi.org/pypi/haystack-ai/3.4.1/json),
    [integration 7.0.2](https://pypi.org/pypi/ollama-haystack/7.0.2/json),
