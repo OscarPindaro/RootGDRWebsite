@@ -137,18 +137,30 @@ is missing from `COMPONENT_ASSET_SUFFIXES`.
 
 `server.py` mounts `/static` with Starlette's `StaticFiles` and
 `/static/components` with the `ComponentAssetFiles` allowlist above. The
-response carries `ETag` and `Last-Modified` and honours
-conditional requests (a re-request returns `304`), but there is **no
-`Cache-Control`, no fingerprinting and no reverse proxy** in front (the
-deployment is a single uvicorn container, `Dockerfile`). So assets are
-revalidated on every navigation rather than cached immutable — safe, never
-stale, at the cost of a conditional request.
+response carries `ETag` and `Last-Modified` and honours conditional requests (a
+conditional re-request returns `304`), but there is **no `Cache-Control`, no
+fingerprinting and no reverse proxy** in front (the deployment is a single
+uvicorn container, `Dockerfile`). Without `Cache-Control`, browsers apply
+heuristic freshness from `Last-Modified`: measured on 2026-10-22, Chromium
+reused a 30-day-old asset without revalidation across two plain reloads after
+its content changed. A stale asset can therefore survive a redeploy for roughly
+10% of its previous age. The validators are correct and cheap (one conditional
+request, 168 ms and zero body bytes under a 500 kbit/s/150 ms profile), but they
+are only consulted once that heuristic window expires. The dated header,
+cold/warm and staleness evidence is in the [origin response policy
+decision](../development_processes/frontend-system-review-2026-10-21.md#decision-2026-10-22-origin-response-policy-req-0019t17).
+
+Explicit static revalidation is proposed as T17-F1: unregistered, unimplemented
+and not a board ticket or approved deployment change. Until such a change is
+approved and implemented, do not add `immutable` or long `max-age` caching to
+these stable URLs, and do not add a proxy or compress authenticated HTML to
+compensate.
 
 No asset pipeline was added. Fingerprinting would mean rewriting every asset URL
 (including JinjaX's `render_assets()`), which is a deployment concern, not an
-icon one; the current ETag revalidation already avoids re-downloading unchanged
-bytes, and the asset set is small (one stylesheet, four scripts, five fonts).
-This is a recorded exception: immutable caching is not available today.
+icon one; when a conditional request is made, the ETag avoids re-downloading
+unchanged bytes, and the asset set is small (one stylesheet, four scripts, five
+fonts). This is a recorded exception: immutable caching is not available today.
 
 ## Used by
 

@@ -46,6 +46,45 @@ Database and image integration checks verify runtime DML-only grants, startup
 without migration secrets, private-file exclusion and upload persistence across
 container recreation. SQL statement parameter echo is disabled by default.
 
+## Origin response policy
+
+The deployment has no reverse proxy, CDN or compression layer. The `app`
+service publishes its port directly on `ROOTGDR_BIND_ADDRESS`, the image runs
+`uvicorn backend.server:app` without a fronting server, and the owner-run
+firewall allows only IPv4 `192.168.1.0/24` to that port. The application origin
+is therefore also the deployment ingress.
+
+Static assets from both mounts (`/static` and `/static/components`) are served
+with `ETag` and `Last-Modified`, answer `If-None-Match`/`If-Modified-Since` with
+`304`, support `HEAD` and ranges, and keep Starlette's content types. Responses
+are identity-encoded for every `Accept-Encoding` variant and carry no
+`Content-Encoding`, no `Vary` and no `Cache-Control`. HTML pages are rendered
+per request and carry no validators or cache directives.
+
+Measured on 2026-10-22 (local uvicorn harness, HTTP/1.1): cold browser loads of
+the login, world-list and editable-character pages were 35 ms, 89 ms and 144 ms
+unthrottled; under a 500 kbit/s/150 ms profile they were 5.3 s, 7.9 s and 20.4 s.
+Compressing static bodies alone would cut their transferred bytes by 24%, 34%
+and 46% in that profile; revalidating an asset costs one round trip (168 ms,
+zero body bytes there). The decision and its evidence are recorded in
+`docs/development_processes/frontend-system-review-2026-10-21.md`
+("Decision 2026-10-22: origin response policy").
+
+Compression is not enabled and has no follow-up ticket: the measured unthrottled
+cost is small on the LAN-only deployment, and a correct static implementation
+needs `Vary: Accept-Encoding`, per-representation validators and per-request CPU.
+Authenticated HTML is not compressed. A separately scoped follow-up proposed as
+T17-F1 (unregistered, unimplemented, not a board ticket and not an approved
+deployment change) would add an explicit `Cache-Control: no-cache` to the static
+mounts only, because without it browsers apply heuristic freshness: a
+30-day-old asset was reused without revalidation across two reloads after its
+content changed. That change is not part of this deployment definition.
+
+If an ingress or proxy is added later, it must not cache authenticated HTML
+without `private`/`no-store` and cookie-aware `Vary`, and it must preserve the
+existing validators. Do not add `immutable` or long `max-age` to the current
+stable asset URLs.
+
 ## Selected-commit image artifacts
 
 `uv run harness deploy build --revision <commit> --output-dir <new-directory>`

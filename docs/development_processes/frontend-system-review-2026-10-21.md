@@ -388,6 +388,112 @@ enable JinjaX fingerprinting: the installed implementation rewrites filenames,
 while the current ordinary StaticFiles mount does not resolve those rewritten
 paths. Its dedicated fingerprint-aware middleware is not the current mount.
 
+### Decision 2026-10-22: origin response policy (REQ-0019/T17)
+
+Measured on 2026-10-22 against this worktree's uvicorn harness
+(`127.0.0.1:18061`, HTTP/1.1, baseline `8d2b093`) with a temporary authenticated
+fixture: a probe world and one character whose page loads the editor bundle.
+The fixture rows were removed after measurement. The raw measurement scripts
+and JSON files lived in the worker's runtime directory; the numbers below are
+the evidence retained here.
+
+**Ingress.** The repository contains no reverse proxy, CDN or compression
+configuration. `Dockerfile` starts `uvicorn backend.server:app` directly,
+`deploy/production.compose.yaml` publishes the app container port on the
+operator-selected bind address, and `deploy/server-setup.yaml` allows only IPv4
+`192.168.1.0/24` to TCP 8001. The harness origin and the deployment ingress are
+therefore the same software path; there is no separate edge to configure or
+measure. LAN-only access also means the constrained-network profile below is a
+sensitivity case, not the normal path.
+
+**Current static responses.** All four `Accept-Encoding` variants (`identity`,
+`gzip`, `br`, `gzip, deflate, br`) returned the same bytes with no
+`Content-Encoding` and no `Vary`. Every asset had `ETag` and `Last-Modified`;
+`If-None-Match` and `If-Modified-Since` returned `304` with no body; `HEAD`
+mirrored `GET`. Content types were `text/css; charset=utf-8`,
+`text/javascript; charset=utf-8`, `font/woff2` and `image/svg+xml`. No
+`Cache-Control` was sent.
+
+| Asset | Raw | gzip -9 | brotli q11 |
+|---|---:|---:|---:|
+| main.css | 18,487 | 6,097 | 5,210 |
+| editor.js | 560,907 | 190,821 | 163,413 |
+| drawings.js | 99,142 | 32,594 | 29,315 |
+| report.js | 27,733 | 10,067 | 9,022 |
+| htmx.min.js | 50,918 | 16,329 | 14,803 |
+| common/Button.css | 5,274 | 1,777 | 1,405 |
+| newsreader woff2 | 132,000 | 131,941 | 132,005 |
+
+**Current HTML responses.** Login, world list, world and character pages sent
+`text/html; charset=utf-8` with `Content-Length`, no `Content-Encoding`, no
+`Vary`, no `ETag`/`Last-Modified` and no `Cache-Control`. They are re-rendered on
+every navigation. Local gzip sizes were 8,024 → 2,252, 26,814 → 5,604,
+36,956 → 6,506 and 64,825 → 9,092 bytes.
+
+**Cold and warm cost.** Unthrottled Chromium cold loads transferred 298,539
+bytes in 19 resources for login (load 35 ms), 418,741 bytes in 46 resources for
+the world list (89 ms), and 1,155,746 bytes in 54 resources for the editable
+character (144 ms). An immediate warm reload reported zero static transfer
+bytes and no revalidation request; the HTML document itself was always fetched
+again.
+
+**Constrained interaction.** With a fixed CDP profile of 500 kbit/s down and
+150 ms RTT, the same cold loads took 5,339 ms, 7,875 ms and 20,415 ms. Holding
+the request schedule fixed and compressing only the static bodies would reduce
+transferred bytes by 24%, 34% and 46% (serialized transfer time 4.78 → 3.63 s,
+6.70 → 4.41 s, 18.49 → 9.99 s). A direct rate-limited check of the editor bundle
+measured 8.50 s raw against 3.00 s for the precompressed body at the same rate.
+A conditional revalidation cost 168 ms and zero body bytes per asset under the
+same profile.
+
+**Heuristic freshness.** The two P2 items above left open what happens across a
+deployment. A loopback fixture reproducing StaticFiles' signals (`Last-Modified`,
+`ETag`, no `Cache-Control`) showed that Chromium reused a 30-day-old asset
+without revalidation across two plain reloads after its content changed
+(`transferSize: 0`, old computed style). A two-second-old asset exceeded its
+0.2 s heuristic freshness and revalidated on the next reload, picking up the
+change. The current policy therefore has a stale-asset window after a redeploy
+of roughly 10% of the previous deployment's asset age. The claim in
+`docs/features-implemented/icon-and-font-delivery.md` that assets are
+"revalidated on every navigation … never stale" was incorrect; that manual now
+records the measured heuristic-freshness behavior and links back here.
+
+**Decision.**
+
+- Compression: keep identity-only delivery. No follow-up ticket. The deployment
+  is a direct uvicorn container on a LAN-only port; unthrottled cold loads are
+  35–144 ms, and the largest saving is the editor bundle that only editors load.
+  A static-only compression change would still need `Vary: Accept-Encoding`,
+  per-representation validator correctness and per-request CPU, and the measured
+  constrained case is not the current access path. Reopen only if the app is
+  exposed beyond the LAN or real client measurements show sustained slow
+  transfers.
+- Cache revalidation: change, in a separately scoped follow-up proposed as
+  T17-F1. T17-F1 is unregistered (no board ticket), unimplemented, and not an
+  approved deployment change. It would add an explicit `Cache-Control: no-cache`
+  to the two static mounts, retaining `ETag`, `Last-Modified`, `304`, `HEAD`,
+  range handling and content types. Do not add middleware, do not apply it to
+  HTML, and do not add `immutable` or long `max-age` to the stable URLs. The
+  cost is one conditional request per asset per navigation: 168 ms each under
+  the measured profile, negligible on the LAN. The benefit is removal of the
+  measured stale-asset window, which can pair new HTML with old CSS or
+  JavaScript after a redeploy.
+
+**Follow-up boundaries.** The proposed T17-F1 is not a board ticket and
+authorizes nothing by itself. It covers only the static `Cache-Control` policy,
+its integration tests and the three manuals' claims. Compression, fingerprinting,
+a proxy and production ingress configuration remain unapproved. If a future
+ingress is added, it must not cache authenticated HTML without
+`private`/`no-store` and cookie-aware `Vary`, and it must not strip the existing
+validators.
+
+**Limits.** Measurements are local loopback and a synthetic CDP profile, not a
+real phone or LAN. Gzip and brotli figures are local `gzip -9`/`brotli -q 11`
+results, not a server implementation. The staleness fixture mirrors the app's
+headers rather than modifying its files. The fixture character is not the full
+reference world. No live server was contacted and no production configuration
+was read beyond the repository files above.
+
 ### P2: CI omits report.js from the committed-artifact comparison
 
 CI runs the build for all three bundles but checks Git differences only for
