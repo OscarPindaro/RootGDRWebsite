@@ -1,6 +1,7 @@
 {#def world_id, base, body, body_html, version, locked=False, can_manage=False, field_name="body", label="Testo Markdown", placeholder=None #}
 {#css editorial/DocEdit.css, editorial/Reference.css, common/Button.css, common/Icon.css #}
 <div class="docedit" data-doc-edit data-world-id="{{ world_id }}" data-doc-field-name="{{ field_name }}"
+     data-doc-label="{{ label }}"
      data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   <textarea class="docedit__source" name="body" data-doc-source hidden>{{ body }}</textarea>

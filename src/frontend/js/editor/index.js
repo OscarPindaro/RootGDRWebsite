@@ -126,8 +126,11 @@ function mentionSource(worldId) {
   };
 }
 
-function extensions({ worldId, onDocChanged, onModEnter, onEscape = null }) {
+function extensions({ worldId, label, onDocChanged, onModEnter, onEscape = null }) {
   return [
+    /* CodeMirror builds its own textbox; the hidden source and the rendered
+       block do not name it. Reuse the field's visible label. */
+    EditorView.contentAttributes.of(label ? { "aria-label": label } : {}),
     history(),
     drawSelection(),
     highlightActiveLine(),
@@ -225,6 +228,15 @@ function setupTabs(field) {
   );
 }
 
+function markdownFieldLabel(textarea) {
+  return (
+    textarea.getAttribute("aria-label") ||
+    textarea.labels?.[0]?.textContent.trim() ||
+    textarea.getAttribute("placeholder")?.trim() ||
+    ""
+  );
+}
+
 function mount(textarea) {
   if (textarea.dataset.mdMounted === "true") return;
   const field = textarea.closest("[data-md-tabs]") || textarea.parentElement;
@@ -237,6 +249,7 @@ function mount(textarea) {
       doc: textarea.value,
       extensions: extensions({
         worldId,
+        label: markdownFieldLabel(textarea),
         onDocChanged: (value) => {
           textarea.value = value;
         },
@@ -699,6 +712,7 @@ function mountDocEdit(block) {
   if (!render || !host || !source) return;
   const autosave = controllerFor(block);
   const fieldName = block.dataset.docFieldName || "body";
+  const label = block.dataset.docLabel;
   autosave.register(fieldName, source.value, (value) => { source.value = value; }, block);
 
   let view = null;
@@ -726,6 +740,7 @@ function mountDocEdit(block) {
         selection: { anchor: Math.min(caret, source.value.length) },
         extensions: extensions({
           worldId: block.dataset.worldId,
+          label,
           onDocChanged: (value) => { source.value = value; autosave.change(fieldName, value); },
           onModEnter: () => { autosave.flush(); close(); },
           onEscape: close,
@@ -771,6 +786,7 @@ function mountDocSummary(block) {
   const closeCommand = block.querySelector("[data-summary-close]");
   if (!render || !host || !source) return;
   const autosave = controllerFor(block);
+  const label = block.dataset.docLabel;
   autosave.register(
     "short_description",
     source.value,
@@ -802,6 +818,7 @@ function mountDocSummary(block) {
         selection: { anchor: Math.min(caret, source.value.length) },
         extensions: extensions({
           worldId: block.dataset.worldId,
+          label,
           onDocChanged: (value) => {
             source.value = value;
             autosave.change("short_description", value);

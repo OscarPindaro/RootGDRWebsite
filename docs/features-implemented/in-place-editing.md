@@ -33,6 +33,11 @@ The reading page is where a document is written: no separate edit form, no
   field is open, the input that replaces the text carries the visible Italian
   label (`Nome`, `Titolo`, `Nome del mondo` in world settings) as its accessible
   name. Closing the field restores the rendered text and focus.
+- While writing, the actual CodeMirror textbox carries the block's label as its
+  accessible name: `Testo Markdown` for the body, `Sintesi` for the short
+  description and `Descrizione del mondo` in world settings. The hidden source
+  textarea and the rendered text keep their own names; the name is set on the
+  `.cm-content[role="textbox"]` element that assistive technology reaches.
 - The blocks are one ordered sequence (Nome → Titolo → Sintesi → Descrizione,
   omitting fields a type does not have). Arrow Up/Down move between them, Enter
   or F2 opens the focused block, and the focused block carries one visible
@@ -88,6 +93,11 @@ The reading page is where a document is written: no separate edit form, no
   opening only; it does not persist anything itself.
 - The same file mounts CodeMirror for the body. `live-preview.js` hides Markdown
   markers outside the active line. The document remains Markdown.
+- `DocEdit` and `DocSummary` publish their existing visible label on the block
+  (`data-doc-label`); the legacy Markdown form field reads the label associated
+  with its textarea. The mount passes that text to
+  `EditorView.contentAttributes` as the content textbox's `aria-label`, so the
+  name follows the UI copy without another component argument.
 - The editor bundle is loaded only on editable document and world-settings
   pages. Readers do not download CodeMirror.
 - Every change snapshots dirty fields and its base version in `localStorage`.

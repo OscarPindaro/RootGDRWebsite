@@ -1,6 +1,7 @@
 {#def world_id, base, value, value_html, version, can_manage=False, locked=False #}
 {#css editorial/DocSummary.css, editorial/Reference.css, common/Button.css, common/Icon.css #}
 <div class="docsummary" data-doc-summary data-world-id="{{ world_id }}"
+     data-doc-label="Sintesi"
      data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   <textarea name="body" data-summary-source hidden>{{ value }}</textarea>
