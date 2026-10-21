@@ -9,6 +9,12 @@ that its saves are simulated.
 """
 
 import importlib.util
+import re
+import signal
+import subprocess
+import sys
+import threading
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -161,6 +167,25 @@ def _choose_b(page):
     expect(page.locator("body")).to_have_attribute("data-study-layout", "b")
 
 
+def _read_serve_url(process):
+    found = {}
+    lines = []
+
+    def read():
+        for line in process.stdout:
+            lines.append(line)
+            match = re.search(r"http://127\.0\.0\.1:\d+/study", line)
+            if match:
+                found["url"] = match.group(0)
+                return
+
+    reader = threading.Thread(target=read, daemon=True)
+    reader.start()
+    reader.join(timeout=15)
+    assert "url" in found, f"serve mode did not print a URL: {lines}"
+    return found["url"]
+
+
 def test_the_study_is_the_raw_page_with_its_real_assets(component):
     page, failed = _open(component)
 
@@ -276,3 +301,42 @@ def test_write_controls_are_inert_and_no_write_reaches_the_server(component):
         for request in component.requests()
         if request[0] not in {"GET", "HEAD", "OPTIONS"}
     ]
+
+
+def test_serve_mode_prints_the_ephemeral_url_and_stops_on_ctrl_c():
+    revisions = STUDY / "evidence" / "revisions.json"
+    before = revisions.read_bytes()
+    process = subprocess.Popen(
+        [sys.executable, str(STUDY / "capture.py"), "--serve"],
+        cwd=STUDY.parents[1],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    try:
+        url = _read_serve_url(process)
+        with urllib.request.urlopen(url, timeout=10) as response:
+            page = response.read().decode()
+            page_status = response.status
+        assert page_status == 200
+        assert "Rugginosa" in page
+        assert 'data-study-layout="a"' in page
+
+        with urllib.request.urlopen(
+            url.replace("/study", "/static/css/main.css"), timeout=10
+        ) as response:
+            css = response.read()
+            css_status = response.status
+            css_type = response.headers["Content-Type"]
+        assert css_status == 200
+        assert css_type.startswith("text/css")
+        assert css
+
+        process.send_signal(signal.SIGINT)
+        assert process.wait(timeout=10) == 0
+    finally:
+        if process.poll() is None:
+            process.kill()
+            process.wait(timeout=10)
+
+    assert revisions.read_bytes() == before

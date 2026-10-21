@@ -35,7 +35,7 @@ Esperimenti applicativi:
 | Prototipo | Approccio | Identità visiva | Avvio |
 |---|---|---|---|
 | [`bookkeeping-study/`](bookkeeping-study/) | Pagine reali JinjaX con fixture tipizzate e route dev-only | Atlante editoriale esistente | `uv run harness dev up`, poi `http://127.0.0.1:8001/components/planning` |
-| [`document-layout-study/`](document-layout-study/) | Scheda personaggio reale, due disposizioni sullo stesso DOM, server effimero | Atlante editoriale esistente | `uv run harness test frontend tests/frontend/test_document_study.py` |
+| [`document-layout-study/`](document-layout-study/) | Scheda personaggio reale, due disposizioni sullo stesso DOM, server effimero | Atlante editoriale esistente | `uv run python prototypes/document-layout-study/capture.py --serve` |
 
 ## Convenzioni
 

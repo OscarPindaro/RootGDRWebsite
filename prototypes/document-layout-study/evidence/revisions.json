@@ -1,5 +1,5 @@
 {
-  "base_commit": "8d2b0934b16cc4fc95ae7a50041c2474ad872e67",
+  "base_commit": "b4d04526a75c860bca838f9718a33892c483ad22",
   "component_blobs": {
     "src/frontend/components/pages/characters/CharacterDetail.jinja": "88a75edf50e181d5474a39f0d26173cbf6b0572f",
     "src/frontend/components/editorial/Document.css": "9318616d0951b423c0486039da0e0ae1057d5dff",

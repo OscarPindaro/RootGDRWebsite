@@ -66,12 +66,18 @@ decision and is not made here.
 ```console
 uv run harness test frontend tests/frontend/test_document_study.py
 uv run python prototypes/document-layout-study/capture.py
+uv run python prototypes/document-layout-study/capture.py --serve
 ```
 
 The test proves the raw page, the real stylesheets, equal data and DOM across
 the two arrangements, the different body geometry, the labelled comparison,
 the inert controls and the absence of write requests. The capture writes the
 four committed screenshots and `evidence/revisions.json`.
+
+`--serve` prints an ephemeral URL and keeps the component server running so the
+owner can open the page and switch A/B with the strip. Ctrl+C stops only that
+server. This mode writes no evidence and does not start or read the
+application, its database or the work/showcase environments.
 
 ## Evidence
 
@@ -107,5 +113,6 @@ the document come from the real catalog.
 - `comparison.css` — the prototype strip and arrangement B.
 - `comparison.js` — layout switching and the inert write boundary.
 - `controls.html` — the labelled comparison strip.
-- `capture.py` — desktop/phone captures on the ephemeral server.
+- `capture.py` — desktop/phone captures and the interactive `--serve` entry
+  point on the ephemeral server.
 - `evidence/` — committed screenshots and `revisions.json`.
