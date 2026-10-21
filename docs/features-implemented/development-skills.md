@@ -1,6 +1,6 @@
 # Development workflow skills
 
-Thirty-three opt-in commands support development, review, documentation and maintenance.
+Thirty-five opt-in commands support development, review, documentation and maintenance.
 
 ## What it does
 
@@ -39,6 +39,8 @@ Thirty-three opt-in commands support development, review, documentation and main
 | `/server-delivery-audit` | Review mini-server delivery configuration locally without deploying. |
 | `/server-deploy` | Prepare and verify an explicitly approved controller-side rollout. |
 | `/server-backup` | Check status, coordinate an approved capture or verify isolated recovery. |
+| `/kickoff` | Plan a new feature-module/JinjaX project or route an existing target to audit. |
+| `/kickoff-fix` | Assess an existing project through the scoped refactoring procedure. |
 
 A sufficiently specified implementation ticket authorizes its scope without a
 second planning approval. An idea-only ticket or unresolved consequential choice
@@ -120,6 +122,16 @@ gates. Backup invocation discloses downtime and any managed-snapshot retention;
 deletion requires specific approval. Recovery only uses a new isolated target,
 never production. No new server automation or credentials are installed.
 
+Kickoff follows this workflow's FastAPI, Pydantic, typed SQLAlchemy, Alembic and
+JinjaX/htmx conventions. It includes a read-only directory detector and a guided
+project recipe, not a prebuilt template generator. Existing projects retain
+their architecture and harness. New foundations and product work need their
+approved scope, verification and local commits.
+
+The UI philosophy may change through a later request and skill update.
+Current settled frontend guidance remains applicable; no replacement philosophy
+or follow-up ticket is created by this port. JinjaX/htmx remains the technology.
+
 ## How it is built
 
 Each command is a `SKILL.md` under `.devin/skills/`, with `triggers: [user]`.
@@ -161,6 +173,9 @@ date, branch and visible-text selection, output limits and write protection.
 No full retrospective or coaching analysis of real conversations ran.
 Server-skill checks validate metadata and local references. No server connection,
 deployment, writer stop, backup, recovery or privileged operation ran.
+Kickoff discovery tests use disposable directories, including worktree markers,
+legacy markers, private files, spaces, invalid files and symlinks.
+No new application was generated or boot-tested during installation.
 Runner checks cover script syntax and accepted agent choices. The benchmark
 rejects `--agent devin` before creating trial artifacts. No model trial or
 behavioral evaluation ran; full runner execution remains unverified.

@@ -49,6 +49,8 @@ WORKFLOW_SKILLS = (
     "server-delivery-audit",
     "server-deploy",
     "server-backup",
+    "kickoff",
+    "kickoff-fix",
 )
 
 
