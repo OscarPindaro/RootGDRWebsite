@@ -9,6 +9,7 @@ loading, results, empty, offline, unauthorized and server-failure states.
 """
 
 import pytest
+from playwright.sync_api import expect
 
 pytestmark = pytest.mark.frontend
 
@@ -196,10 +197,11 @@ def test_the_loading_state_is_visible_before_the_response(component):
 
 def test_the_empty_state_is_announced_politely(component):
     page = _mount(component)
-    component.route_json("GET", "/api/palette", body={"data": []})
+    component.route_json("GET", "/api/palette", body={"data": []}, delay_ms=200)
     _open(page)
 
     page.wait_for_selector("[data-palette-state]:not([hidden])")
+    expect(page.locator("[data-palette-message]")).to_have_text("Nessun risultato.")
     assert _message(page) == "Nessun risultato."
     assert page.locator("[data-palette-status]").inner_text() == "Nessun risultato."
     assert page.locator(".palette__list").is_hidden()
