@@ -7,6 +7,7 @@ a list is empty, and a labelled compact row on a phone. These tests pin the
 columns, the statuses, the empty states and the phone labels.
 """
 
+import re
 from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 
@@ -17,6 +18,30 @@ from backend.navigation import Option
 pytestmark = pytest.mark.frontend
 
 NOW = datetime(2026, 9, 21, 12, 0, tzinfo=UTC)
+
+
+def _channels(value: str) -> tuple[float, ...]:
+    """RGB channels from a computed colour, including ``color(srgb ...)``."""
+    if value.startswith("color("):
+        parts = value[value.index("(") + 1 : value.rindex(")")].split()
+        return tuple(float(part) * 255 for part in parts[1:4])
+    return tuple(float(part) for part in re.findall(r"[\d.]+", value)[:3])
+
+
+def _contrast(foreground: str, background: str) -> float:
+    """WCAG contrast for a computed pair, without rounding the ratio."""
+
+    def luminance(value: str) -> float:
+        linear = [
+            channel / 12.92
+            if channel <= 0.03928
+            else ((channel + 0.055) / 1.055) ** 2.4
+            for channel in (part / 255 for part in _channels(value))
+        ]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    light, dark = sorted((luminance(foreground), luminance(background)), reverse=True)
+    return (light + 0.05) / (dark + 0.05)
 
 
 def _user(
@@ -237,6 +262,43 @@ def _dashboard_props(users, invitations):
             symbol_style="icons",
         ),
     }
+
+
+def test_every_populated_admin_label_and_avatar_reads_at_small_text_contrast(component):
+    page = component.mount(
+        "pages.admin.AdminDashboard",
+        props=_dashboard_props(
+            [
+                _user("Ada", "ada@example.com", role="admin"),
+                _user("Bruno", "bruno@example.com"),
+                _user("Carla", "carla@example.com", active=False),
+            ],
+            [
+                _invite("attesa@example.com"),
+                _invite("scaduto@example.com", expired=True, invite_id=2),
+                _invite("accettato@example.com", accepted=True, invite_id=3),
+            ],
+        ),
+    )
+
+    for variant in ("role-admin", "role-member", "success", "danger", "warning"):
+        assert page.locator(f".pill-{variant}").count() >= 1, variant
+
+    pairs = page.evaluate(
+        """() => [...document.querySelectorAll('.pill, .avatar')].map((el) => {
+            const computed = getComputedStyle(el);
+            return {
+                text: el.textContent.trim(),
+                color: computed.color,
+                background: computed.backgroundColor,
+                fontSize: parseFloat(computed.fontSize),
+            };
+        })"""
+    )
+
+    for pair in pairs:
+        assert pair["fontSize"] < 18.66, pair
+        assert _contrast(pair["color"], pair["background"]) >= 4.5, pair
 
 
 def test_the_dashboard_composes_a_masthead_and_a_heading_per_table(component):

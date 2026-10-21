@@ -17,16 +17,19 @@
   white-space: nowrap;
 }
 
-/* Status and role variants (M3 compatibility names). */
-.pill-neutral    { background: var(--status-neutral-bg); color: var(--status-neutral); }
-.pill-success    { background: var(--status-success-bg); color: var(--status-success); }
+/* Status and role variants (M3 compatibility names). The 12px mono label needs
+   4.5:1, which the lighter status hues do not reach on their own tint. Each
+   variant keeps its fill and derives a text-safe ink from its own semantic
+   colour, so a role never borrows another role's foreground. */
+.pill-neutral    { background: var(--status-neutral-bg); color: color-mix(in srgb, var(--status-neutral) 70%, var(--ink)); }
+.pill-success    { background: var(--status-success-bg); color: color-mix(in srgb, var(--status-success) 70%, var(--ink)); }
 .pill-danger     { background: var(--status-danger-bg);  color: var(--status-danger); }
-.pill-warning    { background: var(--status-warning-bg); color: var(--status-warning); }
+.pill-warning    { background: var(--status-warning-bg); color: color-mix(in srgb, var(--status-warning) 70%, var(--ink)); }
 .pill-info       { background: var(--status-info-bg);    color: var(--status-info); }
-.pill-accent     { background: var(--clr-accent-bg);     color: var(--clr-accent); }
-.pill-role-admin  { background: var(--role-admin-bg);  color: var(--role-admin); }
+.pill-accent     { background: var(--clr-accent-bg);     color: color-mix(in srgb, var(--clr-accent) 70%, var(--ink)); }
+.pill-role-admin  { background: var(--role-admin-bg);  color: color-mix(in srgb, var(--role-admin) 70%, var(--ink)); }
 .pill-role-dev    { background: var(--role-dev-bg);    color: var(--role-dev); }
-.pill-role-member { background: var(--role-member-bg); color: var(--role-member); }
+.pill-role-member { background: var(--role-member-bg); color: color-mix(in srgb, var(--role-member) 70%, var(--ink)); }
 
 /* Product variants (editorial names). */
 .pill-master    { background: var(--ink); color: var(--paper); }

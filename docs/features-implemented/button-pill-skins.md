@@ -20,6 +20,14 @@ identity.
   `act1`, `act2`, `act3`).
 - A state pill stays quieter than a command: the pill fills with the surface or
   a status tint, the primary command fills with the accent.
+- The status and role labels are 12px mono text, so every foreground pair needs
+  4.5:1. `neutral`, `success`, `warning`, `accent`, `role-admin` and
+  `role-member` keep their tinted fills and derive a darker ink from their own
+  semantic colour. `danger`, `info` and `role-dev` already pass and keep their
+  token unchanged.
+- `common.Avatar` keeps its eight categorical fills. Its initials are bold but
+  small (11–13px), so bold is not a large-text exception: the orange entry takes
+  the atlas ink and the pink entry takes a private near-black.
 
 ## How it is built
 
@@ -36,6 +44,13 @@ identity.
   Material `--button-square-*` tokens, which were deleted from `main.css`.
 - `common.IconButton` composes the tooltip and the icon-only button, so the
   seven list pages use it instead of a hand-written `Tooltip` wrapper.
+- Each repaired pill mixes 70% of its own semantic colour with `--ink`:
+  `color-mix` keeps the hue recognisable and leaves the role tokens independent,
+  so a later change to one role does not move another role's foreground.
+- The avatar foregrounds live on the existing `.cat-*` rules. Orange gets
+  `--ink` (5.88:1); pink gets pure black (4.67:1) because no atlas ink reaches
+  4.5:1 on that fill — `--ink` is 4.06:1 and `--surface` is 4.42:1. The rule
+  carries a line-scoped `design-tokens: off` marker for that one literal.
 
 ## Used by
 
@@ -50,3 +65,8 @@ identity.
   standalone `common.Button` lost the `shape`-driven radius.
 - The pill is a status mark, not a control; an interactive filter is a
   `ButtonGroup` or a `Button`.
+- The repaired status/role inks are darker than the raw status hues. That is
+  the contrast repair; the fills and the role tokens are unchanged.
+- The pink avatar is the only entry whose initials are not the surface colour.
+  Every other atlas ink is below 4.5:1 on that fill, so it keeps the fill and
+  takes black initials.
