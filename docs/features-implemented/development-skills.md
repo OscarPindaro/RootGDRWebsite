@@ -1,6 +1,6 @@
 # Development workflow skills
 
-Thirty-one opt-in commands support development, review, documentation and maintenance.
+Thirty-three opt-in commands support development, review, documentation and maintenance.
 
 ## What it does
 
@@ -37,6 +37,8 @@ Thirty-one opt-in commands support development, review, documentation and mainte
 | `/coach` | Suggest improvements supported by the user's interactive conversation history. |
 | `/server-inspect` | Diagnose a named service from authorized read-only evidence. |
 | `/server-delivery-audit` | Review mini-server delivery configuration locally without deploying. |
+| `/server-deploy` | Prepare and verify an explicitly approved controller-side rollout. |
+| `/server-backup` | Check status, coordinate an approved capture or verify isolated recovery. |
 
 A sufficiently specified implementation ticket authorizes its scope without a
 second planning approval. An idea-only ticket or unresolved consequential choice
@@ -110,6 +112,13 @@ duplicating credentials or treating old deployment records as current state.
 Inspection and audit report findings without repairs. Live access still needs
 permission and must follow the existing prohibition on direct production
 operations; unavailable live evidence is reported as a limit.
+
+Deployment and backup skills reuse the existing typed inputs, CLI and playbooks.
+They separate local planning, authorized target checks and approved writes.
+Rollout retains test proof, artifact identity, backup and schema-compatibility
+gates. Backup invocation discloses downtime and any managed-snapshot retention;
+deletion requires specific approval. Recovery only uses a new isolated target,
+never production. No new server automation or credentials are installed.
 
 ## How it is built
 
