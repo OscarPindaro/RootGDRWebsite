@@ -37,6 +37,9 @@ one on its own — implement it, test it, commit it — before starting a depend
 ticket. A large change is never delivered as a single commit. Independent tickets
 may run concurrently only through the approved workflow below.
 
+Commit each completed code or documentation change locally after verification,
+including only that task's work. This does not authorize a push.
+
 ### Delegation and parallel tickets
 
 - For a long ticket list, evaluate whether subagents would keep research and

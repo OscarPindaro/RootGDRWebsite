@@ -13,6 +13,15 @@ an epic, changing priorities/assignees/releases, pushing or deploying. Read
 `AGENTS.md` and the ticket's repository specification before changing code. Do
 not automatically invoke other project skills or launch subagents/worktrees.
 
+Use the [development workflow](../using-development-skills/SKILL.md) as guidance
+for planning and verification; this skill owns all Vikunja operations. Picking
+up a ticket authorizes its implementation when scope, expected behavior,
+acceptance criteria and approach are sufficiently clear. Do not require a second
+plan approval merely because the work is substantial. Inspect linked evidence
+first; if consequential decisions remain unresolved or the ticket only records
+an idea, ask in plain prose and obtain approval for the resulting plan before
+implementation. Do not reopen decisions already settled in the specification.
+
 ## Resolve before starting
 
 1. Verify the checkout and `git status`; preserve unrelated work and live artwork.
