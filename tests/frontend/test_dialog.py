@@ -7,9 +7,15 @@ and exposing pending/error state for requests. ``ConfirmDialog`` composes it
 with one named action and carries no domain knowledge.
 """
 
+from pathlib import Path
+
 import pytest
 
+from backend.jinja import get_catalog
+
 pytestmark = pytest.mark.frontend
+
+COMPONENTS = Path(__file__).parents[2] / "src" / "frontend" / "components"
 
 
 def _add_trigger(page, dialog_id: str) -> None:
@@ -64,6 +70,59 @@ def test_escape_closes_and_returns_focus(component):
 
     assert not _dialog(page).evaluate("dialog => dialog.open")
     assert page.evaluate("() => document.activeElement.id === 'opener'")
+
+
+def test_a_dialog_without_an_id_is_named_by_its_title(component):
+    page = component.mount("common.Dialog", props={"title": "Titolo"})
+    dialog = _dialog(page)
+    assert dialog.get_attribute("aria-labelledby") is None
+
+    page.evaluate("() => document.querySelector('dialog[data-dialog]').showModal()")
+
+    assert page.get_by_role("dialog", name="Titolo", exact=True).count() == 1
+
+
+def test_an_explicit_id_still_names_the_dialog_through_its_heading(component):
+    page = component.mount("common.Dialog", props={"title": "Titolo", "id": "d7"})
+    dialog = _dialog(page)
+    assert dialog.get_attribute("aria-labelledby") == "d7-title"
+    assert dialog.get_attribute("aria-label") is None
+
+    _add_trigger(page, "d7")
+
+    assert page.locator("#d7-title").count() == 1
+    assert page.get_by_role("dialog", name="Titolo", exact=True).count() == 1
+
+
+def test_a_caller_label_wins_over_the_title_fallback(component):
+    page = component.mount(
+        "common.Dialog", props={"title": "Titolo", "aria_label": "Etichetta"}
+    )
+
+    assert _dialog(page).get_attribute("aria-label") == "Etichetta"
+    assert page.content().count('aria-label="Etichetta"') == 1
+
+
+def test_multiple_unnamed_dialogs_are_each_named_by_their_own_title(component):
+    catalog = get_catalog(str(COMPONENTS), env="dev", app_name="harness-frontend")
+    page = component.mount("common.Dialog", props={"title": "Primo"})
+    page.set_content(
+        str(catalog.render("common.Dialog", title="Invita utente"))
+        + str(catalog.render("common.Dialog", title="Revoca invito"))
+    )
+    dialogs = page.locator("dialog[data-dialog]")
+
+    assert dialogs.count() == 2
+    assert page.locator("dialog[aria-labelledby]").count() == 0
+    assert dialogs.evaluate_all(
+        "els => els.map(el => el.getAttribute('aria-label'))"
+    ) == ["Invita utente", "Revoca invito"]
+
+    page.evaluate("() => document.querySelectorAll('dialog')[0].showModal()")
+    assert page.get_by_role("dialog", name="Invita utente", exact=True).count() == 1
+    page.evaluate("() => document.querySelectorAll('dialog')[0].close()")
+    page.evaluate("() => document.querySelectorAll('dialog')[1].showModal()")
+    assert page.get_by_role("dialog", name="Revoca invito", exact=True).count() == 1
 
 
 def test_the_close_control_is_labelled_in_italian(component):

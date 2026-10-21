@@ -18,8 +18,6 @@ from harness.test.browser import BrowserSession
 pytestmark = pytest.mark.e2e
 
 ADMIN = "e2e-admin@example.com"
-INVITE_DIALOG = "#invite-dialog dialog[data-dialog]"
-CONFIRM_DIALOG = "#confirm-dialog dialog[data-dialog]"
 
 
 def _invite(session: BrowserSession, email: str, role: str = "member") -> None:
@@ -39,10 +37,11 @@ def test_inviting_from_the_masthead_swaps_the_table_and_keeps_focus(
     session.goto("/admin/users")
 
     session.page.click('[data-testid="invite-user"]')
-    session.page.locator(INVITE_DIALOG).wait_for(state="visible")
-    session.page.fill(f"{INVITE_DIALOG} input[name='email']", email)
-    session.page.select_option(f"{INVITE_DIALOG} select[name='role']", "member")
-    session.page.click(f"{INVITE_DIALOG} button[type='submit']")
+    invite = session.page.get_by_role("dialog", name="Invita utente", exact=True)
+    invite.wait_for(state="visible")
+    invite.locator("input[name='email']").fill(email)
+    invite.locator("select[name='role']").select_option("member")
+    invite.locator("button[type='submit']").click()
 
     session.page.wait_for_function(
         "() => !document.querySelector('#invite-dialog dialog')?.open"
@@ -58,6 +57,12 @@ def test_inviting_from_the_masthead_swaps_the_table_and_keeps_focus(
         session.page.evaluate("() => document.activeElement?.dataset.testid")
         == "invite-user"
     )
+    # The dialog that arrived through the swap is still named by its title once
+    # the request has closed it.
+    named = session.page.get_by_role(
+        "dialog", name="Invita utente", exact=True, include_hidden=True
+    )
+    assert named.count() == 1
 
     # A fresh render proves the invitation is in the database.
     session.goto("/admin/users")
@@ -76,7 +81,7 @@ def test_revoking_asks_confirmation_and_keeps_the_section_focused(
     row.wait_for()
     row.locator('[data-testid="admin-invite-revoke"]').click()
 
-    confirm = session.page.locator(CONFIRM_DIALOG)
+    confirm = session.page.get_by_role("dialog", name="Revoca invito", exact=True)
     confirm.wait_for(state="visible")
     assert confirm.get_attribute("hx-delete") is None  # the request is on the button
     button = confirm.locator("[data-dialog-confirm]")
@@ -98,6 +103,10 @@ def test_revoking_asks_confirmation_and_keeps_the_section_focused(
     assert (
         session.page.evaluate("() => document.activeElement?.id") == "invitations-table"
     )
+    named = session.page.get_by_role(
+        "dialog", name="Revoca invito", exact=True, include_hidden=True
+    )
+    assert named.count() == 1
     assert session.errors == []
 
 

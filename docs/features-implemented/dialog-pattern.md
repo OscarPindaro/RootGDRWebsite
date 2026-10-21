@@ -8,6 +8,11 @@ surface with one named action.
 
 - `common.Dialog` renders a native `<dialog>` with a titled header, a
   `Chiudi`-labelled close control, a body slot and a hidden live error region.
+- Every dialog exposes its Italian title as its accessible name. With an `id`
+  the name comes from the heading through `aria-labelledby`; without one the
+  title is written as `aria-label`, so the htmx-loaded invitation and
+  confirmation surfaces are named too. A caller that passes its own
+  `aria-label` keeps it.
 - `showModal()` traps focus and closes on Escape natively; the colocated script
   remembers the control that opened the dialog and returns focus to it on cancel
   and on completion.
@@ -23,8 +28,10 @@ surface with one named action.
 
 ## How it is built
 
-- `common/Dialog.jinja` — the native element, `id`/`aria-labelledby` wiring, the
-  Italian close control and the `[data-dialog-error]` live region.
+- `common.Dialog.jinja` — the native element, its accessible name
+  (`aria-labelledby` on the heading when an `id` is given, otherwise the title
+  as `aria-label`), the Italian close control and the `[data-dialog-error]` live
+  region.
 - `common/Dialog.js` — the only behaviour. `[data-dialog-open="<id>"]` opens and
   remembers the opener, `[data-dialog-close]` closes, `[data-dialog-confirm]` is
   the pending-controlled action, `[data-dialog-autofocus]` chooses the focus
@@ -77,3 +84,9 @@ surface with one named action.
   successful completion, because the swapped table removes that control; it
   declares `data-dialog-return="invitations-table"` instead, so focus lands on
   the updated region. Focus returns to the control on cancel.
+- A dialog without an `id` needs no page-wide identifier to be named. A caller
+  that passes one owns its uniqueness: the heading reference is `<id>-title`,
+  and a duplicated id would resolve to the first matching heading.
+- `ImageEditor` rewrites its confirmation heading when it opens. That dialog has
+  no `id`, so its fallback name stays the rendered title (`Conferma`) while the
+  heading changes; an `aria-labelledby` reference would follow the new text.
