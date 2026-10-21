@@ -143,6 +143,67 @@ def test_global_nav_renders_without_a_world(component):
 # --- Phone drawer: modal contract -------------------------------------------
 
 
+def test_closed_phone_drawer_is_not_in_the_focus_order(component):
+    """Off-screen is not unreachable: Tab skips the rail until it is opened."""
+    page = _mount(component)
+    page.set_viewport_size(PHONE)
+
+    assert page.eval_on_selector("#rail", "el => el.hasAttribute('inert')")
+    assert not page.eval_on_selector(".main", "el => el.hasAttribute('inert')")
+
+    page.focus("a.skip")
+    page.keyboard.press("Tab")
+    assert page.evaluate("() => document.activeElement.id === 'drawer-toggle'")
+
+    for _ in range(30):
+        page.keyboard.press("Tab")
+        assert not page.evaluate(
+            "() => Boolean(document.activeElement.closest('#rail'))"
+        ), "Tab entered the closed drawer"
+
+
+def test_crossing_to_desktop_releases_the_open_drawer(component):
+    page = _mount(component)
+    _open_drawer(page)
+
+    page.set_viewport_size({"width": 1280, "height": 800})
+    page.wait_for_function(
+        "() => !document.body.classList.contains('drawer-open')", timeout=2000
+    )
+
+    assert not page.eval_on_selector(".main", "el => el.hasAttribute('inert')")
+    assert not page.eval_on_selector("#rail", "el => el.hasAttribute('inert')")
+    assert not page.evaluate(
+        "() => document.getElementById('rail').classList.contains('is-open')"
+    )
+    assert page.eval_on_selector("body", "el => getComputedStyle(el).overflow") != (
+        "hidden"
+    )
+
+    page.evaluate(
+        """() => {
+            const items = Array.from(
+                document.querySelectorAll(
+                    '#rail a[href], #rail button:not([disabled])'
+                )
+            ).filter(element => element.offsetParent !== null);
+            items[items.length - 1].focus();
+        }"""
+    )
+    page.keyboard.press("Tab")
+    assert not page.evaluate(
+        "() => Boolean(document.activeElement.closest('#rail'))"
+    ), "Tab is still trapped after crossing to desktop"
+
+    page.set_viewport_size(PHONE)
+    page.wait_for_function(
+        "() => document.getElementById('rail').hasAttribute('inert')", timeout=2000
+    )
+    assert not page.evaluate(
+        "() => document.getElementById('rail').classList.contains('is-open')"
+    )
+
+
 def test_drawer_moves_focus_in_and_restores_it_on_escape(component):
     page = _mount(component)
     _open_drawer(page)

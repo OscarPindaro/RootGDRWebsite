@@ -324,10 +324,18 @@ def test_command_palette_opens_and_searches(session: BrowserSession) -> None:
 
 
 def test_mobile_drawer_opens_and_closes(session: BrowserSession) -> None:
-    """The phone rail is a modal drawer: focus inside, background inert, body
-    locked, Escape closes and returns focus to the opener."""
+    """The phone rail is a modal drawer: closed it is inert and skipped by Tab,
+    open it takes focus while the background is inert and the body locked,
+    Escape closes and returns focus to the opener, and crossing to desktop
+    releases the shell."""
     session.page.set_viewport_size({"width": 390, "height": 844})
     session.goto("/worlds")
+
+    assert session.page.locator("#rail").evaluate("el => el.hasAttribute('inert')")
+    session.page.focus("a.skip")
+    session.page.keyboard.press("Tab")
+    assert session.page.evaluate("() => document.activeElement.id === 'drawer-toggle'")
+
     session.page.click("#drawer-toggle")
     session.page.wait_for_selector("#rail.is-open")
 
@@ -349,6 +357,15 @@ def test_mobile_drawer_opens_and_closes(session: BrowserSession) -> None:
     session.page.wait_for_selector("#rail.is-open", state="detached")
     assert not session.page.locator(".main").evaluate("el => el.hasAttribute('inert')")
     assert session.page.evaluate("() => document.activeElement.id === 'drawer-toggle'")
+
+    session.page.set_viewport_size({"width": 1280, "height": 800})
+    session.page.wait_for_function(
+        "() => !document.getElementById('rail').hasAttribute('inert')"
+    )
+    assert not session.page.locator(".main").evaluate("el => el.hasAttribute('inert')")
+    assert not session.page.evaluate(
+        "() => document.body.classList.contains('drawer-open')"
+    )
     assert session.errors == []
 
 

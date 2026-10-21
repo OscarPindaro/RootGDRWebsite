@@ -20,6 +20,8 @@
     '[tabindex]:not([tabindex="-1"])',
   ].join(",");
 
+  var PHONE = window.matchMedia("(max-width: 900px)");
+
   function rail() {
     return document.getElementById("rail");
   }
@@ -57,30 +59,57 @@
 
   var opener = null;
 
-  function setOpen(open, restoreFocus) {
+  /* The drawer has three states: closed on a phone, open on a phone, and the
+     static desktop column. `apply` derives them from the breakpoint and the
+     requested open flag, and is idempotent, so the initial load and a resize
+     are synchronized even when the open flag has not changed. */
+  function apply(open) {
     var drawer = rail();
     var shade = scrim();
     var trigger = toggle();
-    if (!drawer || !shade || open === isOpen()) return;
+    if (!drawer || !shade) return false;
 
-    drawer.classList.toggle("is-open", open);
-    shade.classList.toggle("is-open", open);
-    if (trigger) trigger.setAttribute("aria-expanded", String(open));
+    var modal = PHONE.matches && open;
+    drawer.classList.toggle("is-open", modal);
+    shade.classList.toggle("is-open", modal);
+    if (trigger) trigger.setAttribute("aria-expanded", String(modal));
     background().forEach(function (element) {
-      if (open) element.setAttribute("inert", "");
+      if (modal) element.setAttribute("inert", "");
       else element.removeAttribute("inert");
     });
-    document.body.classList.toggle("drawer-open", open);
+    document.body.classList.toggle("drawer-open", modal);
 
-    if (open) {
+    /* Off-screen is not unreachable: the closed phone drawer stays inert so
+       Tab and assistive navigation skip its links. The desktop column is
+       visible and carries no such guard. */
+    if (PHONE.matches && !modal) drawer.setAttribute("inert", "");
+    else drawer.removeAttribute("inert");
+
+    return modal;
+  }
+
+  function setOpen(open, restoreFocus) {
+    var drawer = rail();
+    var trigger = toggle();
+    if (!drawer || !scrim()) return;
+
+    var wasOpen = isOpen();
+    var nowOpen = apply(open);
+
+    if (nowOpen && !wasOpen) {
       var first = focusables(drawer)[0];
       if (first) first.focus();
-    } else if (restoreFocus) {
+    } else if (!nowOpen && restoreFocus) {
       var back = opener && document.contains(opener) ? opener : trigger;
       if (back) back.focus();
     }
-    if (!open) opener = null;
+    if (!nowOpen) opener = null;
   }
+
+  apply(false);
+  PHONE.addEventListener("change", function () {
+    setOpen(false, false);
+  });
 
   document.addEventListener("click", function (event) {
     if (!(event.target instanceof Element)) return;

@@ -15,10 +15,11 @@ every authenticated route.
   static pages) scrolls inside it; a long world name or a long identity
   truncates rather than pushing the user menu out.
 - On a phone (≤ 900px) the rail becomes a **modal drawer**: the topbar exposes a
-  trigger, a truncated page/world identity and the search action. Opening the
-  drawer moves focus inside, marks the rest of the shell `inert`, locks body
-  scroll, contains Tab and Shift+Tab, and closes on Escape or the scrim with
-  focus returning to the trigger.
+  trigger, a truncated page/world identity and the search action. While it is
+  closed it is `inert`, so Tab and assistive navigation skip the off-screen
+  rail. Opening the drawer moves focus inside, marks the rest of the shell
+  `inert`, locks body scroll, contains Tab and Shift+Tab, and closes on Escape
+  or the scrim with focus returning to the trigger.
 - The **user menu** is a dedicated identity trigger — avatar, name/email and
   chevron — that opens a `common.Menu` popover. It is not a `common.Button`; no
   button skin is overridden to make an identity row.
@@ -52,6 +53,11 @@ every authenticated route.
 A rail is a navigation landmark, not a dialog, so native `showModal()` cannot
 host it. `Page.js` reproduces the dialog contract by hand:
 
+- **three states** are derived from the `(max-width: 900px)` media query and the
+  open flag: closed phone, open phone and the static desktop column. The state
+  is applied on load and again on every breakpoint change, so a closed drawer is
+  inert before the first Tab and crossing to the desktop removes the background
+  `inert`, the body scroll lock and the open flag;
 - **initial focus** goes to the first focusable element in the rail;
 - **containment** intercepts Tab at the document level and cycles within the
   rail, and re-enters the drawer if focus is ever outside it;
@@ -75,8 +81,12 @@ popover before closing.
 
 ## Limits
 
-- The drawer is only a modal at the phone breakpoint; the JS does not run while
-  the rail is a static desktop column.
+- The drawer is only a modal at the phone breakpoint. The breakpoint is written
+  twice — in `Page.js` and in the `max-width: 900px` rules of `Page.css`,
+  `Rail.css` and `Topbar.css` — so changing one side without the others
+  desynchronizes the states.
+- The closed state is applied by `Page.js`; without JavaScript the off-screen
+  drawer stays in the focus order and the topbar trigger does nothing.
 - The desktop rail background spans the document, but the document is the
   `.shell`; a page that escapes the shell would not extend it.
 - The M3 drawer the rail replaced is gone for good: F22 deleted
