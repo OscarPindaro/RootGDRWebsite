@@ -1,8 +1,9 @@
 # Prototyping process
 
 How to run a design prototype for this project, written to be handed to an agent
-as a prompt. It is the process that produced `prototypes/devin-prototype/`,
-including the parts that went wrong.
+as a prompt. It is the process that produced `prototypes/devin-prototype/` and
+the application-composed study in `prototypes/bookkeeping-study/`, including the
+parts that went wrong.
 
 Read `prototypes/README.md` first for the repository conventions. This document
 is about **how to work**, not where files go.
@@ -18,12 +19,51 @@ throwaway surface where alternatives are put side by side and looked at.
 If you find yourself writing migrations, services, or tests for domain logic,
 you have left prototyping.
 
+Two modes are approved. Choose by the question the round has to answer:
+
+| Question | Mode |
+|---|---|
+| Is the visual identity, or a page structure outside the accepted one, still open? | Standalone static exploration |
+| Is this an addition inside the accepted atlas identity, where the real controls, assets and layout are the uncertainty? | Application-composed exploration |
+
+### Decision record
+
+The owner accepted both modes on 2026-10-21 (commit `bf4f6ce`), on the evidence
+in `prototypes/bookkeeping-study/README.md` and the learning/tool sections of
+`docs/development_processes/frontend-system-review-2026-10-21.md`. Static
+exploration stays valid and needs no new approval. The application mode is
+approved for additions within the existing identity; it does not authorize a
+redesign, a preview framework, or production routes.
+
+Consequences for the dependent tickets:
+
+- T23 delivers one bounded real-JinjaX comparison under this mode. It stays
+  conditional on its own prerequisites.
+- T24 and T26 use the approved mode. They may reuse T23's example, but neither
+  waits for T23; an equivalent comparison in the approved mode is enough.
+- T25 and T27 implement the owner's selections. They are implementation work,
+  not prototype rounds.
+
+### Simulated versus real persistence
+
+Say what is simulated, in the interface and in the record. A static prototype
+has no persistence at all. An application-composed study keeps typed fixtures
+and browser-only state as the default: no campaign reads or writes, no provider
+calls, no persisted prototype state. Browser-only controls, fake JSON and
+fixture saves are labelled as simulated; a simulated preference or toggle is
+not domain persistence. A prototype never claims a save it did not make.
+
+A domain-write experiment is a separate decision. It needs explicit owner
+approval beyond this process, an isolated test-harness environment, and the
+persisted result read back through the API or a database query. This mode's
+approval does not authorize backend or domain implementation, migrations, or a
+production route.
+
 ### Application-composed exploration
 
-For the bookkeeping/agent studies, the owner explicitly selected prototyping
-inside the real frontend on 2026-10-21. Use the application's JinjaX catalog,
-components, assets and shell, served through the harness-managed backend.
-This is the preferred mode for additions within the existing atlas identity.
+Approved for additions within the existing atlas identity. Use the application's
+JinjaX catalog, components, assets and shell, served through the harness-managed
+backend.
 
 - Keep routes dev-only, under the component showcase; no production endpoints.
 - Use typed, clearly labelled fixtures. No campaign reads/writes, migrations,
@@ -43,7 +83,9 @@ The first implementation is the study described in
 `prototypes/bookkeeping-study/README.md`. This mode does not replace the static
 explorations below or authorize a redesign of the existing visual system.
 
-**Standalone static exploration conventions**
+### Standalone static exploration
+
+Approved for a new visual world or a structure outside the accepted identity.
 
 - Static files, no build step. HTML, CSS and plain JavaScript. Loading a library
   from a CDN as an ES module is acceptable; adding a bundler is not.
@@ -62,8 +104,9 @@ design it.
 
 Questions that paid off:
 
-- **Form.** Standalone static pages, a single page with a hash router, or
-  something inside the real application? The answer changes every file you write.
+- **Form.** Standalone static pages, a single page with a hash router, or the
+  approved application-composed mode inside the real frontend? The answer
+  changes every file you write.
 - **Language.** Which language for the interface copy and the fake content?
 - **Fidelity.** Keep the principles of a reference design and improve the
   execution, or propose something independent?
@@ -77,6 +120,10 @@ Do not ask about taste. Taste is what the prototype is for.
 
 Work in this order. Do not skip a step because the next one is more
 interesting.
+
+Start from the task framing: who is doing what, in which order, and what the
+page must make obvious. The alternatives are judged against that framing, not
+against a general preference for one arrangement.
 
 ### 3.1 Establish the system on one page
 
@@ -110,6 +157,15 @@ Two rules make it work:
   the two options mean, and put a shortcut in the page so the comparison does not
   require going back to a settings panel.
 
+Equal content means the same names, lengths, images, missing values and state
+coverage on both sides. If one side cannot cover a state, say so in the page and
+in the record.
+
+In the application mode a toggle is still the first choice when it preserves
+state. For structural alternatives that cannot share one state, separate preview
+routes of the same page are acceptable; label the comparison-only controls and
+do not turn them into product settings.
+
 The payoff is that the decision is made on real content. Almost every decision in
 this project was made that way, and the ones that were made in prose had to be
 revisited.
@@ -118,9 +174,14 @@ revisited.
 
 - Load the page in a real browser and assert **no console errors** and no failed
   requests.
-- Take screenshots: full page at desktop, and at phone width.
-- Check the states you just built, not only the default one.
+- Take screenshots: full page at desktop, and at phone width. In the application
+  mode use the harness capture, so the reference and the result come from the
+  same viewports.
+- Check the states you just built, not only the default one: editable, read-only
+  or locked, missing content, long names, overflow.
 - Interact: click, type, open the menu, submit.
+- Compare each alternative against the task framing: reading order, what is
+  visible without opening anything, and which state the reader is in.
 
 A change is not done because the file looks right.
 
@@ -128,11 +189,16 @@ A change is not done because the file looks right.
 
 Keep a living document next to the prototype. For every question, record:
 
-- what was decided;
+- what was decided, and who selected it;
 - **why**, in terms that can be checked;
 - **what was rejected and why** — this is the part that pays off later, when
   someone asks "why not X" six months after everyone has forgotten;
 - what the decision costs, and what the escape hatch is if it turns out wrong.
+
+Also record the evidence: the mode, the date, the fixture and component/source
+revision (commit or file revisions), the screenshot paths, and the command that
+produced them. An application-composed prototype moves with the real components,
+so its captures record one revision and are not a frozen reference.
 
 ---
 
@@ -153,6 +219,7 @@ They are the reason the rules exist.
 | Proposed a preference for something that is a build-time choice (which editor to use). | **Ask: who would set this, and what breaks if two people disagree?** If two people disagreeing would change the *content*, it is not a preference. |
 | Added a fourth switch to a fixed-height panel and broke the phone layout. | **Re-check the smallest viewport after every addition** to a fixed-size container. |
 | Invented plausible campaign content (a "next act" the user had not planned). | **Never invent facts about the user's data.** Ask, or leave it out. Plausible-looking fiction in a prototype reads as a requirement. |
+| Compared a static imitation of a control with the real control and treated the two as one experiment. | **Compare like with like.** Both sides of one experiment use the same mode and the same implementation surface; a mock and a real component answer different questions. |
 
 ---
 
@@ -185,8 +252,9 @@ spacing differ between the two renderings.
 Rules for building one:
 
 - Use the **real** implementation on both sides. Generate the server-side output
-  with the application's actual renderer and configuration, not a mock. Commit
-  the generator script so the artifact can be regenerated.
+  with the application's actual renderer and configuration, not a mock. In the
+  application mode that is the real catalog; record the revision it was generated
+  from. Commit the generator script so the artifact can be regenerated.
 - Report the comparison as a **pass or fail with the first difference**, not as a
   wall of output.
 - Normalise only differences you can name and justify, and say so in the code.
@@ -198,16 +266,27 @@ Rules for building one:
 
 - The prototype README says what it is, how to run it, and what it does not do.
 - Every open question is either decided in the document or explicitly listed as
-  open.
+  open. The record names the mode, the owner's selection, and the rejected
+  alternative with its evidence.
 - Decisions taken during prototyping are promoted into the feature documents
   (`docs/features-request/`), because that is what the implementation reads.
+- The implementation handoff lists the accepted behavior, the fixtures it was
+  proved on, the component revisions and the limits. The implementing ticket
+  reads the feature document, not the prototype source.
+- A dev-only route, fixture or experimental CSS is removed or explicitly
+  retained with its gating; a live prototype is not a frozen historical
+  reference and is never cited as proof of a write or a permission.
 - Anything discovered that is worth doing but not now goes to
   `docs/features-request/desired_features.md`, with the constraint that would shape it.
 - Commit the prototype. It is the record of *why*, and it is cheap to keep.
 
 ---
 
-## 8. Prompt template
+## 8. Prompt template (standalone static exploration)
+
+This template asks for the static mode only. For an application-composed study,
+start from the brief in `prototypes/bookkeeping-study/README.md` and the rules in
+§1.
 
 ```
 Prototype the following for this project: <what, and which content types>.
