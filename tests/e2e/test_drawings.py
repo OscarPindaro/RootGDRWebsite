@@ -94,7 +94,6 @@ def _drag(page, start: tuple[float, float], end: tuple[float, float]) -> None:
     viewBox is: the artboard shows a margin around itself, so a pixel offset from
     the canvas corner is not an artboard coordinate.
     """
-    page.locator("[data-drawing-artboard]").scroll_into_view_if_needed()
     first = _at(page, start[0], start[1])
     second = _at(page, end[0], end[1])
     page.mouse.move(first[0], first[1])
@@ -137,11 +136,33 @@ def test_an_admin_draws_undoes_and_reopens_artwork(session: BrowserSession) -> N
 
 
 def _at(page, x: float, y: float) -> tuple[float, float]:
-    return tuple(
+    """The screen point of an artboard coordinate, with the canvas visible.
+
+    The inspector scrolls the page, so a raw coordinate resolved before the
+    artboard is back in view lands on the sticky toolbar or outside the
+    viewport. The SVG's own screen matrix is still what converts the point.
+    """
+    page.locator("[data-drawing-artboard]").scroll_into_view_if_needed()
+    point = tuple(
         page.evaluate(
             "([x,y]) => { const m = document.querySelector('[data-drawing-artboard]').getScreenCTM(); return [m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f]; }",
             [x, y],
         )
+    )
+    viewport = page.viewport_size
+    assert 0 <= point[0] < viewport["width"] and 0 <= point[1] < viewport["height"], (
+        f"artboard point ({x}, {y}) resolved off screen at {point}"
+    )
+    return point
+
+
+def _hit_target(page, point: tuple[float, float]) -> dict:
+    """What a pointer event at a screen point would hit, as the overlay marks it."""
+    return page.evaluate(
+        "([x,y]) => { const el = document.elementFromPoint(x,y);"
+        " return el ? {tag: el.tagName, vertex: el.dataset.vertex ?? null,"
+        " edge: el.dataset.edge ?? null} : null; }",
+        list(point),
     )
 
 
@@ -170,6 +191,13 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     for index in (0, 1):
         x, y = along(index)
         point = _at(session.page, x, y)
+        hit = _hit_target(session.page, point)
+        assert hit is not None and hit["tag"] == "polygon", (
+            f"edge insertion {index} would hit {hit}"
+        )
+        assert hit["vertex"] is None and hit["edge"] is None, (
+            f"edge insertion {index} would hit a handle: {hit}"
+        )
         session.page.mouse.dblclick(point[0], point[1])
     assert len(_local_node(session)["points"]) == 5
 
@@ -180,11 +208,20 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     )
     tip = _local_node(session)["points"][tip_index]
     tip_at = _at(session.page, tip[0], tip[1])
+    hit = _hit_target(session.page, tip_at)
+    assert hit is not None and hit["vertex"] == str(tip_index), (
+        f"the tip drag would hit {hit} instead of vertex {tip_index}"
+    )
     lower_at = _at(session.page, tip[0], tip[1] + 90)
     session.page.mouse.move(tip_at[0], tip_at[1])
     session.page.mouse.down()
     session.page.mouse.move(lower_at[0], lower_at[1], steps=4)
     session.page.mouse.up()
+
+    # The edit lands locally before Save, so a delivery failure is not read as
+    # a persistence failure.
+    moved = _local_node(session)["points"][tip_index]
+    assert moved[1] > tip[1] + 60, "the dragged tip moved locally"
 
     with session.page.expect_response(_is_patch_to(drawing_id)) as saved:
         session.page.get_by_test_id("drawing-save").click()
@@ -193,6 +230,7 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     bent = _node(session, drawing_id)
     assert len(bent["points"]) == 5
     assert bent["points"][tip_index][1] > tip[1] + 60
+    assert bent["points"] == _local_node(session)["points"]
 
     session.goto(f"/drawings/{drawing_id}")
     session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
@@ -219,6 +257,13 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
         x = start[0] + (tip[0] - start[0]) * 0.25
         y = start[1] + (tip[1] - start[1]) * 0.25
         point = _at(session.page, x, y)
+        hit = _hit_target(session.page, point)
+        assert hit is not None and hit["tag"] == "polygon", (
+            f"edge insertion {index} would hit {hit}"
+        )
+        assert hit["vertex"] is None and hit["edge"] is None, (
+            f"edge insertion {index} would hit a handle: {hit}"
+        )
         session.page.mouse.dblclick(point[0], point[1])
     assert len(_local_node(session)["points"]) == 5
 
@@ -248,6 +293,15 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
 
     session.page.locator(f"[data-select-node='{tip_piece['id']}']").click()
     session.page.locator("[data-palette='#d1402a']").click()
+
+    # The recolour and the hidden seam are local before Save.
+    local = _local_node_scene(session)["nodes"]
+    local_tip = next(node for node in local if node["id"] == tip_piece["id"])
+    local_rest = next(node for node in local if node["id"] == rest["id"])
+    assert local_tip["fill"] == "#d1402a"
+    assert local_rest["fill"] != "#d1402a"
+    assert local_tip["edgeVisible"].count(False) == 1
+    assert local_rest["edgeVisible"].count(False) == 1
 
     with session.page.expect_response(_is_patch_to(drawing_id)) as saved:
         session.page.get_by_test_id("drawing-save").click()

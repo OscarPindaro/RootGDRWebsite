@@ -59,6 +59,16 @@ multi-step flows work correctly:
 
 E2E tests live in `tests/e2e/` and are marked `@pytest.mark.e2e`.
 
+### Browser gesture tests
+
+Tests that drive raw pointer coordinates with `page.mouse` do not scroll for
+you. Bring the canvas back into view after inspector actions before resolving
+coordinates from the element's own screen matrix, and assert that the point
+hits the intended vertex, edge, or shape rather than a sticky toolbar. Assert
+the local document change before clicking Save, so a gesture that did not
+deliver is not mistaken for a persistence failure. See
+`tests/e2e/test_drawings.py`.
+
 ### Fuzzy tests (planned, not yet implemented)
 
 Test complex functionality against **randomly generated samples** to find edge
