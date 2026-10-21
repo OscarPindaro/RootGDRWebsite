@@ -1,6 +1,6 @@
 # Development workflow skills
 
-Twenty-nine opt-in commands support development, review, documentation and maintenance.
+Thirty-one opt-in commands support development, review, documentation and maintenance.
 
 ## What it does
 
@@ -35,6 +35,8 @@ Twenty-nine opt-in commands support development, review, documentation and maint
 | `/plugin-feedback` | Record observed skill problems and assess proposed corrections. |
 | `/retro` | Analyze scoped native conversation history directly, including Devin SQLite. |
 | `/coach` | Suggest improvements supported by the user's interactive conversation history. |
+| `/server-inspect` | Diagnose a named service from authorized read-only evidence. |
+| `/server-delivery-audit` | Review mini-server delivery configuration locally without deploying. |
 
 A sufficiently specified implementation ticket authorizes its scope without a
 second planning approval. An idea-only ticket or unresolved consequential choice
@@ -101,6 +103,14 @@ the selected conversation branch, limits dates and text, excludes hidden
 reasoning, and treats historical instructions as evidence rather than authority.
 This history support does not add Devin to the benchmark/evaluation runners.
 
+The mini-server skills adapt inspection and delivery-audit procedures to the
+existing Fedora/rootless-Podman and controller-side Ansible setup. Shared
+guidance links the deployment manual, server decisions and CI policy instead of
+duplicating credentials or treating old deployment records as current state.
+Inspection and audit report findings without repairs. Live access still needs
+permission and must follow the existing prohibition on direct production
+operations; unavailable live evidence is reported as a limit.
+
 ## How it is built
 
 Each command is a `SKILL.md` under `.devin/skills/`, with `triggers: [user]`.
@@ -140,6 +150,8 @@ entry-point metadata and local links; they do not establish model compliance.
 Native-history query tests use a disposable SQLite fixture to check project,
 date, branch and visible-text selection, output limits and write protection.
 No full retrospective or coaching analysis of real conversations ran.
+Server-skill checks validate metadata and local references. No server connection,
+deployment, writer stop, backup, recovery or privileged operation ran.
 Runner checks cover script syntax and accepted agent choices. The benchmark
 rejects `--agent devin` before creating trial artifacts. No model trial or
 behavioral evaluation ran; full runner execution remains unverified.

@@ -45,6 +45,8 @@ WORKFLOW_SKILLS = (
     "plugin-feedback",
     "retro",
     "coach",
+    "server-inspect",
+    "server-delivery-audit",
 )
 
 
