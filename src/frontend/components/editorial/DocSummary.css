@@ -32,3 +32,10 @@
   min-height: 4.5rem;
   padding: var(--sp-1) 0;
 }
+
+.docsummary__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+}

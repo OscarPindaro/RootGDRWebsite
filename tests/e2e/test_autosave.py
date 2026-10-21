@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from harness.test.browser import BrowserSession
+from harness.test.browser import BrowserSession, authenticate_context
 
 pytestmark = pytest.mark.e2e
 
@@ -317,3 +317,97 @@ def test_world_settings_autosaves_name_markdown_and_local_recovery(
     _wait_saved(session)
     assert session.expect_api(api_path).json()["description"] == recovered
     assert session.errors == []
+
+
+def test_a_touch_context_leaves_body_and_summary_writing_without_a_keyboard(
+    session: BrowserSession, seed_world
+) -> None:
+    """REQ-0019/T09: the visible command is the way out of writing on a phone.
+
+    A Pixel-sized touch context opens the body from the bar, writes, and taps
+    *Mostra il risultato*; the pending write still reaches the API, focus
+    returns to the block, and one preview is rendered. The summary uses the
+    same command.
+    """
+    world_id = seed_world("Mondo Touch comando")
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/",
+        method="POST",
+        expected_status=201,
+        data={
+            "name": "Autore touch",
+            "title": "Titolo touch",
+            "short_description": "Sintesi touch.",
+            "body": "Corpo touch.",
+        },
+    ).json()
+    api_path = f"/api/worlds/{world_id}/characters/{payload['id']}"
+    path = f"/worlds/{world_id}/characters/{payload['id']}"
+
+    browser = session.context.browser
+    context = browser.new_context(
+        viewport={"width": 390, "height": 844},
+        is_mobile=True,
+        has_touch=True,
+        device_scale_factor=1,
+    )
+    try:
+        authenticate_context(context, session.base_url, "e2e-admin@example.com")
+        phone = BrowserSession(context, session.base_url)
+        phone.goto(path)
+        previews: list[str] = []
+        phone.page.on(
+            "request",
+            lambda request: (
+                previews.append(request.url)
+                if request.method == "POST" and request.url.endswith("/preview")
+                else None
+            ),
+        )
+
+        phone.page.get_by_role("button", name="Modifica").tap()
+        phone.page.wait_for_selector("[data-doc-edit] .cm-content")
+        phone.page.locator("[data-doc-edit] .cm-content").tap()
+        phone.page.keyboard.press("Control+End")
+        phone.page.keyboard.type(" scritto col dito.")
+        command = phone.page.get_by_role("button", name="Mostra il risultato")
+        assert command.is_visible()
+        command.tap()
+
+        assert not phone.page.locator("[data-doc-edit] .cm-editor").is_visible()
+        assert (
+            phone.page.evaluate(
+                "() => document.activeElement?.dataset?.docBlock ?? null"
+            )
+            == "body"
+        )
+        _wait_saved(phone)
+        assert (
+            session.expect_api(api_path).json()["body"].endswith(" scritto col dito.")
+        )
+
+        phone.page.locator("[data-summary-render]").dblclick()
+        phone.page.wait_for_selector("[data-doc-summary] .cm-content")
+        phone.page.locator("[data-doc-summary] .cm-content").tap()
+        phone.page.keyboard.press("Control+A")
+        phone.page.keyboard.type("Sintesi col dito.")
+        command = phone.page.get_by_role("button", name="Mostra il risultato")
+        command.tap()
+
+        assert not phone.page.locator("[data-doc-summary] .cm-editor").is_visible()
+        assert (
+            phone.page.evaluate(
+                "() => document.activeElement?.dataset?.docBlock ?? null"
+            )
+            == "summary"
+        )
+        _wait_saved(phone)
+        assert (
+            session.expect_api(api_path).json()["shortDescription"]
+            == "Sintesi col dito."
+        )
+        phone.page.wait_for_timeout(300)
+        assert len(previews) == 2
+        assert phone.errors == []
+    finally:
+        context.close()

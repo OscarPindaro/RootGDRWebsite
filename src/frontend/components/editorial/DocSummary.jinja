@@ -1,5 +1,5 @@
 {#def world_id, base, value, value_html, version, can_manage=False, locked=False #}
-{#css editorial/DocSummary.css, editorial/Reference.css #}
+{#css editorial/DocSummary.css, editorial/Reference.css, common/Button.css, common/Icon.css #}
 <div class="docsummary" data-doc-summary data-world-id="{{ world_id }}"
      data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
@@ -13,4 +13,9 @@
           hx-include="closest [data-doc-summary]"
           hx-target="previous [data-summary-render]"
           hx-swap="innerHTML"></button>
+  {% if can_manage and not locked %}
+    <div class="docsummary__actions" data-summary-actions hidden>
+      <common.Button variant="secondary" size="sm" data-summary-close>Mostra il risultato</common.Button>
+    </div>
+  {% endif %}
 </div>

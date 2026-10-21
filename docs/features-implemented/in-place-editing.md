@@ -20,6 +20,12 @@ The reading page is where a document is written: no separate edit form, no
   line is rendered — headings, bold, italic, code, links and mentions. `Ctrl/⌘
   + Enter` shows the result, rendered by the same server renderer readers get,
   and coming back resumes at the same caret position.
+- While a body or summary is open, a labelled *Mostra il risultato* command
+  appears below it. It runs the same close path as `Ctrl/⌘ + Enter`: the pending
+  write is flushed, the result is rendered once, focus returns to the block and
+  reopening resumes at the same caret. It exists so writing can be left on a
+  touch device without a hardware keyboard; it appears only while writing, and
+  closing is neither publication nor discarding.
 - The name and title remain single-line fields. The short description opens a
   compact Markdown editor with the same preview and `@` menu as the body. All
   three use the same autosave and conflict controller. The rendered name stays a
@@ -64,7 +70,10 @@ The reading page is where a document is written: no separate edit form, no
 ## How it is built
 
 - `editorial/DocEdit.jinja` renders the body, hidden source textarea, server
-  preview control and live status. `editorial/DocIdentity.jinja` marks the plain
+  preview control and live status. `editorial/DocSummary.jinja` does the same for
+  the compact summary. Both carry the hidden actions row that `mountDocEdit` and
+  `mountDocSummary` reveal while writing, and both commands call the same
+  `close()` the shortcuts use. `editorial/DocIdentity.jinja` marks the plain
   identity fields and shares the same status/controller. The rendered fields
   keep their native elements: `mountDocIdentity` adds no widget role to them, so
   the heading stays a heading. It derives each field's label from
@@ -94,8 +103,8 @@ The reading page is where a document is written: no separate edit form, no
 
 ## Recovery and limits
 
-- The result is rendered by the server on `Ctrl/⌘ + Enter`; while typing, the
-  CodeMirror live preview shows rendered text.
+- The result is rendered by the server on `Ctrl/⌘ + Enter` or on *Mostra il
+  risultato*; while typing, the CodeMirror live preview shows rendered text.
 - Network, 401/403, 409, 422 and 423 responses retain the local draft. A stale
   409 offers reload, copy and an explicit retry against the latest version.
 - `visibilitychange` and htmx/navigation intent flush normally. `pagehide` sends

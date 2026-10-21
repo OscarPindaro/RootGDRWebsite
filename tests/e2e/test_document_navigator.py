@@ -4,7 +4,10 @@ The navigator orders editable blocks by the product sequence
 (``name → title → summary → body``) rather than by DOM nesting, moves between
 them with the arrows, opens them with Enter/F2, and returns focus to the same
 block when an editor closes. CodeMirror keeps native arrows and closes with
-Ctrl/⌘+Enter or Escape. A locked page loads no editor bundle at all.
+Ctrl/⌘+Enter or Escape. A locked page loads no editor bundle at all. While a
+body or summary is being written, the visible *Mostra il risultato* command
+closes it with the same focus and caret behavior as those shortcuts
+(REQ-0019/T09).
 """
 
 from __future__ import annotations
@@ -232,6 +235,74 @@ def test_code_mirror_ctrl_enter_and_escape_return_to_the_block(
     # After closing, the arrows navigate between blocks again.
     session.page.keyboard.press("ArrowUp")
     assert _active_block(session) == "summary"
+    assert session.errors == []
+
+
+def test_the_visible_command_closes_the_body_and_resumes_at_the_caret(
+    session: BrowserSession, seed_world
+) -> None:
+    world_id, _, api_path = _character(session, seed_world, "comando corpo")
+    previews: list[str] = []
+    session.page.on(
+        "request",
+        lambda request: (
+            previews.append(request.url)
+            if request.method == "POST" and request.url.endswith("/preview")
+            else None
+        ),
+    )
+
+    session.page.locator("[data-doc-render]").dblclick()
+    editor = session.page.locator("[data-doc-edit] .cm-content")
+    editor.click()
+    session.page.keyboard.press("Control+End")
+    session.page.keyboard.type(" scritto col comando.")
+    caret = session.page.evaluate("() => document.getSelection().anchorOffset")
+    command = session.page.get_by_role("button", name="Mostra il risultato")
+    assert command.is_visible()
+
+    command.click()
+
+    assert _active_block(session) == "body"
+    assert not session.page.locator("[data-doc-edit] .cm-editor").is_visible()
+    assert not command.is_visible()
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["body"].endswith(" scritto col comando.")
+    # One close, one rendered result.
+    session.page.wait_for_timeout(300)
+    assert previews == [f"{session.base_url}/worlds/{world_id}/preview"]
+
+    # Reopening from the bar resumes at the caret the command left.
+    session.page.get_by_role("button", name="Modifica").click()
+    session.page.wait_for_selector("[data-doc-edit] .cm-content")
+    assert session.page.evaluate("() => document.getSelection().anchorOffset") == caret
+    session.page.keyboard.press("Escape")
+    assert session.errors == []
+
+
+def test_the_visible_command_closes_the_summary(
+    session: BrowserSession, seed_world
+) -> None:
+    _, _, api_path = _character(session, seed_world, "comando sintesi")
+
+    session.page.locator("[data-summary-render]").dblclick()
+    editor = session.page.locator("[data-doc-summary] .cm-content")
+    editor.click()
+    session.page.keyboard.press("Control+A")
+    session.page.keyboard.type("Sintesi col comando.")
+    command = session.page.get_by_role("button", name="Mostra il risultato")
+    assert command.is_visible()
+
+    command.click()
+
+    assert _active_block(session) == "summary"
+    assert not session.page.locator("[data-doc-summary] .cm-editor").is_visible()
+    assert not command.is_visible()
+    _wait_saved(session)
+    assert (
+        session.expect_api(api_path).json()["shortDescription"]
+        == "Sintesi col comando."
+    )
     assert session.errors == []
 
 

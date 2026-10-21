@@ -1,9 +1,11 @@
-"""Page-level document shortcuts (REQ-0006/T02).
+"""Page-level document shortcuts and the visible editing exit.
 
 F2 opens the body when no block is focused; Ctrl/Command+Shift+Enter invokes the
 visible publication command through the persistence barrier. Typing, the code
 editor, an open menu or dialog and repeated keydown keep the keyboard, and the
-editor's own Mod+Enter is never overridden.
+editor's own Mod+Enter is never overridden. While a body or summary is being
+written, a labelled command returns to the rendered result without a keyboard
+(REQ-0019/T09).
 """
 
 import pytest
@@ -132,3 +134,130 @@ def test_the_shortcut_is_inert_while_a_dialog_is_open(component):
     page.keyboard.press("Control+Shift+Enter")
 
     assert page.evaluate("() => window.__runs") == 0
+
+
+def _mount_summary(component, value: str = "", **overrides) -> None:
+    component.route_json("PATCH", AUTOSAVE, body={"version": 2})
+    props = {
+        "world_id": "w",
+        "base": "/worlds/w/characters/1",
+        "value": value,
+        "value_html": render_markdown(value, {}),
+        "version": "1",
+        "can_manage": True,
+    }
+    props.update(overrides)
+    page = component.mount("editorial.DocSummary", props=props)
+    page.add_script_tag(url="/static/js/editor.js")
+    page.wait_for_selector("[data-summary-render]", state="attached")
+    return page
+
+
+def _count_previews(page, preview: str) -> None:
+    page.evaluate(
+        """selector => {
+            window.__previews = 0;
+            document.addEventListener('click', (event) => {
+                if (event.target.closest(selector)) window.__previews += 1;
+            }, true);
+        }""",
+        preview,
+    )
+
+
+def test_the_close_command_appears_only_while_writing(component):
+    page = _mount(component, body="Testo esistente")
+    command = page.get_by_role("button", name="Mostra il risultato")
+
+    assert not command.is_visible()
+
+    page.dblclick("[data-doc-render]")
+    page.wait_for_selector(".cm-editor")
+    assert command.is_visible()
+
+    page.keyboard.press("Escape")
+    page.wait_for_selector(".cm-editor", state="detached")
+    assert not command.is_visible()
+
+
+def test_the_close_command_returns_to_the_result_and_the_same_focus(component):
+    page = _mount(component, body="Testo esistente")
+    _count_previews(page, "[data-doc-preview]")
+    page.dblclick("[data-doc-render]")
+    page.wait_for_selector(".cm-editor")
+    page.locator(".cm-content").click()
+
+    page.get_by_role("button", name="Mostra il risultato").click()
+
+    page.wait_for_selector(".cm-editor", state="detached")
+    assert page.evaluate("() => document.activeElement.dataset.docBlock") == "body"
+    assert page.evaluate("() => window.__previews") == 1
+    # Closing shows the result; it neither publishes nor discards the text.
+    assert page.evaluate("() => window.__runs") == 0
+    assert (
+        page.evaluate("() => document.querySelector('[data-doc-source]').value")
+        == "Testo esistente"
+    )
+
+
+def test_the_close_command_flushes_the_pending_write(component):
+    page = _mount(component, body="Testo esistente")
+    page.dblclick("[data-doc-render]")
+    page.wait_for_selector(".cm-editor")
+    page.locator(".cm-content").click()
+    page.keyboard.press("Control+End")
+    page.keyboard.type(" e altro.")
+
+    with page.expect_request(
+        lambda request: request.method == "PATCH" and AUTOSAVE in request.url
+    ):
+        page.get_by_role("button", name="Mostra il risultato").click()
+
+    assert (
+        page.evaluate("() => document.querySelector('[data-doc-source]').value")
+        == "Testo esistente e altro."
+    )
+
+
+def test_the_close_command_is_touch_sized_on_a_phone(component):
+    page = _mount(component, body="Testo esistente")
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.dblclick("[data-doc-render]")
+    page.wait_for_selector(".cm-editor")
+
+    box = page.get_by_role("button", name="Mostra il risultato").bounding_box()
+
+    assert box is not None
+    assert box["height"] >= 44
+
+
+def test_the_summary_has_the_same_close_command(component):
+    page = _mount_summary(component, value="Sintesi iniziale.")
+    command = page.get_by_role("button", name="Mostra il risultato")
+    assert not command.is_visible()
+
+    _count_previews(page, "[data-summary-preview]")
+    page.dblclick("[data-summary-render]")
+    page.wait_for_selector("[data-doc-summary] .cm-editor")
+    assert command.is_visible()
+
+    command.click()
+
+    page.wait_for_selector("[data-doc-summary] .cm-editor", state="detached")
+    assert page.evaluate("() => document.activeElement.dataset.docBlock") == "summary"
+    assert page.evaluate("() => window.__previews") == 1
+    assert not command.is_visible()
+    assert (
+        page.evaluate("() => document.querySelector('[data-summary-source]').value")
+        == "Sintesi iniziale."
+    )
+
+
+@pytest.mark.parametrize("overrides", [{"can_manage": False}, {"locked": True}])
+def test_readers_and_locked_documents_get_no_close_command(component, overrides):
+    page = _mount(component, **overrides)
+
+    assert page.locator("[data-doc-close]").count() == 0
+
+    summary = _mount_summary(component, **overrides)
+    assert summary.locator("[data-summary-close]").count() == 0

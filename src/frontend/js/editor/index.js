@@ -695,6 +695,7 @@ function mountDocEdit(block) {
   const source = block.querySelector("[data-doc-source]");
   const preview = block.querySelector("[data-doc-preview]");
   const actions = block.querySelector("[data-doc-actions]");
+  const closeCommand = block.querySelector("[data-doc-close]");
   if (!render || !host || !source) return;
   const autosave = controllerFor(block);
   const fieldName = block.dataset.docFieldName || "body";
@@ -750,6 +751,7 @@ function mountDocEdit(block) {
   render.addEventListener("dblclick", open);
   render.docStopOpen = open;
   block.docOpen = open;
+  closeCommand?.addEventListener("click", () => { autosave.flush(); close(); });
   block.addEventListener("keydown", (event) => {
     if (view && event.key === "Escape") { event.preventDefault(); close(); }
   });
@@ -765,6 +767,8 @@ function mountDocSummary(block) {
   const host = block.querySelector("[data-summary-editor]");
   const source = block.querySelector("[data-summary-source]");
   const preview = block.querySelector("[data-summary-preview]");
+  const actions = block.querySelector("[data-summary-actions]");
+  const closeCommand = block.querySelector("[data-summary-close]");
   if (!render || !host || !source) return;
   const autosave = controllerFor(block);
   autosave.register(
@@ -783,6 +787,7 @@ function mountDocSummary(block) {
     view = null;
     host.hidden = true;
     render.hidden = false;
+    if (actions) actions.hidden = true;
     preview?.click();
     render.focus({ preventScroll: true });
   }
@@ -790,6 +795,7 @@ function mountDocSummary(block) {
     if (view || event?.target.closest("a")) return;
     host.hidden = false;
     render.hidden = true;
+    if (actions) actions.hidden = false;
     view = new EditorView({
       state: EditorState.create({
         doc: source.value,
@@ -818,6 +824,7 @@ function mountDocSummary(block) {
   render.addEventListener("dblclick", open);
   render.docStopOpen = open;
   block.summaryOpen = open;
+  closeCommand?.addEventListener("click", () => { autosave.flush(); close(); });
 }
 
 /* ---------- identity fields ---------- */
