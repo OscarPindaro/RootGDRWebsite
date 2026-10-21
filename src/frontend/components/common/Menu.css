@@ -66,6 +66,20 @@
   flex: 1;
 }
 
+/* A checkable item reserves the check column always, so the label does not move
+   when the state changes. */
+.menu-item[role="menuitemcheckbox"] .menu-item-check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  inline-size: var(--icon-md);
+  color: var(--clr-accent);
+}
+.menu-item[role="menuitemcheckbox"][aria-checked="false"] .menu-item-check {
+  visibility: hidden;
+}
+
 .menu-trigger-chevron {
   flex-shrink: 0;
   transition: transform var(--dur-base) var(--ease-out);

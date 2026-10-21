@@ -29,6 +29,66 @@
   line-height: var(--leading-tight);
 }
 
+.drawing-editor__viewport-controls { display: inline-flex; align-items: center; gap: var(--sp-1); }
+/* ---------- docked command palette ----------
+   Inside the canvas, at its top centre: the commands belong to the drawing
+   surface, not to the application, so the panel never covers the page chrome
+   and the canvas stays usable around it. */
+.drawing-editor__canvas {
+  position: relative;
+  min-width: 0;
+  border: var(--rule-ink);
+  background: var(--surface);
+}
+
+.drawing-editor__palette-dock {
+  position: absolute;
+  top: var(--sp-2);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  display: grid;
+  gap: var(--sp-2);
+  width: min(100% - var(--sp-4), 28rem);
+  max-height: calc(100% - var(--sp-4));
+  overflow-y: auto;
+  padding: var(--sp-3);
+  border: var(--rule-ink);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.drawing-editor__palette-dock[hidden] { display: none; }
+
+.drawing-editor__commands-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-2);
+}
+
+.drawing-editor__command-preview {
+  width: 100%;
+  max-height: var(--drawing-layers-height);
+  border: var(--rule);
+}
+
+.drawing-editor__command-options {
+  list-style: none;
+  max-height: var(--drawing-layers-height);
+  overflow-y: auto;
+}
+.drawing-editor__command-option { padding: var(--sp-2); cursor: pointer; }
+.drawing-editor__command-option[aria-selected="true"] { background: var(--paper-deep); }
+.drawing-editor__command-option[aria-disabled="true"] { color: var(--muted); }
+
+.drawing-editor__context-menu {
+  max-height: calc(100dvh - var(--sp-4));
+  max-width: calc(100dvw - var(--sp-4));
+  overflow-y: auto;
+}
+.drawing-editor__context-menu [disabled] { color: var(--muted); }
+
 .drawing-editor__commands {
   display: flex;
   flex-wrap: wrap;
@@ -86,11 +146,74 @@
 
 /* ---------- tools ---------- */
 
+.drawing-editor__rail {
+  display: grid;
+  gap: var(--sp-3);
+  align-content: start;
+  min-width: 0;
+}
+
+.drawing-editor__paint { padding: var(--sp-2); }
+
+
+/* The rail is narrower than the inspector, so a paint row groups its controls
+   to the left and wraps instead of spreading them across the column. */
+.drawing-editor__paint .drawing-editor__field {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+/* An inspector row: a label and its fields on one line, so related numbers read
+   as one property instead of one property per field. */
+.drawing-editor__row {
+  display: grid;
+  grid-template-columns: 4rem minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.drawing-editor__row-label {
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  /* "Raggio orizzontale" wraps in the label column instead of being clipped. */
+  overflow-wrap: anywhere;
+}
+
+.drawing-editor__cell {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-1);
+  min-width: 0;
+}
+
+.drawing-editor__axis {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+/* A row's number field is one of two in a narrow column: no room for the
+   browser's spinner or the default padding. */
+.drawing-editor__cell .drawing-editor__name {
+  flex: 1 1 auto;
+  width: 100%;
+  padding-inline: var(--sp-1);
+  appearance: textfield;
+}
+
+.drawing-editor__cell .drawing-editor__name::-webkit-outer-spin-button,
+.drawing-editor__cell .drawing-editor__name::-webkit-inner-spin-button {
+  appearance: none;
+  margin: 0;
+}
+
 .drawing-editor__tools {
   display: grid;
   gap: var(--sp-1);
   align-content: start;
 }
+
+.drawing-editor__split { display: flex; }
+.drawing-editor__split .drawing-editor__tool { flex: 1; min-width: 0; }
 
 .drawing-editor__tool {
   display: flex;
@@ -120,24 +243,28 @@
 
 /* ---------- artboard ---------- */
 
-.drawing-editor__canvas {
-  min-width: 0;
-  border: var(--rule-ink);
-  background: var(--surface);
-}
-
 .drawing-editor__artboard {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: var(--drawing-artboard-ratio);
+  /* The ratio comes from the document's artboard, set inline. */
   /* Pointer drags draw; they must not scroll or zoom the page. */
   touch-action: none;
 }
 
-.drawing-editor__plate { fill: var(--surface); }
+/* Off the artboard the drawing still shows, on the page: the artboard is a
+   guide, so what sits outside it is visible but visibly outside. */
+.drawing-editor__outside { fill: var(--paper-deep); }
 
-.drawing-editor__shape {
+.drawing-editor__plate {
+  fill: var(--surface);
+  stroke: var(--line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.drawing-editor__shape,
+.drawing-editor__command-shape {
   stroke-linejoin: miter;
   vector-effect: non-scaling-stroke;
 }
@@ -234,10 +361,28 @@
   align-items: center;
   gap: var(--sp-2);
   min-height: var(--touch-target);
-  border: 0;
+  border-bottom: var(--rule);
+  border-inline: 0;
   padding: 0 var(--sp-2);
   /* A nested row indents by its depth in the tree. */
   padding-left: calc(var(--sp-2) + var(--drawing-depth, 0) * var(--sp-3));
+}
+
+/* A rule between rows, and none after the last row of a level: the nested
+   children already open with their own left rule. */
+.drawing-editor__tree-node:last-child > .drawing-editor__layer { border-bottom: 0; }
+
+.drawing-editor__layer-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: var(--touch-target);
+  border: var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--text-sm);
+  padding-inline: var(--sp-2);
 }
 
 .drawing-editor__layer.is-selected {
@@ -256,6 +401,8 @@
   cursor: pointer;
   font-size: var(--text-sm);
 }
+
+.drawing-editor__geometry { display: grid; gap: var(--sp-2); border: 0; min-width: 0; }
 
 .drawing-editor__field {
   display: flex;
@@ -283,9 +430,12 @@
 
 /* ---------- palette and style controls ---------- */
 
+/* The paint controls live in the left rail, beside the tools, so they are
+   reachable without scrolling the inspector. The chips wrap instead of
+   overflowing that narrow column. */
 .drawing-editor__palette {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--drawing-chip), 1fr));
   gap: var(--sp-1);
 }
 
@@ -369,6 +519,22 @@
   pointer-events: none;
 }
 
+/* The cut is a plane, not a segment: a dashed line that runs off the artboard
+   with two handles for its direction and its position. */
+.drawing-editor__cut-line {
+  stroke: var(--vermilion);
+  stroke-width: 1.5;
+  stroke-dasharray: 8 5;
+  pointer-events: none;
+}
+
+.drawing-editor__cut-handle {
+  fill: var(--surface);
+  stroke: var(--vermilion);
+  stroke-width: 2;
+  cursor: grab;
+}
+
 /* The edge toggle in vertex mode: filled when the outline is drawn, dashed
    when it is hidden. */
 .drawing-editor__edge-handle {
@@ -422,16 +588,10 @@
 @media (max-width: 900px) {
   .drawing-editor__workspace { grid-template-columns: minmax(0, 1fr); }
 
-  .drawing-editor__tools {
-    grid-auto-flow: column;
-    grid-auto-columns: max-content;
-    overflow-x: auto;
-  }
-
   .drawing-editor__selection-bar,
   .drawing-editor__hint,
   .drawing-editor__bar,
-  .drawing-editor__tools { display: none; }
+  .drawing-editor__rail { display: none; }
 
   .drawing-editor__phone-note {
     display: block;

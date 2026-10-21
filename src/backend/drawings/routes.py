@@ -13,6 +13,7 @@ from .schemas import (
     DrawingResponse,
     DrawingSummary,
     DrawingUpdate,
+    SceneDocument,
 )
 from .service import (
     create_drawing,
@@ -22,6 +23,7 @@ from .service import (
     node_count_of,
     scene_of,
     update_drawing,
+    validate_scene,
 )
 
 router = APIRouter(prefix="/api/drawings", tags=["drawings"])
@@ -58,6 +60,13 @@ async def list_drawings_route(
 ) -> ListResponse[DrawingSummary]:
     """List every drawing (admin only)."""
     return ListResponse(data=await list_drawings(db, user, page, page_size))
+
+
+@router.post("/validate", response_model=SceneDocument)
+async def validate_scene_route(
+    data: SceneDocument, user: User = Depends(get_current_admin_user)
+) -> SceneDocument:
+    return validate_scene(data, user)
 
 
 @router.get("/{drawing_id}", response_model=DrawingResponse)

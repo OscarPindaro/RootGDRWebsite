@@ -64,3 +64,16 @@ which assets happened to be collected.
 - Declaring the asset makes the dependency visible and checkable; it does not by
   itself put a `<link>` in an htmx fragment response. Fragments still rely on the
   host page having loaded the stylesheet.
+- `test_every_class_a_template_uses_has_a_rule` closes the other half of the
+  same seam. The ownership guard asks who styles a root; this one asks whether
+  anybody does. `WorldNew` shipped `<form class="form">` and no stylesheet ever
+  defined `.form`, so the two fields stacked as bare blocks and touched — a
+  defect that compiles, passes the create-flow test, and renders without an
+  error. A class with no rule is reported by name and file, so the fix is either
+  a rule or a layout primitive.
+- `UNSTYLED_ALLOWLIST` holds the classes that carry no rule on purpose: an SVG
+  or script hook the client queries by class, a marker on an element that is
+  hidden or styled by a global, and a BEM parent whose layout lives on its
+  children. Like `MIGRATION_ALLOWLIST`, it fails on a stale entry, so an
+  exception cannot outlive the markup that needed it. The guard reads only
+  `*.jinja`; a class a script writes is not covered yet.

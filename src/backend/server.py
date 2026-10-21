@@ -12,6 +12,7 @@ from .auth.routes.invitations import router as invitation_router
 from .characters.routes import router as characters_router
 from .content.actions import router as content_actions_router
 from .drawings.routes import router as drawings_router
+from .libraries.routes import router as libraries_router
 from .images.routes import router as images_router
 from .npcs.routes import router as npcs_router
 from .palette import router as palette_router
@@ -103,6 +104,7 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     app.include_router(worlds_router)
     app.include_router(characters_router)
     app.include_router(drawings_router)
+    app.include_router(libraries_router)
     app.include_router(images_router)
     app.include_router(content_actions_router)
     app.include_router(npcs_router)

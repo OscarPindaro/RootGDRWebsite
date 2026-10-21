@@ -1,7 +1,15 @@
 import pytest
 from pydantic import ValidationError
 
-from backend.drawings.schemas import PathNode, PolygonNode, SceneDocument
+from backend.drawings.schemas import (
+    SCENE_FORMAT_VERSION,
+    EllipseNode,
+    GroupNode,
+    InstanceNode,
+    PathNode,
+    PolygonNode,
+    SceneDocument,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -32,7 +40,7 @@ def test_nonzero_area_self_intersecting_polygon_is_rejected():
 
 def test_unknown_formats_and_duplicate_ids_are_rejected():
     with pytest.raises(ValidationError):
-        SceneDocument(schema_version=2)
+        SceneDocument(schema_version=99)
     node = PolygonNode(id="same", name="Shape", points=[(0, 0), (10, 0), (0, 10)])
     with pytest.raises(ValidationError):
         SceneDocument(nodes=[node, node])
@@ -45,4 +53,292 @@ def test_colour_cannot_reference_external_content():
             name="Shape",
             points=[(0, 0), (10, 0), (0, 10)],
             fill="url(https://example.com/image)",
+        )
+
+
+def test_legacy_native_migration_is_deterministic_and_does_not_infer_locks():
+    legacy = {
+        "schemaVersion": 1,
+        "nodes": [
+            {
+                "kind": "polygon",
+                "id": "old",
+                "name": "Rettangolo",
+                "points": [[0, 0], [100, 0], [80, 70]],
+                "transform": [2, 0, 0, 3, 10, 20],
+            }
+        ],
+    }
+    first = SceneDocument.model_validate(legacy)
+    second = SceneDocument.model_validate(legacy)
+    assert first.schema_version == SCENE_FORMAT_VERSION
+    assert first == second
+    assert first.nodes[0].constraint is None
+    assert first.nodes[0].point_ids == ["v0", "v1", "v2"]
+    assert first.nodes[0].points == [(0, 0), (100, 0), (80, 70)]
+    assert legacy["schemaVersion"] == 1
+    assert SceneDocument.model_validate(first.model_dump(by_alias=True)) == first
+
+
+@pytest.mark.parametrize(
+    "nodes",
+    [None, "bad", [{"kind": "group", "id": "g", "name": "Group", "nodes": None}]],
+)
+def test_malformed_legacy_trees_are_validation_errors(nodes):
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"schemaVersion": 1, "nodes": nodes})
+
+
+def test_stable_element_ids_reject_duplicates_and_wrong_counts():
+    base = {"id": "p", "name": "Shape", "points": [(0, 0), (10, 0), (0, 10)]}
+    for ids in (["a", "a", "c"], ["a", "b"], []):
+        with pytest.raises(ValidationError):
+            PolygonNode(**base, point_ids=ids)
+
+
+@pytest.mark.parametrize(
+    "constraint,points",
+    [
+        ("rectangle", [(0, 0), (10, 0), (8, 10), (0, 10)]),
+        ("square", [(0, 0), (10, 0), (10, 20), (0, 20)]),
+        ("triangle_equilateral", [(0, 0), (10, 0), (5, 10)]),
+        ("triangle_right_right", [(0, 10), (10, 10), (5, 0)]),
+        ("triangle_isosceles", [(0, 10), (10, 10), (2, 0)]),
+    ],
+)
+def test_native_constraints_reject_incompatible_geometry(constraint, points):
+    with pytest.raises(ValidationError):
+        PolygonNode(
+            id="p", name="Shape", points=points, constraint={"kind": constraint}
+        )
+
+
+def test_locked_square_rejects_nonuniform_parent_transform():
+    scene = {
+        "schemaVersion": 2,
+        "nodes": [
+            {
+                "kind": "group",
+                "id": "g",
+                "name": "Group",
+                "transform": [2, 0, 0, 3, 0, 0],
+                "nodes": [
+                    {
+                        "kind": "polygon",
+                        "id": "p",
+                        "name": "Square",
+                        "points": [[0, 0], [10, 0], [10, 10], [0, 10]],
+                        "constraint": {"kind": "square"},
+                    }
+                ],
+            }
+        ],
+    }
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate(scene)
+    scene["nodes"][0]["nodes"][0]["constraint"] = None
+    assert SceneDocument.model_validate(scene).nodes[0].nodes[0].constraint is None
+
+
+@pytest.mark.parametrize("transform", [(2, 0, 0, 3, 0, 0), (1, 0, 1, 1, 0, 0)])
+def test_locked_circles_reject_incompatible_own_and_parent_transforms(transform):
+    circle = EllipseNode(
+        id="circle",
+        name="Circle",
+        cx=0,
+        cy=0,
+        rx=10,
+        ry=10,
+        constraint={"kind": "circle"},
+    )
+    with pytest.raises(ValidationError):
+        SceneDocument(nodes=[circle.model_copy(update={"transform": transform})])
+    with pytest.raises(ValidationError):
+        SceneDocument(
+            nodes=[GroupNode(id="g", name="Group", transform=transform, nodes=[circle])]
+        )
+    circle.constraint = None
+    assert SceneDocument(
+        nodes=[GroupNode(id="g", name="Group", transform=transform, nodes=[circle])]
+    )
+
+
+def test_reflected_uniform_circle_transform_and_legacy_named_ellipse_remain_valid():
+    circle = EllipseNode(
+        id="c",
+        name="Circle",
+        cx=0,
+        cy=0,
+        rx=10,
+        ry=10,
+        constraint={"kind": "circle"},
+        transform=(-2, 0, 0, 2, 0, 0),
+    )
+    assert SceneDocument(nodes=[circle]).nodes[0].constraint.kind == "circle"
+    legacy = SceneDocument.model_validate(
+        {
+            "schemaVersion": 1,
+            "nodes": [
+                {
+                    "kind": "ellipse",
+                    "id": "old",
+                    "name": "Cerchio",
+                    "cx": 10,
+                    "cy": 20,
+                    "rx": 30,
+                    "ry": 15,
+                }
+            ],
+        }
+    )
+    assert legacy.nodes[0].constraint is None
+    assert legacy.nodes[0].rx == 30 and legacy.nodes[0].ry == 15
+
+
+def test_transform_pivots_round_trip_and_version_two_keeps_geometry_locks():
+    old = {
+        "schemaVersion": 2,
+        "nodes": [
+            {
+                "kind": "polygon",
+                "id": "p",
+                "name": "Square",
+                "points": [[0, 0], [100, 0], [100, 100], [0, 100]],
+                "pointIds": ["a", "b", "c", "d"],
+                "constraint": {"kind": "square"},
+            }
+        ],
+    }
+    migrated = SceneDocument.model_validate(old)
+    assert migrated.schema_version == SCENE_FORMAT_VERSION
+    assert migrated.nodes[0].point_ids == ["a", "b", "c", "d"]
+    assert migrated.nodes[0].constraint.kind == "square"
+    assert migrated.nodes[0].pivot is None
+    migrated.nodes[0].pivot = (20, 30)
+    assert SceneDocument.model_validate(migrated.model_dump(by_alias=True)).nodes[
+        0
+    ].pivot == (20, 30)
+    with pytest.raises(ValidationError):
+        migrated.nodes[0].pivot = (float("nan"), 0)
+
+
+def test_curve_modes_validate_endpoint_identity_and_linked_tangents():
+    data = {
+        "kind": "path",
+        "id": "p",
+        "name": "Curve",
+        "d": "M0 0 C0 50 25 75 50 75 75 75 100 50 100 0",
+        "pointIds": [f"h{i}" for i in range(7)],
+        "anchorModes": [{"id": "h3", "mode": "symmetric"}],
+    }
+    node = PathNode.model_validate(data)
+    assert node.anchor_modes[0].mode == "symmetric"
+    assert (
+        PathNode.model_validate(node.model_dump(by_alias=True)).point_ids
+        == node.point_ids
+    )
+    with pytest.raises(ValidationError):
+        PathNode.model_validate(
+            data | {"anchorModes": [{"id": "h2", "mode": "smooth"}]}
+        )
+    with pytest.raises(ValidationError):
+        PathNode.model_validate(
+            data | {"d": "M0 0 C0 50 25 60 50 75 75 75 100 50 100 0"}
+        )
+
+
+def test_curve_and_anchor_identities_round_trip():
+    scene = SceneDocument.model_validate(
+        {
+            "nodes": [
+                {
+                    "kind": "path",
+                    "id": "p",
+                    "name": "Curve",
+                    "d": "M0 0 C10 20 30 20 40 0",
+                    "anchors": [
+                        {
+                            "id": "grip",
+                            "name": "Grip",
+                            "position": [10, 10],
+                            "angle": 0.5,
+                        }
+                    ],
+                }
+            ]
+        }
+    )
+    assert scene.nodes[0].point_ids == ["h0", "h1", "h2", "h3"]
+    assert SceneDocument.model_validate(scene.model_dump(by_alias=True)) == scene
+
+
+def _instance(**overrides):
+    payload = {
+        "kind": "instance",
+        "id": "instance-1",
+        "name": "Spada",
+        "source": {
+            "libraryId": "11111111-1111-1111-1111-111111111111",
+            "assetId": "22222222-2222-2222-2222-222222222222",
+        },
+        "revision": 2,
+        "overrides": ["transform"],
+        "nodes": [
+            {
+                "kind": "polygon",
+                "id": "blade",
+                "name": "Lama",
+                "points": [[0, 0], [40, 0], [20, 6]],
+            }
+        ],
+    }
+    payload.update(overrides)
+    return payload
+
+
+def test_a_version_five_scene_migrates_to_the_instance_format():
+    scene = SceneDocument.model_validate({"schemaVersion": 6, "nodes": []})
+
+    assert scene.schema_version == SCENE_FORMAT_VERSION == 6
+
+
+def test_an_instance_carries_its_source_revision_and_local_overrides():
+    scene = SceneDocument.model_validate({"nodes": [_instance()]})
+    node = scene.nodes[0]
+
+    assert isinstance(node, InstanceNode)
+    assert node.revision == 2
+    assert node.overrides == ["transform"]
+    assert [child.id for child in node.nodes] == ["blade"]
+    assert SceneDocument.model_validate(scene.model_dump(by_alias=True)) == scene
+
+
+def test_an_instance_needs_a_source_a_child_and_distinct_overrides():
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(source=None)]})
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(nodes=[])]})
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(revision=0)]})
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(overrides=["fill", "fill"])]})
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate({"nodes": [_instance(overrides=["shape"])]})
+
+
+def test_a_legacy_scene_cannot_smuggle_instance_metadata():
+    with pytest.raises(ValidationError):
+        SceneDocument.model_validate(
+            {
+                "schemaVersion": 4,
+                "nodes": [
+                    {
+                        "kind": "group",
+                        "id": "g",
+                        "name": "G",
+                        "nodes": [],
+                        **_instance(),
+                    }
+                ],
+            }
         )

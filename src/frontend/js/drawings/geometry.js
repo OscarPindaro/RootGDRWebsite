@@ -107,3 +107,19 @@ export function centerOf(points) {
   const box = bounds(points);
   return [(box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2];
 }
+
+export function resizeFrame(corners, corner, point) {
+  if (corners.length !== 4 || !Number.isInteger(corner) || corner < 0 || corner > 3 || !point.every(Number.isFinite)) return null;
+  const fixed = corners[(corner + 2) % 4];
+  let u = [corners[1][0] - corners[0][0], corners[1][1] - corners[0][1]];
+  let v = [corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]];
+  const width = Math.hypot(...u), height = Math.hypot(...v);
+  if (!width && !height) return null;
+  if (!width) u = [v[1] / height, -v[0] / height];
+  if (!height) v = [-u[1] / width, u[0] / width];
+  const basis = [u[0], u[1], v[0], v[1], fixed[0], fixed[1]];
+  const inverse = invert(basis);
+  if (!inverse) return null;
+  const start = apply(inverse, corners[corner]), wanted = apply(inverse, point);
+  return { basis, inverse, fixed, sx:start[0] ? wanted[0] / start[0] : 1, sy:start[1] ? wanted[1] / start[1] : 1 };
+}

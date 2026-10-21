@@ -87,11 +87,19 @@ def test_a_save_from_another_writer_becomes_a_conflict(
     )
 
 
-def _drag(page, start: tuple[int, int], end: tuple[int, int]) -> None:
-    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
-    page.mouse.move(box["x"] + start[0], box["y"] + start[1])
+def _drag(page, start: tuple[float, float], end: tuple[float, float]) -> None:
+    """Drag between two points given in artboard units.
+
+    Reading the SVG's own screen matrix keeps the helper honest whatever the
+    viewBox is: the artboard shows a margin around itself, so a pixel offset from
+    the canvas corner is not an artboard coordinate.
+    """
+    page.locator("[data-drawing-artboard]").scroll_into_view_if_needed()
+    first = _at(page, start[0], start[1])
+    second = _at(page, end[0], end[1])
+    page.mouse.move(first[0], first[1])
     page.mouse.down()
-    page.mouse.move(box["x"] + end[0], box["y"] + end[1], steps=4)
+    page.mouse.move(second[0], second[1], steps=4)
     page.mouse.up()
 
 
@@ -129,8 +137,12 @@ def test_an_admin_draws_undoes_and_reopens_artwork(session: BrowserSession) -> N
 
 
 def _at(page, x: float, y: float) -> tuple[float, float]:
-    box = page.locator("[data-testid='drawing-canvas']").bounding_box()
-    return (box["x"] + (x / 640) * box["width"], box["y"] + (y / 480) * box["height"])
+    return tuple(
+        page.evaluate(
+            "([x,y]) => { const m = document.querySelector('[data-drawing-artboard]').getScreenCTM(); return [m.a*x+m.c*y+m.e,m.b*x+m.d*y+m.f]; }",
+            [x, y],
+        )
+    )
 
 
 def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> None:
@@ -143,7 +155,8 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     drawn = _local_node(session)
     tip = drawn["points"][2]
 
-    session.page.locator("[data-drawing-mode]").click()
+    session.page.locator("[data-drawing-unlock]").click()
+    session.page.locator("[data-drawing-mode='vertex']").click()
 
     # Insert one point on the upper edge and one on the lower edge. A quarter
     # along, not the midpoint: the midpoint is the edge-visibility toggle.
@@ -157,7 +170,7 @@ def test_the_bent_beak_survives_a_save_and_a_reopen(session: BrowserSession) -> 
     for index in (0, 1):
         x, y = along(index)
         point = _at(session.page, x, y)
-        session.page.mouse.click(point[0], point[1])
+        session.page.mouse.dblclick(point[0], point[1])
     assert len(_local_node(session)["points"]) == 5
 
     # Drag the original tip downward. It is the topmost vertex, wherever the
@@ -199,29 +212,41 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
     drawn = _local_node(session)
     tip = drawn["points"][2]
 
-    session.page.locator("[data-drawing-mode]").click()
+    session.page.locator("[data-drawing-unlock]").click()
+    session.page.locator("[data-drawing-mode='vertex']").click()
     for index in (0, 1):
         start = drawn["points"][index]
         x = start[0] + (tip[0] - start[0]) * 0.25
         y = start[1] + (tip[1] - start[1]) * 0.25
         point = _at(session.page, x, y)
-        session.page.mouse.click(point[0], point[1])
+        session.page.mouse.dblclick(point[0], point[1])
     assert len(_local_node(session)["points"]) == 5
 
-    # Cut between the two inserted vertices: the two points nearest the tip.
+    # Cut along the line through the two inserted vertices, so the tip comes off.
     points = _local_node(session)["points"]
     tip_index = min(range(5), key=lambda index: points[index][1])
     neighbours = sorted([(tip_index - 1) % 5, (tip_index + 1) % 5])
+    # Draw the line through the two inserted vertices, then apply it with Enter.
     session.page.get_by_test_id("drawing-tool-cut").click()
-    for index in neighbours:
-        point = _at(session.page, points[index][0], points[index][1])
-        session.page.mouse.click(point[0], point[1])
+    _drag(
+        session.page,
+        (points[neighbours[0]][0], points[neighbours[0]][1]),
+        (points[neighbours[1]][0], points[neighbours[1]][1]),
+    )
+    assert session.page.locator(".drawing-editor__cut-line").count() == 1
+    session.page.keyboard.press("Enter")
 
     pieces = _local_node_scene(session)["nodes"]
-    assert len(pieces) == 2
-    assert sorted(len(piece["points"]) for piece in pieces) == [3, 4]
+    assert len(pieces) == 2, "the beak is two editable pieces"
+    # The tip is the piece that still reaches the original apex; a pointer move
+    # lands on whole pixels, so the cut can clip a vertex and add a point.
+    tip_piece = min(pieces, key=lambda node: min(point[1] for point in node["points"]))
+    rest = next(node for node in pieces if node["id"] != tip_piece["id"])
+    assert min(point[1] for point in tip_piece["points"]) == tip[1], "the apex"
+    for corner in drawn["points"][:2]:
+        assert list(corner) in rest["points"], "the base stays in the other piece"
 
-    # The smaller piece is selected, so the palette recolours the tip.
+    session.page.locator(f"[data-select-node='{tip_piece['id']}']").click()
     session.page.locator("[data-palette='#d1402a']").click()
 
     with session.page.expect_response(_is_patch_to(drawing_id)) as saved:
@@ -230,15 +255,17 @@ def test_a_cut_recolours_the_tip_without_losing_the_rest(
 
     stored = session.expect_api(f"/api/drawings/{drawing_id}").json()
     assert stored["nodeCount"] == 2
-    tip_piece = next(
-        node for node in stored["scene"]["nodes"] if len(node["points"]) == 3
+    stored_tip = next(
+        node for node in stored["scene"]["nodes"] if node["id"] == tip_piece["id"]
     )
-    rest = next(node for node in stored["scene"]["nodes"] if len(node["points"]) == 4)
-    assert tip_piece["fill"] == "#d1402a"
-    assert rest["fill"] != "#d1402a"
-    # The shared cut edge is hidden on both pieces.
-    assert tip_piece["edgeVisible"][-1] is False
-    assert rest["edgeVisible"][-1] is False
+    stored_rest = next(
+        node for node in stored["scene"]["nodes"] if node["id"] == rest["id"]
+    )
+    assert stored_tip["fill"] == "#d1402a"
+    assert stored_rest["fill"] != "#d1402a"
+    # The seam the cut made starts hidden on both pieces.
+    assert stored_tip["edgeVisible"].count(False) == 1
+    assert stored_rest["edgeVisible"].count(False) == 1
 
     session.goto(f"/drawings/{drawing_id}")
     session.page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
@@ -282,7 +309,7 @@ def test_both_curve_endpoints_remain_editable_after_saving(session: BrowserSessi
     page.get_by_test_id("drawing-tool-curve").click()
     _drag(page, (100, 100), (300, 150))
     before = _local_node_scene(session)["nodes"][0]["d"]
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     page.get_by_role("button", name="Punto finale", exact=True).focus()
     page.keyboard.press("ArrowRight")
     page.get_by_role("button", name="Punto iniziale", exact=True).focus()
@@ -301,7 +328,7 @@ def test_both_curve_endpoints_remain_editable_after_saving(session: BrowserSessi
     session.goto(f"/drawings/{identifier}")
     page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
     page.locator("[data-select-node]").first.click()
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     assert page.get_by_role("button", name="Punto iniziale", exact=True).count() == 1
     assert page.get_by_role("button", name="Punto finale", exact=True).count() == 1
 
@@ -342,7 +369,7 @@ def test_grouped_artwork_and_faint_curve_reopen_editable(session: BrowserSession
     opacity.evaluate(
         "el => { el.value = 20; el.dispatchEvent(new Event('change', {bubbles:true})); }"
     )
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     assert page.locator(".drawing-editor__curve-control").count() == 2
     handle = page.locator(".drawing-editor__curve-control").first.bounding_box()
     x, y = handle["x"] + handle["width"] / 2, handle["y"] + handle["height"] / 2
@@ -363,7 +390,7 @@ def test_grouped_artwork_and_faint_curve_reopen_editable(session: BrowserSession
     page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
     assert _local_node_scene(session) == stored["scene"]
     page.locator(f"[data-select-node='{curve_id}']").click()
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     assert page.locator(".drawing-editor__curve-control").count() == 2
     assert session.errors == []
 
@@ -393,3 +420,458 @@ def test_conflicted_work_is_persisted_as_a_separate_copy(session: BrowserSession
     original = session.expect_api(f"/api/drawings/{identifier}").json()
     assert original["title"] == "Server wins"
     assert not original["scene"]["nodes"]
+
+
+def test_locked_presets_and_explicit_unlock_survive_native_save(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    for family, preset, start, end in [
+        ("triangle", "triangle_equilateral", (80, 80), (200, 200)),
+        ("triangle", "triangle_right_left", (250, 80), (370, 200)),
+        ("rectangle", "square", (80, 250), (200, 370)),
+        ("polygon", "regular_polygon", (250, 250), (370, 370)),
+    ]:
+        page.locator(f"[data-preset-menu='{family}']").click()
+        page.locator(f"[data-drawing-preset='{preset}']").click()
+        _drag(page, start, end)
+    local = _local_node_scene(session)
+    assert [node["constraint"]["kind"] for node in local["nodes"]] == [
+        "triangle_equilateral",
+        "triangle_right_left",
+        "square",
+        "regular_polygon",
+    ]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-select-node]").first.click()
+    page.locator("[data-drawing-unlock]").click()
+    unlocked = _local_node_scene(session)
+    assert unlocked["nodes"][0]["constraint"] is None
+    assert unlocked["nodes"][0]["points"] == local["nodes"][0]["points"]
+    assert unlocked["nodes"][0]["pointIds"] == local["nodes"][0]["pointIds"]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == unlocked
+
+
+def test_circle_parameters_stay_locked_after_save_and_reopen(session: BrowserSession):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (300, 200))
+    for field, value in [("cx", "220"), ("cy", "180"), ("rx", "65")]:
+        page.locator(f"[data-ellipse-parameter='{field}']").fill(value)
+        page.locator(f"[data-ellipse-parameter='{field}']").blur()
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    stored = session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"][
+        0
+    ]
+    assert stored["rx"] == stored["ry"] == 65
+    assert stored["cx"] == 220 and stored["cy"] == 180
+    assert stored["constraint"] == {"kind": "circle"}
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-select-node]").first.click()
+    page.get_by_role("button", name="Raggio", exact=True).focus()
+    page.keyboard.press("ArrowRight")
+    assert (
+        _local_node_scene(session)["nodes"][0]["rx"]
+        == _local_node_scene(session)["nodes"][0]["ry"]
+        == 66
+    )
+
+
+def test_snapped_resize_is_persisted_without_editor_guides(session: BrowserSession):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (100, 100), (300, 250))
+    original = _local_node_scene(session)["nodes"][0]
+    corner = original["points"][2]
+    page.locator("[data-drawing-mode='transform']").click()
+    page.mouse.move(*_at(page, *corner))
+    page.mouse.down()
+    page.mouse.move(*_at(page, corner[0] + 53, corner[1] + 47), steps=4)
+    assert page.locator("[data-snap-guide]").count() > 0
+    page.mouse.up()
+    local = _local_node_scene(session)
+    node = local["nodes"][0]
+    a, b, c, d, e, f = node["transform"]
+    fixed = original["points"][0]
+    assert a * fixed[0] + c * fixed[1] + e == pytest.approx(fixed[0])
+    assert b * fixed[0] + d * fixed[1] + f == pytest.approx(fixed[1])
+    assert node["pointIds"] == original["pointIds"]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    assert "guides" not in local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == local
+
+
+def test_subscene_delete_keeps_the_saved_drawing_and_undo_restores_children(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (200, 200))
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (300, 100), (400, 200))
+    page.locator("[data-select-node]").first.click()
+    page.locator("[data-select-node]").nth(1).click(modifiers=["Shift"])
+    page.get_by_test_id("drawing-group").click()
+    group = _local_node_scene(session)["nodes"][0]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    page.locator(f"[data-select-node='{group['id']}']").click()
+    page.keyboard.press("Delete")
+    assert _local_node_scene(session)["nodes"] == []
+    persisted = session.expect_api(f"/api/drawings/{identifier}").json()
+    assert persisted["scene"]["nodes"][0]["id"] == group["id"]
+    page.keyboard.press("Control+z")
+    assert _local_node_scene(session)["nodes"][0] == group
+    page.locator(f"[data-select-node='{group['id']}']").click()
+    page.get_by_test_id("drawing-delete").click()
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    persisted = session.expect_api(f"/api/drawings/{identifier}").json()
+    assert persisted["id"] == identifier and persisted["scene"]["nodes"] == []
+
+
+def test_context_duplicate_saves_native_artwork_and_global_search_stays_separate(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (250, 220))
+    node = _local_node_scene(session)["nodes"][0]
+    center = [sum(point[axis] for point in node["points"]) / 3 for axis in (0, 1)]
+    page.mouse.click(*_at(page, *center), button="right")
+    page.locator("#drawing-context-menu [data-drawing-command='duplicate']").click()
+    local = _local_node_scene(session)
+    assert len(local["nodes"]) == 2
+    assert local["nodes"][0]["id"] != local["nodes"][1]["id"]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Control+k")
+    page.locator("#palette").wait_for(state="visible")
+    assert not page.locator("#drawing-context-menu").is_visible()
+    page.keyboard.press("Escape")
+
+
+def test_global_palette_creates_and_finds_drawings_through_native_api(
+    session: BrowserSession,
+):
+    _create(session)
+    page = session.page
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Control+k")
+    page.locator(".palette__input").fill("Nuovo disegno")
+    create = page.locator(".palette__item").filter(
+        has=page.locator(".palette__kind", has_text="Crea")
+    )
+    create.first.wait_for()
+    old = _drawing_id(page.url)
+    create.first.click()
+    page.wait_for_url(
+        lambda url: "/drawings/" in str(url) and not str(url).endswith(old)
+    )
+    identifier = _drawing_id(page.url)
+    stored = session.expect_api(f"/api/drawings/{identifier}").json()
+    assert stored["title"] == "Nuovo disegno" and stored["scene"]["nodes"] == []
+    result = session.expect_api("/api/palette?q=disegn").json()
+    assert any(item["href"] == "/drawings" for item in result["data"])
+    assert any(
+        item["method"] == "POST" and item["href"] == "/drawings/new"
+        for item in result["data"]
+    )
+
+
+def test_global_palette_navigation_keeps_dirty_work_when_leave_is_cancelled(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    target = session.expect_api(
+        "/api/drawings/",
+        method="POST",
+        expected_status=201,
+        data={"title": "Palette navigation target"},
+    ).json()
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (250, 220))
+    local = _local_node_scene(session)
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Control+k")
+    page.locator(".palette__input").fill("Palette navigation target")
+    page.locator(".palette__item").filter(
+        has_text="Palette navigation target"
+    ).first.wait_for()
+    page.locator(".palette__item").filter(
+        has_text="Palette navigation target"
+    ).first.click()
+    page.locator("#drawing-navigation").wait_for(state="visible")
+    page.locator("#drawing-navigation [data-dialog-close]").last.click()
+    assert page.url.endswith(identifier)
+    assert _local_node_scene(session) == local
+    assert (
+        session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"] == []
+    )
+    assert session.expect_api(f"/api/drawings/{target['id']}").status == 200
+
+
+def test_advanced_curve_insertion_and_tangent_mode_persist_without_flattening(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-curve").click()
+    _drag(page, (100, 100), (300, 200))
+    original = _local_node_scene(session)
+    page.locator("[data-path-anchor-insert]").click()
+    inserted = _local_node_scene(session)
+    assert len(inserted["nodes"][0]["pointIds"]) == 7
+    assert inserted["nodes"][0]["pointIds"][0] == original["nodes"][0]["pointIds"][0]
+    page.locator("[data-path-command='1'][data-path-offset='4']").click()
+    page.locator("[data-path-anchor-mode]").select_option("symmetric")
+    local = _local_node_scene(session)
+    assert any(mode["mode"] == "symmetric" for mode in local["nodes"][0]["anchorModes"])
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == local
+
+
+def test_polygon_draft_recovers_and_stale_recovery_cannot_overwrite_newer_server(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-polygon").click()
+    for point in [(100, 100), (200, 100), (150, 200)]:
+        page.mouse.click(*_at(page, *point))
+    page.on("dialog", lambda dialog: dialog.accept())
+    page.reload()
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-recovery-restore]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.tool === 'polygon'"
+    )
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Enter")
+    local = _local_node_scene(session)
+    assert len(local["nodes"]) == 1
+    current = session.expect_api(f"/api/drawings/{identifier}").json()
+    session.expect_api(
+        f"/api/drawings/{identifier}",
+        method="PATCH",
+        data={"expectedVersion": current["version"], "title": "Newer server"},
+    )
+    page.reload()
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-recovery-restore]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 1"
+    )
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 409
+    assert _local_node_scene(session) == local
+    assert (
+        session.expect_api(f"/api/drawings/{identifier}").json()["title"]
+        == "Newer server"
+    )
+
+
+def test_local_recovery_restores_work_without_claiming_server_persistence(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (250, 220))
+    local = _local_node_scene(session)
+    page.on("dialog", lambda dialog: dialog.accept())
+    page.reload()
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-recovery-restore]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 1"
+    )
+    assert _local_node_scene(session) == local
+    assert (
+        session.expect_api(f"/api/drawings/{identifier}").json()["scene"]["nodes"] == []
+    )
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+
+
+def test_object_edit_lock_persists_and_fit_does_not_save_geometry(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (250, 220))
+    node_id = _local_node_scene(session)["nodes"][0]["id"]
+    page.locator(f"[data-node-locked='{node_id}']").click()
+    local = _local_node_scene(session)
+    page.locator("[data-drawing-fit='drawing']").click()
+    assert _local_node_scene(session) == local
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator(f"[data-select-node='{node_id}']").click()
+    assert _local_node_scene(session)["nodes"][0]["editLocked"] is True
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('move', {dx:20,dy:30})"
+        )
+        is False
+    )
+    assert _local_node_scene(session) == local
+
+
+def test_guided_radius_preview_applies_once_and_persists_native_circle(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (200, 200))
+    original = _local_node_scene(session)
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-mode='guided']").click()
+    page.locator("[data-canvas-command-action]").select_option("ellipse-parameter")
+    page.locator(
+        "[data-guided-fields='ellipse-parameter'] [data-guided-field='value']"
+    ).fill("80")
+    assert _local_node_scene(session) == original
+    assert page.locator("[data-canvas-preview] ellipse").count() == 1
+    page.locator("[data-canvas-command-apply]").click()
+    local = _local_node_scene(session)
+    assert local["nodes"][0]["rx"] == local["nodes"][0]["ry"] == 80
+    page.get_by_test_id("drawing-undo").click()
+    assert _local_node_scene(session) == original
+    page.get_by_test_id("drawing-redo").click()
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+
+
+def test_numeric_transform_and_pivot_reopen_with_native_geometry_intact(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.get_by_test_id("drawing-tool-square").click()
+    _drag(page, (100, 100), (300, 250))
+    before = _local_node_scene(session)["nodes"][0]
+    for field, value in [
+        ("width", "260"),
+        ("pivotX", "150"),
+        ("pivotY", "160"),
+        ("angle", "30"),
+    ]:
+        page.locator(f"[data-geometry-field='{field}']").fill(value)
+        page.locator(f"[data-geometry-field='{field}']").blur()
+    local = _local_node_scene(session)
+    assert local["nodes"][0]["pivot"] == [150, 160]
+    assert local["nodes"][0]["points"] == before["points"]
+    assert local["nodes"][0]["pointIds"] == before["pointIds"]
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == local
+
+
+def test_compact_triangle_refinement_saves_an_editable_native_right_triangle(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    assert _local_node_scene(session)["nodes"] == []
+    field.fill("rect left")
+    page.keyboard.press("Enter")
+    page.wait_for_selector("#drawing-command-dialog", state="hidden")
+    local = _local_node_scene(session)
+    assert len(local["nodes"]) == 1
+    assert local["nodes"][0]["constraint"] == {"kind": "triangle_right_left"}
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local
+    session.goto(f"/drawings/{identifier}")
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    assert _local_node_scene(session) == local
+
+
+def test_canvas_palette_framework_creates_vectors_with_one_undo_and_native_save(
+    session: BrowserSession,
+):
+    identifier = _create(session)
+    page = session.page
+    page.wait_for_selector("[data-drawing-editor][data-drawing-mounted='true']")
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-mode='guided']").click()
+    page.locator("[data-canvas-command-action]").select_option("create-preset")
+    page.locator("[data-canvas-command-apply]").click()
+    assert len(_local_node_scene(session)["nodes"]) == 1
+    assert _local_node_scene(session)["nodes"][0]["constraint"] == {
+        "kind": "triangle_isosceles"
+    }
+    page.get_by_test_id("drawing-undo").click()
+    assert _local_node_scene(session)["nodes"] == []
+    page.get_by_test_id("drawing-redo").click()
+    local = _local_node_scene(session)
+    with page.expect_response(_is_patch_to(identifier)) as saved:
+        page.get_by_test_id("drawing-save").click()
+    assert saved.value.status == 200
+    assert session.expect_api(f"/api/drawings/{identifier}").json()["scene"] == local

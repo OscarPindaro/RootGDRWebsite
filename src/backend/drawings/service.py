@@ -4,6 +4,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import delete, select, func, cast
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm.attributes import flag_modified
 
 from ..concurrency import require_expected_version
 from ..db.enums import UserRole
@@ -39,6 +40,11 @@ def scene_of(model: DrawingModel) -> SceneDocument:
     caller must see it rather than silently lose artwork.
     """
     return SceneDocument.model_validate(model.document)
+
+
+def validate_scene(data: SceneDocument, user: User) -> SceneDocument:
+    _require_admin(user)
+    return data
 
 
 def node_count_of(model: DrawingModel) -> int:
@@ -113,8 +119,9 @@ async def update_drawing(
     if data.title is not None:
         model.title = data.title
     if data.scene is not None:
-        # Assign the whole value: a nested mutation is invisible to SQLAlchemy.
+        # Explicit replacement also persists a read-time native-format migration.
         model.document = data.scene
+        flag_modified(model, "document")
     await db.flush()
     await db.refresh(model)
     return model

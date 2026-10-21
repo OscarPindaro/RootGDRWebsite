@@ -19,6 +19,11 @@ from ..content.models import ReferenceModel  # noqa: F401
 from ..drawings.models import DrawingModel  # noqa: F401
 from ..files.models import FileModel  # noqa: F401
 from ..images.models import ImageRevisionModel  # noqa: F401
+from ..libraries.models import (  # noqa: F401
+    SceneAssetModel,
+    SceneLibraryModel,
+    SceneSectionModel,
+)
 from ..npcs.models import NpcModel  # noqa: F401
 from ..pages.models import PageModel  # noqa: F401
 from ..places.models import PlaceModel  # noqa: F401
@@ -48,6 +53,9 @@ __all__ = [
     "ReferenceModel",
     "ReportEvidenceModel",
     "ReportModel",
+    "SceneAssetModel",
+    "SceneLibraryModel",
+    "SceneSectionModel",
     "SessionModel",
     "StoryModel",
     "TaskModel",

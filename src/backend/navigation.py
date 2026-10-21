@@ -18,6 +18,66 @@ class NavItem(BaseModel):
     style: str | None = None
 
 
+class FeatureRegistration(NavItem):
+    nav_id: str | None = None
+    admin_only: bool = False
+    dev_only: bool = False
+    aliases: tuple[str, ...] = ()
+    create_name: str | None = None
+    create_href: str | None = None
+    create_method: Literal["GET", "POST"] = "GET"
+
+
+GLOBAL_FEATURES = (
+    FeatureRegistration(
+        id="worlds",
+        label="Mondi",
+        href="/worlds",
+        mark="mondi",
+        aliases=("world", "mondo"),
+        create_name="Nuovo mondo",
+        create_href="/worlds/new",
+    ),
+    FeatureRegistration(
+        id="drawings",
+        nav_id="disegni",
+        label="Disegni",
+        href="/drawings",
+        mark="disegni",
+        admin_only=True,
+        aliases=("drawing", "canvas", "tavola"),
+        create_name="Nuovo disegno",
+        create_href="/drawings/new",
+        create_method="POST",
+    ),
+    FeatureRegistration(
+        id="admin-users",
+        label="Utenti",
+        href="/admin/users",
+        mark="profilo",
+        admin_only=True,
+        aliases=("users", "amministrazione"),
+    ),
+    FeatureRegistration(
+        id="showcase",
+        label="Componenti",
+        href="/components",
+        mark="pagina",
+        admin_only=True,
+        dev_only=True,
+    ),
+)
+
+
+def visible_features(is_admin: bool, env: str) -> list[FeatureRegistration]:
+    return [
+        feature
+        for feature in GLOBAL_FEATURES
+        if (not feature.admin_only or is_admin)
+        and (not feature.dev_only or env == "dev")
+    ]
+
+
 class PageLink(BaseModel):
     label: str
     href: str
@@ -99,25 +159,15 @@ class MetadataField(BaseModel):
 
 def global_nav(active: str | None, is_admin: bool, env: str) -> list[NavItem]:
     """Navigation shown outside a world."""
-    items = [
-        NavItem(id="worlds", label="Mondi", href="/worlds", mark="mondi"),
+    return [
+        NavItem(
+            id=feature.nav_id or feature.id,
+            label=feature.label,
+            href=feature.href,
+            mark=feature.mark,
+        )
+        for feature in visible_features(is_admin, env)
     ]
-    if is_admin:
-        items.append(
-            NavItem(id="disegni", label="Disegni", href="/drawings", mark="disegni")
-        )
-        items.append(
-            NavItem(
-                id="admin-users", label="Utenti", href="/admin/users", mark="profilo"
-            )
-        )
-        if env == "dev":
-            items.append(
-                NavItem(
-                    id="showcase", label="Componenti", href="/components", mark="pagina"
-                )
-            )
-    return items
 
 
 # section id (used for the active state and counts), label, mark, URL path.

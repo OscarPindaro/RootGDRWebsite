@@ -6,11 +6,14 @@ right. These tests pin the layout contract — the artboard dominates on desktop
 the columns stack on a phone, every tool is labelled — not the artwork.
 """
 
+import json
+
 import pytest
 from types import SimpleNamespace
 
 from backend.drawings.schemas import (
     Artboard,
+    EllipseNode,
     GroupNode,
     PathNode,
     PolygonNode,
@@ -85,10 +88,9 @@ def test_every_tool_has_a_visible_label(component):
     page = component.mount("editorial.DrawingEditor", props=PROPS)
 
     tools = page.locator("[data-testid='drawing-toolbar'] .drawing-editor__tool")
-    assert tools.count() == 8
+    assert tools.count() == 7
     labels = [tool.inner_text().strip() for tool in tools.all()]
     assert labels == [
-        "Seleziona",
         "Triangolo",
         "Rettangolo",
         "Cerchio",
@@ -120,6 +122,452 @@ def test_the_layers_list_marks_the_selected_object(component):
     assert page.locator(".drawing-editor__layer.is-selected").count() == 1
 
 
+_LIBRARY = "01a13000-0000-7000-8000-000000000001"
+_SECTION = "01a13000-0000-7000-8000-000000000002"
+_ASSET = "01a13000-0000-7000-8000-000000000003"
+
+
+def _library_body() -> list:
+    return [
+        {
+            "id": _LIBRARY,
+            "name": "Parti comuni",
+            "scope": "global",
+            "worldId": None,
+            "version": 1,
+            "createdAt": "2026-10-12T00:00:00+00:00",
+            "updatedAt": "2026-10-12T00:00:00+00:00",
+            "sections": [
+                {
+                    "id": _SECTION,
+                    "name": "NPC",
+                    "position": 0,
+                    "assetCount": 1,
+                    "createdAt": "2026-10-12T00:00:00+00:00",
+                    "updatedAt": "2026-10-12T00:00:00+00:00",
+                }
+            ],
+        }
+    ]
+
+
+def _asset_body(with_fragment: bool = False) -> dict:
+    body = {
+        "id": _ASSET,
+        "name": "Becco di Altus",
+        "sectionId": _SECTION,
+        "sectionName": "NPC",
+        "nodeCount": 1,
+        "version": 1,
+        "updatedAt": "2026-10-12T00:00:00+00:00",
+    }
+    if with_fragment:
+        body["fragment"] = {
+            "schemaVersion": 6,
+            "nodes": [
+                {
+                    "kind": "polygon",
+                    "id": "library-beak",
+                    "name": "Becco",
+                    "transform": [1, 0, 0, 1, 0, 0],
+                    "opacity": 1,
+                    "visible": True,
+                    "pivot": None,
+                    "editLocked": False,
+                    "anchors": [],
+                    "fill": "#d97a26",
+                    "stroke": "#17150f",
+                    "strokeWidth": 4,
+                    "constraint": None,
+                    "points": [[0, 0], [40, 0], [20, 30]],
+                    "pointIds": ["a", "b", "c"],
+                    "edgeVisible": None,
+                }
+            ],
+        }
+    return body
+
+
+def _options(page, selector: str) -> list[str]:
+    """The option labels in a select, read from the DOM.
+
+    A closed disclosure does not render its contents, so reading text through
+    the rendered box would be empty even though the options are there.
+    """
+    return page.locator(selector).evaluate("el => [...el.options].map(o => o.text)")
+
+
+def _open_library(page) -> None:
+    """Wait for the panel's first listing."""
+    page.locator("[data-library]").wait_for(state="visible")
+    page.wait_for_function(
+        "() => document.querySelectorAll('[data-library-library] option').length > 0"
+    )
+
+
+def _library_routes(component, detail_responses=None) -> None:
+    """Serve the library endpoints.
+
+    ``detail_responses`` replaces the single-asset answers, one per request, so a
+    test can serve a source that changes or disappears between two reads.
+    """
+    component.route_json("GET", "/api/libraries", body=_library_body())
+    component.route_json(
+        "GET",
+        f"/api/libraries/{_LIBRARY}/assets",
+        body={"data": [_asset_body()], "total": 1, "page": 1, "pageSize": 100},
+    )
+    component.route_json(
+        "GET",
+        f"/api/libraries/{_LIBRARY}/assets/{_ASSET}",
+        body=_asset_body(True),
+        responses=detail_responses,
+    )
+
+
+def test_an_account_without_a_library_is_told_so(component):
+    component.route_json("GET", "/api/libraries", body=[])
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    page.wait_for_timeout(300)
+
+    assert "Nessuna libreria" in page.locator("[data-library-status]").inner_text()
+    assert _options(page, "[data-library-library]") == []
+
+
+def test_the_library_surface_does_not_exist_without_the_server_offering_it(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.wait_for_timeout(300)
+
+    assert page.locator("[data-library]").count() == 0
+    assert [
+        path
+        for _method, path in component.requests()
+        if path.startswith("/api/libraries")
+    ] == []
+
+
+def test_the_library_panel_asks_for_nothing_until_it_is_opened(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.wait_for_timeout(300)
+
+    assert page.locator("[data-library]").is_hidden()
+    assert [
+        path
+        for _method, path in component.requests()
+        if path.startswith("/api/libraries")
+    ] == []
+
+
+def test_the_library_panel_lists_a_section_and_its_assets(component):
+    _library_routes(component)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    panel = page.locator("[data-library]")
+    page.wait_for_timeout(600)
+    panel.wait_for(state="visible")
+
+    assert _options(page, "[data-library-library]") == ["Parti comuni"]
+    assert _options(page, "[data-library-section]") == ["NPC"]
+    assert _options(page, "[data-library-asset]") == ["Becco di Altus"]
+    assert page.locator("[data-library-insert]").is_enabled()
+
+
+def test_inserting_an_asset_adds_an_independent_copy_as_one_undo_step(component):
+    _library_routes(component)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.locator("[data-library-insert]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2"
+    )
+
+    nodes = _scene_of(page)["nodes"]
+    assert nodes[0]["id"] == "box", "the drawing is untouched"
+    assert nodes[1]["name"] == "Becco"
+    assert nodes[1]["pointIds"] != ["a", "b", "c"], "the copy gets its own identities"
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection.length"
+        )
+        == 1
+    )
+
+    page.get_by_test_id("drawing-undo").click()
+    assert len(_scene_of(page)["nodes"]) == 1
+    assert "Inserito" in page.locator("[data-library-status]").inner_text()
+
+
+def test_an_asset_can_be_inserted_linked_to_its_original(component):
+    _library_routes(component)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.locator("[data-library-link]").check()
+    page.locator("[data-library-insert]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2"
+    )
+
+    linked = _scene_of(page)["nodes"][1]
+    assert linked["kind"] == "instance", "a linked insert is one instance node"
+    assert (
+        linked["source"]["libraryId"]
+        == page.locator("[data-library-library]").input_value()
+    )
+    assert (
+        linked["source"]["assetId"]
+        == page.locator("[data-library-asset]").input_value()
+    )
+    assert linked["revision"] == 1, "the revision it was resolved at"
+    assert linked["overrides"] == []
+    assert [child["name"] for child in linked["nodes"]] == ["Becco"]
+    assert "collegato" in page.locator("[data-library-status]").inner_text()
+
+    # Editing inside the instance is recorded as a local override, which is what
+    # lets a refresh keep the change. The rule itself is covered by the algorithm
+    # tests; here it is enough that the panel offers the choice and the document
+    # keeps the link.
+    assert page.locator("[data-library-link]").is_checked()
+
+
+def test_a_linked_instance_can_be_made_independent(component):
+    _library_routes(component)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.locator("[data-library-link]").check()
+    page.locator("[data-library-insert]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2"
+    )
+    page.locator("[data-library-detach]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2 && !document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.some(n => n.kind === 'instance')"
+    )
+
+    nodes = _scene_of(page)["nodes"]
+    assert [node["kind"] for node in nodes] == ["polygon", "polygon"], (
+        "the artwork stays, the link goes"
+    )
+    assert nodes[1]["name"] == "Becco"
+
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][1]["kind"] == "instance", (
+        "detaching is one undo step"
+    )
+
+
+def _linked_instance_page(component, detail_responses=None):
+    _library_routes(component, detail_responses=detail_responses)
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.locator("[data-library-link]").check()
+    page.locator("[data-library-insert]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes.length === 2"
+    )
+    return page
+
+
+def test_a_linked_instance_refreshes_to_the_library_revision(component):
+    newer = _asset_body(True)
+    newer["version"] = 2
+    longer = dict(newer["fragment"]["nodes"][0])
+    longer["points"] = [[0, 0], [80, 0], [40, 12]]
+    newer["fragment"] = {"schemaVersion": 6, "nodes": [longer]}
+    page = _linked_instance_page(
+        component,
+        detail_responses=[
+            {"status": 200, "body": _asset_body(True)},
+            {"status": 200, "body": newer},
+        ],
+    )
+
+    page.locator("[data-library-refresh]").click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.nodes[1].revision === 2"
+    )
+
+    instance = _scene_of(page)["nodes"][1]
+    assert instance["revision"] == 2
+    assert instance["nodes"][0]["points"] == [[0, 0], [80, 0], [40, 12]]
+    assert "revisione 2" in page.locator("[data-library-status]").inner_text()
+
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][1]["revision"] == 1, "a refresh is one undo step"
+
+
+def test_a_missing_source_is_reported_and_leaves_the_artwork_alone(component):
+    # The 404 is the point of the test: the client asks for a source that is gone.
+    component.allow_console_errors("status of 404")
+    page = _linked_instance_page(
+        component,
+        detail_responses=[
+            {"status": 200, "body": _asset_body(True)},
+            {"status": 404, "body": {"detail": "Asset not found"}},
+        ],
+    )
+    before = _scene_of(page)["nodes"][1]
+
+    page.locator("[data-library-refresh]").click()
+    page.wait_for_timeout(400)
+
+    assert "non esiste più" in page.locator("[data-library-status]").inner_text()
+    after = _scene_of(page)["nodes"][1]
+    assert after == before, "the resolved artwork is untouched"
+    assert after["nodes"][0]["points"] == before["nodes"][0]["points"]
+
+
+def test_saving_the_selection_sends_a_native_fragment(component):
+    _library_routes(component)
+    sent = {}
+    component.route_json(
+        "POST",
+        f"/api/libraries/{_LIBRARY}/assets",
+        body=_asset_body(),
+        status=201,
+    )
+    page = component.mount(
+        "editorial.DrawingEditor",
+        props=_live_props(_square(), library_url="/api/libraries"),
+    )
+    _mounted(page)
+    _open_library(page)
+    page.evaluate(
+        """() => {
+            const real = window.fetch;
+            window.fetch = (url, options) => {
+                if (options && options.method === 'POST') window.__posted = options.body;
+                return real(url, options);
+            };
+        }"""
+    )
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-library-name]").fill("Riquadro comune")
+    page.locator("[data-library-save]").click()
+    page.wait_for_function("() => window.__posted !== undefined")
+
+    payload = page.evaluate("() => JSON.parse(window.__posted)")
+    assert payload["name"] == "Riquadro comune"
+    assert payload["sectionId"] == _SECTION
+    fragment = payload["fragment"]
+    assert fragment["schemaVersion"] == 6
+    assert fragment["nodes"][0]["points"] == [
+        [100.0, 100.0],
+        [400.0, 100.0],
+        [400.0, 400.0],
+        [100.0, 400.0],
+    ]
+    assert fragment["nodes"][0]["pointIds"] == _scene_of(page)["nodes"][0]["pointIds"]
+    del sent
+
+
+def test_the_artboard_is_editable_and_stays_a_soft_guide(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    width = page.locator("[data-artboard-field='artboardWidth']")
+    assert width.input_value() == "640"
+    svg = page.locator("[data-drawing-artboard]")
+    assert svg.get_attribute("viewBox") == "-160 -120 960 720", (
+        "a quarter around each edge"
+    )
+
+    width.fill("800")
+    width.blur()
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.artboard.width"
+        )
+        == 800
+    )
+    assert svg.get_attribute("viewBox") == "-200 -120 1200 720"
+
+    page.get_by_test_id("drawing-undo").click()
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.scene.artboard.width"
+        )
+        == 640
+    )
+
+
+def test_an_invalid_artboard_size_is_refused(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    before = _scene_of(page)["artboard"]
+    width = page.locator("[data-artboard-field='artboardWidth']")
+
+    for value in ("0", "-5", "999999"):
+        width.fill(value)
+        width.blur()
+        assert _scene_of(page)["artboard"] == before, value
+        assert "100000" in page.locator("[data-drawing-error]").inner_text()
+    assert width.input_value() == "640", "the field shows the document again"
+
+
+def test_the_artboard_background_is_editable(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    plate = page.locator("[data-drawing-artboard] .drawing-editor__plate")
+    assert plate.get_attribute("fill") == "#fffdf6"
+
+    page.evaluate(
+        """() => {
+            const input = document.querySelector("[data-artboard-field='artboardBackground']");
+            input.value = "#123456";
+            input.dispatchEvent(new Event("change", {bubbles: true}));
+        }"""
+    )
+    assert _scene_of(page)["artboard"]["background"] == "#123456"
+    assert plate.get_attribute("fill") == "#123456"
+
+
+def test_artwork_outside_the_artboard_is_drawn_and_not_clipped(component):
+    scene = _square()
+    scene.nodes.append(
+        PolygonNode(
+            id="far",
+            name="Fuori",
+            points=[(900, 900), (1100, 900), (1000, 1100)],
+            fill="#d1402a",
+        )
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+
+    assert (
+        page.locator("[data-drawing-scene-layer] .drawing-editor__shape").count() == 2
+    )
+    # The artboard stays exactly its own size, so what is outside it is visibly
+    # outside rather than cropped away.
+    view = page.locator("[data-drawing-artboard]").get_attribute("viewBox").split()
+    assert view == ["-160", "-120", "960", "720"]
+    assert page.locator(".drawing-editor__outside").count() == 1
+
+
 def test_the_artboard_shows_the_shapes_and_the_selection_handles(component):
     page = component.mount("editorial.DrawingEditor", props=PROPS)
 
@@ -144,7 +592,7 @@ def test_the_scene_travels_as_json_for_the_client(component):
     payload = page.evaluate(
         "() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"
     )
-    assert payload["schemaVersion"] == 1
+    assert payload["schemaVersion"] == 6
     assert [node["id"] for node in payload["nodes"]] == ["head", "beak"]
     assert payload["nodes"][1]["points"][1] == [296.0, 120.0]
 
@@ -182,12 +630,13 @@ def test_the_read_only_specimen_hides_its_commands(component):
 # --- drawing: tools, history, styles ---------------------------------------
 
 
-def _live_props(scene=None) -> dict:
+def _live_props(scene=None, library_url=None) -> dict:
     return {
         "title": "Nuova tavola",
         "drawing_id": None,
         "scene": scene if scene is not None else SceneDocument(),
         "editable": True,
+        "library_url": library_url,
     }
 
 
@@ -377,7 +826,7 @@ def _select_the_triangle(page) -> None:
 
 
 def _vertex_mode(page) -> None:
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
 
 
 def test_vertex_mode_shows_a_handle_per_vertex_and_per_edge(component):
@@ -392,7 +841,7 @@ def test_vertex_mode_shows_a_handle_per_vertex_and_per_edge(component):
     assert page.locator(".drawing-editor__edge-handle").count() == 3
 
 
-def test_clicking_an_edge_inserts_a_vertex(component):
+def test_double_clicking_an_edge_inserts_a_vertex(component):
     page = component.mount(
         "editorial.DrawingEditor", props=_live_props(_one_triangle())
     )
@@ -403,6 +852,8 @@ def test_clicking_an_edge_inserts_a_vertex(component):
     # A quarter along the top edge, away from its midpoint toggle.
     point = _at(page, 150, 100)
     page.mouse.click(point[0], point[1])
+    assert len(_scene_of(page)["nodes"][0]["points"]) == 3
+    page.mouse.dblclick(point[0], point[1])
 
     points = _scene_of(page)["nodes"][0]["points"]
     assert len(points) == 4
@@ -440,7 +891,7 @@ def test_alt_clicking_a_vertex_removes_it(component):
 
     # A fourth vertex first: a triangle cannot lose one and stay a polygon.
     inserted = _at(page, 150, 100)
-    page.mouse.click(inserted[0], inserted[1])
+    page.mouse.dblclick(inserted[0], inserted[1])
     assert len(_scene_of(page)["nodes"][0]["points"]) == 4
 
     page.keyboard.down("Alt")
@@ -503,36 +954,197 @@ def _square() -> SceneDocument:
     )
 
 
-def test_the_cut_tool_splits_a_polygon_into_two_pieces(component):
+def _two_shapes() -> SceneDocument:
+    return SceneDocument(
+        nodes=[
+            PolygonNode(
+                id="box",
+                name="Riquadro",
+                points=[(100, 100), (300, 100), (300, 300), (100, 300)],
+                fill="#1f7a7a",
+            ),
+            PolygonNode(
+                id="tri",
+                name="Triangolo",
+                points=[(350, 100), (500, 100), (425, 300)],
+                fill="#3f7fb0",
+            ),
+        ]
+    )
+
+
+def _selection(page) -> list[str]:
+    return page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection"
+    )
+
+
+def test_control_and_shift_click_in_the_tree_both_add_to_the_selection(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.keyboard.down("Control")
+    page.locator("[data-select-node='tri']").click()
+    page.keyboard.up("Control")
+    assert _selection(page) == ["box", "tri"]
+
+    # Ctrl again removes it: the same gesture is additive and toggling.
+    page.keyboard.down("Control")
+    page.locator("[data-select-node='tri']").click()
+    page.keyboard.up("Control")
+    assert _selection(page) == ["box"]
+
+    page.keyboard.down("Shift")
+    page.locator("[data-select-node='tri']").click()
+    page.keyboard.up("Shift")
+    assert _selection(page) == ["box", "tri"]
+
+
+def test_two_tree_rows_can_be_grouped_after_a_control_click(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.keyboard.down("Control")
+    page.locator("[data-select-node='tri']").click()
+    page.keyboard.up("Control")
+    page.locator("[data-drawing-group]").click()
+
+    nodes = _scene_of(page)["nodes"]
+    assert len(nodes) == 1
+    assert nodes[0]["kind"] == "group"
+    assert len(nodes[0]["nodes"]) == 2
+
+
+def test_double_clicking_the_row_renames_it_inline(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+    page.locator("[data-select-node='box']").dblclick()
+
+    field = page.locator(".drawing-editor__layer-input")
+    assert field.count() == 1
+    assert field.input_value() == "Riquadro"
+    field.fill("Becco")
+    field.press("Enter")
+
+    assert _scene_of(page)["nodes"][0]["name"] == "Becco"
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+    assert page.locator("[data-select-node='box']").inner_text() == "Becco"
+
+
+def test_a_single_click_on_a_selected_row_only_selects(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").click()
+
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+    assert _selection(page) == ["box"]
+
+
+def test_escape_leaves_the_name_alone(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").dblclick()
+    page.locator(".drawing-editor__layer-input").fill("Buttato")
+    page.keyboard.press("Escape")
+
+    assert _scene_of(page)["nodes"][0]["name"] == "Riquadro"
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+
+
+def test_f2_renames_the_selected_row(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").focus()
+    page.keyboard.press("F2")
+
+    assert page.locator(".drawing-editor__layer-input").count() == 1
+
+
+def test_a_locked_row_is_not_renamed(component):
+    scene = _two_shapes()
+    scene.nodes[0].edit_locked = True
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").dblclick()
+
+    assert page.locator(".drawing-editor__layer-input").count() == 0
+    assert _scene_of(page)["nodes"][0]["name"] == "Riquadro"
+
+
+def test_tree_rows_are_separated_by_a_rule(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    widths = page.evaluate(
+        """() => [...document.querySelectorAll(
+            '[data-testid="drawing-layers"] .drawing-editor__layer'
+        )].map(el => getComputedStyle(el).borderBottomWidth)"""
+    )
+    assert widths == ["1px", "0px"], "a rule between the rows, none after the last"
+
+
+def test_the_tree_rename_keeps_working_after_a_save(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-select-node='box']").dblclick()
+    page.locator(".drawing-editor__layer-input").fill("Corpo")
+    page.locator(".drawing-editor__layer-input").press("Enter")
+
+    payload = page.evaluate(
+        """() => JSON.parse(document.querySelector('[data-drawing-scene]').textContent)"""
+    )
+    assert payload["schemaVersion"] == 6
+    assert _scene_of(page)["nodes"][0]["name"] == "Corpo"
+
+
+def test_the_cut_line_splits_a_polygon_into_two_pieces(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
-    point = _at(page, 250, 250)
-    page.mouse.click(point[0], point[1])
+    page.locator("[data-select-node='box']").click()
 
     page.get_by_test_id("drawing-tool-cut").click()
-    for corner in ((100, 100), (400, 400)):
-        target = _at(page, corner[0], corner[1])
-        page.mouse.click(target[0], target[1])
+    _drag(page, (250, 50), (250, 450))
+    assert page.locator(".drawing-editor__cut-line").count() == 1, "the line is up"
+    assert page.locator(".drawing-editor__cut-handle").count() == 2
+    assert len(_scene_of(page)["nodes"]) == 1, "nothing is cut before Enter"
+
+    page.keyboard.press("Enter")
 
     nodes = _scene_of(page)["nodes"]
     assert len(nodes) == 2
-    assert sum(len(node["points"]) for node in nodes) == 6
     assert nodes[0]["id"] == "box", "the original keeps its id"
     assert "tagliata" in nodes[1]["name"]
-    # The shared cut edge is hidden on both pieces.
-    assert nodes[0]["edgeVisible"][-1] is False
-    assert nodes[1]["edgeVisible"][-1] is False
+    assert nodes[0]["edgeVisible"].count(False) == 1, "the seam starts hidden"
+    assert nodes[1]["edgeVisible"].count(False) == 1
+    assert page.locator(".drawing-editor__cut-line").count() == 0, "the line goes away"
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.tool"
+        )
+        == "select"
+    )
 
 
 def test_a_cut_is_one_undo_step(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
-    point = _at(page, 250, 250)
-    page.mouse.click(point[0], point[1])
-    page.get_by_test_id("drawing-tool-cut").click()
-    for corner in ((100, 100), (400, 400)):
-        target = _at(page, corner[0], corner[1])
-        page.mouse.click(target[0], target[1])
+    page.locator("[data-select-node='box']").click()
+    _cut_with_line(page, (250, 50), (250, 450))
     assert len(_scene_of(page)["nodes"]) == 2
 
     page.get_by_test_id("drawing-undo").click()
@@ -543,15 +1155,99 @@ def test_a_cut_is_one_undo_step(component):
     assert len(nodes[0]["points"]) == 4
 
 
-def test_a_cut_between_adjacent_vertices_is_refused(component):
+def test_the_cut_line_can_be_moved_and_rotated_before_it_is_applied(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
-    point = _at(page, 250, 250)
-    page.mouse.click(point[0], point[1])
+    page.locator("[data-select-node='box']").click()
     page.get_by_test_id("drawing-tool-cut").click()
-    for corner in ((100, 100), (400, 100)):
-        target = _at(page, corner[0], corner[1])
-        page.mouse.click(target[0], target[1])
+    _drag(page, (250, 50), (250, 450))
+
+    def line():
+        return page.evaluate(
+            """() => {
+                const el = document.querySelector('.drawing-editor__cut-line');
+                return [Number(el.getAttribute('x1')), Number(el.getAttribute('y1')),
+                        Number(el.getAttribute('x2')), Number(el.getAttribute('y2'))];
+            }"""
+        )
+
+    before = line()
+    # Drag the middle of the line sideways: it moves without turning.
+    _drag(page, (250, 250), (300, 250))
+    moved = line()
+    assert moved != before
+    # Drag one handle: the other end stays put, so the direction changes.
+    handle = page.locator("[data-cut-handle='1']").bounding_box()
+    page.mouse.move(
+        handle["x"] + handle["width"] / 2, handle["y"] + handle["height"] / 2
+    )
+    page.mouse.down()
+    page.mouse.move(handle["x"] + 80, handle["y"] + handle["height"] / 2, steps=4)
+    page.mouse.up()
+    assert line() != moved
+    page.keyboard.press("Enter")
+    assert len(_scene_of(page)["nodes"]) == 2
+
+
+def test_escape_puts_the_cut_line_away_without_cutting(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.get_by_test_id("drawing-tool-cut").click()
+    _drag(page, (250, 50), (250, 450))
+    page.keyboard.press("Escape")
+
+    assert page.locator(".drawing-editor__cut-line").count() == 0
+    assert _scene_of(page) == before
+    assert not page.get_by_test_id("drawing-undo").is_enabled()
+
+
+def test_a_cut_only_touches_the_selected_polygons(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_two_shapes()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    _cut_with_line(page, (150, 50), (150, 450))
+
+    nodes = _scene_of(page)["nodes"]
+    assert len(nodes) == 3, "one shape split, the other untouched"
+    assert [node["id"] for node in nodes][:1] == ["box"]
+    assert nodes[1]["name"].endswith("tagliata")
+    assert nodes[2]["id"] == "tri"
+    assert nodes[2]["points"] == [
+        list(point) for point in _two_shapes().nodes[1].points
+    ]
+
+
+def test_a_cut_without_a_selected_polygon_says_so(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-cut").click()
+    _drag(page, (250, 50), (250, 450))
+    page.keyboard.press("Enter")
+
+    assert len(_scene_of(page)["nodes"]) == 1
+    assert "Seleziona" in page.locator("[data-drawing-error]").inner_text()
+
+
+def test_a_cut_along_an_edge_is_refused(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    # The line runs along the top edge: neither piece would have area.
+    _cut_with_line(page, (100, 100), (400, 100))
+
+    assert len(_scene_of(page)["nodes"]) == 1
+    assert "non è valido" in page.locator("[data-drawing-error]").inner_text()
+
+
+def test_a_cut_of_a_locked_preset_is_refused(component):
+    scene = _square()
+    scene.nodes[0].constraint = {"kind": "square"}
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    _cut_with_line(page, (250, 50), (250, 450))
 
     assert len(_scene_of(page)["nodes"]) == 1
     assert "non è valido" in page.locator("[data-drawing-error]").inner_text()
@@ -681,11 +1377,174 @@ def _page_props(version: int = 3) -> dict:
     }
 
 
+def _select_first_row(page) -> None:
+    page.locator("[data-select-node]").first.click()
+
+
+def _recolour(page) -> None:
+    """A document change that needs no pointer coordinates."""
+    page.locator("[data-palette='#ffffff']").first.click()
+
+
+def _cut_with_line(page, start, end) -> None:
+    """Pick the cut tool, drag the unbounded line, then apply it with Enter."""
+    page.get_by_test_id("drawing-tool-cut").click()
+    _drag(page, start, end)
+    page.keyboard.press("Enter")
+
+
 def _status(page) -> str:
     return page.locator("[data-autosave-status]").inner_text().strip()
 
 
+def test_every_preset_menu_item_carries_its_shape_icon(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+
+    for menu in (
+        "drawing-triangle-menu",
+        "drawing-rectangle-menu",
+        "drawing-circle-menu",
+        "drawing-polygon-menu",
+    ):
+        items = page.locator(f"#{menu} .menu-item")
+        assert items.count() >= 1
+        assert items.locator(".menu-item-icon svg").count() == items.count()
+    assert page.locator("#drawing-triangle-menu .menu-item").count() == 4
+
+
+def test_the_grid_can_be_drawn_as_points(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    grid = page.locator(".drawing-editor__grid")
+    assert grid.get_attribute("fill") == "url(#drawing-grid)"
+    assert page.locator("#drawing-grid-dots circle").count() == 1
+
+    item = page.locator("[data-drawing-grid-dots]")
+    assert item.get_attribute("role") == "menuitemcheckbox"
+    assert item.get_attribute("aria-checked") == "false"
+
+    page.evaluate("() => document.querySelector('[data-drawing-grid-dots]').click()")
+    assert grid.get_attribute("fill") == "url(#drawing-grid-dots)"
+    assert item.get_attribute("aria-checked") == "true"
+    assert (
+        item.locator(".menu-item-check").evaluate(
+            "el => getComputedStyle(el).visibility"
+        )
+        == "visible"
+    )
+
+    page.evaluate("() => document.querySelector('[data-drawing-grid-dots]').click()")
+    assert grid.get_attribute("fill") == "url(#drawing-grid)"
+    assert item.get_attribute("aria-checked") == "false"
+    assert (
+        item.locator(".menu-item-check").evaluate(
+            "el => getComputedStyle(el).visibility"
+        )
+        == "hidden"
+    )
+
+
+def test_the_grid_style_survives_a_reload(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.evaluate("() => document.querySelector('[data-drawing-grid-dots]').click()")
+    page.reload()
+    _mounted(page)
+    assert page.locator(".drawing-editor__grid").get_attribute("fill") == (
+        "url(#drawing-grid-dots)"
+    )
+    assert page.locator("[data-drawing-grid-dots]").get_attribute("aria-checked") == (
+        "true"
+    )
+
+
+def test_autosave_is_a_checkable_menu_item_that_starts_off(component):
+    component.route_json("GET", "/api/libraries", body=[])
+    page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
+    item = page.locator("[data-drawing-autosave]")
+
+    assert item.get_attribute("role") == "menuitemcheckbox"
+    assert item.get_attribute("aria-checked") == "false"
+    page.evaluate("() => document.querySelector('[data-drawing-autosave]').click()")
+    assert item.get_attribute("aria-checked") == "true"
+
+
+def test_autosave_waits_for_two_idle_seconds_and_saves_once(component):
+    component.route_json("GET", "/api/libraries", body=[])
+    page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
+    # The server echoes what it stored, so a successful save settles the editor.
+    page.route(
+        f"**/api/drawings/{DRAWING_ID}",
+        lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body=json.dumps(
+                {
+                    "id": DRAWING_ID,
+                    "version": 4,
+                    "scene": json.loads(route.request.post_data)["scene"],
+                }
+            ),
+        ),
+    )
+    page.evaluate(
+        """() => {
+            window.__patches = [];
+            const real = window.fetch;
+            window.fetch = (url, options) => {
+                if (options && options.method === 'PATCH') window.__patches.push(String(url));
+                return real(url, options);
+            };
+        }"""
+    )
+    page.evaluate("() => document.querySelector('[data-drawing-autosave]').click()")
+
+    _select_first_row(page)
+    _recolour(page)
+    assert page.evaluate("() => window.__patches.length") == 0
+
+    page.wait_for_function("() => window.__patches.length === 1")
+    page.wait_for_timeout(2400)
+    assert page.evaluate("() => window.__patches.length") == 1, "one save, not a stream"
+    assert _status(page) == "Salvato"
+
+
+def test_autosave_stays_quiet_when_it_is_off(component):
+    component.route_json(
+        "PATCH",
+        f"/api/drawings/{DRAWING_ID}",
+        body={
+            "id": DRAWING_ID,
+            "version": 4,
+            "scene": _scene().model_dump(by_alias=True),
+        },
+    )
+    component.route_json("GET", "/api/libraries", body=[])
+    page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
+    page.evaluate(
+        """() => {
+            window.__patches = [];
+            const real = window.fetch;
+            window.fetch = (url, options) => {
+                if (options && options.method === 'PATCH') window.__patches.push(String(url));
+                return real(url, options);
+            };
+        }"""
+    )
+    _select_first_row(page)
+    _recolour(page)
+    page.wait_for_timeout(2600)
+
+    assert page.evaluate("() => window.__patches.length") == 0
+    assert _status(page) == "Modifiche non salvate"
+
+
 def test_the_editor_page_mounts_and_reports_the_saved_state(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
 
@@ -703,6 +1562,7 @@ def test_saving_sends_the_document_and_the_version_it_was_read_at(component):
             "scene": _scene().model_dump(by_alias=True),
         },
     )
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.evaluate(
@@ -732,6 +1592,7 @@ def test_saving_sends_the_document_and_the_version_it_was_read_at(component):
 def test_a_conflicting_save_is_reported_and_keeps_the_local_scene(component):
     component.allow_console_errors("409")
     component.route_json("PATCH", f"/api/drawings/{DRAWING_ID}", status=409)
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
 
@@ -746,6 +1607,7 @@ def test_a_conflicting_save_is_reported_and_keeps_the_local_scene(component):
 def test_a_failed_save_never_claims_success(component):
     component.allow_console_errors("500")
     component.route_json("PATCH", f"/api/drawings/{DRAWING_ID}", status=500)
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
 
@@ -913,7 +1775,7 @@ def test_both_bezier_endpoints_can_be_selected_and_edited(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
     _mounted(page)
     page.locator("[data-select-node='curve']").click()
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     end = page.get_by_role("button", name="Punto finale", exact=True)
     assert end.count() == 1
     end.focus()
@@ -942,15 +1804,123 @@ def test_space_activates_a_focused_tool_button(component):
     assert button.get_attribute("aria-pressed") == "true"
 
 
+def test_colour_and_border_controls_sit_in_the_left_rail(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+
+    rail = page.locator(".drawing-editor__rail")
+    assert rail.locator("[data-testid='drawing-fill-swatch']").count() == 1
+    assert rail.locator("[data-style='stroke']").count() == 1
+    assert rail.locator("[data-style='strokeWidth']").count() == 1
+    assert rail.locator("[data-style='opacity']").count() == 1
+    assert rail.locator("[data-palette]").count() == 14
+
+    # The inspector keeps the identity and geometry, not a second copy of paint.
+    inspector = page.locator("[data-testid='drawing-inspector']")
+    assert inspector.locator("[data-style='fill']").count() == 0
+    assert inspector.locator("[data-palette]").count() == 0
+
+
+def test_the_paint_controls_are_reachable_without_scrolling(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+
+    swatch = page.locator("[data-testid='drawing-fill-swatch']").bounding_box()
+    viewport = page.evaluate("() => window.innerHeight")
+    assert swatch["y"] + swatch["height"] <= viewport
+
+
+def test_related_geometry_fields_share_one_row(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+
+    rows = page.locator("[data-geometry-parameters] .drawing-editor__row")
+    assert rows.count() == 4
+    assert rows.locator(".drawing-editor__row-label").all_inner_texts() == [
+        "Posizione",
+        "Dimensione",
+        "Rotazione",
+        "Pivot",
+    ]
+
+    position = rows.nth(0)
+    x = position.locator("[data-geometry-field='x']").bounding_box()
+    y = position.locator("[data-geometry-field='y']").bounding_box()
+    assert abs(x["y"] - y["y"]) < 4, "X and Y are on one line"
+
+    size = rows.nth(1)
+    width = size.locator("[data-geometry-field='width']").bounding_box()
+    height = size.locator("[data-geometry-field='height']").bounding_box()
+    assert abs(width["y"] - height["y"]) < 4, "the two dimensions are on one line"
+
+
+def test_the_ellipse_radius_row_keeps_its_accessible_label(component):
+    # A free ellipse has two independent axes.
+    free = SceneDocument(
+        nodes=[EllipseNode(id="oval", name="Ellisse", cx=250, cy=250, rx=100, ry=60)]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(free))
+    _mounted(page)
+    page.locator("[data-select-node='oval']").click()
+
+    radius = page.locator("[data-ellipse-parameters] .drawing-editor__row").nth(1)
+    assert radius.locator(".drawing-editor__row-label").inner_text() == (
+        "Raggio orizzontale"
+    )
+    assert (
+        radius.locator("[data-ellipse-parameter='rx']").get_attribute("aria-label")
+        == "Raggio orizzontale"
+    )
+
+    # A locked circle has a single radius, and the row label says so.
+    circle = SceneDocument(
+        nodes=[
+            EllipseNode(
+                id="oval",
+                name="Cerchio",
+                cx=250,
+                cy=250,
+                rx=100,
+                ry=100,
+                constraint={"kind": "circle"},
+            )
+        ]
+    )
+    locked = component.mount("editorial.DrawingEditor", props=_live_props(circle))
+    _mounted(locked)
+    locked.locator("[data-select-node='oval']").click()
+
+    row = locked.locator("[data-ellipse-parameters] .drawing-editor__row").nth(1)
+    assert row.locator(".drawing-editor__row-label").inner_text() == "Raggio"
+    assert (
+        row.locator("[data-ellipse-parameter='rx']").get_attribute("aria-label")
+        == "Raggio"
+    )
+
+
 def test_phone_preview_has_no_overflow_or_active_editing_controls(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     page.set_viewport_size(PHONE)
     page.reload()
     _mounted(page)
     assert page.locator("[data-testid='drawing-phone-note']").is_visible()
     assert page.get_by_test_id("drawing-save").is_disabled()
-    for selector in (".drawing-editor__canvas", ".drawing-editor__panel"):
-        box = page.locator(selector).first.bounding_box()
+    # Every surface the phone actually shows fits; the authoring rail is hidden,
+    # so it is not measured.
+    boxes = page.evaluate(
+        """() => [...document.querySelectorAll(
+            '.drawing-editor__canvas, .drawing-editor__panel'
+        )].filter(el => el.getClientRects().length).map(el => {
+            const r = el.getBoundingClientRect();
+            return {x: r.x, width: r.width};
+        })"""
+    )
+    assert boxes
+    for box in boxes:
         assert box["x"] + box["width"] <= PHONE["width"]
     assert page.evaluate("() => document.documentElement.scrollWidth") <= PHONE["width"]
 
@@ -984,8 +1954,8 @@ def test_a_line_can_become_an_editable_polyline(component):
     _mounted(page)
     page.get_by_test_id("drawing-tool-line").click()
     _drag(page, (100, 100), (300, 100))
-    page.locator("[data-drawing-mode]").click()
-    page.mouse.click(*_at(page, 200, 100))
+    page.locator("[data-drawing-mode='vertex']").click()
+    page.mouse.dblclick(*_at(page, 200, 100))
     assert _scene_of(page)["nodes"][0]["d"].count("L") == 2
     assert page.locator("[data-path-command]").count() == 3
 
@@ -997,7 +1967,7 @@ def test_curve_handles_edit_a_cubic_stroke_and_undo(component):
     _drag(page, (100, 100), (300, 100))
     before = _scene_of(page)["nodes"][0]["d"]
     assert "C" in before
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     assert page.locator(".drawing-editor__curve-control").count() == 2
     assert page.locator("[data-path-command]").count() == 4
     handle = page.locator(".drawing-editor__curve-control").first.bounding_box()
@@ -1011,14 +1981,14 @@ def test_curve_handles_edit_a_cubic_stroke_and_undo(component):
     assert _scene_of(page)["nodes"][0]["d"] == before
 
 
-def test_cancelled_cut_restores_inserted_boundary_point(component):
+def test_a_cut_line_does_not_touch_the_document_until_it_is_applied(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
     _mounted(page)
     page.locator("[data-select-node='box']").click()
     before = _scene_of(page)
     page.get_by_test_id("drawing-tool-cut").click()
-    page.mouse.click(*_at(page, 150, 100))
-    assert len(_scene_of(page)["nodes"][0]["points"]) == 5
+    _drag(page, (150, 100), (150, 400))
+    assert _scene_of(page) == before, "the line is editor state, not document state"
     page.keyboard.press("Escape")
     assert _scene_of(page) == before
     assert not page.get_by_test_id("drawing-undo").is_enabled()
@@ -1045,7 +2015,7 @@ def test_child_vertex_edit_uses_transformed_parent_coordinates(component):
     page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
     _mounted(page)
     page.locator("[data-select-node='child']").click()
-    page.locator("[data-drawing-mode]").click()
+    page.locator("[data-drawing-mode='vertex']").click()
     _drag(page, (120, 40), (140, 60))
     points = _scene_of(page)["nodes"][0]["nodes"][0]["points"]
     assert points[0] == [20, 20]
@@ -1089,6 +2059,7 @@ def test_style_change_is_one_undo_action(component):
 
 
 def test_save_keeps_edits_made_while_request_is_in_flight(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.evaluate(
@@ -1107,6 +2078,7 @@ def test_save_keeps_edits_made_while_request_is_in_flight(component):
 
 
 def test_rename_drawing_is_sent_on_explicit_save(component):
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.evaluate(
@@ -1121,6 +2093,7 @@ def test_rename_drawing_is_sent_on_explicit_save(component):
 def test_conflict_offers_copy_and_explicit_reload_confirmation(component):
     component.allow_console_errors("409")
     component.route_json("PATCH", f"/api/drawings/{DRAWING_ID}", status=409)
+    component.route_json("GET", "/api/libraries", body=[])
     page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
     _mounted(page)
     page.get_by_test_id("drawing-save").click()
@@ -1130,3 +2103,860 @@ def test_conflict_offers_copy_and_explicit_reload_confirmation(component):
     assert page.locator("#drawing-reload").is_visible()
     page.locator("#drawing-reload [data-dialog-close]").first.click()
     assert page.locator(".drawing-editor__shape").count() == 2
+
+
+def test_single_shape_defaults_to_edit_and_t_enters_transform(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (220, 200))
+    assert (
+        page.locator("[data-drawing-mode='vertex']").get_attribute("aria-pressed")
+        == "true"
+    )
+    assert page.locator("[data-vertex]").count() == 3
+    assert page.locator("[data-corner]").count() == 0
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("t")
+    assert (
+        page.locator("[data-drawing-mode='transform']").get_attribute("aria-pressed")
+        == "true"
+    )
+    assert page.locator("[data-corner]").count() == 4
+    page.get_by_test_id("drawing-tool-select").click()
+    assert page.locator("[data-drawing-mode-label]").inner_text() == "Seleziona"
+    assert page.locator("[data-corner]").count() == 0
+
+
+def test_editor_actions_share_enabled_states_and_reject_unavailable_edits(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    assert page.locator("[data-drawing-mode='vertex']").is_disabled()
+    assert page.locator("[data-drawing-mode='transform']").is_disabled()
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('delete')"
+        )
+        is False
+    )
+    _draw_two(page)
+    _select_two(page)
+    assert page.locator("[data-drawing-mode='vertex']").is_disabled()
+    assert page.locator("[data-drawing-mode='transform']").is_enabled()
+    assert page.locator("[data-corner]").count() == 4
+
+
+def test_editor_shortcuts_do_not_own_unrelated_controls_or_typing(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    field = page.locator("[data-node-name]")
+    field.fill("Test")
+    page.keyboard.press("Delete")
+    page.keyboard.press("Control+z")
+    assert _scene_of(page) == before
+    page.evaluate(
+        "() => { const input = document.createElement('input'); input.id = 'outside-editor'; document.body.append(input); input.focus(); }"
+    )
+    page.keyboard.press("ArrowRight")
+    page.keyboard.press("Delete")
+    assert _scene_of(page) == before
+
+
+def test_save_shortcut_works_from_the_document_title(component):
+    component.route_json("GET", "/api/libraries", body=[])
+    page = component.mount("pages.drawings.DrawingDetail", props=_page_props())
+    _mounted(page)
+    page.evaluate(
+        "() => { window.fetch = async (url, options) => { window.savedPayload = JSON.parse(options.body); return new Response(JSON.stringify({version:4, title:window.savedPayload.title, scene:window.savedPayload.scene}), {status:200}); }; }"
+    )
+    page.locator("[data-drawing-title]").fill("Titolo salvato")
+    page.keyboard.press("Control+s")
+    page.wait_for_function("() => Boolean(window.savedPayload)")
+    assert page.evaluate("() => window.savedPayload.title") == "Titolo salvato"
+
+
+def test_multiple_shapes_transform_together_as_one_undo_step(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    _draw_two(page)
+    _select_two(page)
+    before = _scene_of(page)
+    _drag(page, (440, 200), (610, 300))
+    after = _scene_of(page)
+    assert all(
+        node["transform"] != old["transform"]
+        for node, old in zip(after["nodes"], before["nodes"], strict=True)
+    )
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page) == before
+
+
+def test_ellipse_defaults_to_direct_center_and_axis_controls(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-preset-menu='circle']").click()
+    page.locator("[data-drawing-preset='ellipse']").click()
+    _drag(page, (100, 100), (300, 200))
+    assert page.locator("[data-ellipse-axis]").count() == 3
+    _drag(page, (300, 150), (340, 150))
+    assert _scene_of(page)["nodes"][0]["rx"] == pytest.approx(140, abs=1)
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["rx"] == pytest.approx(100, abs=1)
+
+
+def test_unlocking_a_native_preset_is_explicit_appearance_preserving_and_undoable(
+    component,
+):
+    scene = _square()
+    scene.nodes[0].constraint = {"kind": "square"}
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.mouse.click(*_at(page, 150, 100))
+    assert _scene_of(page) == before
+    page.locator("[data-drawing-unlock]").click()
+    after = _scene_of(page)
+    assert after["nodes"][0]["constraint"] is None
+    assert after["nodes"][0]["points"] == before["nodes"][0]["points"]
+    assert after["nodes"][0]["pointIds"] == before["nodes"][0]["pointIds"]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page) == before
+
+
+@pytest.mark.parametrize(
+    "preset,count",
+    [
+        ("triangle_equilateral", 3),
+        ("triangle_right_right", 3),
+        ("triangle_right_left", 3),
+        ("square", 4),
+        ("regular_polygon", 6),
+    ],
+)
+def test_split_button_presets_create_persistent_constrained_geometry(
+    component, preset, count
+):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    family = (
+        "triangle"
+        if preset.startswith("triangle_")
+        else "rectangle"
+        if preset == "square"
+        else "polygon"
+    )
+    page.locator(f"[data-preset-menu='{family}']").click()
+    page.locator(f"[data-drawing-preset='{preset}']").click()
+    _drag(page, (100, 100), (260, 220))
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": preset}
+    assert len(node["points"]) == len(node["pointIds"]) == count
+    assert page.locator("[data-drawing-unlock]").is_visible()
+    page.get_by_test_id("drawing-duplicate").click()
+    assert _scene_of(page)["nodes"][1]["constraint"] == node["constraint"]
+    page.get_by_test_id("drawing-undo").click()
+    assert len(_scene_of(page)["nodes"]) == 1
+
+
+def test_an_accepted_variant_is_restated_by_the_shape_name(component):
+    """Regression: a right triangle refused the word `Triangolo` in stage two."""
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    status = page.locator("[data-canvas-command-status]")
+
+    field.fill("rect")
+    page.keyboard.press("Enter")
+    assert "angolo a destra" in status.inner_text()
+
+    field.fill("Triangolo")
+    assert "Non riconosciuto" not in status.inner_text()
+    assert "angolo a destra" in status.inner_text()
+
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"][0]["constraint"] == {"kind": "triangle_right_right"}
+
+
+def test_the_second_stage_says_what_it_accepts(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    field.fill("quadrato")
+
+    status = page.locator("[data-canvas-command-status]").inner_text()
+    assert "Non riconosciuto" in status
+    assert "misura" in status
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+
+
+def test_the_command_palette_is_docked_inside_the_canvas(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    panel = page.locator("[data-testid='drawing-commands']")
+    panel.wait_for(state="visible")
+
+    assert page.locator("dialog#drawing-command-dialog").count() == 0
+    assert panel.evaluate("el => el.tagName") == "DIV"
+    canvas = page.locator("[data-testid='drawing-canvas']").bounding_box()
+    box = panel.bounding_box()
+    assert box["x"] >= canvas["x"] - 1
+    assert box["x"] + box["width"] <= canvas["x"] + canvas["width"] + 1
+    assert box["y"] >= canvas["y"] - 1
+    # Top centre of the canvas.
+    assert abs((box["x"] + box["width"] / 2) - (canvas["x"] + canvas["width"] / 2)) < 4
+    assert box["y"] - canvas["y"] <= 24
+
+
+def test_the_close_control_and_escape_put_the_palette_away(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-testid='drawing-commands']").wait_for(state="visible")
+    page.locator("[data-canvas-command-close]").click()
+    assert not page.locator("[data-testid='drawing-commands']").is_visible()
+
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-command-input]").press("Escape")
+    assert not page.locator("[data-testid='drawing-commands']").is_visible()
+    assert page.evaluate(
+        "() => document.activeElement.hasAttribute('data-drawing-commands')"
+    )
+
+
+@pytest.mark.parametrize(
+    "refinement,width,kind",
+    [
+        ("130", 130, "triangle_isosceles"),
+        ("130 isoscele", 130, "triangle_isosceles"),
+        ("isoscele 130", 130, "triangle_isosceles"),
+        ("equilatero 80", 80, "triangle_equilateral"),
+        ("rect left 60", 60, "triangle_right_left"),
+    ],
+)
+def test_the_compact_stage_takes_a_size_and_a_variant(
+    component, refinement, width, kind
+):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+
+    field.fill(refinement)
+    page.keyboard.press("Enter")
+
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": kind}
+    xs = [point[0] for point in node["points"]]
+    assert round(max(xs) - min(xs)) == width
+
+
+def test_a_polygon_takes_its_vertex_count_in_the_second_stage(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("poligono")
+    page.keyboard.press("Enter")
+    field.fill("6")
+    page.keyboard.press("Enter")
+
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "regular_polygon"}
+    assert len(node["points"]) == 6
+
+
+def test_an_out_of_range_vertex_count_creates_nothing(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("poligono")
+    page.keyboard.press("Enter")
+    for value in ("2", "99", "molti"):
+        field.fill(value)
+        page.keyboard.press("Enter")
+        assert _scene_of(page)["nodes"] == []
+
+
+def test_the_compact_stage_shows_the_interpretation(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    field.fill("130 isoscele")
+
+    status = page.locator("[data-canvas-command-status]").inner_text()
+    assert "Triangolo · isoscele" in status
+    assert "130" in status
+
+
+@pytest.mark.parametrize(
+    "refinement,kind",
+    [
+        ("", "triangle_isosceles"),
+        ("rect", "triangle_right_right"),
+        ("rect left", "triangle_right_left"),
+        ("equilateral", "triangle_equilateral"),
+    ],
+)
+def test_compact_triangle_accepts_then_creates_one_constrained_vector(
+    component, refinement, kind
+):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+    assert "120" in page.locator("[data-canvas-command-status]").inner_text()
+    if refinement:
+        field.fill(refinement)
+    page.locator("[data-canvas-mode='guided']").click()
+    page.locator("[data-canvas-mode='compact']").click()
+    field.focus()
+    page.keyboard.press("Enter")
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": kind}
+    assert len(node["points"]) == 3
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"] == []
+
+
+def test_numeric_geometry_and_local_pivot_are_validated_and_undoable(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    width = page.locator("[data-geometry-field='width']")
+    width.fill("450")
+    width.blur()
+    assert page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.geometry.width"
+    ) == pytest.approx(450)
+    pivot = page.locator("[data-geometry-field='pivotX']")
+    pivot.fill("150")
+    pivot.blur()
+    assert _scene_of(page)["nodes"][0]["pivot"] == [150, 250]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["pivot"] is None
+
+
+def test_marquee_select_all_and_edit_locks_are_separate_from_geometry_locks(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    _draw_two(page)
+    _drag(page, (50, 50), (480, 240))
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection.length"
+        )
+        == 2
+    )
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Control+a")
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection.length"
+        )
+        == 2
+    )
+    page.locator("[data-select-node]").first.click()
+    node_id = _scene_of(page)["nodes"][0]["id"]
+    page.locator(f"[data-node-locked='{node_id}']").click()
+    before = _scene_of(page)
+    assert before["nodes"][0]["editLocked"] is True
+    assert before["nodes"][0]["constraint"] == {"kind": "triangle_isosceles"}
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('move', {dx:20,dy:30})"
+        )
+        is False
+    )
+    assert _scene_of(page) == before
+    page.locator(f"[data-node-locked='{node_id}']").click()
+    assert _scene_of(page)["nodes"][0]["editLocked"] is False
+
+
+def test_canvas_group_selection_uses_control_for_deeper_children(component):
+    scene = _square()
+    scene.nodes = [GroupNode(id="group", name="Group", nodes=scene.nodes)]
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.mouse.click(*_at(page, 200, 200))
+    assert page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection"
+    ) == ["group"]
+    page.keyboard.down("Control")
+    page.mouse.click(*_at(page, 200, 200))
+    page.keyboard.up("Control")
+    assert page.evaluate(
+        "() => document.querySelector('[data-drawing-editor]').__drawingEditor.selection"
+    ) == ["box"]
+
+
+def test_fit_and_zoom_readout_do_not_change_native_artwork(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.locator("[data-drawing-fit='selection']").click()
+    assert "%" in page.locator("[data-drawing-zoom]").inner_text()
+    assert _scene_of(page) == before
+    page.locator("[data-drawing-fit='drawing']").click()
+    assert _scene_of(page) == before
+
+
+def test_guided_shape_preview_is_non_destructive_until_apply(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-mode='guided']").click()
+    page.locator("[data-canvas-command-action]").select_option("create-preset")
+    page.locator("[data-guided-field='kind']").select_option("square")
+    page.locator("[data-guided-field='width']").first.fill("140")
+    page.locator("[data-guided-field='height']").first.fill("140")
+    assert _scene_of(page)["nodes"] == []
+    assert page.locator("[data-canvas-preview]").is_visible()
+    assert (
+        page.locator("[data-canvas-preview] .drawing-editor__command-shape").count() > 0
+    )
+    page.keyboard.press("Escape")
+    page.wait_for_selector("#drawing-command-dialog", state="hidden")
+    assert _scene_of(page)["nodes"] == []
+    page.locator("[data-drawing-commands]").click()
+    page.locator("[data-canvas-command-apply]").click()
+    assert _scene_of(page)["nodes"][0]["constraint"] == {"kind": "square"}
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"] == []
+
+
+@pytest.mark.parametrize("mode", ["compact", "guided"])
+def test_numeric_move_commands_share_both_palette_operations(component, mode):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-commands]").click()
+    if mode == "compact":
+        page.locator("[data-canvas-command-input]").fill("move 20 30")
+        page.keyboard.press("Enter")
+    else:
+        page.locator("[data-canvas-mode='guided']").click()
+        page.locator("[data-canvas-command-action]").select_option("move")
+        page.locator("[data-guided-fields='move'] [data-guided-field='dx']").fill("20")
+        page.locator("[data-guided-fields='move'] [data-guided-field='dy']").fill("30")
+        page.locator("[data-canvas-command-apply]").click()
+    assert _scene_of(page)["nodes"][0]["transform"][4:] == [20, 30]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["transform"] == [1, 0, 0, 1, 0, 0]
+
+
+def test_compact_default_dimensions_shrink_to_fit_the_visible_zoomed_canvas(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    x, y = _at(page, 320, 240)
+    for _ in range(30):
+        page.locator("[data-drawing-artboard]").dispatch_event(
+            "wheel", {"deltaY": -1, "clientX": x, "clientY": y}
+        )
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    page.keyboard.press("Enter")
+    points = _scene_of(page)["nodes"][0]["points"]
+    assert all(280 <= point[0] <= 360 and 210 <= point[1] <= 270 for point in points)
+
+
+def test_compact_unknown_input_and_cancellation_do_not_create_artwork(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-drawing-commands]").click()
+    field = page.locator("[data-canvas-command-input]")
+    field.fill("not-a-command")
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+    field.fill("triangle")
+    page.keyboard.press("Enter")
+    field.fill("not-a-variant")
+    page.keyboard.press("Enter")
+    assert _scene_of(page)["nodes"] == []
+    page.keyboard.press("Escape")
+    assert _scene_of(page)["nodes"] == []
+
+
+def test_canvas_command_variants_are_exclusive_and_preserve_drafts_without_execution(
+    component,
+):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("/")
+    page.locator("#drawing-command-dialog").wait_for(state="visible", timeout=2000)
+    page.locator("[data-canvas-command-input]").fill("Duplica")
+    page.locator("[data-canvas-mode='guided']").click()
+    assert (
+        page.locator("[data-canvas-mode='guided']").get_attribute("aria-pressed")
+        == "true"
+    )
+    assert (
+        page.locator("[data-canvas-mode='compact']").get_attribute("aria-pressed")
+        == "false"
+    )
+    page.locator("[data-canvas-mode='compact']").click()
+    assert page.locator("[data-canvas-command-input]").input_value() == "Duplica"
+    assert _scene_of(page) == before
+    page.keyboard.press("Escape")
+    assert _scene_of(page) == before
+
+
+def test_canvas_commands_share_action_availability_and_validate_vector_units(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('create-preset', {kind:'square', width:NaN, height:100})"
+        )
+        is False
+    )
+    assert _scene_of(page)["nodes"] == []
+    assert (
+        page.evaluate(
+            "() => document.querySelector('[data-drawing-editor]').__drawingEditor.execute('create-preset', {kind:'square', width:100, height:100})"
+        )
+        is True
+    )
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "square"}
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"] == []
+
+
+def test_canvas_context_commands_and_shift_bypass_are_focus_owned(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.mouse.click(*_at(page, 250, 250), button="right")
+    menu = page.locator("#drawing-context-menu")
+    menu.wait_for(state="visible", timeout=2000)
+    menu.locator("[data-drawing-command='duplicate']").click()
+    assert len(_scene_of(page)["nodes"]) == 2
+    page.evaluate(
+        "() => document.addEventListener('contextmenu', event => { window.contextPrevented = event.defaultPrevented; })"
+    )
+    page.keyboard.down("Shift")
+    page.mouse.click(*_at(page, 250, 250), button="right")
+    page.keyboard.up("Shift")
+    assert page.evaluate("() => window.contextPrevented") is False
+    assert not menu.is_visible()
+
+
+def test_slash_commands_and_shortcut_help_leave_text_and_dialogs_in_control(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("/")
+    page.locator("#drawing-command-dialog").wait_for(state="visible", timeout=2000)
+    page.keyboard.press("Escape")
+    page.wait_for_selector("#drawing-command-dialog", state="hidden")
+    page.wait_for_function(
+        "() => document.activeElement.hasAttribute('data-drawing-artboard')"
+    )
+    before = _scene_of(page)
+    page.locator("[data-node-name]").focus()
+    page.keyboard.press("/")
+    assert not page.locator("#drawing-command-dialog").is_visible()
+    page.locator("[data-drawing-help]").click()
+    page.locator("#drawing-help").wait_for(state="visible", timeout=2000)
+    before = _scene_of(page)
+    page.keyboard.press("Delete")
+    page.keyboard.press("t")
+    assert _scene_of(page) == before
+    assert "Ctrl" in page.locator("#drawing-help").inner_text()
+    page.keyboard.press("Escape")
+
+
+def test_middle_drag_over_a_curve_handle_pans_without_editing_the_curve(component):
+    scene = SceneDocument(
+        nodes=[
+            PathNode(id="curve", name="Curve", d="M100 100 C150 150 250 150 300 100")
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='curve']").click()
+    before = _scene_of(page)
+    handle = page.get_by_role("button", name="Controllo 1").bounding_box()
+    x, y = handle["x"] + handle["width"] / 2, handle["y"] + handle["height"] / 2
+    page.mouse.move(x, y)
+    page.mouse.down(button="middle")
+    page.mouse.move(x + 50, y + 30, steps=4)
+    page.mouse.up(button="middle")
+    assert _scene_of(page) == before
+    assert (
+        page.locator("[data-drawing-scene-layer]").get_attribute("transform")
+        != "matrix(1 0 0 1 0 0)"
+    )
+
+
+def test_visibility_diagnostics_distinguish_hidden_empty_and_disabled_paint(component):
+    square = _square().nodes[0]
+    square.fill = None
+    square.stroke = None
+    scene = SceneDocument(
+        nodes=[
+            GroupNode(id="hidden", name="Hidden", visible=False, nodes=[square]),
+            GroupNode(id="empty", name="Empty"),
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    assert (
+        "Nessuna selezione" in page.locator("[data-drawing-diagnostics]").inner_text()
+    )
+    page.locator("[data-select-node='box']").click()
+    diagnostic = page.locator("[data-drawing-diagnostics]").inner_text()
+    assert "genitore" in diagnostic and "Riempimento e contorno" in diagnostic
+    before = _scene_of(page)
+    page.locator("[data-node-visible='box']").click()
+    page.locator("[data-node-visible='box']").click()
+    assert _scene_of(page) == before
+    assert "genitore" in page.locator("[data-drawing-diagnostics]").inner_text()
+    page.locator("[data-select-node='empty']").click()
+    assert "Gruppo vuoto" in page.locator("[data-drawing-diagnostics]").inner_text()
+    assert len(_scene_of(page)["nodes"]) == 2
+
+
+def test_deleting_a_subscene_is_one_undo_and_stacking_has_vertical_extremes(component):
+    scene = SceneDocument(
+        nodes=[
+            GroupNode(id="group", name="Group", nodes=[_square().nodes[0]]),
+            PolygonNode(
+                id="front", name="Front", points=[(450, 100), (550, 100), (500, 200)]
+            ),
+        ]
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='group']").click()
+    assert (
+        page.locator("[data-drawing-order='1'] [data-icon='chevron-up']").count() == 1
+    )
+    page.locator("[data-drawing-order='front']").click()
+    assert [node["id"] for node in _scene_of(page)["nodes"]] == ["front", "group"]
+    page.locator("[data-drawing-order='back']").click()
+    assert [node["id"] for node in _scene_of(page)["nodes"]] == ["group", "front"]
+    before = _scene_of(page)
+    page.locator("[data-drawing-artboard]").focus()
+    page.keyboard.press("Delete")
+    assert [node["id"] for node in _scene_of(page)["nodes"]] == ["front"]
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page) == before
+
+
+def test_creation_feedback_and_rejected_short_gestures_leave_tools_usable(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-square").click()
+    page.mouse.move(*_at(page, 113, 117))
+    page.mouse.down()
+    assert page.locator("[data-snap-guide]").count() == 2
+    page.mouse.up()
+    assert _scene_of(page)["nodes"] == []
+    assert page.get_by_test_id("drawing-tool-triangle").is_enabled()
+    assert page.locator("[data-snap-guide]").count() == 0
+
+
+def test_alt_resize_cannot_override_a_circle_geometry_lock(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (200, 200))
+    page.locator("[data-drawing-mode='transform']").click()
+    page.keyboard.down("Alt")
+    _drag(page, (200, 200), (257, 223))
+    page.keyboard.up("Alt")
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "circle"}
+    assert node["rx"] == node["ry"]
+    assert abs(node["transform"][0]) == pytest.approx(abs(node["transform"][3]))
+    assert node["transform"][0] == pytest.approx(1.57, abs=0.01)
+
+
+def test_resize_snaps_the_dragged_corner_and_keeps_the_opposite_fixed(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-mode='transform']").click()
+    _drag(page, (400, 400), (447, 453))
+    transform = _scene_of(page)["nodes"][0]["transform"]
+    assert transform[0] == transform[3] == pytest.approx(350 / 300)
+    assert transform[0] * 100 + transform[4] == pytest.approx(100)
+    assert transform[3] * 100 + transform[5] == pytest.approx(100)
+    assert transform[0] * 400 + transform[4] == pytest.approx(450)
+
+
+def test_shift_resize_is_proportional_and_alt_creation_bypasses_only_snap(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-drawing-mode='transform']").click()
+    page.keyboard.down("Shift")
+    _drag(page, (400, 400), (510, 450))
+    page.keyboard.up("Shift")
+    node = _scene_of(page)["nodes"][0]
+    assert abs(node["transform"][0]) == pytest.approx(abs(node["transform"][3]))
+    page.get_by_test_id("drawing-tool-square").click()
+    page.keyboard.down("Alt")
+    _drag(page, (113, 117), (253, 247))
+    page.keyboard.up("Alt")
+    rect = _scene_of(page)["nodes"][1]
+    assert rect["points"][0] == pytest.approx([113, 117], abs=0.1)
+    assert rect["points"][2] == pytest.approx([253, 247], abs=0.1)
+    assert rect["constraint"] == {"kind": "rectangle"}
+
+
+def test_geometry_edge_alignment_has_a_visible_guide_without_grid_snap(component):
+    scene = _square()
+    scene.nodes.append(
+        PolygonNode(
+            id="target",
+            name="Target",
+            points=[(450, 80), (500, 80), (500, 130), (450, 130)],
+            fill="#000000",
+        )
+    )
+    page = component.mount("editorial.DrawingEditor", props=_live_props(scene))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    page.locator("[data-snap-grid]").click()
+    page.mouse.move(*_at(page, 250, 250))
+    page.mouse.down()
+    page.mouse.move(*_at(page, 597, 380), steps=4)
+    assert _scene_of(page)["nodes"][0]["transform"][4:] == pytest.approx(
+        [350, 130], abs=1
+    )
+    assert page.locator("[data-snap-guide]").count() >= 1
+    page.mouse.up()
+    assert page.locator("[data-snap-guide]").count() == 0
+
+
+def test_circle_creation_and_radius_controls_keep_equal_radii(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (300, 200))
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "circle"}
+    assert node["rx"] == node["ry"] == pytest.approx(50, abs=1)
+    assert page.locator("[data-ellipse-axis]").count() == 2
+    _drag(page, (250, 150), (290, 150))
+    assert (
+        _scene_of(page)["nodes"][0]["rx"]
+        == _scene_of(page)["nodes"][0]["ry"]
+        == pytest.approx(90, abs=1)
+    )
+    page.locator("[data-ellipse-parameter='rx']").fill("65")
+    page.locator("[data-ellipse-parameter='rx']").blur()
+    assert _scene_of(page)["nodes"][0]["rx"] == _scene_of(page)["nodes"][0]["ry"] == 65
+    page.get_by_test_id("drawing-undo").click()
+    assert _scene_of(page)["nodes"][0]["rx"] == 90
+
+
+def test_ellipse_menu_and_explicit_circle_unlock_expose_two_axes(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.locator("[data-preset-menu='circle']").click()
+    page.locator("[data-drawing-preset='ellipse']").click()
+    _drag(page, (100, 100), (300, 200))
+    ellipse = _scene_of(page)["nodes"][0]
+    assert ellipse["constraint"] is None
+    assert ellipse["rx"] == pytest.approx(100, abs=1)
+    assert ellipse["ry"] == pytest.approx(50, abs=1)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (350, 100), (450, 200))
+    page.locator("[data-drawing-unlock]").click()
+    page.locator("[data-ellipse-parameter='ry']").fill("75")
+    page.locator("[data-ellipse-parameter='ry']").blur()
+    node = _scene_of(page)["nodes"][1]
+    assert node["rx"] == 50 and node["ry"] == 75
+
+
+def test_invalid_ellipse_parameters_do_not_change_geometry(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-circle").click()
+    _drag(page, (100, 100), (200, 200))
+    before = _scene_of(page)
+    radius = page.locator("[data-ellipse-parameter='rx']")
+    radius.fill("0")
+    radius.blur()
+    assert _scene_of(page) == before
+    assert page.locator("[data-drawing-error]").is_visible()
+
+
+def test_preset_menu_keyboard_navigation_does_not_move_the_selection(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)
+    page.locator("[data-preset-menu='triangle']").click()
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("ArrowDown")
+    page.keyboard.press("Escape")
+    assert _scene_of(page) == before
+    assert (
+        page.locator("[data-preset-menu='triangle']").get_attribute("aria-expanded")
+        == "false"
+    )
+
+
+def test_primary_triangle_remains_isosceles_and_unlock_allows_free_beak_edit(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props())
+    _mounted(page)
+    page.get_by_test_id("drawing-tool-triangle").click()
+    _drag(page, (100, 100), (300, 300))
+    node = _scene_of(page)["nodes"][0]
+    assert node["constraint"] == {"kind": "triangle_isosceles"}
+    _drag(page, (200, 100), (250, 140))
+    edited = _scene_of(page)["nodes"][0]
+    assert edited["points"][2][0] == pytest.approx(200, abs=1)
+    assert edited["points"][2][1] == pytest.approx(140, abs=1)
+    page.locator("[data-drawing-unlock]").click()
+    _drag(page, (200, 140), (250, 180))
+    assert _scene_of(page)["nodes"][0]["points"][2] == pytest.approx([250, 180], abs=1)
+
+
+def test_insert_remove_and_cut_keep_surviving_vertex_identities(component):
+    page = component.mount("editorial.DrawingEditor", props=_live_props(_square()))
+    _mounted(page)
+    page.locator("[data-select-node='box']").click()
+    before = _scene_of(page)["nodes"][0]["pointIds"]
+    page.mouse.dblclick(*_at(page, 150, 100))
+    inserted = _scene_of(page)["nodes"][0]["pointIds"]
+    assert inserted[0] == before[0] and inserted[2:] == before[1:]
+    page.keyboard.down("Alt")
+    page.mouse.click(*_at(page, 150, 100))
+    page.keyboard.up("Alt")
+    assert _scene_of(page)["nodes"][0]["pointIds"] == before
+    _cut_with_line(page, (250, 50), (250, 450))
+    cut = _scene_of(page)["nodes"]
+    assert all(len(node["pointIds"]) == len(node["points"]) for node in cut)
+    assert all(len(set(node["pointIds"])) == len(node["pointIds"]) for node in cut)
+    assert cut[0]["pointIds"][0] == before[0], "a surviving vertex keeps its identity"

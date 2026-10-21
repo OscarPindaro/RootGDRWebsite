@@ -1,5 +1,5 @@
 {#def world_id=None #}
-{#css layout/Palette.css #}
+{#css layout/Palette.css, common/Button.css, common/Icon.css #}
 {#js common/Dialog.js, layout/Palette.js #}
 <dialog class="palette" id="palette" data-dialog
         data-world-id="{{ world_id or '' }}" aria-label="Cerca nell'archivio">
@@ -10,6 +10,7 @@
            placeholder="Cerca mondi, personaggi, luoghi…" aria-label="Cerca"
            data-dialog-autofocus>
     <ul class="palette__list" id="palette-list" role="listbox" aria-label="Risultati"></ul>
+    <common.Button size="sm" variant="secondary" data-palette-more hidden>Altri risultati</common.Button>
     <div class="palette__state" data-palette-state hidden>
       <p class="palette__message" data-palette-message></p>
       <button class="palette__retry" type="button" data-palette-retry hidden>Riprova</button>

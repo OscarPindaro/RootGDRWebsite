@@ -196,23 +196,45 @@ The paper texture and hand-drawn lettering in these references are not a request
 for textured digital rendering or handwriting recognition. Printable cards do
 need editable name/title text; font and layout choices remain open.
 
+## Settled decisions (2026-10-11 review)
+
+The user reviewed the workspace and answered the open questions below. These are
+decisions, not proposals; the repository holds them and Vikunja holds status.
+
+| Topic | Decision |
+| --- | --- |
+| Undo history | Session-local and in-memory only. Persisting history across sessions was considered and rejected. |
+| Autosave | An opt-in toggle in the editor menu, VS Code style. When on it saves two idle seconds after the last change. The preference is browser-local per user. Explicit Save, the conflict actions and stale-write rejection are unchanged. |
+| Cut tool | Draw a line, move or rotate it, then press Enter. The line is unbounded, only the Ctrl+click-selected nodes are cut, each splits into two pieces, and the line disappears when it is applied. |
+| Artboard | A soft guide: drawing outside it stays allowed. Export adapts to the artboard's dimensions, with a second mode that uses the bounds of all content. The current behaviour stays supported. |
+| Command palette | Docked inside the canvas bounds at its top centre, not a modal over the application. |
+| Libraries | A world library is readable only by an admin and that world's master. A library is divided into sections the librarian creates (NPC, Clothes, Weapons, Prop, …). |
+| Importing a scene | A deep copy by default, configurable to link to the existing scene so later source changes propagate to it. |
+| Unreachable IK target | Refuse the pose; never stretch a bone to reach it. |
+| Publication | Portraits and document illustrations use a snapshot published at a moment in time, not a live reference. |
+| Printable cards | The repository chooses the preset dimensions, margins and typography for now. |
+
+Feedback from the same review is implemented as local tickets `T46`–`T52`:
+`T46` spacing and an unstyled-class guard, `T47` scene tree, `T48` inspector and
+paint layout, `T49` docked palette and the two-stage compact flow, `T50` menu
+icons, dotted grid and autosave, `T51` cut tool, `T52` artboard and export.
+
 ## Open questions
 
-- Polygon splitting gestures, circle-to-path behaviour, selection tools and exact
-  snapping targets/tolerances; how shared boundaries behave after later edits.
-- Source revision/update timing and conflict handling when an overridden vertex,
-  anchor or bone is renamed/removed; cycles, missing sources and asset deletion.
-- Promotion semantics: move versus publish/copy, dependencies on other world-local
-  assets, and what happens to existing instances and world visibility.
-- Skeleton topology editing (including adding joints), supported body presets,
-  joint ranges, root/pinned-point controls and unreachable targets. Clothing
+Still unresolved, and needed before their tickets:
+
+- Palette swatches beyond the curated fourteen, stroke controls, faint-detail
+  opacity and any clipping tools.
+- Skeleton topology editing (including adding joints), the supported body presets
+  and their count, joint ranges, and root/pinned-point controls. Clothing
   coverage and attachment behaviour; no cloth deformation is implied.
-- Palette swatches, stroke controls, faint-detail opacity and any clipping tools.
-- Native document format/storage, save/autosave workflow, recovery, concurrency,
-  versioning and whether undo history survives closing the drawing.
-- Portrait/document updates after editing the drawing: live references or
-  explicitly published snapshots; export dimensions and card print dimensions,
-  margins, typography and printing workflow.
+- Export dimensions per mode and the background choices in practice; the card
+  print dimensions, margins, typography and printing workflow once the presets
+  above are reviewed.
+
+Previously listed and now settled by the review above: polygon splitting
+gestures, circle-to-path behaviour, selection tools, snapping targets, save and
+recovery workflow, promotion of a world asset, and portrait/document updates.
 
 ## First workspace milestone
 

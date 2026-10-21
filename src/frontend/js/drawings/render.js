@@ -6,7 +6,7 @@
    transform applied, so a handle stays the same size on screen. */
 
 import { apply, multiply } from "./geometry.js";
-import { nodeBounds, nodeCenter, nodeFrame, pathHandles } from "./scene.js";
+import { isContainer, nodeFrame, nodeCenter, pathHandles, selectionCorners } from "./scene.js";
 
 const NS = "http://www.w3.org/2000/svg";
 
@@ -24,6 +24,7 @@ function matrixAttr(m) {
 
 function shapeElement(node, view) {
   const selected = (view.selection || []).includes(node.id) || node.id === view.selectedId;
+  const shapeClass = view.preview ? "drawing-editor__command-shape" : "drawing-editor__shape";
   const group = el("g", {
     class: "drawing-editor__node" + (selected ? " is-selected" : ""),
     transform: matrixAttr(node.transform),
@@ -40,7 +41,7 @@ function shapeElement(node, view) {
     const allVisible = !node.edgeVisible || node.edgeVisible.every(Boolean);
     group.appendChild(
       el("polygon", {
-        class: "drawing-editor__shape",
+        class: shapeClass,
         points: node.points.map((point) => point.join(",")).join(" "),
         fill,
         stroke: allVisible ? stroke : "none",
@@ -52,7 +53,7 @@ function shapeElement(node, view) {
       for (const run of visibleRuns(node)) {
         group.appendChild(
           el("polyline", {
-            class: "drawing-editor__shape drawing-editor__shape--outline",
+            class: shapeClass + " drawing-editor__shape--outline",
             points: run.map((point) => point.join(",")).join(" "),
             fill: "none",
             stroke,
@@ -66,7 +67,7 @@ function shapeElement(node, view) {
   } else if (node.kind === "ellipse") {
     group.appendChild(
       el("ellipse", {
-        class: "drawing-editor__shape",
+        class: shapeClass,
         cx: node.cx,
         cy: node.cy,
         rx: node.rx,
@@ -79,7 +80,7 @@ function shapeElement(node, view) {
   } else if (node.kind === "path") {
     group.appendChild(
       el("path", {
-        class: "drawing-editor__shape",
+        class: shapeClass,
         d: node.d,
         fill,
         stroke,
@@ -88,7 +89,7 @@ function shapeElement(node, view) {
         "stroke-linecap": "round",
       })
     );
-  } else if (node.kind === "group") {
+  } else if (node.kind === "group" || node.kind === "instance") {
     for (const child of node.nodes) group.appendChild(shapeElement(child, view));
   }
   return group;
@@ -129,18 +130,12 @@ export function visibleRuns(node) {
 function overlayElements(scene, view) {
   const found = findById(scene.nodes, view.selectedId);
   if (!found) return [];
-  // The transform box and its handles belong to a single selection; a
-  // multi-selection is shown by the outlines alone.
-  if ((view.selection || []).length > 1) return [];
+  // A single selection keeps its oriented box; a
+  // multi-selection shares a world-space transform box.
   const node = found;
+  const ids = view.selection?.length ? view.selection : [node.id];
   const toView = multiply(view.viewport, nodeFrame(scene, node.id).world);
-  const box = nodeBounds(node);
-  const corners = [
-    [box.minX, box.minY],
-    [box.maxX, box.minY],
-    [box.maxX, box.maxY],
-    [box.minX, box.maxY],
-  ].map((point) => apply(toView, point));
+  const corners = selectionCorners(scene, ids).map(point => apply(view.viewport, point));
 
   const elements = [
     el("polygon", {
@@ -163,11 +158,15 @@ function overlayElements(scene, view) {
       );
     });
     const top = [(corners[0][0] + corners[1][0]) / 2, (corners[0][1] + corners[1][1]) / 2];
-    const center = apply(toView, nodeCenter(node));
+    const center = [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
     const outward = normalize([top[0] - center[0], top[1] - center[1]]);
     const rotate = [top[0] + outward[0] * 28, top[1] + outward[1] * 28];
     elements.push(el("line", { class: "drawing-editor__rotate-stem", x1: top[0], y1: top[1], x2: rotate[0], y2: rotate[1] }));
     elements.push(el("circle", { class: "drawing-editor__rotate-handle", cx: rotate[0], cy: rotate[1], r: 6 }));
+    if (ids.length === 1) {
+      const pivot = apply(toView, node.pivot || nodeCenter(node));
+      elements.push(el("circle", {class:"drawing-editor__handle", cx:pivot[0], cy:pivot[1], r:5, "data-transform-pivot":"true", role:"button", tabindex:0, "aria-label":"Pivot della trasformazione"}));
+    }
   }
 
   if (view.mode === "vertex" && node.kind === "polygon") {
@@ -199,6 +198,15 @@ function overlayElements(scene, view) {
     });
   }
 
+  if (view.mode === "vertex" && node.kind === "ellipse") {
+    const circle = node.constraint?.kind === "circle";
+    const handles = [["center", [node.cx, node.cy], "Centro"], ["x", [node.cx + node.rx, node.cy], circle ? "Raggio" : "Raggio orizzontale"], ...(!circle ? [["y", [node.cx, node.cy + node.ry], "Raggio verticale"]] : [])];
+    for (const [axis, local, label] of handles) {
+      const point = apply(toView, local);
+      elements.push(el("circle", { class: "drawing-editor__handle", cx: point[0], cy: point[1], r: 6, "data-ellipse-axis": axis, "aria-label": label, role:"button", tabindex:0 }));
+    }
+  }
+
   if (view.mode === "vertex" && node.kind === "path") {
     const handles = pathHandles(node.d);
     for (const handle of handles) {
@@ -213,31 +221,27 @@ function overlayElements(scene, view) {
   }
 
   if (view.cut) {
+    // The cut is an unbounded line: it is drawn past both ends of the artboard
+    // so it reads as a plane, not as a segment with two ends to hit.
     const from = apply(view.viewport, view.cut.from);
     const to = apply(view.viewport, view.cut.to);
+    const span = Math.hypot(to[0] - from[0], to[1] - from[1]) || 1;
+    const reach = 100000 / span;
+    const far = [from[0] - (to[0] - from[0]) * reach, from[1] - (to[1] - from[1]) * reach];
+    const beyond = [to[0] + (to[0] - from[0]) * reach, to[1] + (to[1] - from[1]) * reach];
     elements.push(
       el("line", {
-        class: "drawing-editor__preview",
-        x1: from[0],
-        y1: from[1],
-        x2: to[0],
-        y2: to[1],
-      })
+        class: "drawing-editor__cut-line",
+        x1: far[0],
+        y1: far[1],
+        x2: beyond[0],
+        y2: beyond[1],
+      }),
+      el("circle", {class: "drawing-editor__cut-handle", cx: from[0], cy: from[1], r: 7, "data-cut-handle": "0", role: "button", tabindex: 0, "aria-label": "Primo punto della linea di taglio"}),
+      el("circle", {class: "drawing-editor__cut-handle", cx: to[0], cy: to[1], r: 7, "data-cut-handle": "1", role: "button", tabindex: 0, "aria-label": "Secondo punto della linea di taglio"})
     );
   }
 
-  if (view.snap) {
-    const point = apply(view.viewport, view.snap);
-    elements.push(
-      el("rect", {
-        class: "drawing-editor__snap",
-        x: point[0] - 7,
-        y: point[1] - 7,
-        width: 14,
-        height: 14,
-      })
-    );
-  }
   return elements;
 }
 
@@ -249,7 +253,7 @@ function normalize(vector) {
 function findById(nodes, id) {
   for (const node of nodes) {
     if (node.id === id) return node;
-    if (node.kind === "group") {
+    if (node.kind === "group" || node.kind === "instance") {
       const nested = findById(node.nodes, id);
       if (nested) return nested;
     }
@@ -258,12 +262,34 @@ function findById(nodes, id) {
 }
 
 export function render(svg, scene, view) {
-  const sceneLayer = svg.querySelector("[data-drawing-scene-layer]");
-  const overlay = svg.querySelector("[data-drawing-overlay]");
+  const sceneLayer = svg.querySelector("[data-drawing-scene-layer], [data-preview-scene-layer]");
+  const overlay = svg.querySelector("[data-drawing-overlay], [data-preview-overlay]");
+  const { width, height } = scene.artboard;
+  // The artboard is a soft guide: a quarter of it is shown around every edge, so
+  // artwork drawn past it stays visible instead of being clipped away.
+  svg.setAttribute("viewBox", `${-width / 4} ${-height / 4} ${width * 1.5} ${height * 1.5}`);
+  const plate = svg.querySelector(".drawing-editor__plate");
+  plate.setAttribute("x", 0);
+  plate.setAttribute("y", 0);
+  plate.setAttribute("width", width);
+  plate.setAttribute("height", height);
   sceneLayer.setAttribute("transform", matrixAttr(view.viewport));
-  svg.querySelector(".drawing-editor__grid").setAttribute("transform", matrixAttr(view.viewport));
-  svg.querySelector(".drawing-editor__plate").setAttribute("fill", scene.artboard.background);
-  svg.querySelector(".drawing-editor__plate").style.fill = scene.artboard.background;
+  svg.querySelector(".drawing-editor__grid, .drawing-editor__preview-grid").setAttribute("transform", matrixAttr(view.viewport));
+  plate.setAttribute("fill", scene.artboard.background);
+  plate.style.fill = scene.artboard.background;
   sceneLayer.replaceChildren(...scene.nodes.map((node) => shapeElement(node, view)));
   overlay.replaceChildren(...overlayElements(scene, view));
+  if (view.snap) {
+    const point = apply(view.viewport, view.snap);
+    overlay.appendChild(el("rect", {class:"drawing-editor__snap", x:point[0] - 7, y:point[1] - 7, width:14, height:14}));
+  }
+  if (view.marquee) {
+    const from = apply(view.viewport,view.marquee.from), to = apply(view.viewport,view.marquee.to);
+    overlay.appendChild(el("rect", {class:"drawing-editor__selection", "data-drawing-marquee":"true", x:Math.min(from[0],to[0]), y:Math.min(from[1],to[1]), width:Math.abs(to[0]-from[0]), height:Math.abs(to[1]-from[1])}));
+  }
+  for (const {axis, value} of view.guides || []) {
+    const from = apply(view.viewport, axis === 0 ? [value, -100000] : [-100000, value]);
+    const to = apply(view.viewport, axis === 0 ? [value, 100000] : [100000, value]);
+    overlay.appendChild(el("line", {class:"drawing-editor__snap", "data-snap-guide":axis, x1:from[0], y1:from[1], x2:to[0], y2:to[1]}));
+  }
 }

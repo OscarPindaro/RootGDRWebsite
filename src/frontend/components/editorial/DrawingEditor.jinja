@@ -1,12 +1,13 @@
-{#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True #}
-{#css editorial/DrawingEditor.css, common/Button.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css #}
-{#js common/Dialog.js, editorial/DrawingEditor.js #}
+{#def title, drawing_id=None, version=None, scene=None, save_url=None, editable=True, owner_id=None, library_url=None #}
+{#css editorial/DrawingEditor.css, common/Button.css, common/ButtonGroup.css, common/Field.css, common/Icon.css, common/Tooltip.css, common/Dialog.css, common/Menu.css #}
+{#js common/Dialog.js, common/Menu.js, editorial/DrawingEditor.js #}
 {% set artboard = scene.artboard if scene else None %}
 {% set objects = scene.nodes if scene else [] %}
 {% set selected = objects[0] if objects and objects[0].kind != 'group' else None %}
 <div class="drawing-editor"
      data-drawing-editor
      data-title="{{ title | e }}"
+     {% if owner_id %}data-owner-id="{{ owner_id }}"{% endif %}
      {% if drawing_id %}data-drawing-id="{{ drawing_id }}"{% endif %}
      {% if save_url %}data-save-url="{{ save_url }}"{% endif %}
      {% if version %}data-version="{{ version }}"{% endif %}
@@ -18,6 +19,9 @@
       <common.Button variant="secondary" size="sm" icon="undo-2" disabled={{ not editable }} data-drawing-undo data-testid="drawing-undo">Annulla</common.Button>
       <common.Button variant="secondary" size="sm" icon="redo-2" disabled={{ not editable }} data-drawing-redo data-testid="drawing-redo">Ripeti</common.Button>
       <common.Button variant="primary" size="sm" icon="save" disabled={{ not editable }} data-testid="drawing-save">Salva</common.Button>
+      <common.IconButton icon="ellipsis-vertical" label="Azioni della selezione" id="drawing-context-trigger" popovertarget="drawing-context-menu" aria-haspopup="menu" aria-expanded="false" data-drawing-context disabled={{ not editable }} />
+      <common.Button variant="secondary" size="sm" data-drawing-commands disabled={{ not editable }}>Comandi (/)</common.Button>
+      <common.IconButton icon="file-text" label="Scorciatoie" data-dialog-open="drawing-help" data-drawing-help disabled={{ not editable }} />
     </div>
   </header>
 
@@ -30,6 +34,19 @@
     per modificarla.
   </p>
   <p class="drawing-editor__error" data-drawing-error role="alert" hidden></p>
+  <div class="drawing-editor__actions" data-drawing-recovery hidden>
+    <p class="hint" data-recovery-message role="status"></p>
+    <common.Button size="sm" variant="secondary" data-recovery-restore>Riprendi bozza locale</common.Button>
+    <common.Button size="sm" variant="text" data-recovery-discard>Scarta bozza locale</common.Button>
+  </div>
+  <common.Dialog title="Modifiche non salvate" id="drawing-navigation" manual={{ True }}>
+    <p>Salva sul server prima di uscire, scarta il lavoro locale oppure rimani qui.</p>
+    <common.Button size="sm" variant="primary" data-navigation-save>Salva e continua</common.Button>
+    <common.Button size="sm" variant="secondary" data-navigation-discard>Scarta e continua</common.Button>
+    <common.Button size="sm" variant="text" data-dialog-close>Rimani qui</common.Button>
+    <p class="hint" data-navigation-message role="status"></p>
+  </common.Dialog>
+  <common.Button size="sm" variant="secondary" data-recovery-path hidden>Completa bozza del tratto</common.Button>
   <div class="drawing-editor__actions" data-drawing-conflict-actions hidden>
     <common.Button size="sm" variant="secondary" data-drawing-save-copy>Salva come copia</common.Button>
     <common.Button size="sm" variant="secondary" data-dialog-open="drawing-reload">Ricarica</common.Button>
@@ -40,41 +57,154 @@
     <common.Button variant="danger" size="sm" data-drawing-reload>Scarta e ricarica</common.Button>
   </common.Dialog>
 
+  <common.Menu id="drawing-context-menu" labelledby="drawing-context-trigger" class="drawing-editor__context-menu">
+    {% for action, label, icon in [('select', 'Seleziona', 'mouse-pointer-2'), ('edit', 'Modifica forma', 'spline'), ('transform', 'Trasforma (T)', 'grid-2x2'), ('duplicate', 'Duplica', 'copy'), ('delete', 'Elimina sottoscena', 'trash-2'), ('group', 'Raggruppa', 'grid-2x2'), ('ungroup', 'Separa', 'list'), ('forward', 'Porta avanti', 'chevron-up'), ('backward', 'Porta indietro', 'chevron-down'), ('front', 'Primo piano', 'chevron-up'), ('back', 'Sfondo', 'chevron-down'), ('unlock', 'Sblocca geometria', 'lock-open'), ('undo', 'Annulla', 'undo-2'), ('redo', 'Ripeti', 'redo-2'), ('save', 'Salva', 'save')] %}
+    <common.MenuItem label={{ label }} icon={{ icon }} data-drawing-command={{ action }} disabled={{ not editable }} />
+    {% endfor %}
+    <common.MenuItem label="Salvataggio automatico" icon="save" checked={{ False }} data-drawing-autosave />
+    <common.MenuItem label="Griglia a punti" icon="grid-2x2" checked={{ False }} data-drawing-grid-dots />
+  </common.Menu>
+  <common.Dialog title="Scorciatoie del disegno" id="drawing-help" manual={{ True }}>
+    <ul class="prose">
+      <li><kbd>T</kbd>: Trasforma la selezione.</li>
+      <li><kbd>/</kbd>: Comandi canvas. <kbd>Ctrl/⌘ + K</kbd>: ricerca nel sito.</li>
+      <li><kbd>Ctrl/⌘ + S</kbd>: Salva, anche dai campi di testo.</li>
+      <li><kbd>Ctrl/⌘ + Z</kbd>: Annulla; <kbd>Ctrl/⌘ + Shift + Z</kbd> o <kbd>Ctrl + Y</kbd>: Ripeti.</li>
+      <li><kbd>Delete</kbd> o <kbd>Backspace</kbd>: elimina la sottoscena selezionata; <kbd>Ctrl/⌘ + D</kbd>: Duplica.</li>
+      <li>Frecce sulla tavola: sposta la selezione. Sui controlli modifica il punto/raggio; nella scena naviga l’albero. <kbd>Shift</kbd>: passo più grande.</li>
+      <li>Trascinamento centrale o <kbd>Spazio</kbd> + trascinamento sinistro: sposta la vista.</li>
+      <li>Doppio clic sul bordo in Modifica forma: inserisce un punto. I controlli sul bordo cambiano il contorno con un clic.</li>
+      <li>Poligono in creazione: <kbd>Enter</kbd> o doppio clic chiude; <kbd>Escape</kbd> annulla.</li>
+      <li><kbd>Shift</kbd> conserva le proporzioni in Trasforma; <kbd>Alt</kbd> esclude gli agganci, non i vincoli.</li>
+      <li><kbd>Shift</kbd> + clic destro conserva il menu del browser. Testi e dialoghi mantengono le proprie scorciatoie.</li>
+      <li><kbd>Ctrl + T</kbd> resta Nuova scheda del browser; <kbd>Alt + Spazio</kbd> può essere riservato dal sistema operativo.</li>
+    </ul>
+  </common.Dialog>
+
   <div class="drawing-editor__selection-bar" data-drawing-selection-bar role="toolbar" aria-label="Selezione e agganci">
-    <common.IconButton icon="spline" label="Vertici" data-drawing-mode="vertex" disabled={{ not editable }} />
+    <common.IconButton icon="mouse-pointer-2" label="Seleziona" data-tool="select" data-testid="drawing-tool-select" selected={{ True }} disabled={{ not editable }} />
+    <common.IconButton icon="spline" label="Modifica forma" selected={{ False }} data-drawing-mode="vertex" disabled={{ not editable }} />
+    <common.IconButton icon="grid-2x2" label="Trasforma (T)" selected={{ False }} data-drawing-mode="transform" disabled={{ not editable }} />
+    <span class="hint" data-drawing-mode-label aria-live="polite">Seleziona</span>
     <common.IconButton icon="grid-2x2" label="Raggruppa" data-drawing-group data-testid="drawing-group" disabled={{ not editable }} />
     <common.IconButton icon="list" label="Separa" data-drawing-ungroup data-testid="drawing-ungroup" disabled={{ not editable }} />
     <common.IconButton icon="copy" label="Duplica" data-drawing-duplicate data-testid="drawing-duplicate" disabled={{ not editable }} />
     <common.IconButton icon="trash-2" label="Elimina" data-drawing-delete data-testid="drawing-delete" disabled={{ not editable }} />
-    <common.IconButton icon="arrow-right" label="Avanti" data-drawing-order="1" disabled={{ not editable }} />
-    <common.IconButton icon="arrow-left" label="Dietro" data-drawing-order="-1" disabled={{ not editable }} />
+    <common.IconButton icon="chevron-up" label="Porta avanti" data-drawing-order="1" disabled={{ not editable }} />
+    <common.IconButton icon="chevron-down" label="Porta indietro" data-drawing-order="-1" disabled={{ not editable }} />
+    <common.Button icon="chevron-up" size="xs" variant="secondary" data-drawing-order="front" disabled={{ not editable }}>Primo piano</common.Button>
+    <common.Button icon="chevron-down" size="xs" variant="secondary" data-drawing-order="back" disabled={{ not editable }}>Sfondo</common.Button>
     <common.IconButton icon="grid-2x2" label="Mostra griglia" selected={{ True }} data-drawing-grid />
     <common.Button size="xs" variant="secondary" selected={{ True }} data-snap-grid>Aggancia griglia</common.Button>
     <common.Button size="xs" variant="secondary" selected={{ True }} data-snap-shapes>Aggancia oggetti</common.Button>
+    <span class="drawing-editor__viewport-controls">
+      <common.IconButton icon="square" size="xs" label="Adatta disegno" data-drawing-fit="drawing" />
+      <common.IconButton icon="mouse-pointer-2" size="xs" label="Adatta selezione" data-drawing-fit="selection" />
+      <span class="mono" data-drawing-zoom aria-label="Zoom della vista">100%</span>
+    </span>
   </div>
 
   <div class="drawing-editor__workspace">
+    <div class="drawing-editor__rail">
+    <section class="drawing-editor__panel drawing-editor__paint" aria-label="Colore e contorno" data-testid="drawing-paint">
+      <h3 class="drawing-editor__panel-title">Colore</h3>
+      <div class="drawing-editor__palette" role="group" aria-label="Tavolozza">
+        <button type="button" class="drawing-editor__chip" data-palette="#ffffff" style="--swatch: #ffffff" aria-label="Bianco"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#000000" style="--swatch: #000000" aria-label="Nero"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#d1402a" style="--swatch: #d1402a" aria-label="Vermiglio"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#d97a26" style="--swatch: #d97a26" aria-label="Arancio"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#e0a327" style="--swatch: #e0a327" aria-label="Ocra"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#8a9a2b" style="--swatch: #8a9a2b" aria-label="Oliva"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#3c7a52" style="--swatch: #3c7a52" aria-label="Bosco"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#1f7a7a" style="--swatch: #1f7a7a" aria-label="Turchese"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#3f7fb0" style="--swatch: #3f7fb0" aria-label="Cielo"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#2c46a8" style="--swatch: #2c46a8" aria-label="Cobalto"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#4a3f8f" style="--swatch: #4a3f8f" aria-label="Indaco"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#7b3f8f" style="--swatch: #7b3f8f" aria-label="Prugna"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#c2506f" style="--swatch: #c2506f" aria-label="Rosa"></button>
+        <button type="button" class="drawing-editor__chip" data-palette="#8a5a3c" style="--swatch: #8a5a3c" aria-label="Argilla"></button>
+      </div>
+      <div class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Riempimento</span>
+        <span class="drawing-editor__swatch" data-testid="drawing-fill-swatch"
+              {% if selected and selected.fill %}style="--swatch: {{ selected.fill }}"{% endif %}></span>
+        <input class="drawing-editor__color" type="color" data-style="fill"
+               value="{{ selected.fill if selected and selected.fill else '#e0a327' }}"
+               aria-label="Colore di riempimento" disabled={{ not editable }} />
+        <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-fill"
+               {% if not (selected and selected.fill) %}checked{% endif %}
+               aria-label="Nessun riempimento" disabled={{ not editable }} /> Nessuno</label>
+      </div>
+      <div class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Contorno</span>
+        <span class="drawing-editor__swatch drawing-editor__swatch--stroke" data-testid="drawing-stroke-swatch"
+              {% if selected and selected.stroke %}style="--swatch: {{ selected.stroke }}"{% endif %}></span>
+        <input class="drawing-editor__color" type="color" data-style="stroke"
+               value="{{ selected.stroke if selected and selected.stroke else '#17150f' }}"
+               aria-label="Colore del contorno" disabled={{ not editable }} />
+        <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-stroke"
+               {% if not (selected and selected.stroke) %}checked{% endif %}
+               aria-label="Nessun contorno" disabled={{ not editable }} /> Nessuno</label>
+      </div>
+      <div class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Spessore</span>
+        <input class="drawing-editor__range" type="range" min="0" max="20" step="0.5" data-style="strokeWidth"
+               value="{{ selected.stroke_width if selected else 4 }}" aria-label="Spessore del contorno"
+               disabled={{ not editable }} />
+        <span class="drawing-editor__value mono" data-style-value="strokeWidth">{{ selected.stroke_width if selected else 4 }}</span>
+      </div>
+      <div class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Opacità</span>
+        <input class="drawing-editor__range" type="range" min="0" max="100" step="1" data-style="opacity"
+               value="{{ (selected.opacity * 100) | round | int if selected else 100 }}" aria-label="Opacità"
+               disabled={{ not editable }} />
+        <span class="drawing-editor__value mono" data-style-value="opacity">{{ (selected.opacity * 100) | round | int if selected else 100 }}%</span>
+      </div>
+    </section>
     <div class="drawing-editor__tools" role="toolbar" aria-label="Strumenti di disegno" data-testid="drawing-toolbar">
-      <button type="button" class="drawing-editor__tool is-selected" aria-pressed="true" data-tool="select" data-testid="drawing-tool-select">
-        <common.Icon name="mouse-pointer-2" size=20 />
-        <span class="drawing-editor__tool-label">Seleziona</span>
-      </button>
-      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="triangle" data-testid="drawing-tool-triangle">
-        <common.Icon name="triangle" size=20 />
-        <span class="drawing-editor__tool-label">Triangolo</span>
-      </button>
-      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="square" data-testid="drawing-tool-square">
-        <common.Icon name="square" size=20 />
-        <span class="drawing-editor__tool-label">Rettangolo</span>
-      </button>
-      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="circle" data-testid="drawing-tool-circle">
-        <common.Icon name="circle" size=20 />
-        <span class="drawing-editor__tool-label">Cerchio</span>
-      </button>
-      <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="polygon" data-testid="drawing-tool-polygon">
-        <common.Icon name="pentagon" size=20 />
-        <span class="drawing-editor__tool-label">Poligono</span>
-      </button>
+      <div class="drawing-editor__split">
+        <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="triangle" data-testid="drawing-tool-triangle">
+          <common.Icon name="triangle" size=20 />
+          <span class="drawing-editor__tool-label">Triangolo</span>
+        </button>
+        <common.IconButton icon="chevron-down" label="Varianti del triangolo" id="drawing-triangle-trigger" popovertarget="drawing-triangle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="triangle" disabled={{ not editable }} />
+      </div>
+      <common.Menu id="drawing-triangle-menu" labelledby="drawing-triangle-trigger">
+        <common.MenuItem label="Isoscele" icon="triangle" data-drawing-preset="triangle_isosceles" />
+        <common.MenuItem label="Equilatero" icon="triangle" data-drawing-preset="triangle_equilateral" />
+        <common.MenuItem label="Rettangolo · angolo a destra" icon="triangle" data-drawing-preset="triangle_right_right" />
+        <common.MenuItem label="Rettangolo · angolo a sinistra" icon="triangle" data-drawing-preset="triangle_right_left" />
+      </common.Menu>
+      <div class="drawing-editor__split">
+        <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="square" data-testid="drawing-tool-square">
+          <common.Icon name="square" size=20 />
+          <span class="drawing-editor__tool-label">Rettangolo</span>
+        </button>
+        <common.IconButton icon="chevron-down" label="Varianti del rettangolo" id="drawing-rectangle-trigger" popovertarget="drawing-rectangle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="rectangle" disabled={{ not editable }} />
+      </div>
+      <common.Menu id="drawing-rectangle-menu" labelledby="drawing-rectangle-trigger">
+        <common.MenuItem label="Quadrato" icon="square" data-drawing-preset="square" />
+      </common.Menu>
+      <div class="drawing-editor__split">
+        <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="circle" data-testid="drawing-tool-circle">
+          <common.Icon name="circle" size=20 />
+          <span class="drawing-editor__tool-label">Cerchio</span>
+        </button>
+        <common.IconButton icon="chevron-down" label="Varianti del cerchio" id="drawing-circle-trigger" popovertarget="drawing-circle-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="circle" disabled={{ not editable }} />
+      </div>
+      <common.Menu id="drawing-circle-menu" labelledby="drawing-circle-trigger">
+        <common.MenuItem label="Ellisse" icon="circle" data-drawing-preset="ellipse" />
+      </common.Menu>
+      <div class="drawing-editor__split">
+        <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="polygon" data-testid="drawing-tool-polygon">
+          <common.Icon name="pentagon" size=20 />
+          <span class="drawing-editor__tool-label">Poligono</span>
+        </button>
+        <common.IconButton icon="chevron-down" label="Varianti del poligono" id="drawing-polygon-trigger" popovertarget="drawing-polygon-menu" aria-haspopup="menu" aria-expanded="false" data-preset-menu="polygon" disabled={{ not editable }} />
+      </div>
+      <common.Menu id="drawing-polygon-menu" labelledby="drawing-polygon-trigger">
+        <common.MenuItem label="Poligono regolare" icon="pentagon" data-drawing-preset="regular_polygon" />
+      </common.Menu>
       <button type="button" class="drawing-editor__tool" aria-pressed="false" data-tool="line" data-testid="drawing-tool-line">
         <common.Icon name="pen-tool" size=20 />
         <span class="drawing-editor__tool-label">Linea</span>
@@ -89,15 +219,25 @@
       </button>
     </div>
 
+    </div>
+
     <div class="drawing-editor__canvas" data-testid="drawing-canvas">
-      <svg class="drawing-editor__artboard" viewBox="0 0 {{ artboard.width if artboard else 640 }} {{ artboard.height if artboard else 480 }}"
-           role="img" aria-label="Tavola da disegno" data-drawing-artboard>
+      <svg class="drawing-editor__artboard"
+           viewBox="{{ -(artboard.width if artboard else 640) / 4 }} {{ -(artboard.height if artboard else 480) / 4 }} {{ (artboard.width if artboard else 640) * 1.5 }} {{ (artboard.height if artboard else 480) * 1.5 }}"
+           style="aspect-ratio: {{ (artboard.width if artboard else 640) }} / {{ (artboard.height if artboard else 480) }}"
+           role="img" aria-label="Tavola da disegno" tabindex="0" data-drawing-artboard>
         <defs>
           <pattern id="drawing-grid" width="10" height="10" patternUnits="userSpaceOnUse">
             <path d="M10 0H0V10" fill="none" stroke="var(--line)" stroke-width="1" />
           </pattern>
+          <pattern id="drawing-grid-dots" width="10" height="10" patternUnits="userSpaceOnUse">
+            <circle cx="1" cy="1" r="1" fill="var(--line)" />
+          </pattern>
         </defs>
-        <rect class="drawing-editor__plate" x="0" y="0" width="100%" height="100%" />
+        {# Everything outside the artboard is still drawn, on the page rather
+           than on the plate: the artboard is a guide, not a hard edge. #}
+        <rect class="drawing-editor__outside" x="-100000" y="-100000" width="200000" height="200000" />
+        <rect class="drawing-editor__plate" x="0" y="0" width="{{ artboard.width if artboard else 640 }}" height="{{ artboard.height if artboard else 480 }}" />
         <rect class="drawing-editor__grid" x="-100000" y="-100000" width="200000" height="200000" fill="url(#drawing-grid)" />
         {# The scene layer is rebuilt by the client from the document; the
            server-rendered shapes here are the no-JS first paint. #}
@@ -123,11 +263,71 @@
           {% endif %}
         </g>
       </svg>
+  <div class="drawing-editor__palette-dock" id="drawing-command-dialog" data-testid="drawing-commands" hidden>
+    <div class="drawing-editor__commands-head">
+    <common.ButtonGroup label="Metodo dei comandi" variant="connected" size="sm">
+      <common.Button size="sm" variant="secondary" selected={{ True }} data-canvas-mode="compact">Compatta</common.Button>
+      <common.Button size="sm" variant="secondary" selected={{ False }} data-canvas-mode="guided">Guidata</common.Button>
+    </common.ButtonGroup>
+    <common.IconButton icon="x" size="sm" label="Chiudi i comandi" data-canvas-command-close />
+    </div>
+    <div data-canvas-compact>
+      <label class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Comando</span>
+        <input class="drawing-editor__name" data-canvas-command-input maxlength="255" role="combobox" aria-label="Comando canvas" aria-autocomplete="list" aria-controls="canvas-command-options" aria-expanded="true" />
+      </label>
+      <ul class="drawing-editor__command-options" id="canvas-command-options" data-canvas-command-options role="listbox" aria-label="Comandi disponibili"></ul>
+    </div>
+    <div data-canvas-guided hidden>
+      <label class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Azione</span>
+        <select class="drawing-editor__name" data-canvas-command-action aria-label="Azione canvas"></select>
+      </label>
+      <label class="drawing-editor__field">
+        <span class="drawing-editor__field-label">Parametri (unità tavola)</span>
+        <input class="drawing-editor__name" data-canvas-command-parameters maxlength="255" aria-label="Parametri comando" placeholder="dx dy / x y larghezza altezza angolo" />
+      </label>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="create-preset" hidden>
+        <legend class="hint">Forma · riquadro in unità tavola · centro scena</legend>
+        <label class="drawing-editor__field"><span>Forma</span><select class="drawing-editor__name" data-guided-field="kind" aria-label="Forma da creare"></select></label>
+        {% for field, label in [('width', 'Larghezza riquadro'), ('height', 'Altezza riquadro'), ('x', 'Centro X scena'), ('y', 'Centro Y scena'), ('sides', 'Lati (poligono)')] %}
+        <label class="drawing-editor__field"><span>{{ label }}</span><input class="drawing-editor__name" type="number" step="any" data-guided-field="{{ field }}" aria-label="{{ label }}" /></label>
+        {% endfor %}
+      </fieldset>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="move" hidden>
+        <legend class="hint">Spostamento · unità scena</legend>
+        <label class="drawing-editor__field"><span>Delta X</span><input class="drawing-editor__name" type="number" step="any" data-guided-field="dx" aria-label="Delta X" /></label>
+        <label class="drawing-editor__field"><span>Delta Y</span><input class="drawing-editor__name" type="number" step="any" data-guided-field="dy" aria-label="Delta Y" /></label>
+      </fieldset>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="ellipse-parameter" hidden>
+        <legend class="hint">Raggio / semiasse · unità locali</legend>
+        <label class="drawing-editor__field"><span>Raggio orizzontale</span><input class="drawing-editor__name" type="number" step="any" data-guided-field="value" aria-label="Raggio guidato" /></label>
+      </fieldset>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="parent" hidden>
+        <legend class="hint">Genitore · mantiene la posizione scena</legend>
+        <select class="drawing-editor__name" data-guided-field="parent" aria-label="Genitore guidato"></select>
+      </fieldset>
+      <fieldset class="drawing-editor__geometry" data-guided-fields="align" hidden>
+        <legend class="hint">Allineamento / spazi · assi scena</legend>
+        <select class="drawing-editor__name" data-guided-field="alignment" aria-label="Allineamento guidato">
+          <option value="left">Sinistra</option><option value="center-x">Centro orizzontale</option><option value="right">Destra</option><option value="top">Alto</option><option value="center-y">Centro verticale</option><option value="bottom">Basso</option><option value="distribute-x">Spazi orizzontali</option><option value="distribute-y">Spazi verticali</option>
+        </select>
+      </fieldset>
+      <svg class="drawing-editor__command-preview" data-canvas-preview role="img" aria-label="Anteprima del comando" viewBox="0 0 640 480" hidden>
+        <rect class="drawing-editor__plate" width="100%" height="100%" />
+        <g class="drawing-editor__preview-grid"></g><g data-preview-scene-layer></g><g data-preview-overlay></g>
+      </svg>
+      <common.Button size="sm" variant="primary" data-canvas-command-apply>Applica</common.Button>
+    </div>
+    <p class="hint" data-canvas-command-status role="status" aria-live="polite"></p>
+  </div>
     </div>
 
     <div class="drawing-editor__side">
       <section class="drawing-editor__panel" aria-label="Scena" data-testid="drawing-layers">
         <h3 class="drawing-editor__panel-title">Scena</h3>
+        <template data-scene-lock><common.Icon name="lock" size=20 /></template>
+        <template data-scene-unlock><common.Icon name="lock-open" size=20 /></template>
         <template data-scene-eye><common.Icon name="eye" size=20 /></template>
         <template data-scene-eye-off><common.Icon name="eye-off" size=20 /></template>
         <template data-scene-arrow><common.Icon name="chevron-down" size=20 /></template>
@@ -144,24 +344,116 @@
         </ul>
       </section>
 
+      {% if library_url %}<section class="drawing-editor__panel" aria-label="Libreria" data-library data-library-url="{{ library_url }}">
+        <h3 class="drawing-editor__panel-title">Libreria</h3>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-library">Libreria</label>
+          <select class="drawing-editor__name" id="drawing-library" data-library-library aria-label="Libreria"></select>
+        </div>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-library-section">Sezione</label>
+          <select class="drawing-editor__name" id="drawing-library-section" data-library-section aria-label="Sezione della libreria"></select>
+        </div>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-library-asset">Elemento</label>
+          <select class="drawing-editor__name" id="drawing-library-asset" data-library-asset aria-label="Elemento della libreria"></select>
+        </div>
+        <label class="drawing-editor__toggle"><input type="checkbox" data-library-link /> Collega all’originale</label>
+        <common.Button size="xs" variant="secondary" data-library-insert disabled>Inserisci nell’arte</common.Button>
+        <common.Button size="xs" variant="secondary" data-library-detach hidden>Rendi indipendente</common.Button>
+        <common.Button size="xs" variant="secondary" data-library-refresh hidden>Aggiorna dalla libreria</common.Button>
+        <p class="hint" data-library-link-state hidden></p>
+        <div class="drawing-editor__field">
+          <label class="drawing-editor__field-label" for="drawing-library-name">Salva selezione come</label>
+          <input class="drawing-editor__name" type="text" id="drawing-library-name" data-library-name maxlength="255" aria-label="Nome del nuovo elemento" placeholder="Becco di Altus" />
+        </div>
+        <common.Button size="xs" variant="secondary" data-library-save disabled>Salva nella libreria</common.Button>
+        <p class="hint" data-library-status role="status" aria-live="polite"></p>
+        <p class="hint" data-library-empty hidden>Nessun elemento in questa sezione.</p>
+      </section>{% endif %}
+
       <section class="drawing-editor__panel" aria-label="Proprietà" data-testid="drawing-inspector">
         <h3 class="drawing-editor__panel-title">Proprietà</h3>
-        <div class="drawing-editor__palette" role="group" aria-label="Tavolozza">
-          <button type="button" class="drawing-editor__chip" data-palette="#ffffff" style="--swatch: #ffffff" aria-label="Bianco"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#000000" style="--swatch: #000000" aria-label="Nero"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#d1402a" style="--swatch: #d1402a" aria-label="Vermiglio"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#d97a26" style="--swatch: #d97a26" aria-label="Arancio"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#e0a327" style="--swatch: #e0a327" aria-label="Ocra"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#8a9a2b" style="--swatch: #8a9a2b" aria-label="Oliva"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#3c7a52" style="--swatch: #3c7a52" aria-label="Bosco"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#1f7a7a" style="--swatch: #1f7a7a" aria-label="Turchese"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#3f7fb0" style="--swatch: #3f7fb0" aria-label="Cielo"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#2c46a8" style="--swatch: #2c46a8" aria-label="Cobalto"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#4a3f8f" style="--swatch: #4a3f8f" aria-label="Indaco"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#7b3f8f" style="--swatch: #7b3f8f" aria-label="Prugna"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#c2506f" style="--swatch: #c2506f" aria-label="Rosa"></button>
-          <button type="button" class="drawing-editor__chip" data-palette="#8a5a3c" style="--swatch: #8a5a3c" aria-label="Argilla"></button>
+        <p class="hint" data-drawing-diagnostics role="status" aria-live="polite">Nessuna selezione</p>
+        <div class="drawing-editor__field" data-regular-options hidden>
+          <label class="drawing-editor__field-label" for="drawing-regular-sides">Lati del poligono</label>
+          <input class="drawing-editor__name" type="number" id="drawing-regular-sides" data-regular-sides min="3" max="32" value="6" />
         </div>
+        <p class="hint" data-drawing-constraint>Geometria libera</p>
+        <common.Button size="xs" variant="secondary" icon="lock-open" data-drawing-unlock disabled={{ not editable }}>Sblocca geometria</common.Button>
+        <fieldset class="drawing-editor__geometry" data-artboard-parameters>
+          <legend class="hint">Tavola · guida morbida · unità tavola</legend>
+          {% for label, fields in [
+            ('Tavola', [('artboardWidth', 'L', 'Larghezza della tavola'), ('artboardHeight', 'A', 'Altezza della tavola')]),
+          ] %}
+          <div class="drawing-editor__row">
+            <span class="drawing-editor__row-label">{{ label }}</span>
+            {% for field, axis, aria in fields %}
+            <label class="drawing-editor__cell">
+              <span class="drawing-editor__axis" aria-hidden="true">{{ axis }}</span>
+              <input class="drawing-editor__name" type="number" step="any" data-artboard-field="{{ field }}" aria-label="{{ aria }}" min="1" max="100000" />
+            </label>
+            {% endfor %}
+          </div>
+          {% endfor %}
+          <div class="drawing-editor__field">
+            <span class="drawing-editor__field-label">Sfondo</span>
+            <input class="drawing-editor__color" type="color" data-artboard-field="artboardBackground" value="{{ artboard.background if artboard else '#fffdf6' }}" aria-label="Colore di sfondo della tavola" disabled={{ not editable }} />
+          </div>
+        </fieldset>
+        <fieldset class="drawing-editor__geometry" data-path-advanced hidden>
+          <legend class="hint">Ancora curva · tangenti locali</legend>
+          <select class="drawing-editor__name" data-path-anchor-mode aria-label="Comportamento ancora">
+            <option value="corner">Angolo · tangenti indipendenti</option><option value="smooth">Morbida · direzione collegata</option><option value="symmetric">Simmetrica · tangenti uguali</option>
+          </select>
+          <common.Button size="xs" variant="secondary" data-path-anchor-insert>Inserisci punto (curva invariata)</common.Button>
+        </fieldset>
+        <fieldset class="drawing-editor__geometry" data-geometry-parameters hidden>
+          <legend class="hint">Scena · assi oggetto · pivot locale</legend>
+          {% for label, fields in [
+            ('Posizione', [('x', 'X', 'X scena (angolo locale)'), ('y', 'Y', 'Y scena (angolo locale)')]),
+            ('Dimensione', [('width', 'L', 'Larghezza asse'), ('height', 'A', 'Altezza asse')]),
+            ('Rotazione', [('angle', '°', 'Angolo (gradi)')]),
+            ('Pivot', [('pivotX', 'X', 'Pivot X locale'), ('pivotY', 'Y', 'Pivot Y locale')]),
+          ] %}
+          <div class="drawing-editor__row">
+            <span class="drawing-editor__row-label">{{ label }}</span>
+            {% for field, axis, aria in fields %}
+            <label class="drawing-editor__cell">
+              <span class="drawing-editor__axis" aria-hidden="true">{{ axis }}</span>
+              <input class="drawing-editor__name" type="number" step="any" data-geometry-field="{{ field }}" aria-label="{{ aria }}" max="100000" min="{{ '0.1' if field in ['width', 'height'] else '-100000' }}" />
+            </label>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </fieldset>
+        <div class="drawing-editor__field" data-align-controls>
+          <label class="drawing-editor__field-label" for="drawing-alignment">Allineamento / spazi</label>
+          <select class="drawing-editor__name" id="drawing-alignment" data-geometry-align aria-label="Allineamento">
+            <option value="left">Sinistra</option><option value="center-x">Centro orizzontale</option><option value="right">Destra</option>
+            <option value="top">Alto</option><option value="center-y">Centro verticale</option><option value="bottom">Basso</option>
+            <option value="distribute-x">Spazi orizzontali</option><option value="distribute-y">Spazi verticali</option>
+          </select>
+          <common.Button size="xs" variant="secondary" data-geometry-align-apply>Applica allineamento</common.Button>
+        </div>
+        <fieldset class="drawing-editor__geometry" data-ellipse-parameters hidden>
+          <legend class="hint">Coordinate locali · unità tavola</legend>
+          {% for label, fields in [
+            ('Centro', [('cx', 'X', 'Centro X'), ('cy', 'Y', 'Centro Y')]),
+            ('Raggio', [('rx', 'X', 'Raggio orizzontale'), ('ry', 'Y', 'Raggio verticale')]),
+          ] %}
+          <div class="drawing-editor__row">
+            <span class="drawing-editor__row-label" {% if label == 'Raggio' %}data-ellipse-radius-label{% endif %}>{{ label }}</span>
+            {% for field, axis, aria in fields %}
+            <label class="drawing-editor__cell">
+              <span class="drawing-editor__axis" aria-hidden="true">{{ axis }}</span>
+              <input class="drawing-editor__name" type="number" step="any" data-ellipse-parameter="{{ field }}" aria-label="{{ aria }}" max="100000" min="{{ '0.1' if field in ['rx', 'ry'] else '-100000' }}" />
+            </label>
+            {% endfor %}
+          </div>
+          {% endfor %}
+        </fieldset>
+
         <div class="drawing-editor__field">
           <span class="drawing-editor__field-label">Nome</span>
           <input class="drawing-editor__name" type="text" data-node-name maxlength="120"
@@ -172,44 +464,8 @@
           <label class="drawing-editor__field-label" for="drawing-parent">Genitore</label>
           <select class="drawing-editor__name" id="drawing-parent" data-node-parent disabled><option value="">Scena</option></select>
         </div>
-        <div class="drawing-editor__field">
-          <span class="drawing-editor__field-label">Riempimento</span>
-          <span class="drawing-editor__swatch" data-testid="drawing-fill-swatch"
-                {% if selected and selected.fill %}style="--swatch: {{ selected.fill }}"{% endif %}></span>
-          <input class="drawing-editor__color" type="color" data-style="fill"
-                 value="{{ selected.fill if selected and selected.fill else '#e0a327' }}"
-                 aria-label="Colore di riempimento" disabled={{ not editable }} />
-          <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-fill"
-                 {% if not (selected and selected.fill) %}checked{% endif %}
-                 aria-label="Nessun riempimento" disabled={{ not editable }} /> Nessuno</label>
-        </div>
-        <div class="drawing-editor__field">
-          <span class="drawing-editor__field-label">Contorno</span>
-          <span class="drawing-editor__swatch drawing-editor__swatch--stroke" data-testid="drawing-stroke-swatch"
-                {% if selected and selected.stroke %}style="--swatch: {{ selected.stroke }}"{% endif %}></span>
-          <input class="drawing-editor__color" type="color" data-style="stroke"
-                 value="{{ selected.stroke if selected and selected.stroke else '#17150f' }}"
-                 aria-label="Colore del contorno" disabled={{ not editable }} />
-          <label class="drawing-editor__toggle"><input type="checkbox" data-style="no-stroke"
-                 {% if not (selected and selected.stroke) %}checked{% endif %}
-                 aria-label="Nessun contorno" disabled={{ not editable }} /> Nessuno</label>
-        </div>
-        <div class="drawing-editor__field">
-          <span class="drawing-editor__field-label">Spessore</span>
-          <input class="drawing-editor__range" type="range" min="0" max="20" step="0.5" data-style="strokeWidth"
-                 value="{{ selected.stroke_width if selected else 4 }}" aria-label="Spessore del contorno"
-                 disabled={{ not editable }} />
-          <span class="drawing-editor__value mono" data-style-value="strokeWidth">{{ selected.stroke_width if selected else 4 }}</span>
-        </div>
-        <div class="drawing-editor__field">
-          <span class="drawing-editor__field-label">Opacità</span>
-          <input class="drawing-editor__range" type="range" min="0" max="100" step="1" data-style="opacity"
-                 value="{{ (selected.opacity * 100) | round | int if selected else 100 }}" aria-label="Opacità"
-                 disabled={{ not editable }} />
-          <span class="drawing-editor__value mono" data-style-value="opacity">{{ (selected.opacity * 100) | round | int if selected else 100 }}%</span>
-        </div>
 
-        <p class="hint" data-testid="drawing-inspector-hint">Seleziona un oggetto per modificarne colore, spessore e opacità.</p>
+        <p class="hint" data-testid="drawing-inspector-hint">Seleziona un oggetto per modificarne nome, geometria e genitore. Colore e contorno sono a sinistra.</p>
       </section>
     </div>
   </div>

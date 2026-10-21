@@ -5,7 +5,7 @@
    document is the same shape the server stores and validates; the client never
    invents a field the API would refuse. */
 
-import { apply, bounds, centerOf, distanceToSegment, invert, multiply, pointInPolygon, polygonArea } from "./geometry.js";
+import { apply, bounds, centerOf, distanceToSegment, invert, multiply, pointInPolygon, polygonArea, translation, rotateAbout } from "./geometry.js";
 
 /** The deepest nesting the document format accepts. */
 export const MAX_DEPTH = 8;
@@ -17,15 +17,80 @@ export function newId(prefix = "n") {
   return `${prefix}-${sequence.toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+/** A node that owns children: a group, or a linked instance of a library asset. */
+export function isContainer(node) {
+  return node?.kind === "group" || node?.kind === "instance";
+}
+
 export function cloneScene(scene) {
   return JSON.parse(JSON.stringify(scene));
+}
+
+export function migrateScene(scene) {
+  const next = cloneScene(scene);
+  if (![1, 2, 3, 4, 5, 6].includes(next.schemaVersion)) throw new Error("Unsupported native drawing version");
+  next.schemaVersion = 6;
+  walk(next.nodes, node => {
+    if (node.kind !== "instance") return;
+    node.revision ??= 1;
+    node.overrides ??= [];
+    node.source ??= {libraryId: "", assetId: ""};
+  });
+  walk(next.nodes, node => {
+    node.pivot ??= null;
+    node.editLocked ??= false;
+    node.anchors ??= [];
+    if (!isContainer(node)) node.constraint ??= null;
+    if (node.kind === "polygon") node.pointIds ??= node.points.map((_, index) => `v${index}`);
+    if (node.kind === "path") { node.pointIds ??= pathHandles(node.d).map((_, index) => `h${index}`); node.anchorModes ??= []; }
+  });
+  return next;
+}
+
+export function lockedPolygon(points, kind) {
+  if (kind === "circle") return false;
+  const edges = points.map((point, i) => [points[(i + 1) % points.length][0] - point[0], points[(i + 1) % points.length][1] - point[1]]);
+  const lengths = edges.map(([x, y]) => x * x + y * y);
+  const equal = (a, b) => Math.abs(a - b) <= Math.max(1e-8, 1e-6 * Math.max(Math.abs(a), Math.abs(b)));
+  const perpendicular = (a, b) => Math.abs(a[0] * b[0] + a[1] * b[1]) <= 1e-6 * Math.hypot(...a) * Math.hypot(...b);
+  if (kind.startsWith("triangle_")) {
+    if (points.length !== 3) return false;
+    if (kind === "triangle_isosceles") return equal(lengths[1], lengths[2]);
+    if (kind === "triangle_equilateral") return lengths.every(length => equal(length, lengths[0]));
+    const corner = kind === "triangle_right_right" ? 1 : 0;
+    return perpendicular(edges[corner], edges[(corner + 2) % 3]);
+  }
+  if (kind === "rectangle" || kind === "square") {
+    return points.length === 4 && edges.every((edge, i) => perpendicular(edge, edges[(i + 1) % 4])) && (kind === "rectangle" || equal(lengths[0], lengths[1]));
+  }
+  const center = points.reduce((sum, point) => [sum[0] + point[0] / points.length, sum[1] + point[1] / points.length], [0, 0]);
+  const radii = points.map(point => (point[0] - center[0]) ** 2 + (point[1] - center[1]) ** 2);
+  return kind === "regular_polygon" && lengths.every(length => equal(length, lengths[0])) && radii.every(radius => equal(radius, radii[0]));
+}
+
+export function constraintsValid(scene) {
+  let valid = true;
+  walk(scene.nodes, node => {
+    const [a, b, c, d] = node.transform;
+    valid &&= node.transform.every(value => Number.isFinite(value) && Math.abs(value) <= 100000) && Math.abs(a * d - b * c) >= 1e-9;
+    if (!node.constraint) return;
+    const world = nodeFrame(scene, node.id).world;
+    if (node.kind === "polygon") {
+      valid &&= lockedPolygon(node.points, node.constraint.kind) && lockedPolygon(node.points.map(point => apply(world, point)), node.constraint.kind);
+    } else if (node.kind === "ellipse" && node.constraint.kind === "circle") {
+      const [a, b, c, d] = world;
+      const first = a * a + b * b, second = c * c + d * d;
+      valid &&= Math.abs(node.rx - node.ry) <= 1e-6 * Math.max(node.rx, node.ry) && Math.abs(first - second) <= 1e-6 * Math.max(first, second) && Math.abs(a * c + b * d) <= 1e-6 * first;
+    } else valid = false;
+  });
+  return valid;
 }
 
 /** Visit every node in the tree, depth first, in drawing order. */
 export function walk(nodes, visit, parent = null) {
   nodes.forEach((node, index) => {
     visit(node, nodes, index, parent);
-    if (node.kind === "group") walk(node.nodes, visit, node);
+    if (isContainer(node)) walk(node.nodes, visit, node);
   });
 }
 
@@ -35,6 +100,44 @@ export function findNode(scene, id) {
     if (node.id === id) found = { node, siblings, index, parent };
   });
   return found;
+}
+
+export function editLocked(scene, id) {
+  let current = findNode(scene,id);
+  while (current) {
+    if (current.node.editLocked) return true;
+    current = current.parent ? findNode(scene,current.parent.id) : null;
+  }
+  return false;
+}
+
+export function editableSelection(scene, ids) {
+  return ids.every(id => {
+    const found = findNode(scene,id);
+    if (!found || editLocked(scene,id)) return false;
+    let locked = false;
+    if (isContainer(found.node)) walk(found.node.nodes, node => { locked ||= Boolean(node.editLocked); });
+    return !locked;
+  });
+}
+
+export function visibilityIssues(scene, id) {
+  const found = findNode(scene, id);
+  if (!found) return ["no-selection"];
+  const node = found.node, issues = [];
+  if (!node.visible) issues.push("hidden");
+  let parent = found.parent, hiddenParent = false, opacity = node.opacity;
+  while (parent) {
+    hiddenParent ||= !parent.visible;
+    opacity *= parent.opacity;
+    parent = findNode(scene, parent.id).parent;
+  }
+  if (hiddenParent) issues.push("hidden-parent");
+  if (!opacity) issues.push("zero-opacity");
+  if (isContainer(node)) {
+    if (!node.nodes.length) issues.push("empty-group");
+  } else if (!node.fill && (!node.stroke || !node.strokeWidth || (node.kind === "polygon" && node.edgeVisible?.every(value => !value)))) issues.push("no-paint");
+  return issues;
 }
 
 export function countNodes(scene) {
@@ -48,7 +151,7 @@ export function worldPoints(node) {
 }
 
 export function nodeBounds(node) {
-  if (node.kind === "group") {
+  if (isContainer(node)) {
     const boxes = node.nodes.map((child) => {
       const box = nodeBounds(child);
       const corners = [
@@ -76,6 +179,31 @@ export function nodeBounds(node) {
   return bounds(node.points);
 }
 
+/**
+ * The bounds of everything the drawing actually contains, or `null` when there
+ * is nothing visible. This is the alternative to cropping at the artboard: an
+ * export can take the artboard's rectangle, or the rectangle the artwork needs.
+ * Hidden nodes do not extend it, because they are not in the rendered result.
+ */
+export function contentBounds(scene) {
+  const ids = [];
+  walk(scene.nodes, node => {
+    if (node.visible !== false && node.opacity !== 0 && !isContainer(node)) ids.push(node.id);
+  });
+  const corners = ids.flatMap(id => selectionCorners(scene, [id]));
+  return corners.length ? bounds(corners) : null;
+}
+
+export function selectionCorners(scene, ids) {  const corners = ids.flatMap(id => {
+    const frame = nodeFrame(scene, id);
+    const box = nodeBounds(frame.node);
+    return [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]].map(point => apply(frame.world, point));
+  });
+  if (ids.length === 1) return corners;
+  const box = bounds(corners);
+  return [[box.minX, box.minY], [box.maxX, box.minY], [box.maxX, box.maxY], [box.minX, box.maxY]];
+}
+
 export function nodeCenter(node) {
   const box = nodeBounds(node);
   return [(box.minX + box.maxX) / 2, (box.minY + box.maxY) / 2];
@@ -85,7 +213,7 @@ export function nodeCenter(node) {
 
 export function pathHandles(d) {
   const handles = [];
-  let previous = null;
+  let previous = null, previousIndex = null;
   let controlNumber = 0;
   pathCommands(d).forEach((command, index) => {
     for (let offset = 0; offset < command.numbers.length; offset += 2) {
@@ -93,8 +221,9 @@ export function pathHandles(d) {
       const control = command.name === "C" && offset % 6 !== 4;
       const endOffset = Math.floor(offset / 6) * 6 + 4;
       const anchor = control ? (offset % 6 === 0 ? previous : command.numbers.slice(endOffset, endOffset + 2)) : null;
-      handles.push({ command: index, offset, point, control, anchor, label: control ? `Controllo ${++controlNumber}` : "Punto del tracciato" });
-      if (!control) previous = point;
+      const anchorIndex = control ? (offset % 6 === 0 ? previousIndex : handles.length + 1) : null;
+      handles.push({ command: index, offset, point, control, anchor, anchorIndex, label: control ? `Controllo ${++controlNumber}` : "Punto del tracciato" });
+      if (!control) { previous = point; previousIndex = handles.length - 1; }
     }
   });
   const endpoints = handles.filter(handle => !handle.control);
@@ -107,6 +236,51 @@ export function movePathPoint(d, commandIndex, offset, point) {
   const commands = pathCommands(d);
   commands[commandIndex].numbers.splice(offset, 2, ...point);
   return commands.map(c => c.name + c.numbers.map(n => Math.round(n * 1000) / 1000).join(" ")).join(" ");
+}
+
+export function moveCurvePoint(node, command, offset, point) {
+  const handles = pathHandles(node.d), index = handles.findIndex(handle => handle.command === command && handle.offset === offset);
+  if (index < 0 || !point.every(Number.isFinite)) return null;
+  const commands = pathCommands(node.d), handle = handles[index];
+  commands[command].numbers.splice(offset,2,...point);
+  if (!handle.control) {
+    const delta = point.map((value,axis) => value - handle.point[axis]);
+    handles.filter(control => control.control && control.anchorIndex === index).forEach(control => commands[control.command].numbers.splice(control.offset,2,...control.point.map((value,axis) => value + delta[axis])));
+  } else {
+    const mode = node.anchorModes?.find(mode => mode.id === node.pointIds[handle.anchorIndex])?.mode || "corner";
+    const opposite = handles.find((control,position) => position !== index && control.control && control.anchorIndex === handle.anchorIndex);
+    if (opposite && mode !== "corner") {
+      const anchor = handles[handle.anchorIndex].point, vector = point.map((value,axis) => value - anchor[axis]), length = Math.hypot(...vector);
+      const distance = mode === "symmetric" ? length : Math.hypot(...opposite.point.map((value,axis) => value - anchor[axis]));
+      if (length) commands[opposite.command].numbers.splice(opposite.offset,2,...anchor.map((value,axis) => value - vector[axis] / length * distance));
+      else if (mode === "symmetric") commands[opposite.command].numbers.splice(opposite.offset,2,...anchor);
+    }
+  }
+  const d = commands.map(c => c.name + c.numbers.map(n => Math.round(n * 1e6) / 1e6).join(" ")).join(" ");
+  return d.length <= 8000 && commands.every(command => command.numbers.every(value => Number.isFinite(value) && Math.abs(value) <= 100000)) ? {...node,d} : null;
+}
+
+export function setPathAnchorMode(node, id, mode) {
+  if (!["corner", "smooth", "symmetric"].includes(mode)) return null;
+  const handles = pathHandles(node.d), index = node.pointIds.indexOf(id);
+  if (!handles[index] || handles[index].control) return null;
+  const next = {...node, anchorModes:[...(node.anchorModes || []).filter(entry => entry.id !== id),{id,mode}]};
+  const control = handles.find(handle => handle.control && handle.anchorIndex === index);
+  return control && mode !== "corner" ? moveCurvePoint(next,control.command,control.offset,control.point) : next;
+}
+
+export function insertPathAnchor(node, command, offset = 0, t = 0.5) {
+  const commands = pathCommands(node.d), target = commands[command];
+  if (!target || target.name !== "C" || !Number.isInteger(offset) || offset < 0 || offset % 6 !== 0 || !Number.isFinite(t) || t <= 0 || t >= 1 || target.numbers.length < offset + 6) return null;
+  const handles = pathHandles(node.d), first = handles.findIndex(handle => handle.command === command && handle.offset === offset);
+  const p0 = handles[handles[first].anchorIndex].point, p1 = target.numbers.slice(offset,offset+2), p2 = target.numbers.slice(offset+2,offset+4), p3 = target.numbers.slice(offset+4,offset+6);
+  const mix = (a,b) => a.map((value,axis) => value + (b[axis] - value) * t);
+  const a = mix(p0,p1), b = mix(p1,p2), c = mix(p2,p3), d = mix(a,b), e = mix(b,c), middle = mix(d,e);
+  target.numbers.splice(offset,6,...a,...d,...middle,...e,...c,...p3);
+  const pointIds = [...node.pointIds], midId = newId("h");
+  pointIds.splice(first,3,node.pointIds[first],newId("h"),midId,newId("h"),node.pointIds[first+1],node.pointIds[first+2]);
+  const path = commands.map(c => c.name + c.numbers.map(n => Math.round(n * 1e6) / 1e6).join(" ")).join(" ");
+  return path.length <= 8000 && pointIds.length <= 3072 && (node.anchorModes || []).length < 512 ? {...node, pointIds, anchorModes:[...(node.anchorModes || []),{id:midId,mode:"smooth"}], d:path} : null;
 }
 
 export function pathCommands(d) {
@@ -162,7 +336,7 @@ export function nodeFrame(scene, id) {
     for (const node of nodes) {
       const world = multiply(parent, node.transform);
       if (node.id === id) return { node, parent, world };
-      if (node.kind === "group") {
+      if (isContainer(node)) {
         const found = visit(node.nodes, world);
         if (found) return found;
       }
@@ -176,9 +350,9 @@ export function nodeAt(scene, worldPoint, tolerance = 6) {
   let hit = null;
   function visit(nodes, parent) {
     for (const node of nodes) {
-      if (node.visible === false) continue;
+      if (node.visible === false || node.opacity === 0 || node.editLocked) continue;
       const world = multiply(parent, node.transform);
-      if (node.kind === "group") {
+      if (isContainer(node)) {
         visit(node.nodes, world);
         continue;
       }
@@ -196,15 +370,18 @@ export function nodeAt(scene, worldPoint, tolerance = 6) {
 function localHit(node, point, tolerance) {
   if (node.kind === "polygon") {
     if (node.fill && pointInPolygon(point, node.points)) return true;
-    return edgesOf(node).some(([a, b]) => distanceToSegment(point, a, b) <= tolerance);
+    return Boolean(node.stroke && node.strokeWidth > 0 && edgesOf(node).some(([a, b]) => distanceToSegment(point, a, b) <= tolerance));
   }
   if (node.kind === "ellipse") {
     const dx = (point[0] - node.cx) / node.rx;
     const dy = (point[1] - node.cy) / node.ry;
-    return dx * dx + dy * dy <= 1.15;
+    const radius = Math.hypot(dx, dy);
+    return Boolean((node.fill && radius <= 1) || (node.stroke && node.strokeWidth > 0 && Math.abs(radius - 1) <= tolerance / Math.min(node.rx, node.ry)));
   }
   if (node.kind === "path") {
     const points = pathPoints(node.d);
+    if (node.fill && pointInPolygon(point, points)) return true;
+    if (!node.stroke || node.strokeWidth <= 0) return false;
     for (let i = 1; i < points.length; i += 1) {
       if (distanceToSegment(point, points[i - 1], points[i]) <= tolerance) return true;
     }
@@ -241,6 +418,11 @@ export function createPolygon(name, points, fill = "#e0a327") {
     stroke: DEFAULT_STROKE,
     strokeWidth: 4,
     points,
+    pointIds: points.map(() => newId("v")),
+    pivot: null,
+    editLocked: false,
+    anchors: [],
+    constraint: null,
     edgeVisible: null,
   };
 }
@@ -260,6 +442,10 @@ export function createEllipse(name, center, rx, ry, fill = "#e0a327") {
     cy: center[1],
     rx,
     ry,
+    pivot: null,
+    editLocked: false,
+    anchors: [],
+    constraint: null,
   };
 }
 
@@ -275,6 +461,12 @@ export function createPath(name, d, stroke = DEFAULT_STROKE) {
     stroke,
     strokeWidth: 4,
     d,
+    pointIds: pathHandles(d).map(() => newId("h")),
+    anchorModes: [],
+    pivot: null,
+    editLocked: false,
+    anchors: [],
+    constraint: null,
   };
 }
 
@@ -292,6 +484,71 @@ export function createRect(name, from, to, fill = "#e0a327") {
     ],
     fill
   );
+}
+
+export function createPreset(kind, from, to, sides = 6) {
+  let width = Math.abs(to[0] - from[0]), height = Math.abs(to[1] - from[1]);
+  const x = Math.min(from[0], to[0]), y = Math.min(from[1], to[1]);
+  if (![x, y, width, height].every(Number.isFinite) || width < 0.1 || height < 0.1) return null;
+  let node;
+  if (kind === "circle" || kind === "ellipse") {
+    const radius = Math.min(width, height) / 2;
+    node = createEllipse(kind === "circle" ? "Cerchio" : "Ellisse", [x + width / 2, y + height / 2], kind === "circle" ? radius : width / 2, kind === "circle" ? radius : height / 2);
+  } else if (kind === "rectangle" || kind === "square") {
+    if (kind === "square") width = height = Math.min(width, height);
+    node = createRect(kind === "square" ? "Quadrato" : "Rettangolo", [x, y], [x + width, y + height]);
+  } else if (kind.startsWith("triangle_")) {
+    if (kind === "triangle_equilateral") {
+      width = Math.min(width, 2 * height / Math.sqrt(3));
+      height = width * Math.sqrt(3) / 2;
+    }
+    const tip = kind === "triangle_right_right" ? x + width : kind === "triangle_right_left" ? x : x + width / 2;
+    node = createPolygon("Triangolo", [[x, y + height], [x + width, y + height], [tip, y]]);
+  } else if (kind === "regular_polygon") {
+    if (!Number.isInteger(sides) || sides < 3 || sides > 32) return null;
+    const radius = Math.min(width, height) / 2;
+    node = createPolygon("Poligono regolare", Array.from({length:sides}, (_, index) => {
+      const angle = -Math.PI / 2 + 2 * Math.PI * index / sides;
+      return [x + width / 2 + radius * Math.cos(angle), y + height / 2 + radius * Math.sin(angle)];
+    }));
+  } else return null;
+  node.constraint = kind === "ellipse" ? null : {kind};
+  return node;
+}
+
+export function editPresetVertex(node, index, point) {
+  const kind = node.constraint?.kind;
+  if (!kind) return node.points.map((entry, i) => i === index ? point : entry);
+  const points = node.points.map(entry => [...entry]);
+  if (kind === "triangle_isosceles") {
+    if (index === 2) points[2] = [(points[0][0] + points[1][0]) / 2, point[1]];
+    else {
+      const center = points[2][0], half = Math.abs(point[0] - center);
+      points[0] = [center - half, point[1]];
+      points[1] = [center + half, point[1]];
+    }
+    return validPolygon(points) ? points : node.points;
+  }
+  if (kind === "rectangle" || kind === "square") {
+    const opposite = points[(index + 2) % 4];
+    const regenerated = createPreset(kind, opposite, point);
+    return regenerated?.points || node.points;
+  }
+  if (kind === "triangle_right_right" || kind === "triangle_right_left") {
+    if (index === 2) points[2][1] = point[1];
+    else {
+      const delta = point[0] - points[index][0];
+      points[index][0] += delta;
+      if ((kind === "triangle_right_right" && index === 1) || (kind === "triangle_right_left" && index === 0)) points[2][0] += delta;
+      points[0][1] = points[1][1] = point[1];
+    }
+    return validPolygon(points) && lockedPolygon(points, kind) ? points : node.points;
+  }
+  const center = nodeCenter(node), original = points[index];
+  const before = Math.hypot(original[0] - center[0], original[1] - center[1]);
+  const after = Math.hypot(point[0] - center[0], point[1] - center[1]);
+  if (after < 0.1 || !before) return node.points;
+  return points.map(entry => [center[0] + (entry[0] - center[0]) * after / before, center[1] + (entry[1] - center[1]) * after / before]);
 }
 
 /* ---------- mutation ---------- */
@@ -330,6 +587,24 @@ function renameIds(node, name) {
   return node;
 }
 
+/**
+ * A copy of a node with fresh identities everywhere: the node, its points, its
+ * anchors and every descendant. Inserting library artwork must not collide with
+ * what the drawing already uses.
+ */
+export function withFreshIds(node) {
+  const copy = cloneScene(node);
+  const relabel = (target) => {
+    target.id = newId(target.kind);
+    if (target.pointIds) target.pointIds = target.pointIds.map(() => newId("v"));
+    if (target.anchors) target.anchors = target.anchors.map(anchor => ({...anchor, id: newId("a")}));
+    if (target.anchorModes) target.anchorModes = [];
+    if (isContainer(target)) target.nodes.forEach(relabel);
+  };
+  relabel(copy);
+  return copy;
+}
+
 /** Move a node one step towards the front (delta > 0) or the back. */
 export function reorderNode(scene, id, delta) {
   const next = cloneScene(scene);
@@ -347,6 +622,13 @@ export function patchNode(scene, id, patch) {
   const found = findNode(next, id);
   if (!found) return next;
   Object.assign(found.node, patch);
+  return constraintsValid(next) ? next : scene;
+}
+
+/** Change the artboard, which is a guide and an export rectangle, not a clip. */
+export function patchArtboard(scene, patch) {
+  const next = cloneScene(scene);
+  next.artboard = {...next.artboard, ...patch};
   return next;
 }
 
@@ -355,8 +637,97 @@ export function setTransform(scene, id, matrix) {
 }
 
 export function transformInWorld(scene, id, delta, original = nodeFrame(scene, id).world) {
-  const frame = nodeFrame(scene, id);
-  return setTransform(scene, id, multiply(invert(frame.parent), multiply(delta, original)));
+  return transformNodesInWorld(scene, [{id, transform:original}], delta);
+}
+
+export function transformNodesInWorld(scene, entries, delta) {
+  if (!editableSelection(scene,entries.map(entry => entry.id))) return scene;
+  const next = cloneScene(scene);
+  for (const {id, transform} of entries) {
+    const frame = nodeFrame(next, id);
+    const inverse = frame && invert(frame.parent);
+    if (!inverse) return scene;
+    findNode(next, id).node.transform = multiply(inverse, multiply(delta, transform));
+  }
+  return constraintsValid(next) ? next : scene;
+}
+
+export function geometryInfo(scene, ids) {
+  if (!ids.length || ids.some(id => !findNode(scene, id))) return null;
+  const corners = selectionCorners(scene, ids), frame = nodeFrame(scene, ids[0]);
+  const pivot = ids.length === 1 ? frame.node.pivot || nodeCenter(frame.node) : [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
+  return {x:corners[0][0], y:corners[0][1], width:Math.hypot(corners[1][0] - corners[0][0], corners[1][1] - corners[0][1]), height:Math.hypot(corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]), angle:Math.atan2(corners[1][1] - corners[0][1], corners[1][0] - corners[0][0]) * 180 / Math.PI, pivotX:pivot[0], pivotY:pivot[1]};
+}
+
+export function editGeometry(scene, ids, parameters) {
+  const info = geometryInfo(scene, ids);
+  if (!info || !parameters || Object.entries(parameters).some(([key, value]) => !["x", "y", "width", "height", "angle", "pivotX", "pivotY"].includes(key) || !Number.isFinite(value) || Math.abs(value) > 100000)) return null;
+  if ((parameters.width !== undefined && (parameters.width <= 0 || !info.width)) || (parameters.height !== undefined && (parameters.height <= 0 || !info.height))) return null;
+  let next = cloneScene(scene);
+  if (parameters.pivotX !== undefined || parameters.pivotY !== undefined) {
+    if (ids.length !== 1) return null;
+    findNode(next, ids[0]).node.pivot = [parameters.pivotX ?? info.pivotX, parameters.pivotY ?? info.pivotY];
+  }
+  let sx = parameters.width !== undefined ? parameters.width / info.width : 1;
+  let sy = parameters.height !== undefined ? parameters.height / info.height : 1;
+  let ratioLocked = false;
+  walk(next.nodes, node => {
+    if (!["circle", "square", "triangle_equilateral", "regular_polygon"].includes(node.constraint?.kind)) return;
+    let current = findNode(next, node.id);
+    while (current) {
+      if (ids.includes(current.node.id)) { ratioLocked = true; break; }
+      current = current.parent ? findNode(next, current.parent.id) : null;
+    }
+  });
+  if (ratioLocked && parameters.width !== undefined && parameters.height !== undefined && Math.abs(sx - sy) > 1e-6) return null;
+  if (ratioLocked && parameters.width !== undefined && parameters.height === undefined) sy = sx;
+  if (ratioLocked && parameters.height !== undefined && parameters.width === undefined) sx = sy;
+  const corners = selectionCorners(next, ids), frame = nodeFrame(next, ids[0]);
+  const pivot = ids.length === 1 ? apply(frame.world, frame.node.pivot || nodeCenter(frame.node)) : [(corners[0][0] + corners[2][0]) / 2, (corners[0][1] + corners[2][1]) / 2];
+  const u = [corners[1][0] - corners[0][0], corners[1][1] - corners[0][1]], v = [corners[3][0] - corners[0][0], corners[3][1] - corners[0][1]];
+  if (!info.width && !info.height) { u[0] = 1; v[1] = 1; }
+  else {
+    if (!info.width) { u[0] = v[1] / info.height; u[1] = -v[0] / info.height; }
+    if (!info.height) { v[0] = -u[1] / info.width; v[1] = u[0] / info.width; }
+  }
+  const basis = [u[0], u[1], v[0], v[1], pivot[0], pivot[1]], inverse = invert(basis);
+  if (!inverse && (parameters.width !== undefined || parameters.height !== undefined)) return null;
+  const scale = inverse ? multiply(basis, multiply([sx,0,0,sy,0,0], inverse)) : [1,0,0,1,0,0];
+  const delta = multiply(rotateAbout(pivot, ((parameters.angle ?? info.angle) - info.angle) * Math.PI / 180), scale);
+  const entries = ids.map(id => ({id, transform:nodeFrame(next,id).world}));
+  const transformed = transformNodesInWorld(next, entries, delta);
+  if (transformed === next && (sx !== 1 || sy !== 1 || parameters.angle !== undefined)) return null;
+  next = transformed;
+  const after = geometryInfo(next, ids);
+  const move = translation((parameters.x ?? after.x) - after.x, (parameters.y ?? after.y) - after.y);
+  const moved = transformNodesInWorld(next, ids.map(id => ({id, transform:nodeFrame(next,id).world})), move);
+  return moved === next && (move[4] || move[5]) ? null : constraintsValid(moved) ? moved : null;
+}
+
+export function alignNodes(scene, ids, alignment) {
+  if (ids.length < (alignment?.startsWith("distribute") ? 3 : 2) || ids.some(id => !findNode(scene,id)) || !["left", "center-x", "right", "top", "center-y", "bottom", "distribute-x", "distribute-y"].includes(alignment)) return null;
+  const boxes = ids.map(id => ({id, box:bounds(selectionCorners(scene,[id]))}));
+  const total = bounds(boxes.flatMap(({box}) => [[box.minX,box.minY],[box.maxX,box.maxY]]));
+  const next = cloneScene(scene);
+  if (alignment.startsWith("distribute")) {
+    const horizontal = alignment === "distribute-x", low = horizontal ? "minX" : "minY", high = horizontal ? "maxX" : "maxY";
+    boxes.sort((a,b) => a.box[low] - b.box[low]);
+    const widths = boxes.map(({box}) => box[high] - box[low]);
+    const gap = (boxes.at(-1).box[high] - boxes[0].box[low] - widths.reduce((a,b) => a+b,0)) / (boxes.length - 1);
+    let cursor = boxes[0].box[low];
+    boxes.forEach((entry,index) => { entry.delta = horizontal ? [cursor - entry.box[low],0] : [0,cursor - entry.box[low]]; cursor += widths[index] + gap; });
+  } else {
+    boxes.forEach(entry => {
+      const b = entry.box;
+      entry.delta = [alignment === "left" ? total.minX - b.minX : alignment === "right" ? total.maxX - b.maxX : alignment === "center-x" ? (total.minX + total.maxX - b.minX - b.maxX) / 2 : 0, alignment === "top" ? total.minY - b.minY : alignment === "bottom" ? total.maxY - b.maxY : alignment === "center-y" ? (total.minY + total.maxY - b.minY - b.maxY) / 2 : 0];
+    });
+  }
+  for (const {id, delta} of boxes) {
+    const frame = nodeFrame(scene,id), inverse = invert(frame.parent);
+    if (!inverse) return null;
+    findNode(next,id).node.transform = multiply(inverse, multiply(translation(...delta), frame.world));
+  }
+  return constraintsValid(next) ? next : null;
 }
 
 export function validPolygon(points) {
@@ -368,7 +739,7 @@ export function validPolygon(points) {
 export function depthOf(nodes, id, depth = 1) {
   for (const node of nodes) {
     if (node.id === id) return depth;
-    if (node.kind === "group") {
+    if (isContainer(node)) {
       const nested = depthOf(node.nodes, id, depth + 1);
       if (nested) return nested;
     }
@@ -395,7 +766,7 @@ export function groupNodes(scene, ids) {
   const siblings = found[0].siblings;
   if (!found.every((entry) => entry.siblings === siblings)) return null;
   const deepest = Math.max(...ids.map((id) => depthOf(next.nodes, id)));
-  const height = node => node.kind === "group" ? 1 + Math.max(0, ...node.nodes.map(height)) : 0;
+  const height = node => isContainer(node) ? 1 + Math.max(0, ...node.nodes.map(height)) : 0;
   if (deepest + Math.max(...found.map(entry => height(entry.node))) > MAX_DEPTH) return null;
   const positions = found.map(entry => entry.index).sort((a, b) => a - b);
   if (positions.some((position, i) => position !== positions[0] + i)) return null;
@@ -415,6 +786,9 @@ export function groupNodes(scene, ids) {
     opacity: 1,
     visible: true,
     nodes: members,
+    pivot: null,
+    editLocked: false,
+    anchors: [],
   };
   siblings.splice(index, 0, group);
   return { scene: next, id: group.id };
@@ -438,7 +812,7 @@ export function ungroupNode(scene, id) {
     visible: group.visible && child.visible,
   }));
   found.siblings.splice(found.index, 1, ...children);
-  return { scene: next, ids: children.map((child) => child.id) };
+  return constraintsValid(next) ? { scene: next, ids: children.map((child) => child.id) } : null;
 }
 
 export function reparentNode(scene, id, parentId = null) {
@@ -446,7 +820,7 @@ export function reparentNode(scene, id, parentId = null) {
   const target = parentId ? findNode(scene, parentId) : null;
   if (!source || (parentId && (!target || target.node.kind !== "group"))) return null;
   const descendants = [];
-  if (source.node.kind === "group") walk(source.node.nodes, node => descendants.push(node.id));
+  if (isContainer(source.node)) walk(source.node.nodes, node => descendants.push(node.id));
   if (parentId === id || descendants.includes(parentId)) return null;
   if ((source.parent?.id || null) === parentId) return {scene: cloneScene(scene), id};
   const world = nodeFrame(scene, id).world;
@@ -457,8 +831,8 @@ export function reparentNode(scene, id, parentId = null) {
   node.transform = multiply(invert(parentWorld), world);
   const destination = parentId ? findNode(next, parentId).node.nodes : next.nodes;
   destination.push(node);
-  const height = nodes => Math.max(0, ...nodes.map(n => n.kind === "group" ? 1 + height(n.nodes) : 0));
-  if (height(next.nodes) > MAX_DEPTH) return null;
+  const height = nodes => Math.max(0, ...nodes.map(n => isContainer(n) ? 1 + height(n.nodes) : 0));
+  if (height(next.nodes) > MAX_DEPTH || !constraintsValid(next)) return null;
   return {scene: next, id};
 }
 
@@ -554,7 +928,7 @@ function cutVisibility(sourceVisible, indices) {
  */
 export function cutNode(scene, id, i, j) {
   const found = findNode(scene, id);
-  if (!found || found.node.kind !== "polygon") return null;
+  if (!found || found.node.kind !== "polygon" || found.node.constraint) return null;
   const node = found.node;
   const split = splitPolygonAt(node.points, i, j);
   if (!split) return null;
@@ -562,16 +936,251 @@ export function cutNode(scene, id, i, j) {
   const next = cloneScene(scene);
   const target = findNode(next, id);
   target.node.points = split.aPoints.map(p => [...p]);
+  if (node.pointIds) target.node.pointIds = split.aIndices.map(index => node.pointIds[index]);
   target.node.edgeVisible = cutVisibility(node.edgeVisible, split.aIndices);
   const piece = {
     ...cloneScene(node),
     id: newId("poly"),
     name: `${node.name.slice(0, 111)} tagliata`,
     points: split.bPoints.map(p => [...p]),
+    ...(node.pointIds ? { pointIds: split.bIndices.map(index => node.pointIds[index]) } : {}),
     edgeVisible: cutVisibility(node.edgeVisible, split.bIndices),
   };
   target.siblings.splice(target.index + 1, 0, piece);
   return { scene: next, id: piece.id };
+}
+
+/* ---------- cutting along a line ---------- */
+
+/** How far off the line a point may be and still count as lying on it. */
+function lineTolerance(points, direction) {
+  const reach = Math.max(1, ...points.flatMap(point => point.map(Math.abs)));
+  return reach * Math.hypot(...direction) * 1e-9;
+}
+
+/**
+ * Clip a ring to one half-plane, carrying each point's source vertex along.
+ *
+ * Each vertex is classified strictly: `+1` beside, `-1` opposite, `0` on the
+ * line. A vertex on the line belongs to both pieces, which is what makes a cut
+ * along a diagonal produce two triangles instead of two whole squares; an
+ * intersection is inserted only where the two ends are strictly opposite, so a
+ * vertex already on the line is never duplicated.
+ */
+function clipHalfPlane(entries, classes, distances, side) {
+  const out = [];
+  const total = entries.length;
+  for (let index = 0; index < total; index += 1) {
+    const here = classes[index], there = classes[(index + 1) % total];
+    if (side > 0 ? here >= 0 : here <= 0) out.push(entries[index]);
+    if (here * there < 0) {
+      const current = entries[index], next = entries[(index + 1) % total];
+      const t = distances[index] / (distances[index] - distances[(index + 1) % total]);
+      out.push([
+        current[0] + (next[0] - current[0]) * t,
+        current[1] + (next[1] - current[1]) * t,
+        -1,
+      ]);
+    }
+  }
+  // A crossing can land exactly on the vertex that follows it.
+  return out.filter((entry, index) => {
+    const previous = out[(index - 1 + out.length) % out.length];
+    return Math.hypot(entry[0] - previous[0], entry[1] - previous[1]) > 1e-9;
+  });
+}
+
+/**
+ * Split a polygon into the two pieces an unbounded line makes of it.
+ *
+ * Returns `null` when the line misses the polygon, when a piece would have no
+ * area, or when a piece would not be a simple ring. Each piece keeps the
+ * original outline visibility, and the new edges along the line start hidden so
+ * the two halves do not show a seam.
+ */
+export function splitPolygonByLine(points, line, sourceVisible = null) {
+  if (!validPolygon(points) || !line) return null;
+  const origin = line.point, direction = line.direction;
+  if (!Array.isArray(origin) || !Array.isArray(direction)) return null;
+  if (![...origin, ...direction].every(Number.isFinite)) return null;
+  if (Math.hypot(...direction) < 1e-9) return null;
+
+  const distance = point =>
+    direction[0] * (point[1] - origin[1]) - direction[1] * (point[0] - origin[0]);
+  const distances = points.map(distance);
+  const epsilon = lineTolerance(points, direction);
+  const classes = distances.map(value => (value > epsilon ? 1 : value < -epsilon ? -1 : 0));
+  if (!classes.includes(1) || !classes.includes(-1)) return null;
+
+  const at = index => (sourceVisible && sourceVisible[index] === false ? false : true);
+  const entries = points.map((point, index) => [...point, index]);
+  const halves = [
+    clipHalfPlane(entries, classes, distances, 1),
+    clipHalfPlane(entries, classes, distances, -1),
+  ];
+  const pieces = halves.map(clipped => {
+    const piece = clipped.map(([x, y]) => [x, y]);
+    if (!validPolygon(piece)) return null;
+    const sources = clipped.map(([, , source]) => source);
+    const total = piece.length;
+    const visible = sources.map((source, index) => {
+      const next = sources[(index + 1) % total];
+      const endsOnLine =
+        Math.abs(distance(piece[index])) <= epsilon &&
+        Math.abs(distance(piece[(index + 1) % total])) <= epsilon;
+      if (endsOnLine) return false;
+      if (source >= 0 && next >= 0) {
+        if (next === (source + 1) % points.length) return at(source);
+        if (source === (next + 1) % points.length) return at(next);
+      }
+      return true;
+    });
+    return {points: piece, sources, visible};
+  });
+  if (pieces.some(piece => !piece)) return null;
+  return {a: pieces[0], b: pieces[1]};
+}
+
+/**
+ * Apply an unbounded line cut to every polygon in `ids`.
+ *
+ * The original keeps its id and one piece; the other becomes a sibling right
+ * after it, so the whole cut is one undo step. A line that misses a node, or
+ * that would leave it unsplittable, leaves that node alone; `null` means
+ * nothing was cut at all.
+ */
+export function cutNodesByLine(scene, ids, line) {
+  if (!Array.isArray(ids) || !ids.length) return null;
+  const next = cloneScene(scene);
+  let cut = false;
+  for (const id of ids) {
+    const found = findNode(next, id);
+    if (!found || found.node.kind !== "polygon" || found.node.constraint) continue;
+    const node = found.node;
+    const split = splitPolygonByLine(node.points, line, node.edgeVisible);
+    if (!split) continue;
+    const identityOf = (piece, source) =>
+      piece.sources.map((index, position) =>
+        index >= 0 ? source.pointIds[index] : newId(`v${position}`)
+      );
+    found.node.points = split.a.points.map(point => [...point]);
+    found.node.pointIds = identityOf(split.a, node);
+    found.node.edgeVisible = split.a.visible;
+    found.siblings.splice(found.index + 1, 0, {
+      ...cloneScene(node),
+      id: newId("poly"),
+      name: `${node.name.slice(0, 111)} tagliata`,
+      points: split.b.points.map(point => [...point]),
+      pointIds: identityOf(split.b, node),
+      edgeVisible: split.b.visible,
+    });
+    cut = true;
+  }
+  return cut && constraintsValid(next) ? next : null;
+}
+
+/* ---------- linked instances ---------- */
+
+/** A linked instance: the resolved subtree plus where it came from. */
+export function createInstance(name, source, revision, nodes) {
+  return {
+    kind: "instance",
+    id: newId("instance"),
+    name,
+    transform: [1, 0, 0, 1, 0, 0],
+    opacity: 1,
+    visible: true,
+    pivot: null,
+    editLocked: false,
+    anchors: [],
+    source: {...source},
+    revision,
+    overrides: [],
+    nodes: cloneScene(nodes),
+  };
+}
+
+/** The instance that owns `id`, if the node sits inside a linked copy. */
+export function owningInstance(scene, id) {
+  let owner = null;
+  const visit = (nodes, current) => {
+    for (const node of nodes) {
+      if (node.id === id) { owner = current; return true; }
+      if (isContainer(node) && visit(node.nodes, node.kind === "instance" ? node.id : current)) return true;
+    }
+    return false;
+  };
+  visit(scene.nodes, null);
+  return owner;
+}
+
+/**
+ * Record that the author changed one aspect of a linked instance locally.
+ *
+ * The override is a note, not a value: the value stays in the resolved subtree,
+ * which is what makes a refresh able to keep it.
+ */
+export function noteOverride(scene, nodeId, field) {
+  const owner = owningInstance(scene, nodeId);
+  if (!owner) return scene;
+  const next = cloneScene(scene);
+  const instance = findNode(next, owner).node;
+  if (!instance.overrides.includes(field)) instance.overrides.push(field);
+  return next;
+}
+
+/**
+ * Take the library's new revision, keeping what the author changed locally.
+ *
+ * Nodes are matched by their source identity, so a fragment that gained or lost
+ * a node still merges: an unmatched node arrives as the library drew it.
+ */
+export function refreshInstance(scene, id, nodes, revision) {
+  const found = findNode(scene, id);
+  if (!found || found.node.kind !== "instance" || !Array.isArray(nodes) || !nodes.length) return null;
+  if (!Number.isInteger(revision) || revision < 1) return null;
+  const next = cloneScene(scene);
+  const target = findNode(next, id).node;
+  const overrides = new Set(target.overrides || []);
+  const before = new Map();
+  walk(target.nodes, node => before.set(node.id, node));
+  const merged = cloneScene(nodes);
+  walk(merged, node => {
+    const local = before.get(node.id);
+    if (!local) return;
+    for (const field of overrides) {
+      if (field === "transform") node.transform = [...local.transform];
+      else if (field === "opacity") node.opacity = local.opacity;
+      else if (field === "visible") node.visible = local.visible;
+      else if (field === "fill") node.fill = local.fill;
+      else if (field === "stroke") node.stroke = local.stroke;
+    }
+  });
+  target.nodes = merged;
+  target.revision = revision;
+  return constraintsValid(next) ? next : null;
+}
+
+/**
+ * Make an instance independent: the link goes, the artwork stays.
+ *
+ * The children become plain nodes with fresh identities, and the instance's own
+ * transform, opacity and visibility are composed into them so nothing moves.
+ */
+export function detachInstance(scene, id) {
+  const found = findNode(scene, id);
+  if (!found || found.node.kind !== "instance") return null;
+  const next = cloneScene(scene);
+  const target = findNode(next, id);
+  const children = target.node.nodes.map(node => {
+    const copy = withFreshIds(node);
+    copy.transform = multiply(target.node.transform, copy.transform);
+    copy.opacity = target.node.opacity * copy.opacity;
+    copy.visible = target.node.visible && copy.visible;
+    return copy;
+  });
+  target.siblings.splice(target.index, 1, ...children);
+  return constraintsValid(next) ? {scene: next, ids: children.map(child => child.id)} : null;
 }
 
 /* ---------- history ---------- */

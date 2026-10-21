@@ -329,11 +329,13 @@
 
     <section class="showcase-section">
       <h2>Menus</h2>
-      <p class="showcase-note">M3 vertical menu with shared positioning, focus, and keyboard navigation.</p>
+      <p class="showcase-note">M3 vertical menu with shared positioning, focus, and keyboard navigation. A <code>checked</code> item is a <code>menuitemcheckbox</code> with a reserved check column, for settings a menu can toggle.</p>
       <common.MenuTrigger label="Open menu" target="showcase-menu" variant="secondary" />
       <common.Menu id="showcase-menu" labelledby="showcase-menu-trigger">
         <common.MenuItem icon="pencil" label="Rename" />
         <common.MenuItem icon="trash-2" label="Delete" variant="danger" />
+        <common.MenuItem icon="save" label="Autosave" checked={{ True }} />
+        <common.MenuItem icon="grid-2x2" label="Dotted grid" checked={{ False }} />
       </common.Menu>
     </section>
 
