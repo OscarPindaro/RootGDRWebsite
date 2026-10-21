@@ -34,6 +34,8 @@ historical request, not its constraints.
 - As administrator, I change agent instructions, model and operating settings
   without hardcoding them into domain services.
 - As GM, I inspect what one request changed and undo it as a unit.
+- As GM, I rate a useful conversation, correct a partial mistake and retain it
+  as a replayable benchmark with exact checks, LLM judging or both.
 
 ## Baseline and related specifications
 
@@ -154,6 +156,21 @@ Arbitrary shell/code execution is excluded; adding it requires a distinct
 sandbox design and approval. Artifacts are not a second source of truth for
 world entities: only domain services commit canonical changes.
 
+### Mandatory feedback and replayable evaluation
+
+[REQ-0023](REQ-0023-agent-feedback-and-replayable-evaluations.md) defines required
+feedback, case/reference versioning, LLM-assisted correction, exact persisted-state
+checks, LLM judges and mixed scoring. It is part of agent delivery, not optional
+post-delivery analytics. Positive feedback identifies a candidate reference;
+it does not certify every action. Preserve original runs when correcting examples.
+
+Capture the pre-run fixture, actor rights, input turns and source versions
+needed to evaluate it again, not only the final conversation. Separate recorded
+model replay from fresh candidate execution. Require relevant same-suite
+comparisons for prompt/model/tool/orchestration changes; exact failures cannot
+be cancelled by a favorable judge score. No benchmark mutates the live campaign.
+Build evaluation infrastructure with run/tool storage, not only at T13.
+
 ## Research evidence and decision gates
 
 See [the dated research](../development_processes/world-agents-research-2026-10-21.md)
@@ -203,8 +220,10 @@ Ollama, inspect source/change evidence and recover a complete request.
 **Boundary:** coordinate T02-T13; no implicit implementation within the parent.
 **Acceptance:** selected compatibility decisions are recorded; all required
 children pass, supported world operations have a capability/recovery matrix,
-and real-model quality limits are explicit.
-**Verify:** final matrix, opt-in live evidence only if approved, and T13 journeys.
+and real-model quality limits are explicit. REQ-0023 is implemented with
+versioned, corrected references and exact/judged/mixed comparison evidence.
+**Verify:** final matrix, T13 journeys and REQ-0023/T09; outstanding fresh-model
+evaluation gates cannot be passed by replaying recorded responses.
 
 ### REQ-0022/T02 - Provider and orchestration compatibility proof
 
@@ -267,7 +286,8 @@ decide reuse versus a scoped agent-job layer without rewriting unrelated tasks.
 request/change-set identity; lease/restart and pending-tool reconciliation;
 clear distinction between clarification reply and new request; pinned config,
 budgets across attempts and cancellation without hidden rollback. Progress
-polling/streaming is ownership-scoped. No shared DB session across tool calls.
+polling/streaming is ownership-scoped. Retain pre-run fixture/source references
+for benchmark promotion. No shared DB session across tool calls.
 **Verify:** PostgreSQL worker restart, duplicate submission, competing workers,
 waiting/reply/cancel flows and crash after commit before result delivery.
 
@@ -295,7 +315,10 @@ select placement without redesigning the shell.
 **Acceptance:** clear current world, profile and logical-request boundaries;
 attachments, clarification, progress, failure/cancel and continuation; persisted
 messages recover after reload; duplicate submit cannot repeat tools; source
-links obey access rules. Ordinary writes do not demand repeated confirmation.
+links obey access rules. Expose stable turn/run/range identifiers for later
+feedback integration by REQ-0023/T02; that ticket adds the feedback controls
+without duplicating conversation storage. Ordinary writes do not demand
+repeated confirmation.
 **Verify:** fixture-backed E2E create/read/update/soft-delete, clarification and
 restart, accessible keyboard/focus/live feedback, phone and desktop comparison.
 
@@ -360,17 +383,19 @@ human edit after agent completion, repeated undo and persisted restoration.
 ### REQ-0022/T13 - Robustness, complete operation coverage and acceptance
 
 **Story:** the assistant remains bounded and recoverable when input or services fail.
-**Depends:** T02-T12 and implemented REQ-0020/T08/REQ-0021/T15.
+**Depends:** T02-T12 and implemented REQ-0020/T08, REQ-0021/T15 and REQ-0023/T09.
 **Boundary:** adversarial/provider fixtures, operation matrix, backup/export
-boundaries, model-quality acceptance and thematic documentation.
+boundaries, replayable model-quality evaluation and thematic documentation.
 **Acceptance:** bounded malformed-output correction, timeout/rate-limit handling,
 token/step/time budgets across restarts, no silent provider fallback, malicious
 OCR/tool text cannot grant permissions or escape workspaces; context compaction
 keeps complete retained history and tool-result pairing. No default live calls.
-Model-dependent fidelity limitations are reported rather than hidden by mocks.
+Use REQ-0023's versioned suites to record exact and judged results; model-dependent
+fidelity limitations are reported rather than hidden by mocks or recorded replay.
 **Verify:** full handwriting/sheet/transcript/general-assistant workflows,
 content and run restoration, source isolation, backup coverage, desktop/phone
-captures and optional explicitly approved live acceptance tests.
+captures and required benchmark evidence. Live calls require explicit approval;
+missing required fresh evaluations leave acceptance outstanding.
 
 ## Dependency and decision gates
 
@@ -379,6 +404,9 @@ artifacts/configuration; T05 provides management, T06 durable runs and T07 tools
 T08 provides interaction; T09-T11 implement distinct intake modes; T12 exposes
 shared recovery; T13 verifies the combined result. The parent cannot close
 while any required mode exists only as a mock demonstration.
+REQ-0023's case/runner foundation accompanies T06-T07, with feedback and reference
+review integrated into the UI. Its final journey precedes T13; it does not depend
+on T13, so the acceptance requirements are not circular.
 
 Recovery primitives and domain features can be delivered independently of
 paid model testing. T07's complete capability matrix cannot be declared finished
