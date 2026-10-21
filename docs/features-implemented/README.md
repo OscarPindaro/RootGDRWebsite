@@ -23,6 +23,7 @@ Template:
 
 | Feature | Document |
 |---|---|
+| Opt-in development workflow skills | [development-skills.md](development-skills.md) |
 | Three environments: test, scratch, showcase | [development-stack.md](development-stack.md) |
 | Record actions and generate tests | [action-replay.md](action-replay.md) |
 | Write documents on their reading page | [in-place-editing.md](in-place-editing.md) |
