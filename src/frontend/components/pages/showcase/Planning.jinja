@@ -1,0 +1,118 @@
+{#def study #}
+{#css pages/showcase/Planning.css, layout/Page.css, common/Button.css, common/Alert.css, common/HStack.css, common/Grid.css, common/Pill.css, common/Dialog.css, common/Field.css, editorial/Face.css, common/Avatar.css, common/Icon.css, common/Mark.css, common/Menu.css, common/RequestFallback.css, common/SaveIndicator.css, common/Tooltip.css, editorial/ReportPanel.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css #}
+{#js pages/showcase/Planning.js #}
+<layout.Page :title="study.title" :nav="study.nav" :active="study.view" wide>
+  <div class="planning" data-planning data-card-mode="open">
+    <div class="planning__notice">
+      <strong>Studio di interfaccia</strong>
+      <span>Dati dimostrativi. Nessuna modifica al mondo; le prove si azzerano ricaricando.</span>
+    </div>
+    <nav class="planning__views" aria-label="Viste del prototipo">
+      {% for item in study.nav %}
+      <common.Button :href="item.href" :variant="'primary' if item.id == study.view else 'secondary'" size="sm"
+                     :aria-current="'page' if item.id == study.view else None">{{ item.label }}</common.Button>
+      {% endfor %}
+    </nav>
+    <header class="planning__heading">
+      <div>
+        <p class="planning__context">Borgo Mulino / Preparazione del GM</p>
+        <h1>{{ study.title }}</h1>
+        <p class="planning__lede">La situazione, le persone e quello che cambia al tavolo.</p>
+      </div>
+      <common.Pill variant="success">In corso</common.Pill>
+    </header>
+    <div class="planning__toolbar">
+      <div role="group" aria-label="Confronto schede NPC">
+        <common.Button variant="secondary" size="sm" data-card-mode-choice="open" aria-pressed="true">Scheda aperta</common.Button>
+        <common.Button variant="secondary" size="sm" data-card-mode-choice="flip" aria-pressed="false">Carta fronte / retro</common.Button>
+      </div>
+      <span class="planning__hint">Stesso contenuto, due presentazioni.</span>
+    </div>
+
+    {% if study.view == "story" %}
+    <div class="planning__folio">
+      <div class="planning__reading">
+        <section class="planning__section" aria-labelledby="planning-arrival">
+          <h2 id="planning-arrival">Arrivare a Borgo Mulino</h2>
+          <div class="prose">
+            <p>Il mulino domina la strada che attraversa la radura. Ci sono sacchi di grano,
+              ma le macine lavorano a fatica. Gli abitanti aspettano risposte.</p>
+            <p>Questa pagina mette insieme la preparazione. I possibili sviluppi restano
+              ipotesi; soltanto il diario del conflitto racconta cosa succede davvero.</p>
+          </div>
+          <p class="planning__hint">Testo di esempio ispirato agli appunti, non trascrizione o cronaca.</p>
+        </section>
+        <section class="planning__section" aria-labelledby="planning-conflicts">
+          <h2 id="planning-conflicts">Conflitti</h2>
+          <nav class="planning__index" aria-label="Conflitti della storia">
+            <a href="#planning-paperwork">Modulo 4a e Documento 7b</a>
+            <a href="#planning-temple">Il tempio conteso <span>esempio sintetico</span></a>
+          </nav>
+          <article class="planning__conflict" id="planning-paperwork">
+            <div class="planning__section-head">
+              <h3>Modulo 4a e Documento 7b</h3>
+              <common.Pill variant="warning"><span data-conflict-status>Attivo</span></common.Pill>
+            </div>
+            <div class="prose">
+              <p>Il grano c'e. A fermare la produzione sono autorizzazioni incompatibili
+                e due uffici che si rimandano la responsabilita. Il problema diventa
+                ogni giorno piu difficile da ignorare.</p>
+            </div>
+            <p class="planning__links"><a href="?view=npcs">Ada e la pattuglia</a> / Mulino / Municipio</p>
+            <details class="planning__details">
+              <summary>Possibili sviluppi <span>preparazione</span></summary>
+              <p>Se nessuno interviene, un nuovo carico resta fermo al ponte.
+                E un'ipotesi dimostrativa, non un evento avvenuto.</p>
+            </details>
+            <div class="planning__history">
+              <h4>Sviluppi effettivi</h4>
+              <ol>
+                <li><span>Sessione 1 · esempio</span><p>Il gruppo scopre il blocco delle autorizzazioni.</p></li>
+                <li><span>Sessione 2 · esempio</span><p>Ada accetta di parlare con i responsabili degli uffici.</p></li>
+              </ol>
+              <p class="planning__hint">Sviluppi inventati soltanto per confrontare la presentazione.</p>
+            </div>
+            <div data-resolution hidden class="planning__resolution">
+              <h4>Risoluzione</h4><p data-resolution-text></p>
+            </div>
+            <common.Button variant="secondary" size="sm" data-dialog-open="planning-resolve">Prova una risoluzione</common.Button>
+          </article>
+          <article class="planning__conflict" id="planning-temple">
+            <div class="planning__section-head"><h3>Il tempio conteso</h3><common.Pill>Esempio sintetico</common.Pill></div>
+            <p>Un unico luogo nel bosco, vicino a due radure. Le rivendicazioni
+              appartengono al conflitto; il controllo attuale appartiene al luogo.</p>
+            <p class="planning__hint">Secondo conflitto per verificare scansione e distinzione visiva.</p>
+          </article>
+        </section>
+      </div>
+      <aside class="planning__people" aria-label="Persone della storia">
+        <h2>Persone della storia</h2>
+        <p class="planning__hint">Segna i tracciati per provare l'interazione. Non vengono salvati.</p>
+        {% for npc in study.npcs %}<pages.showcase.PlanningNpc :npc="npc" />{% endfor %}
+      </aside>
+    </div>
+    {% else %}
+    <section class="planning__section" aria-label="NPC della storia">
+      <p>Un individuo e un gruppo. Tracciati e mosse sono gli stessi della vista storia.</p>
+      <div class="planning__npc-grid">
+        {% for npc in study.npcs %}<pages.showcase.PlanningNpc :npc="npc" />{% endfor %}
+      </div>
+    </section>
+    {% endif %}
+    <p class="planning__feedback" data-planning-feedback role="status" aria-live="polite">Modalita dimostrativa: nessun salvataggio.</p>
+    <common.Dialog title="Modifica immagine · prova" id="planning-image">
+      <p>Qui si apre la modifica dell'immagine, non la carta sul retro.</p>
+      <common.Field label="Nome immagine dimostrativa" name="planning-image-name" value="Ritratto di esempio" />
+      <common.Button variant="secondary" data-dialog-close>Chiudi la prova</common.Button>
+      <p class="planning__hint">Nessun file viene caricato o modificato.</p>
+    </common.Dialog>
+    <common.Dialog title="Come si risolve il conflitto?" id="planning-resolve">
+      <form data-resolution-form>
+        <common.Field label="Risoluzione e conseguenze" name="planning-resolution" type="textarea" required
+                      placeholder="Scrivi un esito di prova..." />
+        <common.Button type="submit">Mostra la risoluzione di prova</common.Button>
+      </form>
+      <p class="planning__hint">La risoluzione resta soltanto in questa pagina.</p>
+    </common.Dialog>
+  </div>
+</layout.Page>

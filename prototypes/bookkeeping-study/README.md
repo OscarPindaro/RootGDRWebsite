@@ -54,3 +54,22 @@ interactions reset on navigation/reload; no provider is called. Invented people,
 track values and developments are labelled demonstration data, not played history.
 Image activation opens a simulated modification dialog, not a production upload.
 Actual dialogs/buttons/shell behavior are exercised; domain saves are simulated.
+
+## First-slice findings
+
+- Actual catalog routes and browser interaction tests pass. Desktop/phone
+  Docker captures have no overflow, browser errors or mutation requests.
+- Compared the shell, prose hierarchy and entity identity with the retained
+  `devin-prototype` document captures from the frontend review.
+- Open references keep tracks visible but make the side column long. Flipped
+  references reduce initial density but hide mechanical state until turned.
+  Both remain available; neither is declared the owner's chosen layout.
+- `EntityCard` is an anchor, unsuitable for nested interactive track/image
+  controls. The local prototype article reuses Face/Button/Dialog instead.
+- Shared Dialog handles image editing and focus return successfully.
+- Transitive JinjaX CSS declarations are required even when Page is composed.
+  Existing `--rule`/`--rule-ink` tokens satisfy the CSS guard; no global token
+  or component API change was needed.
+- The existing Podman compose wait included a stopped app while starting the
+  database. Starting only that app through the harness helper unblocked it;
+  no container, database, volume or work/showcase environment was reset.

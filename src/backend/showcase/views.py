@@ -9,8 +9,10 @@ from ..drawings.schemas import PolygonNode, SceneDocument
 from ..navigation import ButtonGroupOption, CardItem
 from ..users.schemas import User
 from ..users.service import get_all_users
+from .planning import router as planning_router
 
 router = APIRouter(tags=["showcase"])
+router.include_router(planning_router)
 
 
 def _drawing_specimen() -> SceneDocument:

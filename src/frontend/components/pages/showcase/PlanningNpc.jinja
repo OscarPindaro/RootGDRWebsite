@@ -1,0 +1,48 @@
+{#def npc #}
+{#css pages/showcase/Planning.css, common/Button.css, editorial/Face.css, common/Pill.css, common/Icon.css #}
+<article class="planning-npc" data-npc="{{ npc.key }}" data-face="front" aria-label="{{ npc.name }}">
+  <div class="planning-npc__front" data-card-front>
+    <button class="planning-npc__portrait" type="button" data-dialog-open="planning-image"
+            aria-label="Modifica immagine di {{ npc.name }}">
+      <editorial.Face :tint="npc.tint" shape="cerchio" />
+      <span>Modifica immagine</span>
+    </button>
+    <div class="planning-npc__identity">
+      <p class="planning-npc__role">{{ npc.role }}</p>
+      <h3>{{ npc.name }}</h3>
+      <p>{{ npc.description }}</p>
+    </div>
+  </div>
+  <div class="planning-npc__back" data-card-back>
+    <div class="planning-npc__back-title"><strong>{{ npc.name }}</strong><span>Danno: {{ npc.damage }}</span></div>
+    <div class="planning-npc__tracks">
+      {% for track in npc.tracks %}
+      <fieldset class="planning-npc__track">
+        <legend>{{ track.label }}</legend>
+        {% for box in range(track.capacity) %}
+        <label class="planning-npc__box">
+          <input type="checkbox" data-track="{{ npc.key }}:{{ track.key }}:{{ box }}"
+                 aria-label="{{ npc.name }}, {{ track.label }}, casella {{ box + 1 }}"
+                 {% if box < track.marked %}checked{% endif %}>
+        </label>
+        {% endfor %}
+      </fieldset>
+      {% endfor %}
+    </div>
+    <dl class="planning-npc__motives">
+      <dt>Motivazione</dt><dd>{{ npc.motivation }}</dd>
+      <dt>Cosa vuole</dt><dd>{{ npc.wants }}</dd>
+      <dt>Cosa accetta</dt><dd>{{ npc.accepts }}</dd>
+    </dl>
+    <h4>Mosse</h4>
+    <ul class="planning-npc__moves">
+      {% for move in npc.moves %}
+      <li><strong>{{ move.title }}</strong>{% if move.description %}<p>{{ move.description }}</p>{% endif %}</li>
+      {% endfor %}
+    </ul>
+    {% if npc.equipment %}<p><strong>Equipaggiamento</strong><br>{{ npc.equipment }}</p>{% endif %}
+  </div>
+  <div class="planning-npc__flip" data-card-controls hidden>
+    <common.Button variant="secondary" size="sm" data-card-flip aria-expanded="false">Gira scheda</common.Button>
+  </div>
+</article>
