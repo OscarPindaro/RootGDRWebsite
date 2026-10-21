@@ -18,6 +18,13 @@ if (root) {
     });
   };
   root.addEventListener("click", (event) => {
+    const reputation = event.target.closest("[data-reputation-delta]");
+    if (reputation) {
+      const value = reputation.closest("[data-reputation]").querySelector("[data-reputation-value]");
+      value.textContent = Math.max(-3, Math.min(3, Number(value.textContent) + Number(reputation.dataset.reputationDelta)));
+      announce("Reputazione corretta manualmente per questa prova.");
+      return;
+    }
     const choice = event.target.closest("[data-card-mode-choice]");
     if (choice) {
       root.dataset.cardMode = choice.dataset.cardModeChoice;
@@ -37,6 +44,10 @@ if (root) {
     }
   });
   root.addEventListener("change", (event) => {
+    if (event.target.matches("#planning-view")) {
+      window.location.href = `/components/planning?view=${encodeURIComponent(event.target.value)}`;
+      return;
+    }
     if (!event.target.matches("[data-track]")) return;
     const key = event.target.dataset.track;
     root.querySelectorAll("[data-track]").forEach((box) => {

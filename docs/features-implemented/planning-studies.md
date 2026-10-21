@@ -13,6 +13,12 @@ Clicking a portrait opens the real Dialog component with simulated image-edit
 controls; it does not flip the card. A local resolution form shows an example
 outcome without writing a campaign record.
 
+Reference views add place kind/containment/control, the shared Abitanti category,
+limited character tracks and bounded manual reputation, plus notebook-style
+session prose and expandable local people/places. A native view selector works
+on phones as well as the application's rail. The playbook command opens an
+explanation, not an actual PDF download.
+
 The fixture names, values and developments are explicitly illustrative. Track
 changes and resolution text reset on reload. No provider or domain write API
 is called, and the fixture route has no database dependency.

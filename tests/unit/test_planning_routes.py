@@ -25,12 +25,12 @@ def client():
         yield client
 
 
-@pytest.mark.parametrize("view", ["story", "npcs"])
+@pytest.mark.parametrize("view", ["story", "npcs", "places", "character", "session"])
 def test_page_has_real_components_and_simulation_boundary(client, view):
     response = client.get(f"/components/planning?view={view}")
     assert response.status_code == 200
     assert "data-planning" in response.text
-    assert "planning-npc" in response.text
+    assert 'name="planning-view"' in response.text
     assert "Nessuna modifica al mondo" in response.text
     assert "/static/components/layout/Page.css" in response.text
 

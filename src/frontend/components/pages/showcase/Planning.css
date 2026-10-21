@@ -15,6 +15,13 @@
   gap: var(--sp-2);
   margin: var(--sp-5) 0 var(--sp-8);
 }
+.planning__views .field { min-width: min(100%, 20rem); }
+.planning__place, .planning__reputation { border-top: var(--rule); padding: var(--sp-5) 0; }
+.planning__facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--sp-2) var(--sp-5); font-family: var(--sans); font-size: var(--text-sm); }
+.planning__facts dt { font-weight: 600; }
+.planning__facts dd { margin: 0; }
+.planning__character-tracks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); }
+.planning__reputation output { display: inline-block; min-width: var(--sp-10); text-align: center; font-family: var(--mono); }
 .planning__heading {
   display: flex;
   align-items: start;
@@ -123,7 +130,8 @@
   .planning__heading h1 { font-size: var(--text-2xl); }
   .planning__npc-grid { grid-template-columns: minmax(0, 1fr); }
   .planning__section-head { flex-wrap: wrap; }
-  .planning__toolbar .btn { min-height: var(--sp-12); }
+  .planning .btn { min-height: var(--sp-12); }
+  .planning__details summary { min-height: var(--sp-12); padding-top: var(--sp-3); }
   .planning-npc__box { width: var(--sp-12); height: var(--sp-12); }
 }
 @media (prefers-reduced-motion: reduce) {

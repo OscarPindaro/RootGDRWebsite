@@ -7,27 +7,24 @@
       <strong>Studio di interfaccia</strong>
       <span>Dati dimostrativi. Nessuna modifica al mondo; le prove si azzerano ricaricando.</span>
     </div>
-    <nav class="planning__views" aria-label="Viste del prototipo">
-      {% for item in study.nav %}
-      <common.Button :href="item.href" :variant="'primary' if item.id == study.view else 'secondary'" size="sm"
-                     :aria-current="'page' if item.id == study.view else None">{{ item.label }}</common.Button>
-      {% endfor %}
-    </nav>
+    <div class="planning__views">
+      <common.Field label="Vista dello studio" name="planning-view" :value="study.view" :options="study.choices" />
+    </div>
     <header class="planning__heading">
       <div>
         <p class="planning__context">Borgo Mulino / Preparazione del GM</p>
         <h1>{{ study.title }}</h1>
-        <p class="planning__lede">La situazione, le persone e quello che cambia al tavolo.</p>
+        {% if study.view == "story" %}<p class="planning__lede">La situazione, le persone e quello che cambia al tavolo.</p>{% endif %}
       </div>
-      <common.Pill variant="success">In corso</common.Pill>
+      {% if study.view == "story" %}<common.Pill variant="success">In corso</common.Pill>{% endif %}
     </header>
-    <div class="planning__toolbar">
+    {% if study.view in ["story", "npcs"] %}<div class="planning__toolbar">
       <div role="group" aria-label="Confronto schede NPC">
         <common.Button variant="secondary" size="sm" data-card-mode-choice="open" aria-pressed="true">Scheda aperta</common.Button>
         <common.Button variant="secondary" size="sm" data-card-mode-choice="flip" aria-pressed="false">Carta fronte / retro</common.Button>
       </div>
       <span class="planning__hint">Stesso contenuto, due presentazioni.</span>
-    </div>
+    </div>{% endif %}
 
     {% if study.view == "story" %}
     <div class="planning__folio">
@@ -91,14 +88,14 @@
         {% for npc in study.npcs %}<pages.showcase.PlanningNpc :npc="npc" />{% endfor %}
       </aside>
     </div>
-    {% else %}
+    {% elif study.view == "npcs" %}
     <section class="planning__section" aria-label="NPC della storia">
       <p>Un individuo e un gruppo. Tracciati e mosse sono gli stessi della vista storia.</p>
       <div class="planning__npc-grid">
         {% for npc in study.npcs %}<pages.showcase.PlanningNpc :npc="npc" />{% endfor %}
       </div>
     </section>
-    {% endif %}
+    {% else %}<pages.showcase.PlanningReference :study="study" />{% endif %}
     <p class="planning__feedback" data-planning-feedback role="status" aria-live="polite">Modalita dimostrativa: nessun salvataggio.</p>
     <common.Dialog title="Modifica immagine · prova" id="planning-image">
       <p>Qui si apre la modifica dell'immagine, non la carta sul retro.</p>

@@ -1,0 +1,123 @@
+{#def study #}
+{#css pages/showcase/Planning.css, common/Button.css, common/Field.css, common/Pill.css, common/Dialog.css, editorial/Face.css, common/Icon.css, common/Tooltip.css #}
+{% if study.view == "places" %}
+<div class="planning__folio">
+  <section class="planning__reading" aria-labelledby="planning-places">
+    <h2 id="planning-places">Un luogo, una sola identita</h2>
+    <p class="prose">Dove si trova un luogo e chi lo controlla sono informazioni diverse.
+      Le rivendicazioni e i conflitti restano nelle storie.</p>
+    {% for place in study.places %}
+    <article class="planning__place">
+      <div class="planning__section-head"><h3>{{ place.name }}</h3><common.Pill>{{ place.kind }}</common.Pill></div>
+      <dl class="planning__facts">
+        <dt>Posizione</dt><dd>{{ place.container }}</dd>
+        <dt>Controllo attuale</dt><dd>{{ place.controller }}</dd>
+      </dl>
+      <p>{{ place.description }}</p>
+    </article>
+    {% endfor %}
+  </section>
+  <aside class="planning__section">
+    <h2>Fazioni del mondo</h2>
+    <p><strong>Abitanti</strong><br>Una categoria condivisa, non una fazione per ogni radura.</p>
+    <p><strong>Marchesato</strong><br>Una fazione con identita e reputazione proprie.</p>
+    <details class="planning__details">
+      <summary>Conflitti attivi nel luogo <span>alternativa da valutare</span></summary>
+      <p><a href="?view=story#planning-paperwork">Modulo 4a e Documento 7b</a><br>Ritorno a Borgo Mulino</p>
+      <p class="planning__hint">Solo un collegamento; il testo del conflitto non viene copiato.</p>
+    </details>
+  </aside>
+</div>
+{% elif study.view == "character" %}
+<div class="planning__folio">
+  <section aria-labelledby="planning-character">
+    <h2 id="planning-character">Neri, il viandante</h2>
+    <p class="planning__hint">Personaggio sintetico. Solo tracciati e reputazione: nessuna scheda completa.</p>
+    <div class="planning__place">
+      <h3>Tracciati</h3>
+      <div class="planning__character-tracks">
+        {% for track in study.character_tracks %}
+        <fieldset class="planning-npc__track">
+          <legend>{{ track.label }}</legend>
+          {% for box in range(track.capacity) %}
+          <label class="planning-npc__box">
+            <input type="checkbox" data-track="neri:{{ track.key }}:{{ box }}"
+                   aria-label="Neri, {{ track.label }}, casella {{ box + 1 }}"
+                   {% if box < track.marked %}checked{% endif %}>
+          </label>
+          {% endfor %}
+        </fieldset>
+        {% endfor %}
+      </div>
+    </div>
+    <h3>Reputazione</h3>
+    <p class="planning__hint">Valori di esempio. Correzione manuale, non calcolo degli avanzamenti.</p>
+    {% for faction in ["Abitanti", "Marchesato"] %}
+    <article class="planning__reputation" data-reputation>
+      <div class="planning__section-head"><h4>{{ faction }}</h4>
+        <div role="group" aria-label="Reputazione con {{ faction }}">
+          <common.Button variant="secondary" size="sm" data-reputation-delta="-1" :label="'Riduci reputazione con ' ~ faction">-</common.Button>
+          <output data-reputation-value aria-label="Valore reputazione">0</output>
+          <common.Button variant="secondary" size="sm" data-reputation-delta="1" :label="'Aumenta reputazione con ' ~ faction">+</common.Button>
+        </div>
+      </div>
+      <div class="planning__character-tracks">
+        {% for kind, count in [("Prestigio", 5), ("Nomea", 3)] %}
+        <fieldset class="planning-npc__track"><legend>{{ kind }}</legend>
+          {% for box in range(count) %}
+          <label class="planning-npc__box"><input type="checkbox" data-track="{{ faction }}:{{ kind }}:{{ box }}"
+            aria-label="{{ faction }}, {{ kind }}, casella {{ box + 1 }}"></label>
+          {% endfor %}
+        </fieldset>
+        {% endfor %}
+      </div>
+    </article>
+    {% endfor %}
+  </section>
+  <aside class="planning__section">
+    <h2>Playbook</h2>
+    <common.Field label="Playbook del personaggio" name="planning-playbook" value="Il Ladro" />
+    <p>Il titolo del personaggio resta separato dal playbook.</p>
+    <common.Button variant="secondary" data-dialog-open="planning-playbook-dialog">Prova il download del playbook</common.Button>
+    <p class="planning__hint">Nessun PDF del manuale viene copiato o distribuito da questa prova.</p>
+  </aside>
+</div>
+<common.Dialog title="Download del singolo playbook" id="planning-playbook-dialog">
+  <p>La funzionalita dovra fornire soltanto le pagine del playbook selezionato.</p>
+  <p>Questa prova mostra la posizione del comando. Il catalogo e gli intervalli
+    delle pagine devono ancora essere verificati sui PDF originali.</p>
+</common.Dialog>
+{% else %}
+<div class="planning__folio">
+  <section aria-labelledby="planning-session">
+    <p class="planning__context">Ritorno a Borgo Mulino / Sessione 2</p>
+    <h2 id="planning-session">Le porte del mulino</h2>
+    <div class="planning__section-head"><span>18 ottobre · data dimostrativa</span><common.Pill>Resoconto</common.Pill></div>
+    <div class="prose">
+      <p>Abbiamo seguito il carico fino al ponte. La pattuglia non voleva lasciarlo
+        passare, ma nemmeno gli abitanti avevano voglia di combattere.</p>
+      <p>Ada ha chiesto una garanzia. Il gruppo ha deciso di parlare con entrambi
+        gli uffici prima di promettere qualcosa che non poteva mantenere.</p>
+    </div>
+    <p class="planning__hint">Prosa sintetica per la presentazione, non estratta dalla trascrizione del 18 ottobre.</p>
+    <h3>Conflitti cambiati in questa sessione</h3>
+    <a href="?view=story#planning-paperwork">Modulo 4a e Documento 7b</a>
+    <p>Il resoconto resta libero; lo sviluppo specifico resta nel conflitto.</p>
+    <details class="planning__details"><summary>Fonte e futuro degli eventi</summary>
+      <p>La trascrizione originale resta distinta dal testo. Scene e timeline
+        saranno una vista futura: non una sostituzione di questo resoconto.</p>
+    </details>
+  </section>
+  <aside aria-label="Contesto della sessione">
+    <h2>Al tavolo</h2>
+    <details class="planning__details" open><summary>Personaggi</summary><p>Neri, il viandante <span class="planning__hint">esempio</span></p></details>
+    <details class="planning__details" open><summary>NPC coinvolti</summary>
+      {% for npc in study.npcs %}<p><a href="?view=npcs">{{ npc.name }}</a></p>{% endfor %}
+    </details>
+    <details class="planning__details"><summary>Luoghi</summary><p>Il ponte / Il mulino / Borgo Mulino</p></details>
+    <h3>Sessioni della storia</h3>
+    <ol><li>L'arrivo nella radura</li><li><strong>Le porte del mulino</strong></li></ol>
+    <p class="planning__hint">La lista locale non significa che ogni persona menzionata abbia partecipato.</p>
+  </aside>
+</div>
+{% endif %}

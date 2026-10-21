@@ -8,10 +8,10 @@ from jinjax.catalog import Catalog
 from pydantic import BaseModel, Field
 
 from ..dependencies import get_catalog_dep
-from ..navigation import NavItem
+from ..navigation import NavItem, Option
 
 router = APIRouter(tags=["showcase"])
-StudyView = Literal["story", "npcs"]
+StudyView = Literal["story", "npcs", "places", "character", "session"]
 
 
 class StudyTrack(BaseModel):
@@ -41,20 +41,37 @@ class StudyNpc(BaseModel):
     moves: list[StudyMove]
 
 
+class StudyPlace(BaseModel):
+    name: str
+    kind: str
+    container: str
+    controller: str
+    description: str
+
+
 class PlanningStudy(BaseModel):
     view: StudyView
     title: str
     nav: list[NavItem]
+    choices: list[Option]
     npcs: list[StudyNpc]
+    places: list[StudyPlace]
+    character_tracks: list[StudyTrack]
 
 
 def planning_study(view: StudyView = "story") -> PlanningStudy:
-    labels = [("story", "Storia", "storie"), ("npcs", "NPC", "npc")]
+    labels = [
+        ("story", "Storia", "storie"),
+        ("npcs", "NPC", "npc"),
+        ("places", "Luoghi e fazioni", "luoghi"),
+        ("character", "Personaggio", "personaggi"),
+        ("session", "Sessione", "sessioni"),
+    ]
     return PlanningStudy(
         view=view,
         title="Ritorno a Borgo Mulino"
         if view == "story"
-        else "Persone di Borgo Mulino",
+        else next(label for key, label, _mark in labels if key == view),
         nav=[
             NavItem(
                 id=key,
@@ -63,6 +80,36 @@ def planning_study(view: StudyView = "story") -> PlanningStudy:
                 mark=mark,
             )
             for key, label, mark in labels
+        ],
+        choices=[Option(value=key, label=label) for key, label, _mark in labels],
+        places=[
+            StudyPlace(
+                name="Borgo Mulino",
+                kind="Radura",
+                container="Luogo indipendente",
+                controller="Abitanti",
+                description="Il contesto geografico resta disponibile anche quando la storia finisce.",
+            ),
+            StudyPlace(
+                name="Il mulino",
+                kind="Edificio",
+                container="Dentro Borgo Mulino",
+                controller="Abitanti",
+                description="Un luogo specifico, collegato alla radura senza copiarne la descrizione.",
+            ),
+            StudyPlace(
+                name="Il tempio nel bosco",
+                kind="Tempio",
+                container="Nel bosco, vicino a due radure",
+                controller="Non registrato",
+                description="Due fazioni lo rivendicano. Questo non significa che lo controllino entrambe.",
+            ),
+        ],
+        character_tracks=[
+            StudyTrack(key="fatigue", label="Fatica", capacity=4, marked=1),
+            StudyTrack(key="wounds", label="Ferite", capacity=4, marked=0),
+            StudyTrack(key="wear", label="Usura", capacity=3, marked=1),
+            StudyTrack(key="depletion", label="Consumo", capacity=4, marked=2),
         ],
         npcs=[
             StudyNpc(

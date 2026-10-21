@@ -69,3 +69,29 @@ def test_real_shell_and_cards_do_not_overflow(component, width):
     page.get_by_role("button", name="Carta fronte / retro", exact=True).click()
     page.locator('[data-npc="ada"]').get_by_role("button", name="Gira scheda").click()
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+
+
+@pytest.mark.parametrize("view", ["places", "character", "session"])
+@pytest.mark.parametrize("width", [320, 390, 901, 1440])
+def test_reference_views_reflow(component, view, width):
+    page = mount(component, view)
+    page.set_viewport_size({"width": width, "height": 900})
+    expect(page.get_by_role("heading", level=1)).to_have_count(1)
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+
+
+def test_character_reputation_is_bounded_and_tracks_are_local(component):
+    page = mount(component, "character")
+    increase = page.get_by_role("button", name="Aumenta reputazione con Abitanti")
+    for _ in range(5):
+        increase.click()
+    expect(page.locator("[data-reputation-value]").first).to_have_text("3")
+    page.get_by_role("checkbox", name="Neri, Ferite, casella 1", exact=True).check()
+    page.get_by_role("button", name="Prova il download del playbook").click()
+    expect(page.locator("#planning-playbook-dialog")).to_be_visible()
+    page.keyboard.press("Escape")
+    page.reload()
+    expect(page.locator("[data-reputation-value]").first).to_have_text("0")
+    expect(
+        page.get_by_role("checkbox", name="Neri, Ferite, casella 1", exact=True)
+    ).not_to_be_checked()

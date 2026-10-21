@@ -73,3 +73,19 @@ Actual dialogs/buttons/shell behavior are exercised; domain saves are simulated.
 - The existing Podman compose wait included a stopped app while starting the
   database. Starting only that app through the harness helper unblocked it;
   no container, database, volume or work/showcase environment was reset.
+
+## Reference-slice findings
+
+Places, character and session studies use the same real shell and controls.
+The native Field/select avoids a growing row of duplicate navigation buttons.
+The place list distinguishes geographic containment and actual control; optional
+active-conflict context remains an expandable alternative rather than a decision.
+Character values are browser-only; reputation buttons clamp to -3..+3 without
+claiming to implement award thresholds. The session keeps prose primary and
+does not derive participation from every mention.
+
+Twenty component/browser cases and seven route cases pass for this slice.
+Docker desktop/phone captures have no overflow, errors or mutation requests.
+Compared with the retained prototype document/collection captures, the composition
+preserves the atlas vocabulary while using ordinary content groups rather than
+putting every place/session fact into another card.
