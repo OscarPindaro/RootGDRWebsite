@@ -1,6 +1,6 @@
 # Development workflow skills
 
-Thirty-five opt-in commands support development, review, documentation and maintenance.
+Thirty-six opt-in commands support development, review, documentation and maintenance.
 
 ## What it does
 
@@ -41,6 +41,7 @@ Thirty-five opt-in commands support development, review, documentation and maint
 | `/server-backup` | Check status, coordinate an approved capture or verify isolated recovery. |
 | `/kickoff` | Plan a new feature-module/JinjaX project or route an existing target to audit. |
 | `/kickoff-fix` | Assess an existing project through the scoped refactoring procedure. |
+| `/refresh-knowledge` | Research agent-tool changes and propose updates without applying them. |
 
 A sufficiently specified implementation ticket authorizes its scope without a
 second planning approval. An idea-only ticket or unresolved consequential choice
@@ -131,6 +132,12 @@ approved scope, verification and local commits.
 The UI philosophy may change through a later request and skill update.
 Current settled frontend guidance remains applicable; no replacement philosophy
 or follow-up ticket is created by this port. JinjaX/htmx remains the technology.
+
+`/refresh-knowledge` covers relevant changes in Devin, Claude Code, Codex and
+agent tooling. It distinguishes installed capabilities from newer or untested
+features, cites sources and proposes scoped instruction updates. Research does
+not authorize edits, installations, paid evaluations or automatic adoption.
+Network access and durable reports follow the usual permissions.
 
 ## How it is built
 

@@ -51,6 +51,7 @@ WORKFLOW_SKILLS = (
     "server-backup",
     "kickoff",
     "kickoff-fix",
+    "refresh-knowledge",
 )
 
 
