@@ -5,6 +5,11 @@ contract — ``common.Grid`` with ``document``. Before it, three of them nested
 the backlinks panel inside the main column (and never closed ``.docpage``),
 Story could emit two competing grid children, and Page left its backlinks
 outside the grid entirely.
+
+The matrix below mounts every one of the six real pages with and without
+related material and with a long title, at the widths where the shell changes
+and at ordinary intermediate widths, and asserts the measure the identity,
+portrait and prose need rather than a particular set of tracks.
 """
 
 from types import SimpleNamespace
@@ -21,6 +26,17 @@ pytestmark = pytest.mark.frontend
 
 WORLD_ID = "11111111-1111-1111-1111-111111111111"
 PHONE = {"width": 390, "height": 844}
+
+# 17rem: the identity column the atlas composition has at a wide desktop.
+# Below it a name, a subtitle or a body break into one or two words a line.
+# The requirement is in rem, so it grows with the reader's default text size
+# instead of holding a pixel constant only true at 16px.
+IDENTITY_MEASURE_REM = 17
+LONG_TITLE = "Il lungo inverno dei corvi sul guado settentrionale e i patti mai scritti"
+# 320 and 390 are phones, 699/700/701 the width where the head used to stack
+# at a viewport breakpoint, 899/900/901 the shell's rail transition, and the
+# rest are ordinary intermediate widths up to a wide desktop.
+WIDTHS = (320, 390, 699, 700, 701, 899, 900, 901, 1024, 1100, 1440)
 
 
 def _user() -> SimpleNamespace:
@@ -72,12 +88,12 @@ def _backlinks() -> dict[ContentKind, list[Backlink]]:
     }
 
 
-def _character_props(links=None) -> dict:
+def _character_props(links=None, *, heading=None, can_manage=True) -> dict:
     return {
         **_common(),
         "character": SimpleNamespace(
             id=uuid4(),
-            name="Fiamma Rossa",
+            name=heading or "Fiamma Rossa",
             title="Mercante del Guado",
             short_description="Vende tutto, comprese le informazioni.",
             body="Porta sale a @[Il Cerchio di Pietre].",
@@ -89,19 +105,19 @@ def _character_props(links=None) -> dict:
             version=1,
             owner=SimpleNamespace(name="Ada"),
         ),
-        "can_manage": True,
+        "can_manage": can_manage,
         "animals": animal_options(),
         "tints": tint_options(),
         "links": links,
     }
 
 
-def _npc_props(links=None) -> dict:
+def _npc_props(links=None, *, heading=None, can_manage=True) -> dict:
     return {
         **_common(),
         "npc": SimpleNamespace(
             id=uuid4(),
-            name="La Marchesa",
+            name=heading or "La Marchesa",
             title="Comandante delle truppe feline",
             short_description="Presidia la radura e vuole il pedaggio.",
             body="È entrata nel bosco in primavera.",
@@ -112,19 +128,19 @@ def _npc_props(links=None) -> dict:
             is_draft=False,
             version=1,
         ),
-        "can_manage": True,
+        "can_manage": can_manage,
         "animals": animal_options(),
         "tints": tint_options(),
         "links": links,
     }
 
 
-def _place_props(links=None) -> dict:
+def _place_props(links=None, *, heading=None, can_manage=True) -> dict:
     return {
         **_common(),
         "place": SimpleNamespace(
             id=uuid4(),
-            name="Radura della Grande Quercia",
+            name=heading or "Radura della Grande Quercia",
             short_description="Dove il bosco si apre.",
             body="La quercia segna il centro del bosco.",
             tint="p1",
@@ -134,7 +150,7 @@ def _place_props(links=None) -> dict:
             is_draft=False,
             version=1,
         ),
-        "can_manage": True,
+        "can_manage": can_manage,
         "shapes": shape_options(),
         "tints": tint_options(),
         "is_current": False,
@@ -142,12 +158,14 @@ def _place_props(links=None) -> dict:
     }
 
 
-def _story_props(*, sessions, links=None) -> dict:
+def _story_props(*, sessions=None, links=None, heading=None, can_manage=True) -> dict:
+    # A story without related material has neither sessions nor backlinks.
+    sessions = bool(links) if sessions is None else sessions
     return {
         **_common(),
         "story": SimpleNamespace(
             id=uuid4(),
-            title="L'inverno dei corvi",
+            title=heading or "L'inverno dei corvi",
             status="in_corso",
             period_label="Inverno, 4° anno",
             tint="p8",
@@ -167,18 +185,18 @@ def _story_props(*, sessions, links=None) -> dict:
             if sessions
             else [],
         ),
-        "can_manage": True,
+        "can_manage": can_manage,
         "metadata": [],
         "links": links,
     }
 
 
-def _session_props(links=None) -> dict:
+def _session_props(links=None, *, heading=None, can_manage=True) -> dict:
     return {
         **_common(),
         "session": SimpleNamespace(
             id=uuid4(),
-            title="Il pedaggio del Guado",
+            title=heading or "Il pedaggio del Guado",
             in_world_date="Autunno, 3° anno",
             real_date=None,
             short_description="Tre fazioni firmano una tregua di una stagione.",
@@ -190,18 +208,18 @@ def _session_props(links=None) -> dict:
         ),
         "previous": None,
         "following": None,
-        "can_manage": True,
+        "can_manage": can_manage,
         "metadata": [],
         "links": links,
     }
 
 
-def _page_props(links=None) -> dict:
+def _page_props(links=None, *, heading=None, can_manage=True) -> dict:
     return {
         **_common(),
         "page": SimpleNamespace(
             id=uuid4(),
-            title="Le regole della Casa",
+            title=heading or "Le regole della Casa",
             slug="le-regole-della-casa",
             menu_position=1,
             tint="p3",
@@ -216,10 +234,25 @@ def _page_props(links=None) -> dict:
                 slug="le-fazioni-del-boschetto", title="Le fazioni del Boschetto"
             )
         ],
-        "can_manage": True,
+        "can_manage": can_manage,
         "metadata": [],
         "links": links,
     }
+
+
+# The six document types. ``lone`` is the page's own answer to "no related
+# material": Page detail always keeps its `Altre pagine` aside.
+DOCUMENT_PAGES = [
+    ("pages.characters.CharacterDetail", _character_props, True),
+    ("pages.npcs.NpcDetail", _npc_props, True),
+    ("pages.places.PlaceDetail", _place_props, True),
+    ("pages.sessions.SessionDetail", _session_props, True),
+    ("pages.stories.StoryDetail", _story_props, True),
+    ("pages.pages.PageDetail", _page_props, False),
+]
+
+# The three pages that put a portrait beside the identity.
+PORTRAIT_PAGES = DOCUMENT_PAGES[:3]
 
 
 def _children(page) -> list[dict]:
@@ -250,6 +283,218 @@ def _assert_single_column(page) -> None:
     children = _children(page)
 
     assert len(children) == 1, f"expected a lone main child, got {children}"
+
+
+def _layout(page) -> dict:
+    """The document grid, its head and its prose, with their geometry."""
+    return page.evaluate(
+        """() => {
+            const rect = (el) => {
+                if (!el) return null;
+                const r = el.getBoundingClientRect();
+                return {
+                    x: r.x, y: r.y, width: r.width, height: r.height,
+                    right: r.right, bottom: r.bottom,
+                };
+            };
+            const grid = document.querySelector('.grid-document');
+            const heading = document.querySelector('h1');
+            const gridStyle = grid ? getComputedStyle(grid) : null;
+            const tracks = gridStyle
+                ? gridStyle.gridTemplateColumns.split(' ').map(parseFloat).filter(Number.isFinite)
+                : [];
+            const columnGap = gridStyle ? parseFloat(gridStyle.columnGap) || 0 : 0;
+            return {
+                scrollWidth: document.documentElement.scrollWidth,
+                rootFontSize: parseFloat(
+                    getComputedStyle(document.documentElement).fontSize
+                ),
+                children: grid ? grid.children.length : 0,
+                gridWidth: grid ? grid.clientWidth : 0,
+                trackTotal: tracks.length
+                    ? tracks.reduce((sum, width) => sum + width, 0)
+                        + columnGap * (tracks.length - 1)
+                    : 0,
+                main: rect(grid && grid.children[0]),
+                aside: rect(grid && grid.children.length > 1 ? grid.children[1] : null),
+                face: rect(document.querySelector('.document__face')),
+                identity: rect(document.querySelector('.document__id')),
+                prose: rect(document.querySelector('.document__page .prose, article .prose')),
+                heading: rect(heading),
+                headingOverflow: heading ? heading.scrollWidth - heading.clientWidth : 0,
+            };
+        }"""
+    )
+
+
+def _required_measure(layout: dict) -> float:
+    """The identity's measure in pixels at the page's own text size."""
+    return IDENTITY_MEASURE_REM * layout["rootFontSize"]
+
+
+def _assert_document_measure(layout: dict, width: int) -> None:
+    """No horizontal overflow and no column below the identity's measure."""
+    assert layout["scrollWidth"] <= width, f"the page scrolls sideways at {width}px"
+    assert layout["trackTotal"] <= layout["gridWidth"] + 1, (
+        f"the tracks take {layout['trackTotal']:.0f}px of a "
+        f"{layout['gridWidth']:.0f}px grid at {width}px"
+    )
+
+    required = _required_measure(layout)
+    for name in ("main", "identity", "prose"):
+        column = layout[name]
+        if column is None:
+            continue
+        assert column["width"] >= required, (
+            f"the {name} column is {column['width']:.0f}px of the "
+            f"{required:.0f}px it needs at {layout['rootFontSize']:.0f}px text, "
+            f"{width}px viewport"
+        )
+
+
+def _assert_columns_do_not_overlap(layout: dict) -> None:
+    main, aside = layout["main"], layout["aside"]
+    if aside is None:
+        return
+
+    beside = aside["x"] >= main["right"] - 1
+    below = aside["y"] >= main["bottom"] - 1
+    assert beside or below, "the aside overlaps the document"
+    if below:
+        assert abs(aside["x"] - main["x"]) < 2, "the stacked aside kept its column"
+        assert abs(aside["width"] - main["width"]) < 2, (
+            "the stacked aside is not full width"
+        )
+
+
+def _assert_portrait_and_identity_do_not_overlap(layout: dict) -> None:
+    face, identity = layout["face"], layout["identity"]
+    if face is None or identity is None:
+        return
+
+    if abs(face["y"] - identity["y"]) < 2:
+        assert identity["x"] >= face["right"] - 1, "the identity overlaps the portrait"
+    else:
+        assert identity["y"] >= face["bottom"] - 1, "the identity overlaps the portrait"
+        assert abs(identity["x"] - face["x"]) < 2, (
+            "the stacked identity kept its column"
+        )
+
+
+def _assert_heading_fits(layout: dict) -> None:
+    heading = layout["heading"]
+    assert heading is not None, "the document has no main heading"
+    assert layout["headingOverflow"] <= 1, "the title overflows its column"
+    if layout["identity"] is not None:
+        assert heading["right"] <= layout["identity"]["right"] + 1
+
+
+@pytest.mark.parametrize("width", WIDTHS)
+@pytest.mark.parametrize(("component_name", "props", "lone"), DOCUMENT_PAGES)
+def test_every_document_type_keeps_its_measure(
+    component, component_name, props, lone, width
+):
+    """With related material and a long title, at every width that matters."""
+    page = component.mount(
+        component_name, props=props(links=_backlinks(), heading=LONG_TITLE)
+    )
+    page.set_viewport_size({"width": width, "height": 900})
+    layout = _layout(page)
+
+    _assert_document_measure(layout, width)
+    _assert_columns_do_not_overlap(layout)
+    _assert_portrait_and_identity_do_not_overlap(layout)
+    _assert_heading_fits(layout)
+
+
+@pytest.mark.parametrize("width", WIDTHS)
+@pytest.mark.parametrize(("component_name", "props", "lone"), DOCUMENT_PAGES)
+def test_every_document_type_keeps_its_measure_without_related_material(
+    component, component_name, props, lone, width
+):
+    page = component.mount(component_name, props=props(links=None, heading=LONG_TITLE))
+    page.set_viewport_size({"width": width, "height": 900})
+    layout = _layout(page)
+
+    _assert_document_measure(layout, width)
+    _assert_portrait_and_identity_do_not_overlap(layout)
+    _assert_heading_fits(layout)
+    if lone:
+        assert layout["children"] == 1, (
+            "a document without related material has an aside"
+        )
+
+
+@pytest.mark.parametrize("width", (320, 390))
+@pytest.mark.parametrize(("component_name", "props", "lone"), DOCUMENT_PAGES)
+def test_every_document_fits_a_narrow_page_with_larger_text(
+    component, component_name, props, lone, width
+):
+    """A 150% default text size makes every rem track larger than the page.
+
+    The stacked children span the tracks, so the tracks must be able to shrink
+    below the aside's 16rem and its gap instead of overflowing the grid.
+    """
+    page = component.mount(
+        component_name, props=props(links=_backlinks(), heading=LONG_TITLE)
+    )
+    page.set_viewport_size({"width": width, "height": 900})
+    page.add_style_tag(content="html { font-size: 150%; }")
+    layout = _layout(page)
+
+    assert layout["scrollWidth"] <= width, "the page scrolls sideways"
+    assert layout["trackTotal"] <= layout["gridWidth"] + 1, (
+        f"the tracks take {layout['trackTotal']:.0f}px of a "
+        f"{layout['gridWidth']:.0f}px grid at {width}px"
+    )
+    _assert_columns_do_not_overlap(layout)
+    _assert_portrait_and_identity_do_not_overlap(layout)
+    if layout["identity"] is not None:
+        assert abs(layout["identity"]["width"] - layout["main"]["width"]) < 2, (
+            "the identity does not take the whole stacked width"
+        )
+
+
+@pytest.mark.parametrize("width", (701, 901, 1024))
+@pytest.mark.parametrize(("component_name", "props", "lone"), DOCUMENT_PAGES)
+def test_every_document_keeps_its_measure_with_larger_text(
+    component, component_name, props, lone, width
+):
+    """A 150% text size makes the 15rem portrait 360px wide.
+
+    The head must stack on the width the document actually gets, not on a
+    viewport rule: at 701, 901 and 1024 the portrait beside the identity left
+    it 251, 175 and 296px — below the 17rem (408px) it needs at that size.
+    """
+    page = component.mount(
+        component_name, props=props(links=_backlinks(), heading=LONG_TITLE)
+    )
+    page.set_viewport_size({"width": width, "height": 900})
+    page.add_style_tag(content="html { font-size: 150%; }")
+    layout = _layout(page)
+
+    _assert_document_measure(layout, width)
+    _assert_columns_do_not_overlap(layout)
+    _assert_portrait_and_identity_do_not_overlap(layout)
+    _assert_heading_fits(layout)
+
+
+@pytest.mark.parametrize("width", (390, 901, 1440))
+@pytest.mark.parametrize(("component_name", "props", "lone"), PORTRAIT_PAGES)
+def test_the_read_only_document_keeps_its_measure(
+    component, component_name, props, lone, width
+):
+    """The read-only portrait is a different box from the image editor."""
+    page = component.mount(
+        component_name,
+        props=props(links=_backlinks(), heading=LONG_TITLE, can_manage=False),
+    )
+    page.set_viewport_size({"width": width, "height": 900})
+    layout = _layout(page)
+
+    _assert_document_measure(layout, width)
+    _assert_portrait_and_identity_do_not_overlap(layout)
+    _assert_heading_fits(layout)
 
 
 @pytest.mark.parametrize(
@@ -343,18 +588,54 @@ def test_a_page_merges_altre_pagine_and_backlinks_into_one_aside(component):
     assert not main["hasToc"] and not main["hasLinks"]
 
 
-def test_every_detail_page_uses_the_same_breakpoint(component):
-    """The aside is beside the document above 700px and below it at the phone."""
-    for component_name, props in (
-        ("pages.characters.CharacterDetail", _character_props(links=_backlinks())),
-        ("pages.places.PlaceDetail", _place_props(links=_backlinks())),
-        ("pages.pages.PageDetail", _page_props(links=_backlinks())),
-    ):
-        page = component.mount(component_name, props=props)
-        page.set_viewport_size({"width": 800, "height": 900})
-        main, aside = _children(page)
-        assert aside["x"] >= main["x"] + main["width"], f"{component_name} at 800px"
+def test_the_aside_stacks_on_both_sides_of_the_rail_transition(component):
+    """899/900 have no rail, 901 brings it back and takes 276px from the page.
 
-        page.set_viewport_size(PHONE)
+    The document reflows on the width it actually gets, so the aside is below
+    the document on both sides of the shell's transition, and the identity
+    keeps its measure there.
+    """
+    for width in (899, 900, 901):
+        page = component.mount(
+            "pages.characters.CharacterDetail",
+            props=_character_props(links=_backlinks(), heading=LONG_TITLE),
+        )
+        page.set_viewport_size({"width": width, "height": 900})
         main, aside = _children(page)
-        assert aside["y"] >= main["y"] + main["height"], f"{component_name} at 390px"
+        layout = _layout(page)
+
+        assert aside["y"] >= main["y"] + main["height"] - 1, (
+            f"the aside is beside the document at {width}px"
+        )
+        assert layout["identity"]["width"] >= _required_measure(layout), (
+            f"the identity column is {layout['identity']['width']:.0f}px at {width}px"
+        )
+
+
+def test_the_aside_returns_beside_the_document_when_the_page_can_hold_it(component):
+    page = component.mount(
+        "pages.characters.CharacterDetail", props=_character_props(links=_backlinks())
+    )
+    page.set_viewport_size({"width": 1440, "height": 900})
+    main, aside = _children(page)
+
+    assert aside["x"] >= main["x"] + main["width"] - 1, "the aside did not return"
+    assert aside["width"] < main["width"], "the aside took the document's width"
+
+
+def test_every_detail_page_reflows_at_the_same_document_width(component):
+    """One contract for the six pages, not one breakpoint per caller."""
+    for component_name, props, _ in DOCUMENT_PAGES:
+        page = component.mount(component_name, props=props(links=_backlinks()))
+
+        page.set_viewport_size({"width": 901, "height": 900})
+        main, aside = _children(page)
+        assert aside["y"] >= main["y"] + main["height"] - 1, (
+            f"{component_name} at 901px"
+        )
+
+        page.set_viewport_size({"width": 1440, "height": 900})
+        main, aside = _children(page)
+        assert aside["x"] >= main["x"] + main["width"] - 1, (
+            f"{component_name} at 1440px"
+        )

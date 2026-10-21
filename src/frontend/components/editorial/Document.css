@@ -1,5 +1,37 @@
-/* The document page: a face column and an identity column, then the body.
-   Character, NPC, Place, Story, Session and Page details all share it. */
+/* The document page: its grid, a face column and an identity column, then the
+   body. Character, NPC, Place, Story, Session and Page details all share it. */
+
+/* A document beside its backlinks: one main child, then one optional aside
+   stack. The aside column keeps its width whether or not the caller fills it,
+   so every detail page reads the same at a given width. Both tracks can
+   shrink, so a narrow page or a larger default text size never pushes them
+   past the container. The two classes outrank common/Grid.css's `.grid`, so
+   the cascade does not depend on which stylesheet is collected first. */
+.grid.grid-document {
+  grid-template-columns: minmax(0, 1fr) minmax(0, var(--grid-aside));
+  gap: var(--grid-document-gap);
+  align-items: start;
+  /* The collapse below follows the width the document is actually given, not
+     the viewport: the shell hands its rail back at its own breakpoint, so a
+     viewport breakpoint would keep the aside beside a document that no longer
+     has room for it. */
+  container-type: inline-size;
+}
+
+/* 53.75rem: the aside's 16rem, its 3rem gap and the 34.75rem the document
+   needs for a 15rem portrait beside a 17rem identity. Both children span the
+   tracks, so the aside stacks under the document and the document keeps the
+   whole width instead of losing 16rem of it. */
+@container (max-width: 53.75rem) {
+  .grid.grid-document > * { grid-column: 1 / -1; }
+}
+
+/* The document column is the named query container for its own head: the
+   portrait and the identity each need their measure, and only the width the
+   shell left the document says whether both still fit. The name keeps the
+   query off the grid when a caller forgets the modifier. */
+.document--sized { container: document-column / inline-size; }
+
 .document__head {
   display: grid;
   grid-template-columns: minmax(11.25rem, 15rem) minmax(0, 1fr);
@@ -51,10 +83,14 @@
 .document__face--editor .choice-grid__options { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
 .document__face--editor .choice-grid__option { min-height: 2.75rem; }
 
-@media (max-width: 700px) {
+/* Below the width the two columns need — a 15rem portrait, the head gap and a
+   17rem identity — the portrait goes above the identity and stops at 13.75rem.
+   The threshold is in rem, so it grows with the reader's default text size
+   instead of holding a 15rem portrait beside an identity too narrow to read. */
+@container document-column (max-width: 34.5rem) {
   /* nel documento il volto va sopra l'identità e non a tutta larghezza */
   .document__head {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 1.5rem;
   }
   .document__face { max-width: 13.75rem; }

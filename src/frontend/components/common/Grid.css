@@ -3,6 +3,9 @@
   gap: var(--grid-gap, var(--sp-6));
 }
 
+/* The `document` variant's tracks are the document page's own geometry, not a
+   primitive: editorial/Document.css owns `.grid-document`. */
+
 /* The entry-point strip shares its borders: no gap. */
 .grid-flush { gap: 0; }
 
@@ -15,15 +18,6 @@
 /* Content beside an aside; the content column takes the larger share. */
 .grid-split {
   grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  align-items: start;
-}
-
-/* A document beside its backlinks: one main child, then one optional aside
-   stack. The aside column keeps its width whether or not the caller fills it,
-   so every detail page reads the same at a given width. */
-.grid-document {
-  grid-template-columns: minmax(0, 1fr) var(--grid-aside);
-  gap: var(--grid-document-gap);
   align-items: start;
 }
 
@@ -40,6 +34,5 @@
 @media (max-width: 700px) {
   .grid-columns-2,
   .grid-columns-3,
-  .grid-auto,
-  .grid-document { grid-template-columns: minmax(0, 1fr); }
+  .grid-auto { grid-template-columns: minmax(0, 1fr); }
 }
