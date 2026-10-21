@@ -10,6 +10,7 @@ Ctrl/⌘+Enter or Escape. A locked page loads no editor bundle at all.
 from __future__ import annotations
 
 import pytest
+from playwright.sync_api import expect
 
 from harness.test.browser import BrowserSession
 
@@ -130,6 +131,46 @@ def test_character_keyboard_journey_edits_every_block(
     assert session.errors == []
 
 
+def test_identity_heading_survives_and_the_inputs_are_named_in_italian(
+    session: BrowserSession, seed_world
+) -> None:
+    """The rendered name is a heading, not a textbox; the input that replaces
+    it carries the visible Italian label."""
+    _, _, api_path = _character(session, seed_world, "intestazione")
+
+    heading = session.page.get_by_role("heading", level=1)
+    assert heading.count() == 1
+    expect(heading).to_have_accessible_name("Autore intestazione")
+
+    name = session.page.locator('[data-doc-block="name"]')
+    name.focus()
+    session.page.keyboard.press("Enter")
+    editor = session.page.locator(".docidentity__input")
+    expect(editor).to_be_focused()
+    expect(editor).to_have_accessible_name("Nome")
+    editor.fill("Fiamma Accessibile")
+    session.page.keyboard.press("Enter")
+    assert _active_block(session) == "name"
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["name"] == "Fiamma Accessibile"
+    expect(session.page.get_by_role("heading", level=1)).to_have_accessible_name(
+        "Fiamma Accessibile"
+    )
+
+    title = session.page.locator('[data-doc-block="title"]')
+    title.focus()
+    session.page.keyboard.press("Enter")
+    editor = session.page.locator(".docidentity__input")
+    expect(editor).to_be_focused()
+    expect(editor).to_have_accessible_name("Titolo")
+    editor.fill("Titolo Accessibile")
+    session.page.keyboard.press("Enter")
+    assert _active_block(session) == "title"
+    _wait_saved(session)
+    assert session.expect_api(api_path).json()["title"] == "Titolo Accessibile"
+    assert session.errors == []
+
+
 @pytest.mark.parametrize("block", ["summary", "body"])
 def test_code_mirror_arrows_stay_native(
     session: BrowserSession, seed_world, block: str
@@ -212,7 +253,9 @@ def test_world_settings_name_and_description_journey(
     assert _active_block(session) == "name"
 
     session.page.keyboard.press("Enter")
-    session.page.locator(".docidentity__input").fill("Bosco navigato")
+    editor = session.page.locator(".docidentity__input")
+    expect(editor).to_have_accessible_name("Nome del mondo")
+    editor.fill("Bosco navigato")
     session.page.keyboard.press("Enter")
     assert _active_block(session) == "name"
     _wait_saved(session)

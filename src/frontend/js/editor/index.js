@@ -822,6 +822,8 @@ function mountDocSummary(block) {
 
 /* ---------- identity fields ---------- */
 
+const FIELD_LABELS = { name: "Nome", title: "Titolo" };
+
 function mountDocIdentity(block) {
   if (block.dataset.identityReady === "true") return;
   block.dataset.identityReady = "true";
@@ -833,12 +835,16 @@ function mountDocIdentity(block) {
     const apply = (value) => { field.textContent = value; field.dataset.empty = String(!value); };
     autosave.register(name, initial, apply, block);
     field.tabIndex = 0;
-    field.setAttribute("role", "textbox");
-    field.setAttribute("aria-label", field.dataset.docLabel || name);
+    const eyebrow = field.previousElementSibling;
+    const label =
+      field.dataset.docLabel ||
+      (eyebrow?.classList.contains("eyebrow") ? eyebrow.textContent.trim() : "") ||
+      FIELD_LABELS[name];
     const open = () => {
       if (field.querySelector("input")) return;
       const editor = document.createElement("input");
       editor.className = "docidentity__input";
+      editor.setAttribute("aria-label", label);
       editor.value = field.textContent.trim();
       field.textContent = "";
       field.appendChild(editor);

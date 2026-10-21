@@ -22,7 +22,11 @@ The reading page is where a document is written: no separate edit form, no
   and coming back resumes at the same caret position.
 - The name and title remain single-line fields. The short description opens a
   compact Markdown editor with the same preview and `@` menu as the body. All
-  three use the same autosave and conflict controller.
+  three use the same autosave and conflict controller. The rendered name stays a
+  level-one heading, so heading navigation finds it in reading mode; while a
+  field is open, the input that replaces the text carries the visible Italian
+  label (`Nome`, `Titolo`, `Nome del mondo` in world settings) as its accessible
+  name. Closing the field restores the rendered text and focus.
 - The blocks are one ordered sequence (Nome → Titolo → Sintesi → Descrizione,
   omitting fields a type does not have). Arrow Up/Down move between them, Enter
   or F2 opens the focused block, and the focused block carries one visible
@@ -61,7 +65,11 @@ The reading page is where a document is written: no separate edit form, no
 
 - `editorial/DocEdit.jinja` renders the body, hidden source textarea, server
   preview control and live status. `editorial/DocIdentity.jinja` marks the plain
-  identity fields and shares the same status/controller.
+  identity fields and shares the same status/controller. The rendered fields
+  keep their native elements: `mountDocIdentity` adds no widget role to them, so
+  the heading stays a heading. It derives each field's label from
+  `data-doc-label` or the visible eyebrow before the field and applies it to the
+  input it inserts, not to the rendered text.
 - `src/frontend/js/editor/index.js` owns one sequential autosave queue per API
   document. It coalesces fields and sends authenticated JSON `PATCH` requests
   with the latest `expected_version` to the existing per-feature endpoint.
