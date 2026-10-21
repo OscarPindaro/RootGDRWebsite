@@ -107,4 +107,5 @@ markers = [
     "integration: Integration tests - requires database",
     "e2e: End-to-end tests - full application stack",
     "external_integrations: Tests that drive real containers, Ansible, restic or the board - local only, never in CI",
+    "devin_cli_e2e: Live, paid Devin CLI worker checks; require --run-devin-cli-e2e and never run in CI",
 ]

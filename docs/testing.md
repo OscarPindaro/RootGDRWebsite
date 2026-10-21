@@ -108,6 +108,34 @@ too, when only it needs the external state.
 CI runs the suites as separate jobs: `pytest -m unit`, `-m integration`, the
 frontend job and `-m e2e`.
 
+### Live Devin CLI worker checks
+
+These tests launch the installed CLI with the existing authenticated account.
+They can spend model credits and are disabled by default, even when the external
+integration marker is selected. CI always skips them. The explicit local command
+is:
+
+```bash
+uv run pytest tests/external_integrations/test_devin_cli_workers.py \
+  -m devin_cli_e2e --run-devin-cli-e2e -q
+```
+
+No application or database environment is needed, so this suite uses pytest
+directly rather than the harness's environment-dependent external command.
+The tests create their own temporary Git repository/worktrees and tool-free
+conversations using `deepseek-v4-1-flash-1017-high`. They check fresh and resumed
+sessions in Auto and Dangerous modes, flag precedence, parallel worktree
+separation, native session identity and `/session-stats` served-model reports.
+They do not test automatic tool-approval routing or Desktop tab creation.
+
+Cross-directory resume is a characterization case: the CLI preserves the model
+and session ID but relocates its saved working directory. A worker launcher must
+still enforce its assigned worktree. No pre-existing user session is resumed,
+no lock is forced, and no global configuration is changed. New test sessions remain in CLI
+history; their logs and receipts are in the pytest temporary worktrees under
+`.devin/cli-e2e/`. Authentication failures, unexpected models or missing statistics
+fail the test rather than trigger a fallback.
+
 The test harness uses Docker when its daemon is reachable and otherwise falls back
 to Podman. Set `HARNESS_CONTAINER_ENGINE=docker` or
 `HARNESS_CONTAINER_ENGINE=podman` to override automatic detection.

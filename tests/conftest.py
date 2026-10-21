@@ -23,6 +23,26 @@ from src.backend.dependencies import get_db_session
 from src.backend.server import create_app
 
 
+def pytest_addoption(parser: pytest.Parser) -> None:
+    parser.addoption(
+        "--run-devin-cli-e2e",
+        action="store_true",
+        default=False,
+        help="Enable local live Devin CLI tests; authenticated model calls can spend credits.",
+    )
+
+
+def pytest_collection_modifyitems(
+    config: pytest.Config, items: list[pytest.Item]
+) -> None:
+    if config.getoption("--run-devin-cli-e2e") and not os.environ.get("CI"):
+        return
+    reason = "Live Devin CLI tests require --run-devin-cli-e2e outside CI."
+    for item in items:
+        if item.get_closest_marker("devin_cli_e2e"):
+            item.add_marker(pytest.mark.skip(reason=reason))
+
+
 class TestAppConfig(AppConfig):
     model_config = SettingsConfigDict(
         env_file=os.environ.get("ENV_FILE", "test.env"),

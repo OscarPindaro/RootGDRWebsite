@@ -171,6 +171,22 @@ worktrees are not replaced, and evaluation telemetry export is disabled.
 The behavioral runner's optional `pydantic-evals`/Logfire dependencies were not
 installed. No native-plugin catalog or Devin adapter is created by the port.
 
+## Live CLI Worker Tests
+
+`tests/external_integrations/test_devin_cli_workers.py` exercises real Devin CLI
+conversations in disposable Git worktrees. It verifies the requested DeepSeek
+model using native session records, exported turn metadata and the served-model
+row from `/session-stats`, including resumes and parallel workers.
+
+The suite needs the explicit `--run-devin-cli-e2e` flag, is excluded from default
+runs and always skips in CI. Offline regression tests verify that discovery,
+ordinary runs and CI cannot invoke the CLI, while explicit local execution can.
+The live tests use tool-free responses but can spend credits. They do not reopen
+pre-existing user sessions or test Desktop-created tabs. There is no application
+UI change.
+See [the testing guide](../testing.md#live-devin-cli-worker-checks) for the command,
+requirements and retained test artifacts.
+
 ## Limits
 
 These are agent instructions, not runtime enforcement. Unit checks validate
