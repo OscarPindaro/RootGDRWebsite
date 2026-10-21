@@ -52,9 +52,16 @@ def _user() -> SimpleNamespace:
     )
 
 
-def _mount(component, *, pages=None, content="", symbol_style=None):
+def _mount(
+    component,
+    *,
+    pages=None,
+    content="",
+    symbol_style=None,
+    title="Boschetto di Smeraldo",
+):
     props = {
-        "title": "Boschetto di Smeraldo",
+        "title": title,
         "current_user": _user(),
         "active": "mondo",
         "world": _world(),
@@ -292,6 +299,132 @@ def test_opening_the_palette_from_the_drawer_closes_the_drawer(component):
         "() => document.getElementById('rail').classList.contains('is-open')"
     )
     assert not page.eval_on_selector("#palette", "el => el.hasAttribute('inert')")
+
+
+# --- Phone topbar: search label and hint -------------------------------------
+
+LONG_TITLE = "Massimiliano Alessandro Della Rovere di Montalfoglio e Valli"
+
+TOP_BAR_ACTIONS = {
+    "toggle": "#drawer-toggle",
+    "search": ".topbar [data-open-palette]",
+    "report": '.topbar [data-dialog-open="report-panel"]',
+}
+
+
+def _topbar_boxes(page) -> dict[str, dict]:
+    return {
+        name: page.locator(selector).bounding_box()
+        for name, selector in TOP_BAR_ACTIONS.items()
+    }
+
+
+def _overlap(first: dict, second: dict) -> bool:
+    return (
+        first["x"] < second["x"] + second["width"]
+        and second["x"] < first["x"] + first["width"]
+        and first["y"] < second["y"] + second["height"]
+        and second["y"] < first["y"] + first["height"]
+    )
+
+
+def test_the_topbar_search_hint_is_separated_from_its_label(component):
+    page = _mount(component)
+    page.set_viewport_size({"width": 768, "height": 900})
+
+    search = page.locator(".topbar [data-open-palette]")
+    label = search.locator(".btn-label > span").first
+    hint = search.locator(".topbar__hint")
+
+    assert label.text_content() == "Cerca"
+    assert search.get_attribute("aria-keyshortcuts") == "Alt+Space Control+K Meta+K"
+    assert hint.is_visible()
+
+    label_box = label.bounding_box()
+    hint_box = hint.bounding_box()
+    assert hint_box["x"] - (label_box["x"] + label_box["width"]) >= 4
+
+
+@pytest.mark.parametrize("width", [320, 390])
+@pytest.mark.parametrize("title", ["Boschetto", LONG_TITLE])
+def test_the_phone_topbar_keeps_the_title_and_actions_usable(component, width, title):
+    page = _mount(component, title=title)
+    page.set_viewport_size({"width": width, "height": 844})
+
+    search = page.locator(".topbar [data-open-palette]")
+    assert search.locator(".topbar__hint").is_hidden()
+    assert search.locator(".btn-label > span").first.text_content() == "Cerca"
+    assert search.get_attribute("aria-keyshortcuts") == "Alt+Space Control+K Meta+K"
+
+    assert (
+        page.eval_on_selector(".topbar", "el => el.scrollWidth - el.clientWidth") <= 1
+    )
+    title_width = page.eval_on_selector(
+        ".topbar__title", "el => el.getBoundingClientRect().width"
+    )
+    assert title_width >= 64, title_width
+
+    for name, box in _topbar_boxes(page).items():
+        assert box["width"] >= 44, name
+        assert box["height"] >= 44, name
+        assert box["x"] >= 0, name
+        assert box["x"] + box["width"] <= width + 1, name
+
+
+@pytest.mark.parametrize("width", [320, 390])
+def test_the_phone_topbar_reflows_under_enlarged_text(component, width):
+    page = _mount(component, title=LONG_TITLE)
+    component.route_json("GET", "/api/palette", body={"data": []})
+    page.set_viewport_size({"width": width, "height": 844})
+    page.evaluate("document.documentElement.style.fontSize = '32px'")
+
+    search = page.locator(".topbar [data-open-palette]")
+    assert search.locator(".topbar__hint").is_hidden()
+    assert search.locator(".btn-label > span").first.text_content() == "Cerca"
+    assert search.get_attribute("aria-keyshortcuts") == "Alt+Space Control+K Meta+K"
+
+    assert (
+        page.eval_on_selector(".topbar", "el => el.scrollWidth - el.clientWidth") <= 1
+    )
+    assert search.evaluate("el => el.scrollWidth <= el.clientWidth + 1")
+
+    root_font = page.evaluate(
+        "() => parseFloat(getComputedStyle(document.documentElement).fontSize)"
+    )
+    title_width = page.eval_on_selector(
+        ".topbar__title", "el => el.getBoundingClientRect().width"
+    )
+    assert title_width >= 4 * root_font - 1, title_width
+
+    boxes = _topbar_boxes(page)
+    for name, box in boxes.items():
+        assert box["width"] >= 44, name
+        assert box["height"] >= 44, name
+        assert box["x"] >= 0, name
+        assert box["x"] + box["width"] <= width + 1, name
+    assert not _overlap(boxes["toggle"], boxes["search"])
+    assert not _overlap(boxes["toggle"], boxes["report"])
+    assert not _overlap(boxes["search"], boxes["report"])
+
+    page.click(".topbar [data-open-palette]")
+    page.wait_for_selector("#palette[open]")
+    page.keyboard.press("Escape")
+    page.wait_for_selector("#palette[open]", state="detached")
+
+
+@pytest.mark.parametrize("width", [320, 390])
+def test_the_phone_search_opens_by_tap_and_by_keyboard(component, width):
+    page = _mount(component)
+    component.route_json("GET", "/api/palette", body={"data": []})
+    page.set_viewport_size({"width": width, "height": 844})
+
+    page.click(".topbar [data-open-palette]")
+    page.wait_for_selector("#palette[open]")
+    page.keyboard.press("Escape")
+    page.wait_for_selector("#palette[open]", state="detached")
+
+    page.keyboard.press("Control+k")
+    page.wait_for_selector("#palette[open]")
 
 
 # --- Long content ------------------------------------------------------------

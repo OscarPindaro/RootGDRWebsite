@@ -23,11 +23,15 @@ every authenticated route.
 - The **user menu** is a dedicated identity trigger — avatar, name/email and
   chevron — that opens a `common.Menu` popover. It is not a `common.Button`; no
   button skin is overridden to make an identity row.
-- The rail and the topbar both carry the **command-palette opener** (`Cerca`),
-  documenting `Alt+Spazio` and `Ctrl/⌘K` with a visible hint and
-  `aria-keyshortcuts`. `Page.js` closes the drawer before the palette opens, so
-  the dialog never lands inside the inert background (see
-  [palette.md](palette.md)).
+- The rail and the topbar both carry the **command-palette opener** (`Cerca`)
+  with `aria-keyshortcuts`. The rail shows the full `Alt+Spazio · Ctrl K` hint;
+  the topbar shows `Ctrl K` only where there is room. Below 700px the topbar
+  hint is hidden, so the page identity keeps its space at 320px and 390px while
+  tap and the keyboard still open the palette and the search control keeps the
+  phone touch target. When enlarged text no longer fits one line, the topbar
+  actions wrap below the identity instead of squeezing it. `Page.js` closes the
+  drawer before the palette opens, so the dialog never lands inside the inert
+  background (see [palette.md](palette.md)).
 - Navigation keeps **native Tab order**. The rail is a landmark, not an ARIA
   composite widget, so Arrow Up/Down no longer move through its links.
   `common.Menu` keeps its own APG arrow model inside the popover.
@@ -41,7 +45,9 @@ every authenticated route.
   `layout/Rail.css` owns `.rail*`, `.navitem*` and the rail-context overrides of
   `common.Button` and `common.Menu`. `layout/RailItem.jinja` is the nav item.
 - `layout/Topbar.jinja` renders the phone hierarchy; `layout/Topbar.css` owns
-  `.topbar*`. The topbar carries no inline layout styles.
+  `.topbar*`, the gap between `Cerca` and its hint inside the shared text
+  button, and the title floor that makes `.topbar__actions` wrap. The topbar
+  carries no inline layout styles.
 - `layout/UserMenu.jinja`/`.css` render the identity trigger and host the
   popover. `common/Menu.js` drives it through `popovertarget` and
   `aria-labelledby`, so the arrow-key model is the shared one.

@@ -9,11 +9,12 @@
   align-items: center;
   gap: 0.9rem;
   padding: 0.6rem var(--gutter);
+  flex-wrap: wrap;
 }
 
 .topbar__title {
   flex: 1;
-  min-width: 0;
+  min-width: 4rem;
   font-family: var(--serif);
   font-size: 1.05rem;
   overflow: hidden;
@@ -21,7 +22,33 @@
   white-space: nowrap;
 }
 
+/* The title keeps a readable floor and the actions keep their content width;
+   when enlarged text no longer fits one line, the actions take the next one. */
+.topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-inline-start: auto;
+}
+
+.topbar__actions [data-open-palette] {
+  flex: 0 0 auto;
+  min-inline-size: var(--touch-target);
+}
+
+/* The label wraps the button's content, so a two-part label needs its own gap. */
+.topbar .btn-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
 .topbar__hint { font-size: 0.68rem; }
+
+/* A keyboard hint costs the title its space on touch-width phones. */
+@media (max-width: 700px) {
+  .topbar__hint { display: none; }
+}
 
 @media (max-width: 900px) {
   .topbar { display: flex; }
