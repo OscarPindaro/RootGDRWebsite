@@ -10,6 +10,7 @@ library's rendering.
 import struct
 import time
 import zlib
+from pathlib import Path
 
 import pytest
 
@@ -18,6 +19,10 @@ pytestmark = pytest.mark.frontend
 DRAFT_ID = "01a0c000-0000-4000-8000-0000000000ff"
 DRAFT_KEY = "rootgdr.report.draft"
 CAPTURES = ("screenshot_viewport", "screenshot_full_page", "page_html")
+REPORT_BUNDLE_FAILURE = (
+    "Failed to load resource: the server responded with a status of 500 "
+    "(Internal Server Error)"
+)
 
 
 def _capture(kind: str) -> dict:
@@ -112,15 +117,7 @@ def _reproduction(
     }
 
 
-def _open(component) -> None:
-    """Stub the reproduction state, then open the panel from a real opener."""
-    page = component.page
-    component.route_json(
-        "GET", f"/api/reports/{DRAFT_ID}/reproduction", body=_reproduction()
-    )
-    page.wait_for_function(
-        "() => document.querySelector('#report-panel')?.dataset.reportBound === 'true'"
-    )
+def _add_opener(page) -> None:
     page.evaluate(
         """() => {
             const trigger = document.createElement('button');
@@ -130,7 +127,50 @@ def _open(component) -> None:
             document.body.prepend(trigger);
         }"""
     )
+
+
+def _open(component) -> None:
+    """Stub the reproduction state, then open the panel from a real opener."""
+    page = component.page
+    component.route_json(
+        "GET", f"/api/reports/{DRAFT_ID}/reproduction", body=_reproduction()
+    )
+    page.wait_for_function(
+        "() => document.querySelector('#report-panel')?.dataset.reportBound === 'true'"
+    )
+    _add_opener(page)
     page.click("#opener")
+
+
+def _serve_real_bundle(page) -> None:
+    """Answer the next report bundle request with the built bundle.
+
+    The first request was answered by the fake server with a failure; the retry
+    is fulfilled from the committed output so the test exercises the real
+    controller without a second server route.
+    """
+    bundle = (
+        Path(__file__).parents[2] / "src/frontend/static/js/report.js"
+    ).read_text()
+    page.route(
+        "**/static/js/report.js",
+        lambda route: route.fulfill(
+            status=200, content_type="text/javascript", body=bundle
+        ),
+    )
+
+
+def _accept_report_bundle_failure(component) -> None:
+    """Remove only the expected failed report.js resource error.
+
+    The component session records console text, not locations; the exact
+    sentence, the single failed request and the empty page-error list keep an
+    unrelated failure visible to the fixture.
+    """
+    assert component.console_errors == [REPORT_BUNDLE_FAILURE]
+    assert component.page_errors == []
+    assert component.requests().count(("GET", "/static/js/report.js")) == 1
+    component.console_errors.remove(REPORT_BUNDLE_FAILURE)
 
 
 def _wait_for_state(page, state: str) -> None:
@@ -185,6 +225,131 @@ def test_a_new_report_keeps_its_draft_and_lists_its_captures(component):
     assert entries.count() == 3
     assert entries.nth(0).inner_text().startswith("Schermata visibile")
     assert entries.nth(2).inner_text().startswith("HTML della pagina")
+
+
+def test_a_failed_report_bundle_is_visible_and_retried_on_the_same_page(component):
+    component.route_json(
+        "GET", "/static/js/report.js", status=500, body={"detail": "unavailable"}
+    )
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(description="Bozza salvata", evidence=[_capture("page_html")]),
+    )
+    component.route_json(
+        "GET", f"/api/reports/{DRAFT_ID}/reproduction", body=_reproduction()
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    page.wait_for_function(
+        "() => document.querySelector('[data-report-status]')?.dataset.state === 'failed'"
+    )
+    _accept_report_bundle_failure(component)
+    page.wait_for_function("() => window.rootGdrDialog !== undefined")
+    _add_opener(page)
+    page.click("#opener")
+    # The fixture screenshots after the test; let the dialog's serif face finish.
+    page.wait_for_function("() => document.fonts.status === 'loaded'")
+
+    assert page.locator("#report-panel").evaluate("dialog => dialog.open")
+    assert page.locator("[data-report-status]").inner_text() == (
+        "Non è stato possibile caricare la segnalazione."
+    )
+    assert page.locator("[data-report-retry]").inner_text() == "Riprova"
+
+    bundle_requests = []
+    page.on(
+        "request",
+        lambda request: (
+            bundle_requests.append(request.url)
+            if request.url.endswith("/static/js/report.js")
+            else None
+        ),
+    )
+    _serve_real_bundle(page)
+    page.evaluate(
+        "() => { const retry = document.querySelector('[data-report-retry]'); "
+        "retry.click(); retry.click(); }"
+    )
+    page.wait_for_function(
+        "() => document.querySelector('#report-panel')?.dataset.reportBound === 'true'"
+    )
+    _wait_for_state(page, "saved")
+
+    assert len(bundle_requests) == 1
+    assert page.locator("[data-report-retry]").is_hidden()
+    assert page.locator("[data-report-description]").input_value() == "Bozza salvata"
+    assert component.local_storage(DRAFT_KEY) == DRAFT_ID
+    # The retry resumed the one panel; it did not open a second draft.
+    assert ("POST", "/api/reports/") not in component.requests()
+
+
+def test_a_retried_report_bundle_still_resumes_the_reproduction(component):
+    component.route_json(
+        "GET", "/static/js/report.js", status=500, body={"detail": "unavailable"}
+    )
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("page_html")]),
+    )
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}/reproduction",
+        body=_reproduction(active=True, frontend_session="f-one"),
+    )
+    component.route_json(
+        "POST",
+        f"/api/reports/{DRAFT_ID}/reproduction/steps",
+        body={"frontendSteps": 1},
+    )
+    component.route_json(
+        "POST",
+        f"/api/reports/{DRAFT_ID}/reproduction/stop",
+        body=_reproduction(
+            frontend_session="f-one",
+            stopped_at="2026-10-11T19:00:00+0000",
+        ),
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    page.evaluate("() => sessionStorage.setItem('rootgdr.report.session', 'f-one')")
+    page.wait_for_function(
+        "() => document.querySelector('[data-report-status]')?.dataset.state === 'failed'"
+    )
+    _accept_report_bundle_failure(component)
+    page.wait_for_function("() => window.rootGdrDialog !== undefined")
+    _add_opener(page)
+    page.click("#opener")
+    # The fixture screenshots after the test; let the dialog's serif face finish.
+    page.wait_for_function("() => document.fonts.status === 'loaded'")
+
+    steps = []
+    page.on(
+        "request",
+        lambda request: (
+            steps.append(request.post_data_json)
+            if request.url.endswith(f"/api/reports/{DRAFT_ID}/reproduction/steps")
+            else None
+        ),
+    )
+    _serve_real_bundle(page)
+    page.click("[data-report-retry]")
+    page.wait_for_selector("[data-report-stop-actions]:not([hidden])")
+    _wait_for_request(component, "POST", f"/api/reports/{DRAFT_ID}/reproduction/steps")
+    page.wait_for_timeout(300)
+
+    assert len(steps) == 1
+    assert steps[0]["session"] == "f-one"
+    # One recorder, not one per bundle execution.
+    assert (
+        component.requests().count(
+            ("POST", f"/api/reports/{DRAFT_ID}/reproduction/steps")
+        )
+        == 1
+    )
+    page.click("[data-report-stop]")
+    page.wait_for_selector("[data-report-reproduce-actions]:not([hidden])")
 
 
 def test_a_saved_description_is_recovered_when_the_panel_reopens(component):

@@ -22,6 +22,12 @@ a raw framework payload.
   page-level fallback (`common.RequestFallback`) with request-safe Italian copy:
   a network failure, a server failure and a refused operation each get their own
   sentence.
+- **A failed bundle is recoverable.** The editor and report loaders keep
+  loading, ready and failed apart. A failed `editor.js` or `report.js` request
+  does not count as initialized: the page (editor) or the report panel (report)
+  shows one Italian sentence and a **Riprova** control. Retrying makes one new
+  request on the same page; saved drafts stay where they are, and the report
+  bundle still resumes an active reproduction when it starts.
 - **Errors are announced by weight.** `common.Alert` now defaults its `role` by
   variant: `danger` is `alert` (blocking, destructive), everything else is
   `status` (polite). A caller can override it.
@@ -65,6 +71,15 @@ a request no surface owns.
   a submit control nor a markable region is claimed by nobody, so its next
   request is not mistaken for a duplicate. It is loaded from `layout.BlankPage`,
   so every page has it.
+- `layout/BlankPage.jinja` — `window.__editorLoaded` means the bundle loaded,
+  not that a request was started. A failed request reveals a page-level
+  `request-fallback` with a **Riprova** button; a later `htmx:afterSwap` does
+  not retry on its own.
+- `editorial/ReportPanel.js` — the loader keeps `window.__rootGdrReportBundle`
+  as `loading`/`ready`/`failed`, writes the panel's own
+  `[data-report-status]` and inserts a **Riprova** button. The retry replaces
+  the failed request; `src/frontend/js/report/index.js` still calls
+  `mountAll()` and `resumeReproduction()` once when the bundle executes.
 - `common/Button.css` — `.btn` is `position: relative` and `.btn.is-busy::after`
   is an absolutely positioned ink rule, so disabling never changes geometry.
 - `common/RequestFallback.jinja` / `.css` — the page-level banner, composed from
@@ -101,3 +116,6 @@ a request no surface owns.
   a client that sends no `Accept` at all gets JSON.
 - The 500 page shows the request id; it does not offer a retry that re-runs the
   failed request.
+- The editor failure is a page-level banner; the report failure is shown inside
+  the panel when it is opened. Neither retries automatically: a second failure
+  leaves the same sentence and button.

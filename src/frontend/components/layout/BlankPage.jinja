@@ -21,21 +21,77 @@
   {% if replay_enabled %}<script src="/static/js/replay.js"></script>{% endif %}
   <script>
     /* Load the editor bundle only where there is a Markdown field. Readers
-       never download it, and it is re-checked after htmx swaps. */
+       never download it, and it is re-checked after htmx swaps. A failed
+       request is not a loaded editor: the page says so and offers one retry. */
     (function () {
-      function loadEditor() {
-        if (window.__editorLoaded) return;
-        if (!document.querySelector("[data-markdown-field]") &&
-            !document.querySelector("[data-doc-edit]:not([data-readonly='true'])") &&
-            !document.querySelector("[data-doc-identity]:not([data-readonly='true'])")) return;
-        window.__editorLoaded = true;
+      var loading = false;
+      var failed = false;
+      var fallback = null;
+
+      function wanted() {
+        return !!(
+          document.querySelector("[data-markdown-field]") ||
+          document.querySelector("[data-doc-edit]:not([data-readonly='true'])") ||
+          document.querySelector("[data-doc-identity]:not([data-readonly='true'])")
+        );
+      }
+
+      function showFailure() {
+        if (fallback === null) {
+          fallback = document.createElement("div");
+          fallback.className = "request-fallback";
+          fallback.setAttribute("data-editor-fallback", "");
+          var alert = document.createElement("div");
+          alert.className = "alert alert-danger";
+          alert.setAttribute("role", "alert");
+          var message = document.createElement("span");
+          message.setAttribute("data-editor-fallback-message", "");
+          message.textContent = "Non è stato possibile caricare l’editor.";
+          var retry = document.createElement("button");
+          retry.type = "button";
+          retry.className = "btn btn-secondary btn-sm";
+          retry.setAttribute("data-editor-retry", "");
+          retry.textContent = "Riprova";
+          retry.addEventListener("click", function () { loadEditor(true); });
+          alert.append(message, " ", retry);
+          fallback.append(alert);
+          document.body.prepend(fallback);
+        }
+        fallback.hidden = false;
+      }
+
+      function hideFailure() {
+        if (fallback !== null) fallback.hidden = true;
+      }
+
+      function loadEditor(retry) {
+        if (window.__editorLoaded || loading) return;
+        if (!wanted()) {
+          hideFailure();
+          return;
+        }
+        if (failed && retry !== true) return;
+        failed = false;
+        loading = true;
+        hideFailure();
         var script = document.createElement("script");
         script.src = "/static/js/editor.js";
         script.defer = true;
+        script.addEventListener("load", function () {
+          loading = false;
+          window.__editorLoaded = true;
+          hideFailure();
+        });
+        script.addEventListener("error", function () {
+          loading = false;
+          failed = true;
+          showFailure();
+        });
         document.body.appendChild(script);
       }
+
       loadEditor();
-      document.body.addEventListener("htmx:afterSwap", loadEditor);
+      document.body.addEventListener("htmx:afterSwap", function () { loadEditor(); });
     })();
   </script>
 </body>
