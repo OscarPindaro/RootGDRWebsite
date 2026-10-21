@@ -1,0 +1,55 @@
+{
+  "base_commit": "8d2b0934b16cc4fc95ae7a50041c2474ad872e67",
+  "component_blobs": {
+    "src/frontend/components/pages/characters/CharacterDetail.jinja": "88a75edf50e181d5474a39f0d26173cbf6b0572f",
+    "src/frontend/components/editorial/Document.css": "9318616d0951b423c0486039da0e0ae1057d5dff",
+    "src/frontend/components/editorial/ImageEditor.jinja": "34b7ed8785c5da9edde5771cf00ed26b16182f13",
+    "src/frontend/components/editorial/ImageEditor.css": "fbb1df9b248ff1d56e0049f8911579f6e5ecc263",
+    "src/frontend/components/editorial/DocIdentity.jinja": "d854edb6b85747eb54cb51d750da81a611602eac",
+    "src/frontend/components/editorial/DocEdit.jinja": "ba52e0d7919e7e9d808faf4d5f28c3fa1cb3540d",
+    "src/frontend/components/editorial/DocSummary.jinja": "9cad3f8eb28e2b902d6f3e3e19d13af66bce16a0"
+  },
+  "fixture": {
+    "world_id": "4d2f0b7a-1c3e-4a55-9b2f-8e6a1d0c7f31",
+    "character_id": "9a1c5e2d-7b4f-4c08-a3d6-2f9e8b0c1a54",
+    "name": "Rugginosa"
+  },
+  "captures": [
+    {
+      "profile": "desktop",
+      "layout": "a",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-a.png"
+    },
+    {
+      "profile": "desktop",
+      "layout": "b",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-b.png"
+    },
+    {
+      "profile": "phone",
+      "layout": "a",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-a.png"
+    },
+    {
+      "profile": "phone",
+      "layout": "b",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-b.png"
+    }
+  ]
+}

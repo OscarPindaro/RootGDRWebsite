@@ -1,0 +1,93 @@
+/* Prototype-local comparison strip and arrangement B.
+   Arrangement A is the document as the application renders it; this file only
+   adds the strip and the rules that move the body below the head in B. */
+
+.study-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--rule-ink);
+  border-left: var(--rule-width-strong) solid var(--vermilion);
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+}
+
+.study-bar__notice {
+  flex: 1 1 34rem;
+  margin: 0;
+  line-height: var(--leading-normal);
+}
+
+.study-bar__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.study-bar__status {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .study-bar {
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+  }
+}
+
+/* A prototype-only control never claims to save. The marker also keeps the
+   inert state visible when the browser's own disabled styling is faint. */
+[data-prototype-inert="true"] {
+  cursor: not-allowed;
+}
+
+/* Arrangement B: the portrait and identity stay beside each other, the body
+   moves out of the identity column and takes the full document width below
+   the head. The DOM is unchanged; only the grid placement differs. */
+body[data-study-layout="b"] .document--sized .document__head {
+  grid-template-columns: minmax(11.25rem, 15rem) minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  row-gap: 2rem;
+}
+
+body[data-study-layout="b"] .document--sized .document__id {
+  display: contents;
+}
+
+body[data-study-layout="b"] .document--sized .docidentity {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+}
+
+body[data-study-layout="b"] .document--sized .document__page {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+body[data-study-layout="b"] .document--sized .document__face--editor {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* Below the width the two columns need, B stacks like A: portrait, identity,
+   then the body, all in one column. */
+@container document-column (max-width: 34.5rem) {
+  body[data-study-layout="b"] .document--sized .document__head {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+  }
+
+  body[data-study-layout="b"] .document--sized .docidentity,
+  body[data-study-layout="b"] .document--sized .document__page,
+  body[data-study-layout="b"] .document--sized .document__face--editor {
+    grid-column: 1;
+    grid-row: auto;
+  }
+}

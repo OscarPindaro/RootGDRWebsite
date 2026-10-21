@@ -35,6 +35,7 @@ Esperimenti applicativi:
 | Prototipo | Approccio | Identità visiva | Avvio |
 |---|---|---|---|
 | [`bookkeeping-study/`](bookkeeping-study/) | Pagine reali JinjaX con fixture tipizzate e route dev-only | Atlante editoriale esistente | `uv run harness dev up`, poi `http://127.0.0.1:8001/components/planning` |
+| [`document-layout-study/`](document-layout-study/) | Scheda personaggio reale, due disposizioni sullo stesso DOM, server effimero | Atlante editoriale esistente | `uv run harness test frontend tests/frontend/test_document_study.py` |
 
 ## Convenzioni
 
@@ -68,7 +69,10 @@ Esperimenti applicativi:
 The owner also approved fixture-backed studies inside the actual frontend.
 [Bookkeeping and agents](bookkeeping-study/README.md) render through real JinjaX
 components and the dev-only application showcase at `/components/planning`.
-Their simulated state never writes campaign data or calls providers.
+[Document layout](document-layout-study/README.md) renders one real character
+document on the ephemeral component server and compares two arrangements on
+the same DOM; its write controls are inert and it uses no application route.
+Neither simulated state writes campaign data or calls providers.
 The bounded mode is documented in
 [the prototyping process](../docs/development_processes/prototyping.md);
 the older standalone studies and their static conventions remain unchanged.
