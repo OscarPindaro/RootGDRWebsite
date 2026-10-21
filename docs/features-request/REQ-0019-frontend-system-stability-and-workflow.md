@@ -138,7 +138,7 @@ Numeric IDs identify tickets, not their execution order.
 | T09 | Provide a touch-accessible return from Markdown editing | Repair | None |
 | T10 | Make drawing gesture tests target visible canvas elements | Verification | None |
 | T11 | Verify real host-to-fragment asset delivery | Verification | None |
-| T12 | Gate repaired accessibility states without blanket exemptions | Verification | T03, T04, T06, T07, T08, T09, T32 |
+| T12 | Gate repaired accessibility states without blanket exemptions | Verification | T03, T04, T06, T07, T08, T09, T32, T33, T34 |
 | T13 | Restrict the public component mount to intended assets | Repair | None |
 | T14 | Check every committed application bundle in CI | Repair | None |
 | T15 | Recover from failed editor/report script loads | Repair | None |
@@ -158,7 +158,9 @@ Numeric IDs identify tickets, not their execution order.
 | T29 | Define the supported editor-host swap boundary | Decision | None |
 | T31 | Align token checks with the shared/local CSS policy | Repair | T18 |
 | T32 | Meet the existing phone target floor for appearance controls | Repair | None |
-| T30 | Verify the integrated epic and account for every finding | Verification | Applicable outcomes of T02-T29, T31, and T32 |
+| T33 | Name the actual CodeMirror textboxes | Repair | None |
+| T34 | Repair newly measured shared-label contrast | Repair | None |
+| T30 | Verify the integrated epic and account for every finding | Verification | Applicable outcomes of T02-T29 and T31-T34 |
 
 ### Relationship examples
 
@@ -178,6 +180,53 @@ Numeric IDs identify tickets, not their execution order.
 - Delivery decisions T16/T17 do not block responsive or accessibility repairs.
 
 ## Repair and verification tickets
+
+### REQ-0019/T33 - Name the actual CodeMirror textboxes
+
+**Objective:** body, summary and Markdown-field editors expose a meaningful
+accessible name on the actual editable textbox.
+**Evidence:** T12's populated open-editor scan finds serious
+`aria-input-field-name` violations on `.cm-content[role="textbox"]`; the named
+hidden source and identity inputs do not name this separate element.
+**Boundary:** existing editor mounts, relevant label wiring, focused tests and
+the existing editor bundle. No navigation, autosave or editor-engine redesign.
+**Start:** `src/frontend/js/editor/index.js`, `editorial/DocEdit.jinja`,
+`editorial/DocSummary.jinja`, `common/Field.jinja`,
+`tests/frontend/test_document_shortcuts.py`, and `tests/frontend/test_field.py`.
+**Approach:** derive the content textbox's name from the existing visible field
+label/accepted label input using CodeMirror's content attributes or existing DOM
+label relationships. Cover the legacy Markdown-field, document body and summary
+mounts. Reuse current component inputs; do not add another public naming API.
+**Acceptance:** axe's serious unnamed-textbox finding disappears on each actual
+open editor; names distinguish body, summary and world description. Keyboard,
+caret, touch-close and autosave behavior remain unchanged.
+**Verify:** focused `tests/frontend/test_editor_accessibility.py` and real
+`tests/e2e/test_editor_accessible_names.py`; read edited values back through the
+API. Rebuild/compare the editor bundle, inspect desktop/phone, update the
+in-place-editing manual and add a scoped changelog fragment. T12 must scan the
+editor surface, not only its action row.
+
+### REQ-0019/T34 - Repair newly measured shared-label contrast
+
+**Objective:** the visible saved-state indicator and filled Field labels meet
+4.5:1 without changing their background or global palette.
+**Evidence:** T12 measures `Salvato` at 4.46:1 (`--forest` on `--paper`, 14px
+normal) and two populated filled-field demo labels at 4.43:1. These are measured
+failures, not permission to introduce new accepted exceptions.
+**Boundary:** `common/SaveIndicator.css`, `common/Field.css`, focused component
+tests and existing feature manuals. Do not reopen the wider historical Field or
+SaveIndicator work, alter semantic palette values or suppress contrast globally.
+**Approach:** derive a narrowly scoped text-safe foreground from the current
+semantic ink where needed; retain existing fills, states, geometry and behavior.
+Use the correctly normalized `color(srgb ...)` contrast calculation.
+**Acceptance:** visible saved-state and filled/unfilled focused/unfocused label
+pairs pass their applicable contrast thresholds; no new layout or state machine.
+**Verify:** `tests/frontend/test_save_indicator.py` and
+`tests/frontend/test_field.py`, including the actual computed colors and a
+regression for the measured failures. Inspect desktop/phone, document any
+private ink exception in the existing manuals and add a changelog fragment.
+T12 removes the newly introduced filled-field exceptions and asserts the
+visible saved state.
 
 ### REQ-0019/T02 - Coordinate document reflow
 
@@ -912,3 +961,16 @@ Current work state belongs only in Vikunja. The repository retains this scope,
 declared dependencies, decisions, and evidence; it does not maintain a second
 status table. Future approved work discovered by decision tickets gets new
 stable child keys and acceptance criteria before implementation.
+
+
+### T12-discovered repair registration
+
+Two narrowly scoped follow-ups were registered after populated editing-state
+checks exposed previously unreported defects. This extends the declared scope,
+not the historical original 32-key receipt. Native parent and T12/T30 blocking
+relations were read back; no workflow, priority, assignment or release changed.
+
+| Key | Verified board task |
+|---|---|
+| T33 | [#88](http://192.168.1.201:3458/tasks/88) |
+| T34 | [#89](http://192.168.1.201:3458/tasks/89) |
