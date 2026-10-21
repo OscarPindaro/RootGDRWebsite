@@ -3,7 +3,10 @@
 Admin is dialog-driven: the masthead opens the invite dialog, a successful
 submit swaps the invitation table in place and closes the surface, and the
 revoke asks a shared confirmation. Settings saves on change. These tests drive
-the real browser and assert focus, heading context and the phone labels.
+the real browser and assert focus, heading context and the phone labels. The
+dialog arrives as an htmx fragment with no assets of its own, so the host page's
+preloaded stylesheets and script are asserted as computed styles, parsed sheets
+and the dialog behaviour itself.
 """
 
 from __future__ import annotations
@@ -19,6 +22,14 @@ pytestmark = pytest.mark.e2e
 
 ADMIN = "e2e-admin@example.com"
 
+INVITE_ASSETS = (
+    "common/Alert.css",
+    "common/Button.css",
+    "common/Dialog.css",
+    "common/Field.css",
+    "pages/admin/InviteDialog.css",
+)
+
 
 def _invite(session: BrowserSession, email: str, role: str = "member") -> None:
     session.expect_api(
@@ -30,6 +41,63 @@ def _invite(session: BrowserSession, email: str, role: str = "member") -> None:
     )
 
 
+def _token(page, name: str) -> str:
+    return page.evaluate(
+        "name => getComputedStyle(document.documentElement)"
+        ".getPropertyValue(name).trim()",
+        name,
+    )
+
+
+def _parsed_sheets(page) -> dict[str, int]:
+    sheets = page.evaluate(
+        """() => [...document.styleSheets].map(sheet => ({
+            href: sheet.href || '',
+            rules: (() => { try { return sheet.cssRules.length } catch { return -1 } })(),
+        }))"""
+    )
+    return {sheet["href"]: sheet["rules"] for sheet in sheets}
+
+
+def _assert_host_assets(session: BrowserSession) -> None:
+    """The fragment carries no <link>; its assets must already be parsed."""
+    assert (
+        session.page.locator("#invite-dialog link, #invite-dialog script").count() == 0
+    )
+    rules_by_href = _parsed_sheets(session.page)
+    for asset in INVITE_ASSETS:
+        href = next((url for url in rules_by_href if url.endswith(asset)), None)
+        assert href is not None, f"{asset} was never loaded: {sorted(rules_by_href)}"
+        assert rules_by_href[href] > 0, f"{asset} loaded but parsed to no rules"
+
+
+def _assert_invite_dialog_styled(session: BrowserSession) -> None:
+    page = session.page
+    dialog = page.locator("#invite-dialog dialog[data-dialog]")
+    assert dialog.evaluate("el => getComputedStyle(el).borderRadius") == _token(
+        page, "--radius-lg"
+    )
+    assert (
+        dialog.locator(".dialog-container").evaluate(
+            "el => getComputedStyle(el).flexDirection"
+        )
+        == "column"
+    )
+    assert (
+        dialog.locator(".invite-form").evaluate(
+            "el => getComputedStyle(el).flexDirection"
+        )
+        == "column"
+    )
+    assert (
+        dialog.locator(".field").first.evaluate("el => getComputedStyle(el).display")
+        == "flex"
+    )
+    assert dialog.locator("button[type='submit']").evaluate(
+        "el => getComputedStyle(el).height"
+    ) == _token(page, "--button-height-md")
+
+
 def test_inviting_from_the_masthead_swaps_the_table_and_keeps_focus(
     session: BrowserSession,
 ) -> None:
@@ -39,6 +107,10 @@ def test_inviting_from_the_masthead_swaps_the_table_and_keeps_focus(
     session.page.click('[data-testid="invite-user"]')
     invite = session.page.get_by_role("dialog", name="Invita utente", exact=True)
     invite.wait_for(state="visible")
+    # The fragment arrives with markup only: the host page preloaded its sheets
+    # and its dialog script, and the styles apply inside the swapped surface.
+    _assert_host_assets(session)
+    _assert_invite_dialog_styled(session)
     invite.locator("input[name='email']").fill(email)
     invite.locator("select[name='role']").select_option("member")
     invite.locator("button[type='submit']").click()
@@ -64,9 +136,73 @@ def test_inviting_from_the_masthead_swaps_the_table_and_keeps_focus(
     )
     assert named.count() == 1
 
+    # A second swap into the same host replaces the closed dialog: the assets
+    # and the script still apply, so the new surface opens named and styled.
+    session.page.click('[data-testid="invite-user"]')
+    session.page.locator("#invite-dialog dialog[data-dialog]").wait_for(state="visible")
+    assert session.page.locator("#invite-dialog dialog[data-dialog]").count() == 1
+    assert session.page.locator("#invite-dialog dialog[data-dialog]").evaluate(
+        "dialog => dialog.open"
+    )
+    assert (
+        session.page.get_by_role("dialog", name="Invita utente", exact=True).count()
+        == 1
+    )
+    _assert_host_assets(session)
+    _assert_invite_dialog_styled(session)
+    session.page.locator("#invite-dialog .dialog-close").click()
+    session.page.wait_for_function(
+        "() => !document.querySelector('#invite-dialog dialog')?.open"
+    )
+    session.page.wait_for_function(
+        "() => document.activeElement?.dataset.testid === 'invite-user'"
+    )
+
     # A fresh render proves the invitation is in the database.
     session.goto("/admin/users")
     assert email in session.page.content()
+    assert session.errors == []
+
+
+def test_a_duplicate_invite_keeps_the_dialog_open_with_the_error(
+    session: BrowserSession,
+) -> None:
+    email = f"duplicato-{uuid.uuid4().hex[:8]}@example.com"
+    _invite(session, email)
+    session.goto("/admin/users")
+
+    session.page.click('[data-testid="invite-user"]')
+    invite = session.page.get_by_role("dialog", name="Invita utente", exact=True)
+    invite.wait_for(state="visible")
+    invite.locator("input[name='email']").fill(email)
+    invite.locator("select[name='role']").select_option("member")
+    invite.locator("button[type='submit']").click()
+
+    # The server retargets the response to the dialog host, so the error and the
+    # submitted values land in place instead of in the invitations table.
+    error = session.page.locator(
+        "#invite-dialog .alert-danger", has_text="Esiste già un invito"
+    )
+    error.wait_for(state="visible")
+    assert error.evaluate("el => getComputedStyle(el).borderRadius") == _token(
+        session.page, "--radius-md"
+    )
+    dialog = session.page.locator("#invite-dialog dialog[data-dialog]")
+    assert dialog.count() == 1
+    assert dialog.evaluate("dialog => dialog.open")
+    assert (
+        session.page.get_by_role("dialog", name="Invita utente", exact=True).count()
+        == 1
+    )
+    assert dialog.locator("input[name='email']").input_value() == email
+    assert dialog.locator("select[name='role']").input_value() == "member"
+    _assert_host_assets(session)
+    _assert_invite_dialog_styled(session)
+
+    dialog.locator(".dialog-close").click()
+    session.page.wait_for_function(
+        "() => !document.querySelector('#invite-dialog dialog')?.open"
+    )
     assert session.errors == []
 
 

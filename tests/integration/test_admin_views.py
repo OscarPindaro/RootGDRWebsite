@@ -155,9 +155,20 @@ async def test_the_dashboard_composes_masthead_sections_and_tables(
     assert "Persona" in text and "Ruolo" in text and "Stato" in text
     assert "Amministratore" in text and "Attivo" in text
     assert "In attesa" in text
-    # The revoke confirmation arrives through htmx: the host must carry its CSS.
-    assert "/static/components/common/ConfirmDialog.css" in text
-    assert "/static/components/common/HStack.css" in text
+    # Both htmx fragments rely on the host page: the invite dialog is retargeted
+    # into #invite-dialog and the revoke confirmation into #confirm-dialog, so
+    # their stylesheets and the shared dialog script must be declared here.
+    for asset in (
+        "common/Alert.css",
+        "common/Button.css",
+        "common/Dialog.css",
+        "common/Field.css",
+        "pages/admin/InviteDialog.css",
+        "common/ConfirmDialog.css",
+        "common/HStack.css",
+    ):
+        assert f"/static/components/{asset}" in text
+    assert "/static/components/common/Dialog.js" in text
 
 
 async def test_an_empty_invitation_list_shows_the_empty_state(
@@ -195,8 +206,11 @@ async def test_inviting_returns_the_invitation_table_fragment(
     )
 
     assert response.status_code == 200
-    # The fragment is the table, not a full page.
+    # The fragment is the table, not a full page, and it carries no assets of
+    # its own: the host page must have loaded them before the swap.
     assert "<html" not in response.text
+    assert "<link" not in response.text
+    assert "<script" not in response.text
     assert "table-wrapper" in response.text
     assert email in response.text
     assert "In attesa" in response.text
@@ -209,24 +223,51 @@ async def test_inviting_returns_the_invitation_table_fragment(
         assert stored is not None
 
 
+async def test_the_invite_dialog_fragment_relies_on_the_host_page(
+    app_config, db_manager, admin
+) -> None:
+    app = _app(app_config, db_manager, admin["admin"])
+
+    response = await _get(app, "/admin/users/invite")
+
+    assert response.status_code == 200
+    assert "<html" not in response.text
+    assert "<link" not in response.text
+    assert "<script" not in response.text
+    # The dialog markup names the classes the host stylesheets own.
+    assert "<dialog" in response.text and "data-dialog" in response.text
+    assert 'class="invite-form"' in response.text
+    assert 'class="field field--outlined"' in response.text
+    assert 'hx-target="#invitations-table"' in response.text
+
+
 async def test_a_duplicate_invite_retargets_the_dialog(
     app_config, db_manager, admin
 ) -> None:
     app = _app(app_config, db_manager, admin["admin"])
 
-    response = await _send(
-        app,
-        "POST",
-        "/admin/users/invite",
-        json={"email": admin["pending_email"], "role": "member"},
-    )
+    responses = [
+        await _send(
+            app,
+            "POST",
+            "/admin/users/invite",
+            json={"email": admin["pending_email"], "role": "member"},
+        )
+        for _ in range(2)
+    ]
 
-    assert response.status_code == 200
-    # The dialog comes back in place of the table, so its heading and focus stay.
-    assert response.headers["hx-retarget"] == "#invite-dialog"
-    assert response.headers["hx-reswap"] == "innerHTML"
-    assert "Esiste già un invito" in response.text
-    assert "<html" not in response.text
+    for response in responses:
+        assert response.status_code == 200
+        # The dialog comes back in place of the table, so its heading and focus stay.
+        assert response.headers["hx-retarget"] == "#invite-dialog"
+        assert response.headers["hx-reswap"] == "innerHTML"
+        assert "Esiste già un invito" in response.text
+        assert "<html" not in response.text
+        assert "<link" not in response.text
+        assert "<script" not in response.text
+    # A repeated conflict retargets the same surface, so a second swap cannot
+    # land the dialog in a different target.
+    assert responses[0].text == responses[1].text
 
 
 async def test_the_revoke_confirmation_targets_the_table_in_place(

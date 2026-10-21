@@ -36,10 +36,31 @@ which assets happened to be collected.
   scanner yields each rule's selector text; the selector's first compound,
   stripped of its BEM suffix, gives the root. A root owned by two stylesheets
   fails unless the pair is in `MIGRATION_ALLOWLIST`, and a stale entry fails too.
-- `tests/frontend/test_asset_delivery.py` — renders `pages.login.Login` (full
-  page) and `pages.admin.InviteDialog` (htmx fragment) and asserts computed
-  styles for Button and Field against the tokens that produce them, plus that
-  every stylesheet the fragment needs was fetched and parsed.
+- `tests/frontend/test_asset_delivery.py` — separates the two claims. The
+  isolated mount of `pages.login.Login` (full page) and
+  `pages.admin.InviteDialog` (fragment) asserts computed styles for Button,
+  Field and the dialog surface against the tokens that produce them, and that
+  every stylesheet was fetched and parsed; the shell writes the assets the
+  fragment collected, so this proves the `{#css #}` declarations only. A raw
+  render of `pages.admin.AdminDashboard`, served as the host document, asserts
+  the same sheets are parsed before any swap, then injects the real fragment
+  markup into `#invite-dialog` and fires `htmx:afterSwap`: the dialog opens and
+  is named, the computed styles apply, no stylesheet is added, and a second
+  swap behaves identically. It also asserts the fragment markup carries no
+  `<link>` or `<script>` of its own.
+- `tests/e2e/test_admin_settings.py` — the real request seam. Opening the invite
+  dialog, submitting it, reopening it, and the duplicate-invite `HX-Retarget`
+  into `#invite-dialog` all assert parsed sheets and computed styles on the
+  swapped surface; the conflict test proves the retargeted dialog stays open
+  with its alert styled and its fields populated.
+- `tests/e2e/test_world_access.py` — the same seam for the Giocatori surface:
+  the add-player dialog is asserted on every open, including a second swap into
+  `#world-member-dialog`, and the shared confirmation is asserted before and
+  after cancelling and asking again.
+- `tests/integration/test_admin_views.py` — the server side: the admin host
+  declares the invite dialog's sheets and `common/Dialog.js`; the invitation
+  table and the invite dialog fragments contain no `<link>` or `<script>`; a
+  repeated duplicate invite returns the same retargeted dialog.
 - `src/harness/frontend/renderer.py` — deduplicates collected assets the way the
   application's own tag emission does.
 
@@ -63,7 +84,13 @@ which assets happened to be collected.
   itself still carries the duplicate.
 - Declaring the asset makes the dependency visible and checkable; it does not by
   itself put a `<link>` in an htmx fragment response. Fragments still rely on the
-  host page having loaded the stylesheet.
+  host page having loaded the stylesheet. There is no dynamic asset loader: a
+  fragment swapped into a page that did not declare its sheets renders
+  unstyled, which is what the host tests above prevent by pinning the explicit
+  preloading in `AdminDashboard` and `WorldSettings`.
+- Initialization follows the same rule. `common/Dialog.js` is declared by those
+  hosts, not by the fragments; the swapped dialog opens, closes and returns
+  focus only because the script was already running on the host.
 - `test_every_class_a_template_uses_has_a_rule` closes the other half of the
   same seam. The ownership guard asks who styles a root; this one asks whether
   anybody does. `WorldNew` shipped `<form class="form">` and no stylesheet ever

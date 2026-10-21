@@ -4,6 +4,9 @@ The World Settings access surface is dialog-driven: the plus opens the add
 dialog, a successful submit swaps the members table and closes the surface, and
 remove/revoke ask a shared confirmation first. These tests drive the real
 browser and assert the persisted state in the E2E database, not only the DOM.
+Both dialogs arrive as htmx fragments with no assets of their own, so the host
+page's preloaded stylesheets and script are asserted as computed styles, parsed
+sheets and the dialog behaviour itself.
 """
 
 from __future__ import annotations
@@ -22,6 +25,90 @@ pytestmark = pytest.mark.e2e
 
 ADD_DIALOG = "#world-member-dialog dialog[data-dialog]"
 CONFIRM_DIALOG = "#world-member-confirm dialog[data-dialog]"
+ADD_ASSETS = (
+    "common/Button.css",
+    "common/Dialog.css",
+    "common/Field.css",
+    "pages/worlds/WorldMemberDialog.css",
+)
+CONFIRM_ASSETS = (
+    "common/Button.css",
+    "common/ConfirmDialog.css",
+    "common/Dialog.css",
+    "common/HStack.css",
+)
+
+
+def _token(page, name: str) -> str:
+    return page.evaluate(
+        "name => getComputedStyle(document.documentElement)"
+        ".getPropertyValue(name).trim()",
+        name,
+    )
+
+
+def _parsed_sheets(page) -> dict[str, int]:
+    sheets = page.evaluate(
+        """() => [...document.styleSheets].map(sheet => ({
+            href: sheet.href || '',
+            rules: (() => { try { return sheet.cssRules.length } catch { return -1 } })(),
+        }))"""
+    )
+    return {sheet["href"]: sheet["rules"] for sheet in sheets}
+
+
+def _assert_sheets_parsed(session, assets) -> None:
+    rules_by_href = _parsed_sheets(session.page)
+    for asset in assets:
+        href = next((url for url in rules_by_href if url.endswith(asset)), None)
+        assert href is not None, f"{asset} was never loaded: {sorted(rules_by_href)}"
+        assert rules_by_href[href] > 0, f"{asset} loaded but parsed to no rules"
+
+
+def _assert_add_dialog_styled(session) -> None:
+    page = session.page
+    dialog = page.locator(ADD_DIALOG)
+    assert (
+        page.locator("#world-member-dialog link, #world-member-dialog script").count()
+        == 0
+    )
+    assert dialog.evaluate("el => getComputedStyle(el).borderRadius") == _token(
+        page, "--radius-lg"
+    )
+    assert (
+        dialog.locator("form.world-member-form").evaluate(
+            "el => getComputedStyle(el).flexDirection"
+        )
+        == "column"
+    )
+    assert (
+        dialog.locator(".field").first.evaluate("el => getComputedStyle(el).display")
+        == "flex"
+    )
+    assert dialog.locator("button[type='submit']").evaluate(
+        "el => getComputedStyle(el).height"
+    ) == _token(page, "--button-height-md")
+    _assert_sheets_parsed(session, ADD_ASSETS)
+
+
+def _assert_confirm_dialog_styled(session) -> None:
+    page = session.page
+    confirm = page.locator(CONFIRM_DIALOG)
+    assert (
+        page.locator("#world-member-confirm link, #world-member-confirm script").count()
+        == 0
+    )
+    assert confirm.evaluate("el => getComputedStyle(el).borderRadius") == _token(
+        page, "--radius-lg"
+    )
+    assert (
+        confirm.locator(".h-stack").evaluate("el => getComputedStyle(el).display")
+        == "flex"
+    )
+    assert confirm.locator("[data-dialog-confirm]").evaluate(
+        "el => getComputedStyle(el).height"
+    ) == _token(page, "--button-height-md")
+    _assert_sheets_parsed(session, CONFIRM_ASSETS)
 
 
 def _db_credentials() -> dict[str, str]:
@@ -98,12 +185,7 @@ def _add_member(session, email: str, role: str) -> None:
     session.page.locator(ADD_DIALOG).wait_for(state="visible")
     # The dialog arrives through htmx, so its stylesheet must already be on the
     # host page: a flex column proves WorldMemberDialog.css is loaded.
-    assert (
-        session.page.locator("form.world-member-form").evaluate(
-            "el => getComputedStyle(el).flexDirection"
-        )
-        == "column"
-    )
+    _assert_add_dialog_styled(session)
     session.page.fill(f"{ADD_DIALOG} input[name='email']", email)
     session.page.select_option(f"{ADD_DIALOG} select[name='role']", role)
     session.page.click('[data-testid="world-member-submit"]')
@@ -127,6 +209,25 @@ def test_adding_an_existing_user_through_the_dialog_persists(
     )
     row.wait_for()
     assert row.locator(".pill-success", has_text="Attivo").count() == 1
+
+    # A second swap into the same host keeps the assets and the script: the new
+    # surface opens, named, and returns focus to the control that opened it.
+    session.page.click('[data-testid="world-member-add"]')
+    session.page.locator(ADD_DIALOG).wait_for(state="visible")
+    assert session.page.locator(ADD_DIALOG).count() == 1
+    assert session.page.locator(ADD_DIALOG).evaluate("dialog => dialog.open")
+    assert (
+        session.page.get_by_role("dialog", name="Aggiungi al mondo", exact=True).count()
+        == 1
+    )
+    _assert_add_dialog_styled(session)
+    session.page.locator(f"{ADD_DIALOG} .dialog-close").click()
+    session.page.wait_for_function(
+        "() => !document.querySelector('#world-member-dialog dialog')?.open"
+    )
+    session.page.wait_for_function(
+        "() => document.activeElement?.dataset.testid === 'world-member-add'"
+    )
 
     assert player_email in _member_emails(world_id)
     assert session.errors == []
@@ -154,11 +255,27 @@ def test_inviting_and_revoking_through_the_dialogs_persists(
     confirm = session.page.locator(CONFIRM_DIALOG)
     confirm.wait_for(state="visible")
     # The shared confirmation stylesheet is on the host page too.
-    assert (
-        confirm.locator(".h-stack").evaluate("el => getComputedStyle(el).display")
-        == "flex"
-    )
+    _assert_confirm_dialog_styled(session)
     assert confirm.get_attribute("hx-delete") is None  # the request is on the button
+
+    # Cancelling and asking again replaces the fragment in the same host; the
+    # surface still opens, named, with its styles and its script intact.
+    confirm.locator(".dialog-close").click()
+    session.page.wait_for_function(
+        "() => !document.querySelector('#world-member-confirm dialog')?.open"
+    )
+    session.page.wait_for_function(
+        "() => document.activeElement?.dataset.testid === 'world-invite-revoke'"
+    )
+    session.page.click('[data-testid="world-invite-revoke"]')
+    confirm.wait_for(state="visible")
+    assert confirm.evaluate("dialog => dialog.open")
+    assert (
+        session.page.get_by_role("dialog", name="Annulla invito", exact=True).count()
+        == 1
+    )
+    _assert_confirm_dialog_styled(session)
+
     session.page.click("[data-dialog-confirm]")
     session.page.wait_for_function(
         "() => !document.querySelector('#world-member-confirm dialog')?.open"
