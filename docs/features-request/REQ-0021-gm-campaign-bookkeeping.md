@@ -164,6 +164,13 @@ automation beyond the selected reputation behavior.
 
 ## Evidence and acceptance material
 
+The separate [friend-feedback reconciliation](REQ-0024-friend-feedback-and-session-context.md)
+preserves all three interface-comment photos and maps each observation to
+existing work, missing requirements or an explicit decision. In particular,
+NPC citation ordering and session/story-local characters, NPCs and places were
+not fully covered by this original specification. REQ-0024 owns those additions
+without duplicating the existing card, conflict or session prose tickets.
+
 Use the supplied examples, without committing copyrighted PDFs or private
 transcripts. Local-only references are not portable fixtures:
 
