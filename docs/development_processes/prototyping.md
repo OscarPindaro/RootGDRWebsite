@@ -18,7 +18,32 @@ throwaway surface where alternatives are put side by side and looked at.
 If you find yourself writing migrations, services, or tests for domain logic,
 you have left prototyping.
 
-**Non-negotiable conventions**
+### Application-composed exploration
+
+For the bookkeeping/agent studies, the owner explicitly selected prototyping
+inside the real frontend on 2026-10-21. Use the application's JinjaX catalog,
+components, assets and shell, served through the harness-managed backend.
+This is the preferred mode for additions within the existing atlas identity.
+
+- Keep routes dev-only, under the component showcase; no production endpoints.
+- Use typed, clearly labelled fixtures. No campaign reads/writes, migrations,
+  provider calls or persisted prototype state.
+- Compose existing components first. Unresolved domain pieces stay page-local;
+  do not promote an experimental control into the shared public vocabulary.
+- Exercise actual assets, dialogs, htmx boundaries and responsive behavior.
+  A component limitation is evidence to record, not permission to rewrite it.
+- Keep a brief and comparison record under `prototypes/`; source components
+  and bounded fixture routes live in their normal frontend/backend folders.
+- Run the supported harness rather than starting Uvicorn manually. Do not reset
+  another environment or modify work/showcase data.
+- Explain simulated saves and missing domain behavior in the interface.
+  The prototype is not feature completion.
+
+The first implementation is the study described in
+`prototypes/bookkeeping-study/README.md`. This mode does not replace the static
+explorations below or authorize a redesign of the existing visual system.
+
+**Standalone static exploration conventions**
 
 - Static files, no build step. HTML, CSS and plain JavaScript. Loading a library
   from a CDN as an ES module is acceptable; adding a bundler is not.
