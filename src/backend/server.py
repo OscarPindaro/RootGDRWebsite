@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .auth.routes.auth import router as auth_router
@@ -28,6 +29,26 @@ from .log import RequestContextMiddleware, setup_logging
 from .users.routes import router as users_router
 from .worlds.routes import router as worlds_router
 from fastapi.staticfiles import StaticFiles
+from starlette.responses import Response
+from starlette.types import Scope
+
+
+COMPONENT_ASSET_SUFFIXES = frozenset({".css", ".js"})
+
+
+class ComponentAssetFiles(StaticFiles):
+    """Serve a component's declared CSS/JS, never its Jinja source.
+
+    JinjaX links ``/static/components/<folder>/<Name>.css`` and ``.js``, which
+    live beside the ``.jinja`` templates in the same directory. The extension
+    allowlist is what keeps the sources unreadable; path resolution, content
+    types, conditional requests and range requests stay StaticFiles' job.
+    """
+
+    async def get_response(self, path: str, scope: Scope) -> Response:
+        if Path(path).suffix.lower() not in COMPONENT_ASSET_SUFFIXES:
+            raise HTTPException(status_code=404)
+        return await super().get_response(path, scope)
 
 
 @asynccontextmanager
@@ -84,10 +105,11 @@ def create_app(config: AppConfig | None = None) -> FastAPI:
     if config.frontend and config.frontend.enabled:
         # JinjaX generates asset URLs like /static/components/common/button.css.
         # Mount the components directory BEFORE the generic /static mount so
-        # the more specific prefix takes priority.
+        # the more specific prefix takes priority. The mount holds the .jinja
+        # sources too, so only the declared asset extensions are served.
         app.mount(
             "/static/components",
-            StaticFiles(directory=config.frontend.components_dir),
+            ComponentAssetFiles(directory=config.frontend.components_dir),
             name="components-static",
         )
         app.mount(

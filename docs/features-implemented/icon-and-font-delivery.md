@@ -117,10 +117,27 @@ figure is F20's measurement; F22 cut `main.css` to 18,154 raw / 5,955 gzip by
 moving every component rule out (see [final-consolidation.md](final-consolidation.md)).
 The thresholds are unchanged.
 
+### Component assets
+
+JinjaX links a component's colocated CSS through `render_assets()` and its
+`{#js ... #}` declarations, both under `/static/components`. That directory also
+holds the `.jinja` sources, and Starlette's `StaticFiles` served every file in
+it, so a request for `common/Button.jinja` returned the template. `server.py`
+now mounts the directory with `ComponentAssetFiles`, which allows `.css` and
+`.js` and answers `404` for everything else before delegating to `StaticFiles`.
+Path containment, content types, `ETag`/`Last-Modified` revalidation and range
+requests are unchanged, and the global `/static` mount is untouched, so fonts,
+images and the font licences stay public.
+`tests/integration/test_frontend_assets.py` covers GET/HEAD of both asset kinds,
+the refused template and traversal paths, and the conditional/range responses;
+`tests/unit/test_production_packaging.py` fails if a colocated asset extension
+is missing from `COMPONENT_ASSET_SUFFIXES`.
+
 ### Caching and fingerprinting
 
-`server.py` mounts `/static` and `/static/components` with Starlette's
-`StaticFiles`. The response carries `ETag` and `Last-Modified` and honours
+`server.py` mounts `/static` with Starlette's `StaticFiles` and
+`/static/components` with the `ComponentAssetFiles` allowlist above. The
+response carries `ETag` and `Last-Modified` and honours
 conditional requests (a re-request returns `304`), but there is **no
 `Cache-Control`, no fingerprinting and no reverse proxy** in front (the
 deployment is a single uvicorn container, `Dockerfile`). So assets are
@@ -149,3 +166,6 @@ Every page: `common.Icon` is composed by `Button`, `ButtonGroup`, `IconButton`,
 - The icon registry covers UI chrome. Role marks remain in
   `backend/content/marks.py` and are deliberately not part of it.
 - Assets are revalidated, not cached immutable (see above).
+- A new kind of colocated component asset (an `.svg`, for example) is not
+  public until its extension joins `COMPONENT_ASSET_SUFFIXES`; the packaging
+  test fails until it does.

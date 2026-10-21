@@ -4,7 +4,16 @@ from pathlib import Path
 
 import yaml
 
+from backend.server import COMPONENT_ASSET_SUFFIXES
+
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def test_component_mount_publishes_every_colocated_asset_suffix() -> None:
+    components = ROOT / "src" / "frontend" / "components"
+    suffixes = {path.suffix for path in components.rglob("*") if path.is_file()}
+
+    assert suffixes - {".jinja"} == set(COMPONENT_ASSET_SUFFIXES)
 
 
 def test_container_build_context_is_an_allowlist() -> None:
