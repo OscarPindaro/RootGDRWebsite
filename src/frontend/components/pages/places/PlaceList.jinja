@@ -49,7 +49,7 @@
 <section class="section">
   <editorial.SectionHead title="Bozze" eyebrow="Non ancora pubblicate" />
   <common.Grid min="card" gap=5>
-    {% for card in drafts %}<editorial.EntityCard :item="card" />{% endfor %}
+    {% for card in drafts %}<editorial.EntityCard :item="card" level={{ 3 }} />{% endfor %}
   </common.Grid>
 </section>
 {% endif %}

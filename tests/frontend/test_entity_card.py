@@ -42,6 +42,39 @@ def test_it_is_an_entity_card_not_a_common_card(component):
     assert page.locator(".card").count() == 0
 
 
+def test_the_card_name_is_a_section_heading_by_default(component):
+    """A list page has one h1; the cards below it are sections, not h3s."""
+    page = _mount(component)
+
+    assert page.locator("h2.entity-card__name").count() == 1
+    assert page.locator("h3.entity-card__name").count() == 0
+
+
+def test_a_host_can_nest_the_card_one_level_deeper(component):
+    """The draft grid sits under the ``Bozze`` h2, so its cards are h3."""
+    page = component.mount("editorial.EntityCard", props={"item": _item(), "level": 3})
+
+    assert page.locator("h3.entity-card__name").count() == 1
+    assert page.locator("h2.entity-card__name").count() == 0
+
+
+def test_the_level_changes_the_tag_not_the_look(component):
+    measured = (
+        "el => ['fontFamily', 'fontSize', 'fontWeight', 'lineHeight', 'color', "
+        "'marginTop', 'marginBottom'].map(prop => getComputedStyle(el)[prop])"
+    )
+    shallow = _mount(component)
+    shallow_name = shallow.locator(".entity-card__name").evaluate(measured)
+    shallow_body = shallow.locator(".entity-card__body").bounding_box()
+
+    deep = component.mount("editorial.EntityCard", props={"item": _item(), "level": 3})
+
+    assert deep.locator(".entity-card__name").evaluate(measured) == shallow_name
+    deep_body = deep.locator(".entity-card__body").bounding_box()
+    for side in ("width", "height"):
+        assert deep_body[side] == pytest.approx(shallow_body[side], abs=0.5)
+
+
 def test_it_links_and_names_the_character(component):
     page = _mount(component)
     card = page.locator(".entity-card")

@@ -9,7 +9,9 @@ interaction and state rules and keep their own density.
 - **`editorial.EntityCard`** (`.entity-card`) is the portrait card for a
   character, NPC or draft place. It replaced `editorial.Card`, whose `.card`
   root collided with the generic `common.Card` container. An NPC card takes
-  `npc` and shows the NPC badge and the dashed owner rule.
+  `npc` and shows the NPC badge and the dashed owner rule. `level` keeps the
+  card name in the page outline: 2 in the collection under the masthead h1, 3
+  inside the `Bozze` section. The tag changes, the styling does not.
 - **`editorial.StoryCard`** (`.story-card`) is a story band: the act strip names
   the status and the period, the body carries the title and summary, and the
   foot the session count and the draft state. `level` keeps the heading in the

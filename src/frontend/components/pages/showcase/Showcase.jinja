@@ -413,12 +413,12 @@
       <h2>Collection surfaces</h2>
       <p class="showcase-note">The collection language. An entity card and the create card share one openable hover, one focus ring and one metadata line; a story keeps its band, a ledger its columns, a row its rhythm. The literal creation card is only ever a grid cell beside entity cards.</p>
       <common.Grid min="card" gap=5 style="max-width: 760px">
-        <editorial.EntityCard :item="showcase_card" />
-        <editorial.EntityCard :item="showcase_card" npc />
+        <editorial.EntityCard :item="showcase_card" level={{ 3 }} />
+        <editorial.EntityCard :item="showcase_card" npc level={{ 3 }} />
         <editorial.CollectionCreate action="/worlds/00000000-0000-0000-0000-000000000000/characters/new" label="Nuovo personaggio" hint="Nessun personaggio: creane uno per cominciare." />
       </common.Grid>
       <div style="margin-top: var(--sp-6); max-width: 760px;">
-        <editorial.StoryCard href="#" tint="ochre" title="L'inverno dei corvi" summary="Un arco che raccoglie le sessioni della campagna in corso." status_label="In corso" period_label="Anno 3" :session_count="4" draft />
+        <editorial.StoryCard href="#" tint="ochre" title="L'inverno dei corvi" summary="Un arco che raccoglie le sessioni della campagna in corso." status_label="In corso" period_label="Anno 3" :session_count="4" draft level={{ 3 }} />
       </div>
       <div style="margin-top: var(--sp-6); max-width: 760px;">
         <editorial.Ledger :columns="['N°', 'Data', 'Sessione', '']">

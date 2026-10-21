@@ -32,6 +32,11 @@ every authenticated route.
   actions wrap below the identity instead of squeezing it. `Page.js` closes the
   drawer before the palette opens, so the dialog never lands inside the inert
   background (see [palette.md](palette.md)).
+- The rail and a page's secondary column are both complementary regions. The
+  rail is named `Navigazione laterale`; a document aside is named `Materiale
+  collegato` and the settings cover column `Copertina`, from its visible
+  heading, so region navigation can tell them apart. All keep their native
+  `aside` element; no `role` was added.
 - Navigation keeps **native Tab order**. The rail is a landmark, not an ARIA
   composite widget, so Arrow Up/Down no longer move through its links.
   `common.Menu` keeps its own APG arrow model inside the popover.
@@ -41,7 +46,8 @@ every authenticated route.
 - `layout/Page.jinja` owns the shell markup; `layout/Page.css` owns `.shell`,
   `.main`, `.scrim`, `.skip` and the body scroll lock; `layout/Page.js` owns the
   drawer behaviour.
-- `layout/Rail.jinja` renders the rail and its static-page sub-nav;
+- `layout/Rail.jinja` renders the rail, names its complementary region and
+  keeps the static-page sub-nav;
   `layout/Rail.css` owns `.rail*`, `.navitem*` and the rail-context overrides of
   `common.Button` and `common.Menu`. `layout/RailItem.jinja` is the nav item.
 - `layout/Topbar.jinja` renders the phone hierarchy; `layout/Topbar.css` owns

@@ -30,7 +30,7 @@
         :locked="page.locked" :version="page.version" :can_manage="can_manage"
         placeholder="Inizia a scrivere…" />
     </article>
-    <common.VStack element="aside">
+    <common.VStack element="aside" aria-label="Materiale collegato">
       <div class="toc">
         <div class="toc__label">Altre pagine</div>
         {% for other in others %}
