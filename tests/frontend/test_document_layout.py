@@ -389,6 +389,34 @@ def _assert_heading_fits(layout: dict) -> None:
         assert heading["right"] <= layout["identity"]["right"] + 1
 
 
+# .display's smallest size, at a phone where the base rule caps it at 1.9rem.
+DISPLAY_MIN_REM = 1.9
+
+
+def _identity_roles(page) -> dict:
+    """The main heading and the explicit subtitle slot, as computed."""
+    return page.evaluate(
+        """() => {
+            const role = (el) => {
+                if (!el) return null;
+                const style = getComputedStyle(el);
+                return {
+                    fontSize: parseFloat(style.fontSize),
+                    fontStyle: style.fontStyle,
+                    fontFamily: style.fontFamily,
+                };
+            };
+            return {
+                rootFontSize: parseFloat(
+                    getComputedStyle(document.documentElement).fontSize
+                ),
+                heading: role(document.querySelector('.docidentity h1')),
+                subtitle: role(document.querySelector('.docidentity__subtitle')),
+            };
+        }"""
+    )
+
+
 @pytest.mark.parametrize("width", WIDTHS)
 @pytest.mark.parametrize(("component_name", "props", "lone"), DOCUMENT_PAGES)
 def test_every_document_type_keeps_its_measure(
@@ -639,3 +667,72 @@ def test_every_detail_page_reflows_at_the_same_document_width(component):
         assert aside["x"] >= main["x"] + main["width"] - 1, (
             f"{component_name} at 1440px"
         )
+
+
+@pytest.mark.parametrize("width", (390, 1440))
+@pytest.mark.parametrize(("component_name", "props", "lone"), DOCUMENT_PAGES)
+def test_the_main_heading_keeps_the_primary_role(
+    component, component_name, props, lone, width
+):
+    """A stored field named title is not automatically a subtitle.
+
+    Story, Session and Page keep their main heading in ``title``; the visual
+    role comes from the slot, so those headings keep the display size instead
+    of the smaller italic treatment the character subtitle uses.
+    """
+    page = component.mount(component_name, props=props())
+    page.set_viewport_size({"width": width, "height": 900})
+    roles = _identity_roles(page)
+    heading = roles["heading"]
+
+    assert heading is not None, "the document has no main heading"
+    assert heading["fontStyle"] == "normal", (
+        f"{component_name} styles its main heading as a subtitle at {width}px"
+    )
+    assert heading["fontSize"] >= DISPLAY_MIN_REM * roles["rootFontSize"], (
+        f"{component_name} main heading is {heading['fontSize']:.1f}px at {width}px"
+    )
+
+
+@pytest.mark.parametrize("width", (390, 1440))
+@pytest.mark.parametrize(
+    ("component_name", "props"),
+    [
+        ("pages.characters.CharacterDetail", _character_props),
+        ("pages.npcs.NpcDetail", _npc_props),
+    ],
+)
+def test_the_character_subtitle_keeps_its_own_role(
+    component, component_name, props, width
+):
+    """The name is the heading; the stored title is the subtitle below it."""
+    page = component.mount(component_name, props=props())
+    page.set_viewport_size({"width": width, "height": 900})
+    roles = _identity_roles(page)
+    heading, subtitle = roles["heading"], roles["subtitle"]
+
+    assert subtitle is not None, "the title slot lost its subtitle role"
+    assert subtitle["fontStyle"] == "italic"
+    assert subtitle["fontFamily"] == heading["fontFamily"]
+    assert (
+        1.4 * roles["rootFontSize"]
+        <= subtitle["fontSize"]
+        <= 1.75 * roles["rootFontSize"]
+    ), f"the subtitle is {subtitle['fontSize']:.1f}px at {width}px"
+    assert subtitle["fontSize"] < heading["fontSize"]
+
+
+@pytest.mark.parametrize(
+    ("component_name", "props"),
+    [
+        ("pages.sessions.SessionDetail", _session_props),
+        ("pages.stories.StoryDetail", _story_props),
+        ("pages.pages.PageDetail", _page_props),
+    ],
+)
+def test_a_title_heading_has_no_subtitle(component, component_name, props):
+    page = component.mount(component_name, props=props())
+
+    assert _identity_roles(page)["subtitle"] is None, (
+        f"{component_name} renders its main title as a subtitle too"
+    )

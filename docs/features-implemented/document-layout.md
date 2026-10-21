@@ -29,6 +29,11 @@ one reflow contract and one spacing contract.
   than emitting two competing grid children.
 - A Session keeps its pager in the document column, below the document.
 - A Page puts `Altre pagine` and its backlinks in one aside.
+- The identity's visual roles come from the slot, not from the stored field:
+  the main heading keeps the display treatment on every type, and only the
+  Character and NPC `Titolo` slot is the smaller italic subtitle. Story,
+  Session and Page keep their main heading in `title` and still read as
+  headings.
 
 ## How it is built
 
@@ -71,6 +76,13 @@ one reflow contract and one spacing contract.
 - `editorial.Links` renders the `.links` panel only. It used to render its own
   `<aside>`, which would have nested inside the aside stack that Story and Page
   need; the caller owns the stack, as the prototype does.
+- `editorial/DocIdentity.css` styles the subtitle through
+  `.docidentity__subtitle`, the visual role the Character and NPC detail pages
+  put on their `data-doc-field="title"` paragraph. The field key stays the
+  persisted one and still drives editing and autosave; it no longer selects a
+  type treatment, so the `title` main heading of Story, Session and Page keeps
+  `h1.display`. The prototype makes the same split with `docfield--name` and
+  `docfield--title`.
 - `tests/frontend/test_document_layout.py` mounts all six real pages with and
   without related material and with a long title at 320, 390, 699, 700, 701,
   899, 900, 901, 1024, 1100 and 1440, and asserts the measure each column
@@ -81,7 +93,11 @@ one reflow contract and one spacing contract.
   repeats the check on the read-only portrait at 390, 901 and 1440, a third
   mounts every page at 320 and 390 with a 150% text size, a fourth does the
   same at 701, 901 and 1024, and the existing DOM contract (one main child, at
-  most one direct aside) still holds at a wide desktop.
+  most one direct aside) still holds at a wide desktop. The same file asserts
+  the identity roles at 390 and 1440: every main heading is upright and at
+  least the display size, the Character and NPC subtitle is italic, serif and
+  smaller than its heading, and the three title-heading pages render no
+  subtitle at all.
 
 ## Used by
 

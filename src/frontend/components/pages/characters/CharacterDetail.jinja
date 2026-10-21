@@ -30,7 +30,7 @@
               <span class="eyebrow">Nome</span>
               <h1 class="display" data-doc-field="name" data-doc-block="name">{{ character.name }}</h1>
               <span class="eyebrow">Titolo</span>
-              <p data-doc-field="title" data-doc-block="title"
+              <p class="docidentity__subtitle" data-doc-field="title" data-doc-block="title"
                  {% if not character.title %}data-empty="true"{% endif %}>{{ character.title or '' }}</p>
               <editorial.DocSummary :world_id="world.id" :base="'/worlds/' ~ world.id ~ '/characters/' ~ character.id"
                 :value="character.short_description" :value_html="short_html" :version="character.version"

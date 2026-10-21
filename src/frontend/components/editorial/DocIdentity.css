@@ -12,7 +12,9 @@
   padding-left: 0.7rem;
 }
 
-.docidentity [data-doc-field="title"] {
+/* The subtitle is a visual role, not the stored field: Story, Session and Page
+   keep their main heading in `title` and keep the display treatment. */
+.docidentity__subtitle {
   font-family: var(--serif);
   font-size: clamp(1.4rem, 2.3vw, 1.75rem);
   font-style: italic;
