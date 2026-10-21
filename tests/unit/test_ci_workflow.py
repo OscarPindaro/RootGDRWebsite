@@ -2,11 +2,13 @@
 
 Static checks over ``.github/workflows/ci.yml``: the triggers and concurrency,
 read-only permissions, actions pinned to full SHAs, no secrets, no deployment
-and failure-only, size-bounded artifacts.
+and failure-only, size-bounded artifacts. The committed-bundle comparison is
+checked against the ``build:*`` scripts in ``package.json``.
 """
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 
@@ -17,7 +19,9 @@ pytestmark = pytest.mark.unit
 
 REPO = Path(__file__).parents[2]
 WORKFLOW = REPO / ".github" / "workflows" / "ci.yml"
+PACKAGE = REPO / "package.json"
 PINNED = re.compile(r"^[\w.-]+/[\w.-]+@[0-9a-f]{40}$")
+OUTFILE = re.compile(r"--outfile=(\S+)")
 
 
 @pytest.fixture(scope="module")
@@ -124,6 +128,30 @@ def test_the_external_integrations_stay_out_of_ci(workflow: dict) -> None:
     assert "docker pull" not in runs
     assert "podman pull" not in runs
     assert "podman-compose" not in runs
+
+
+def test_every_generated_bundle_is_compared_with_its_sources(workflow: dict) -> None:
+    """A bundle the build or the guard omits can ship stale."""
+    scripts = json.loads(PACKAGE.read_text(encoding="utf-8"))["scripts"]
+    bundles = {}
+    for name, command in scripts.items():
+        if name.startswith("build:"):
+            match = OUTFILE.search(command)
+            assert match, name
+            bundles[name] = match.group(1)
+    assert sorted(bundles) == ["build:drawings", "build:editor", "build:report"]
+    for name in bundles:
+        assert f"npm run {name}" in scripts["build"], name
+
+    guards = [
+        step["run"]
+        for step in _steps(workflow)
+        if "git diff --exit-code --" in step.get("run", "")
+    ]
+    assert len(guards) == 1
+    assert "npm run build" in guards[0]
+    compared = guards[0].split("git diff --exit-code --", 1)[1].split()
+    assert sorted(compared) == sorted(bundles.values())
 
 
 def test_diagnostics_are_failure_only_and_bounded(workflow: dict) -> None:

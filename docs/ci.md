@@ -11,13 +11,19 @@ Four jobs on `ubuntu-24.04`, each with its own timeout and its own environment:
 - **Checks and unit tests** — `pre-commit run --all-files`, `harness material
   check`, `harness backlog check-requests`, a Towncrier draft render and the
   unit suite.
-- **Frontend component tests** — `npm ci`, `harness browsers --with-deps` and
-  `harness test frontend`.
+- **Frontend component tests** — `npm ci`, `harness browsers --with-deps`,
+  `npm run build` compared against the committed `editor.js`, `drawings.js` and
+  `report.js`, `npm run test:drawings` and `harness test frontend`.
 - **Integration tests** — `harness env up --mode local`, the integration suite
   (the fast group: real PostgreSQL and FastAPI's test client), and a teardown
   that runs even on failure.
 - **End-to-end tests** — the docker environment, `harness test e2e --fresh`, and
   the same always-on teardown.
+
+The committed bundles are what the Docker image ships, and it does not build the
+frontend: the rebuild-and-compare step checks that they match their sources. The
+unit suite fails if the main `build` script skips a `build:*` script, or if a
+`build:*` output in `package.json` is missing from that comparison.
 
 Dependencies come from the lockfiles (`uv sync --frozen --dev`, `npm ci`), the
 Python version matches the project (`uv python install 3.14`) and Node is the
