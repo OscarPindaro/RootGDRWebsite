@@ -824,19 +824,81 @@ Sequential work is the default. Page/editor CSS, shared components, browser
 state and test environments overlap. This plan does not authorize parallel
 agents/worktrees or concurrent suites merely because dependency branches differ.
 
-When registration is approved, use the verified Root GDR project and existing
-backlog tools. Check for existing tasks with matching scope and explicitly
-reconcile overlaps; do not silently duplicate or reparent historical tickets.
+For registration and later reconciliation, use the verified Root GDR project
+and existing backlog tools. Check for existing tasks with matching scope and
+explicitly reconcile overlaps; do not silently duplicate or reparent historical
+tickets.
 Every child links its parent, specification anchor, and confirmed
 prerequisite tasks. Native containment/dependency relations are written and read
 back only if authorized; otherwise retain explicit reciprocal links and report
 the limitation. Do not infer current token permission from historical denials
-or provision/expand credentials. No relation is claimed as created by this file.
+or provision/expand credentials. Claim only relationships confirmed by read-back;
+the registration receipt below records this intake's verified result.
 
 Reuse existing related requests instead of cloning them: this review preserves
 [document toolbar decisions](REQ-0005-document-toolbar-and-status-design.md),
 [story/page details](REQ-0010-story-and-page-authoring-design.md), and
 [drawing authoring scope](REQ-0015-geometric-drawing-and-scene-editor.md).
+
+### Verified registration - 2026-10-21
+
+Registered and read back in Root GDR project 2 using the existing Kanban view
+12. The original 55 tasks were preserved, including their descriptions,
+progress, labels, and relation sets. The drawing-baseline tasks were inspected;
+T10 is a new gesture-test visibility follow-up, not a duplicate request to
+implement polygon editing/cutting again.
+
+All 32 REQ-0019 keys were absent before intake. They now contain the full
+source/approach/verification brief and shared execution contract from local
+snapshot `f3a0f6d62a21b82a67846bc1e03a0e95957d06e2`. Existing approved type/area
+labels were used; decision/conditional cards carry the existing open-questions
+flag. No new label definitions, workflow, priorities, assignments, or release
+were introduced.
+
+Verified native topology: 31 logical child links and 52 logical blocking links,
+including the epic's final-verification gate. Inverse relations were read back.
+Method-dependent T23 links are not unconditional blockers of T24/T26; T30 does
+not unconditionally wait for unselected conditional implementations.
+The parent has a verified child/prerequisite index in comment 92.
+
+This is a historical identity/registration receipt, not a live progress table.
+Re-running the creation preflight found 32 existing keys and none missing;
+existing-relation probes created no duplicate links.
+
+| Key | Verified board task |
+|---|---|
+| T01 | [#56](http://192.168.1.201:3458/tasks/56) |
+| T02 | [#57](http://192.168.1.201:3458/tasks/57) |
+| T03 | [#58](http://192.168.1.201:3458/tasks/58) |
+| T04 | [#59](http://192.168.1.201:3458/tasks/59) |
+| T05 | [#60](http://192.168.1.201:3458/tasks/60) |
+| T06 | [#61](http://192.168.1.201:3458/tasks/61) |
+| T07 | [#62](http://192.168.1.201:3458/tasks/62) |
+| T08 | [#63](http://192.168.1.201:3458/tasks/63) |
+| T09 | [#64](http://192.168.1.201:3458/tasks/64) |
+| T10 | [#65](http://192.168.1.201:3458/tasks/65) |
+| T11 | [#66](http://192.168.1.201:3458/tasks/66) |
+| T12 | [#68](http://192.168.1.201:3458/tasks/68) |
+| T13 | [#69](http://192.168.1.201:3458/tasks/69) |
+| T14 | [#70](http://192.168.1.201:3458/tasks/70) |
+| T15 | [#71](http://192.168.1.201:3458/tasks/71) |
+| T16 | [#72](http://192.168.1.201:3458/tasks/72) |
+| T17 | [#73](http://192.168.1.201:3458/tasks/73) |
+| T18 | [#74](http://192.168.1.201:3458/tasks/74) |
+| T19 | [#76](http://192.168.1.201:3458/tasks/76) |
+| T20 | [#75](http://192.168.1.201:3458/tasks/75) |
+| T21 | [#80](http://192.168.1.201:3458/tasks/80) |
+| T22 | [#77](http://192.168.1.201:3458/tasks/77) |
+| T23 | [#81](http://192.168.1.201:3458/tasks/81) |
+| T24 | [#82](http://192.168.1.201:3458/tasks/82) |
+| T25 | [#83](http://192.168.1.201:3458/tasks/83) |
+| T26 | [#84](http://192.168.1.201:3458/tasks/84) |
+| T27 | [#85](http://192.168.1.201:3458/tasks/85) |
+| T28 | [#86](http://192.168.1.201:3458/tasks/86) |
+| T29 | [#78](http://192.168.1.201:3458/tasks/78) |
+| T30 | [#87](http://192.168.1.201:3458/tasks/87) |
+| T31 | [#79](http://192.168.1.201:3458/tasks/79) |
+| T32 | [#67](http://192.168.1.201:3458/tasks/67) |
 
 ### Shared ticket completion contract
 
