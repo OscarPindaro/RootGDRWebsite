@@ -282,6 +282,13 @@ proof; artifact and conversation retention; configuration-management permissions
 undo conflict handling; scope of permanent purge and external side effects.
 No permanent-purge tool or arbitrary external-action tool is recommended.
 
+The subsequent specifications turn this discussion into bounded tickets:
+[recoverable changes](../features-request/REQ-0020-world-history-and-reversible-changes.md),
+[GM bookkeeping](../features-request/REQ-0021-gm-campaign-bookkeeping.md), and
+[world agents/intake](../features-request/REQ-0022-configurable-world-agents-and-intake.md).
+They distinguish confirmed product decisions from technical decision gates;
+this research remains rationale, not a second backlog or an implementation.
+
 ## Sources
 
 1. Ollama [cloud](https://docs.ollama.com/cloud),

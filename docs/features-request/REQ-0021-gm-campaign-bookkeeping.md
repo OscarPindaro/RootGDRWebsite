@@ -286,8 +286,8 @@ keep separate conflicts; anchors do not depend on a mutable conflict title.
 **Boundary/start:** conflict/development services, optional session references.
 **Acceptance:** append/edit/recover free-form actual developments independently
 of possible developments; optional same-world readable session link; resolution
-records outcome/consequences with resolved state; empty resolution policy is
-explicit; initial situation remains intact. Ordering/date semantics and reopening
+records a nonblank outcome/consequence account with resolved state; the initial
+situation remains intact. Ordering/date semantics and reopening
 are recorded before implementation, not inferred as timeline automation.
 **Verify:** two-session history, no-session development, intervention-free
 resolution, draft/foreign session rejection and complete restoration.
