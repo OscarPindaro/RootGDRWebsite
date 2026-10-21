@@ -101,6 +101,66 @@ The reading page is where a document is written: no separate edit form, no
   document rejects every update with HTTP 423. The only accepted update is an
   authorized, standalone `locked: false` request using the current version.
 
+## Editor host boundary
+
+The editor mounts once per rendered block, and the server preview replaces
+rendered content, not the block that owns it. That is the supported boundary
+(REQ-0019/T29); no current feature needs to replace a whole host.
+
+### Supported
+
+- The body and summary previews swap the **children** of `[data-doc-render]`
+  and `[data-summary-render]` (`hx-swap="innerHTML"`). The host block
+  (`[data-doc-edit]`, `[data-doc-summary]`), the hidden source textarea, the
+  editor host, the actions row, the preview button and the `[data-doc-block]`
+  element all survive the swap.
+- Because the block element survives, its opener (`docStopOpen`), `tabindex`
+  and accessible label stay valid, and the navigator keeps the same stop. The
+  mount guards (`data-doc-ready`, `data-summary-ready`, `data-identity-ready`,
+  `data-metadata-ready`) stay on the surviving node, so re-running `mountAll`
+  over a swapped container does not create a second editor or duplicate the
+  listeners on the block.
+- One controller per API URL is enough while the host is stable:
+  `controllerFor` reuses it, and `register` keeps each field's apply callback
+  bound to the live source textarea or identity field. A restored draft
+  therefore lands in the element the editor opens from; replacing the host
+  would leave that callback writing to a detached node.
+- This is what the component tests in `tests/frontend/test_command_barrier.py`
+  pin: the preview target and swap, host and block identity after the swap, the
+  surviving opener, and one editor and one write per change after a mount scan.
+
+### Not supported
+
+- Replacing a whole `[data-doc-edit]`, `[data-doc-summary]`,
+  `[data-doc-identity]` or `[data-doc-metadata]` block, or the
+  `[data-doc-block]` element, with `outerHTML` or with a swap of an ancestor
+  that contains it.
+- The reason is in `src/frontend/js/editor/index.js`: the `autosaves` map is
+  module-level and keyed by URL, `register()` keeps the first field, apply
+  callback and root, and the open/close closures plus `docStopOpen` live on the
+  nodes being replaced. A new host with the same URL reuses the old controller:
+  `restoreChecked` is already true, so a local draft is not offered again, and
+  a failed save appends its recovery panel to the detached old root.
+- A bounded diagnostic (replace the host, dispatch `htmx:afterSwap`, force a
+  409) observed that outcome: the panel was created inside the detached block
+  and never appeared on the page, while the new editor still wrote its own
+  source. No product flow replaces a host today, so this is a documented
+  consequence, not an observed user-facing defect. An open CodeMirror instance
+  and its caret would be discarded by such a swap as well.
+
+### Rules for an agent
+
+- Keep the preview `hx-target` and `hx-swap` as they are; do not target the
+  host and do not use `outerHTML`.
+- Do not replace a document block through htmx to refresh it. Re-render the
+  page, or swap only inside the render element.
+- Do not add rebinding, disposal or a shared state store for a replacement no
+  selected feature needs. Broader replacement stays unsupported until a scoped
+  child is approved. That child must add controller disposal/rebinding keyed by
+  URL, re-register the fields against the new source, render, root and status
+  nodes, and preserve a draft across the swap; its tests must cover rebinding,
+  disposal and draft preservation before the lifecycle changes.
+
 ## Recovery and limits
 
 - The result is rendered by the server on `Ctrl/⌘ + Enter` or on *Mostra il
