@@ -145,12 +145,15 @@ the selected arrangement. Preserve report recovery, authentication and access.
 ### FB-10 - Clicking an image opens modification
 
 **Source:** photo 2, note 7.
-**Assessment:** the note does not say whether this is desired or a complaint.
+**Confirmed intent:** the owner clarified that clicking an image to open
+modification is wanted, not an unwanted behavior report.
 Current editable ImageEditor makes the image surface a file-input label; it
-opens upload/replacement, not necessarily an image viewer or document editor.
-**Route:** T02 clarifies/compares the intended click behavior before changing
-it. Existing REQ-0019/T24-T25 concern appearance-control disclosure, not a
-confirmed image-click contract. No viewer or new editor is assumed.
+opens upload/replacement. The prototype should expose the image-modification
+workflow clearly, respecting locked/read-only state and keyboard activation.
+**Route:** T02 prototypes the affordance and checks existing REQ-0019/T24-T25
+appearance-control work. Do not substitute a viewer for modification or assume
+a new full image editor is required. Where image editing and card flipping
+coexist, one action must not accidentally trigger the other.
 
 ### FB-11 - Geographic map and connections between places
 
@@ -240,7 +243,9 @@ remains in Vikunja, not the observation ledger.
 evidence rather than a blanket requirement to finish every unrelated child.
 **Boundary:** FB-01/02/03/10, Docbar/ImageEditor/create affordance; decision only.
 **Acceptance:** reproduce current behavior, compare desktop/phone and determine
-the missing demonstrated behavior, prior create placement and image-click intent.
+the missing demonstrated behavior and prior create placement. Image-click
+modification is confirmed; prototype its discoverability and separation from
+other actions, preserving locked/read-only and keyboard behavior.
 Preserve accepted icon-only commands unless the owner explicitly changes them.
 Route selected repairs to existing scope or a separately approved bounded ticket.
 **Verify:** captures and concise accepted interaction record; do not claim that
@@ -339,9 +344,10 @@ choosing a derived view may eliminate the need for new association tables.
 Explicitly record that outcome rather than building both models.
 
 Only unambiguous suggestions are translated here. The demonstrated edit
-interaction, intended image-click outcome, previous create placement and
+interaction, previous create placement and
 precise narrative-browsing wording require confirmation before their UI changes.
 Those uncertainties do not block preservation, mapping or unrelated work.
+Image-click modification is confirmed and no longer an open intent question.
 
 This request supplements rather than replaces
 [REQ-0021](REQ-0021-gm-campaign-bookkeeping.md). Consult
