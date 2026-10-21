@@ -2,9 +2,10 @@
 
 `.devin/session_watchdog.py` checks `potent-topaz` immediately and every 30
 minutes for at most 24 hours. When the session is released, it resumes the same
-conversation through Devin CLI using pinned `deepseek-v4-1-flash-1017-high`
-(DeepSeek V4.1 Flash High). This changes the resumed conversation's model.
-No additional coordinator or agent session is created.
+conversation through Devin CLI, preserving its saved model. It supplies no
+`--model` flag and removes any inherited `DEVIN_MODEL` override.
+No additional coordinator or agent session is created. This watchdog is a
+Python scheduler; it does not currently run a separate DeepSeek supervisor.
 
 ## Commands
 
@@ -60,6 +61,6 @@ availability, workspace trust and administrative approval requirements can block
 continuation. No credentials or global CLI configuration are changed.
 
 Offline tests cover expiry, live locks, dry runs, completion validation, the
-session database/workspace check and the pinned resume command. A paid CLI turn
+session database/workspace check and model-preserving resume command. A paid CLI turn
 and Desktop-to-CLI handoff require an explicitly approved live check. There is no
 application UI change or screenshot requirement for this command.

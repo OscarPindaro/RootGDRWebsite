@@ -17,7 +17,6 @@ from pydantic import BaseModel, Field
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = Path.home() / ".local/share/devin/cli"
-MODEL = "deepseek-v4-1-flash-1017-high"
 SESSION = "potent-topaz"
 RUNTIME = ROOT / ".devin/afk-runtime" / f"watch-{SESSION}"
 
@@ -90,7 +89,7 @@ def log(message: str) -> None:
 def check(schedule: Schedule, *, dry_run: bool = False) -> str:
     if time.time() >= schedule.deadline:
         return "expired"
-    session()
+    original_model = session().model
     # Desktop may still be finishing its turn; never inspect a half-written
     # completion report or launch another coordinator while its lock is live.
     if locked():
@@ -120,7 +119,7 @@ write {RUNTIME / "complete.json"} as JSON with exactly these fields:
 session_id: "{SESSION}", summary: factual completed outcome,
 verification: concrete passing checks and evidence.
 Do not write it for a partial ticket, a blocker or a handoff. This report ends
-the watchdog. You are using pinned {MODEL}; do not switch models.
+the watchdog. Keep this session's existing model ({original_model}); do not switch models.
 The watchdog deadline is {datetime.fromtimestamp(schedule.deadline, UTC).isoformat()}.
 """
     )
@@ -128,8 +127,6 @@ The watchdog deadline is {datetime.fromtimestamp(schedule.deadline, UTC).isoform
         cli,
         "--resume",
         SESSION,
-        "--model",
-        MODEL,
         "--permission-mode",
         schedule.permission_mode,
         "--prompt-file",
@@ -138,7 +135,8 @@ The watchdog deadline is {datetime.fromtimestamp(schedule.deadline, UTC).isoform
     ]
     environment = os.environ.copy()
     environment.pop("ACP_BACKEND", None)
-    environment["DEVIN_MODEL"] = MODEL
+    # Without a model flag or environment override, CLI keeps the saved model.
+    environment.pop("DEVIN_MODEL", None)
     environment["DEVIN_PERMISSION_MODE"] = schedule.permission_mode
     with (RUNTIME / "worker.log").open("a") as output:
         with subprocess.Popen(
@@ -163,8 +161,8 @@ The watchdog deadline is {datetime.fromtimestamp(schedule.deadline, UTC).isoform
                 raise
     if code:
         return f"resume-failed-{code}: see {RUNTIME / 'worker.log'}"
-    if session().model != MODEL:
-        raise ValueError("Resumed session did not retain the requested model")
+    if session().model != original_model:
+        raise ValueError("Resumed session changed its original model")
     return "complete" if completed() else "turn-ended: will check again"
 
 
@@ -200,7 +198,7 @@ def main() -> int:
             schedule = Schedule.model_validate_json(path.read_text())
         else:
             path.write_text(schedule.model_dump_json(indent=2) + "\n")
-        log(f"watching {SESSION}; deadline={schedule.deadline}; model={MODEL}")
+        log(f"watching {SESSION}; deadline={schedule.deadline}; preserving saved model")
         while True:
             started = time.monotonic()
             try:

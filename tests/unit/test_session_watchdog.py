@@ -18,7 +18,16 @@ SPEC.loader.exec_module(watchdog)
 @pytest.fixture
 def schedule(tmp_path, monkeypatch):
     monkeypatch.setattr(watchdog, "RUNTIME", tmp_path)
-    monkeypatch.setattr(watchdog, "session", lambda: None)
+    monkeypatch.setattr(
+        watchdog,
+        "session",
+        lambda: watchdog.Session(
+            id=watchdog.SESSION,
+            working_directory=watchdog.ROOT,
+            model="gpt-6-1-sol-medium",
+            last_activity_at=1,
+        ),
+    )
     return watchdog.Schedule(
         started_at=time.time(), deadline=time.time() + 3600, permission_mode="smart"
     )
@@ -79,9 +88,9 @@ def test_reads_real_session_database_and_rejects_wrong_workspace(tmp_path, monke
         )
         connection.execute(
             "INSERT INTO sessions VALUES(?,?,?,?)",
-            (watchdog.SESSION, str(watchdog.ROOT), watchdog.MODEL, 1),
+            (watchdog.SESSION, str(watchdog.ROOT), "original-model", 1),
         )
-    assert watchdog.session().model == watchdog.MODEL
+    assert watchdog.session().model == "original-model"
     with sqlite3.connect(tmp_path / "sessions.db") as connection:
         connection.execute("UPDATE sessions SET working_directory='/another-workspace'")
     with pytest.raises(ValueError, match="another workspace"):
@@ -100,31 +109,25 @@ def test_stale_and_ambiguous_locks(tmp_path, monkeypatch):
     assert not watchdog.locked()
 
 
-def test_resume_command_is_pinned_and_keeps_session_identity(schedule, monkeypatch):
+@pytest.mark.parametrize("model_changed", [False, True])
+def test_resume_keeps_original_model_and_session_identity(
+    schedule, monkeypatch, model_changed
+):
     monkeypatch.setattr(watchdog, "locked", lambda: False)
     monkeypatch.setattr(watchdog.shutil, "which", lambda name: "/bin/devin")
     monkeypatch.setenv("ACP_BACKEND", "desktop")
-    monkeypatch.setattr(
-        watchdog,
-        "session",
-        lambda: watchdog.Session(
-            id=watchdog.SESSION,
-            working_directory=watchdog.ROOT,
-            model=watchdog.MODEL,
-            last_activity_at=1,
-        ),
-    )
+    monkeypatch.setenv("DEVIN_MODEL", "deepseek-v4-1-flash-1017-high")
 
     class Process:
         def __init__(self, command, **kwargs):
-            assert command[:5] == [
+            assert command[:3] == [
                 "/bin/devin",
                 "--resume",
                 "potent-topaz",
-                "--model",
-                watchdog.MODEL,
             ]
-            assert command[5:7] == ["--permission-mode", "smart"]
+            assert "--model" not in command
+            assert command[3:5] == ["--permission-mode", "smart"]
+            assert "DEVIN_MODEL" not in kwargs["env"]
             assert "ACP_BACKEND" not in kwargs["env"]
             assert kwargs["stdin"] == watchdog.subprocess.DEVNULL
 
@@ -136,7 +139,26 @@ def test_resume_command_is_pinned_and_keeps_session_identity(schedule, monkeypat
 
         def wait(self, timeout):
             assert 0 < timeout <= 3600
+            if model_changed:
+                monkeypatch.setattr(
+                    watchdog,
+                    "session",
+                    lambda: watchdog.Session(
+                        id=watchdog.SESSION,
+                        working_directory=watchdog.ROOT,
+                        model="unexpected-model",
+                        last_activity_at=1,
+                    ),
+                )
             return 0
 
     monkeypatch.setattr(watchdog.subprocess, "Popen", Process)
-    assert watchdog.check(schedule) == "turn-ended: will check again"
+    if model_changed:
+        with pytest.raises(ValueError, match="changed its original model"):
+            watchdog.check(schedule)
+    else:
+        assert watchdog.check(schedule) == "turn-ended: will check again"
+    assert (
+        "existing model (gpt-6-1-sol-medium)"
+        in (watchdog.RUNTIME / "prompt.md").read_text()
+    )
