@@ -7,10 +7,11 @@ This is a review and proposed working method, not an adopted specification,
 implementation ticket list, or live backlog. Application changes require their
 own verification. Vikunja and release versions are not changed by this report.
 
-The subsequent [REQ-0019 ticket proposal](../features-request/REQ-0019-frontend-system-stability-and-workflow.md)
-defines the parent epic, small child objectives, prerequisites, and decision
-gates. Use that document for proposed execution boundaries; this report remains
-the evidence and rationale, not a second live backlog.
+The subsequent [REQ-0019 ticket specification](../features-request/REQ-0019-frontend-system-stability-and-workflow.md)
+defines the parent epic, child objectives, implementation entry points,
+verification, prerequisites, and decision gates. Use that document for ticket
+execution boundaries; this report remains evidence and rationale, not a second
+live backlog.
 
 ## Purpose
 
