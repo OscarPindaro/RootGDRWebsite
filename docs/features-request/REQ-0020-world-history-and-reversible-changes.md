@@ -164,7 +164,7 @@ domains without erasing history or bypassing permissions.
 **Acceptance:** T02-T08 pass, their decision gates are recorded, and one mixed
 create/update/delete journey restores state and relationships with retained bytes.
 **Dependencies:** no child starts until its stated prerequisites are satisfied.
-**Verification:** review child evidence and run the combined recovery journey.
+**Verify:** review child evidence and run the combined recovery journey.
 
 ### REQ-0020/T02 - Revision and operation foundation
 
