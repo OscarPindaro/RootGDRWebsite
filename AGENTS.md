@@ -1,10 +1,26 @@
 # Project Guidelines
 
+Speak and write like a library maintainer: concise, calm, precise, and practical.
+Lead with the result or the issue, explain relevant behavior and compatibility,
+and state what was verified and what remains uncertain. Use plain language and
+concrete facts. Avoid salesmanship, theatrical emphasis, flattery, and filler.
+
 This file is reserved for coding agents.
-Be concise, both when talking and writing code. In general. LLMs tend to use a lot of justapoxitions when talking:
-- it's not (only) X, it's Y
-- it's this thing that should be done with a explicit decision, not with other patches
-Please, avoid this unless it makes sense to write like this. the second example especially could have stopped at the comma, you are adding useless words that don't say anything new.
+
+## Communication Style
+
+Avoid forced contrasts such as "it's not X, it's Y" or "not just X, but Y"
+unless the distinction corrects a real misunderstanding. State the useful fact
+directly; omit a contrasting clause when it adds no information. Do not use
+stock LLM phrasing such as "honest take", "genuine", "blast radius",
+"game-changer", or "let's dive in". Describe the specific assessment, affected
+code, or consequence instead. These examples are not an exhaustive blacklist:
+remove canned enthusiasm, inflated metaphors, and claims of sincerity wherever
+they appear. Apply this style to replies, documentation, comments, and commit
+messages.
+
+## Code Principles
+
 Every line of code is a potential liablity, so a solution should not add useless complexity.
 Don't fragment code into a million private helpers, especially ones used by a single function: promote reuse, not fragmentation. If a snippet is not easy to follow, prefer a comment over extracting it.
 A change done in a file in general should not have a ripple effect on a very distant unrelated file.
