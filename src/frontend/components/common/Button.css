@@ -160,9 +160,12 @@ html[data-accent="gradiente"] .btn-text:hover {
 .btn-block { width: 100%; }
 
 /* The touch target survives the atlas skin: on a phone every command keeps
-   the touch-target minimum even when its desktop size is smaller. */
+   the touch-target minimum even when its desktop size is smaller. An icon-only
+   command has a fixed width as well as a fixed height, so the floor applies to
+   both dimensions. */
 @media (max-width: 700px) {
   .btn { min-height: var(--touch-target); }
+  .btn-icon-only { min-width: var(--touch-target); }
 }
 
 @media (prefers-reduced-motion: reduce) {

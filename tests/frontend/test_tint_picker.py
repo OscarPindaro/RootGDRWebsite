@@ -8,6 +8,8 @@ return — also inside a dialog.
 
 import pytest
 
+from backend.content.view_helpers import tint_options
+
 pytestmark = pytest.mark.frontend
 
 TINTS = [
@@ -118,6 +120,68 @@ def test_the_palette_keeps_44px_targets_on_phone(component):
     )
     assert sizes
     assert all(width >= 44 and height >= 44 for width, height in sizes), sizes
+
+
+def _palette(page) -> dict:
+    """The open palette measured through its labels, not the radios inside them."""
+    return page.evaluate(
+        """() => {
+            const panel = document.querySelector('#picker-panel');
+            const grid = panel.querySelector('.choice-grid__options');
+            const panelBox = panel.getBoundingClientRect();
+            const gridBox = grid.getBoundingClientRect();
+            const boxes = [...grid.querySelectorAll('.choice-grid__option')]
+                .map(label => label.getBoundingClientRect());
+            const rows = {};
+            for (const box of boxes) {
+                const top = Math.round(box.top);
+                rows[top] = (rows[top] || 0) + 1;
+            }
+            const inside = (outer) => boxes.every(box =>
+                box.left >= outer.left - 0.5 && box.right <= outer.right + 0.5);
+            return {
+                labels: boxes.map(box => ({width: box.width, height: box.height})),
+                rows: Object.values(rows),
+                insideGrid: inside(gridBox),
+                insidePanel: inside(panelBox),
+                page: [document.documentElement.scrollWidth,
+                       document.documentElement.clientWidth],
+            };
+        }"""
+    )
+
+
+@pytest.mark.parametrize("width", [320, 390])
+def test_the_whole_phone_palette_fits_its_popover(component, width):
+    page = _mount(component, options=tint_options())
+    page.set_viewport_size({"width": width, "height": 844})
+    page.click("#picker-trigger")
+    page.wait_for_selector("#picker-panel:popover-open")
+
+    palette = _palette(page)
+    assert len(palette["labels"]) == len(tint_options())
+    for box in palette["labels"]:
+        assert box["width"] >= 44
+        assert box["height"] >= 44
+    # Twelve tints stay the intended six-column palette at both widths.
+    assert palette["rows"] == [6, 6]
+    assert palette["insideGrid"]
+    assert palette["insidePanel"]
+    assert palette["page"][0] <= palette["page"][1]
+
+
+def test_desktop_keeps_the_compact_palette(component):
+    page = _mount(component, options=tint_options())
+    page.click("#picker-trigger")
+    page.wait_for_selector("#picker-panel:popover-open")
+
+    palette = _palette(page)
+    assert palette["rows"] == [6, 6]
+    for box in palette["labels"]:
+        # The phone floor is scoped to phones: the compact 3:2 swatches stay.
+        assert box["height"] == pytest.approx(box["width"] / 1.5, rel=0.02)
+        assert box["height"] < 44
+    assert palette["insideGrid"]
 
 
 def test_a_disabled_picker_cannot_open(component):

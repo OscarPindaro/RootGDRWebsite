@@ -75,9 +75,12 @@
 }
 
 @media (max-width: 700px) {
-  /* The palette keeps 44px targets on phone. */
+  /* The palette keeps 44px targets on phone. The width is the floor, not
+     --sp-12: the popover's six columns are only a little wider than the floor
+     at the narrowest phone, and a --sp-12 minimum would push the last swatch
+     past the palette's own rule. */
   .tint-picker__panel .choice-grid__option {
-    min-width: var(--sp-12);
+    min-width: var(--touch-target);
     min-height: var(--sp-12);
   }
 }

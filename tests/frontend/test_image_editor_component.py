@@ -385,6 +385,96 @@ def test_clear_updates_the_media_and_the_revision_list(component):
     assert _stayed(page)
 
 
+# --- Phone touch targets: the whole label, not the transparent input ---------
+
+TOUCH_TARGET = 44
+
+_LABEL_BOXES = """labels => labels.map(label => {
+    const box = label.getBoundingClientRect();
+    const mark = label.querySelector('.choice-grid__mark');
+    return {
+        width: box.width,
+        height: box.height,
+        right: box.right,
+        markFits: mark.scrollWidth <= mark.clientWidth + 1
+            && mark.scrollHeight <= mark.clientHeight + 1,
+    };
+})"""
+
+
+def _phone_editor(component, width):
+    page = component.mount("editorial.ImageEditor", props=_character())
+    page.set_viewport_size({"width": width, "height": 844})
+    return page
+
+
+@pytest.mark.parametrize("width", [320, 390])
+def test_a_phone_choice_label_is_a_whole_touch_target(component, width):
+    page = _phone_editor(component, width)
+
+    boxes = page.eval_on_selector_all(
+        ".image-editor__choices .choice-grid__option", _LABEL_BOXES
+    )
+    assert boxes
+    for box in boxes:
+        assert box["width"] >= TOUCH_TARGET
+        assert box["height"] >= TOUCH_TARGET
+
+
+@pytest.mark.parametrize("width", [320, 390])
+def test_a_phone_choice_grid_stays_inside_the_page_with_larger_text(component, width):
+    page = _phone_editor(component, width)
+    page.evaluate("() => { document.documentElement.style.fontSize = '20px'; }")
+
+    boxes = page.eval_on_selector_all(
+        ".image-editor__choices .choice-grid__option", _LABEL_BOXES
+    )
+    assert boxes
+    for box in boxes:
+        assert box["width"] >= TOUCH_TARGET
+        assert box["height"] >= TOUCH_TARGET
+        assert box["right"] <= width
+        assert box["markFits"]
+    assert page.evaluate(
+        "() => document.documentElement.scrollWidth"
+        " <= document.documentElement.clientWidth"
+    )
+
+
+def test_desktop_choice_labels_keep_their_size(component):
+    page = component.mount("editorial.ImageEditor", props=_character())
+
+    boxes = page.eval_on_selector_all(
+        ".image-editor__choices .choice-grid__option", _LABEL_BOXES
+    )
+    assert boxes
+    # The phone floor is scoped to phones: desktop keeps the caller's 2.5rem.
+    assert {round(box["height"]) for box in boxes} == {40}
+
+
+def test_a_phone_tap_anywhere_on_the_label_selects_and_persists(component):
+    component.route_json(
+        "PATCH",
+        AUTOSAVE,
+        body={"animal": "🐈", "tint": "p5", "version": 4},
+    )
+    page = _phone_editor(component, 390)
+    label = page.locator(
+        ".image-editor__choices .choice-grid__option",
+        has=page.locator('input[name="tint"][value="p5"]'),
+    )
+
+    label.click(position={"x": 3, "y": 3})
+
+    radio = page.locator('input[name="tint"][value="p5"]')
+    assert radio.is_checked()
+    assert radio.evaluate("element => document.activeElement === element")
+    page.wait_for_function(
+        "() => document.querySelector('[data-image-status]').textContent === 'Salvato'"
+    )
+    assert ("PATCH", AUTOSAVE) in component.requests()
+
+
 def test_an_external_trigger_opens_the_history_dialog(component):
     base = f"/api/worlds/{WORLD_ID}/images/character/{OWNER_ID}/revisions"
     component.route_json("GET", base + "/", body={"data": HISTORY})

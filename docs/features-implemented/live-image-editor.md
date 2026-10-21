@@ -17,9 +17,21 @@ the page.
   editor. World Settings uses that to place the history `IconButton` in the
   `Copertina` `SectionHead`, right-aligned on the same line as the title; the
   character, NPC and place pages keep the compact command row under the picture.
+- On a phone the whole appearance cell is the target. Every choice label keeps
+  the 44px floor in both dimensions, and so does the history command. A grid
+  that cannot hold its declared columns at that size drops columns rather than
+  overflowing the page; desktop keeps the size the editor asks for.
 
 ## How it is built
 
+- The phone floor lives in `common/ChoiceGrid.css`. A `max-width: 700px` block
+  gives the label `min-height: var(--touch-target)`, lets the options grid
+  auto-fit columns whose minimum is the larger of `--touch-target` and
+  `100% / --columns`, and gives rows the same minimum so a caller's smaller
+  local minimum cannot undercut it. `width: 100%` keeps a tint cell's 3:2 ratio
+  from widening its own track, so the ratio only gives way where it would leave
+  the cell under the floor. `common/Button.css` applies the floor to
+  `.btn-icon-only`'s width as well as its height.
 - `editorial/ImageEditor.js` no longer calls `location.reload()`. After a
   mutation it either syncs the media from the response (upload) or reloads the
   revision list and derives the current revision from it (`syncMedia`). The
@@ -51,3 +63,8 @@ the page.
   returns on cancel).
 - History loads lazily when the dialog is opened; there is no live update if
   another session changes the revisions meanwhile.
+- The 44px floor is this project's target contract for a control used on a
+  phone. It is not a WCAG 2.2 AA conformance claim for every target in the
+  application.
+- The document face keeps its own four-column grid (`editorial/Document.css`),
+  so at a given phone width its cells are wider than the shared auto-fit result.

@@ -12,10 +12,36 @@ pytestmark = pytest.mark.e2e
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 8
 JPEG = b"\xff\xd8\xff\xe0" + b"0" * 12
+TOUCH_TARGET = 44
 
 
 def _file(name: str, mime: str, content: bytes) -> dict[str, object]:
     return {"name": name, "mimeType": mime, "buffer": content}
+
+
+def _assert_phone_targets(session: BrowserSession, width: int) -> None:
+    """The whole choice label and the history action are the tap targets.
+
+    The transparent radio is not: it is measured through the label that holds
+    it, which is the box the phone actually hits.
+    """
+    boxes = session.page.eval_on_selector_all(
+        ".image-editor__choices .choice-grid__option, "
+        "[data-testid='image-history-open']",
+        """elements => elements.map(element => {
+            const box = element.getBoundingClientRect();
+            return {width: box.width, height: box.height, right: box.right};
+        })""",
+    )
+    assert len(boxes) > 1
+    for box in boxes:
+        assert box["width"] >= TOUCH_TARGET
+        assert box["height"] >= TOUCH_TARGET
+        assert box["right"] <= width
+    assert session.page.evaluate(
+        "() => document.documentElement.scrollWidth"
+        " <= document.documentElement.clientWidth"
+    )
 
 
 def _history(session: BrowserSession, world_id: str, kind: str, owner_id: str) -> dict:
@@ -153,6 +179,11 @@ def test_character_image_keyboard_focus_and_symbol_tint_on_phone(
     api_path = f"/api/worlds/{world_id}/characters/{character_id}"
     session.goto(f"/worlds/{world_id}/characters/{character_id}")
     _no_reload_marker(session)
+
+    _assert_phone_targets(session, 390)
+    session.page.set_viewport_size({"width": 320, "height": 844})
+    _assert_phone_targets(session, 320)
+    session.page.set_viewport_size({"width": 390, "height": 844})
 
     surface = session.page.get_by_test_id("image-editor-surface")
     surface.focus()

@@ -75,3 +75,24 @@ def test_a_link_variant_renders_an_anchor(component):
     anchor = page.locator("a.btn-icon-only")
     assert anchor.get_attribute("href") == "/worlds"
     assert anchor.get_attribute("aria-label") == "Torna ai mondi"
+
+
+@pytest.mark.parametrize("width", [320, 390])
+def test_a_phone_keeps_the_touch_target_in_both_dimensions(component, width):
+    page = _mount(component)
+    page.set_viewport_size({"width": width, "height": 844})
+
+    box = page.locator("button.btn-icon-only").bounding_box()
+    assert box is not None
+    assert box["width"] >= 44
+    assert box["height"] >= 44
+    assert box["width"] == pytest.approx(box["height"])
+
+
+def test_desktop_keeps_the_small_size(component):
+    page = _mount(component)
+
+    box = page.locator("button.btn-icon-only").bounding_box()
+    assert box is not None
+    assert box["width"] == pytest.approx(40)
+    assert box["height"] == pytest.approx(40)
