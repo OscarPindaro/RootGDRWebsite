@@ -60,9 +60,10 @@ A reader can report a problem from the page they are on, without leaving it.
 - Frontend: `editorial.ReportPanel` is a `common.Dialog` rendered by
   `layout.Page`, opened by the topbar trigger. The capture is a bundle
   (`src/frontend/js/report/index.js` → `/static/js/report.js`) built by esbuild
-  and fetched on demand by `editorial/ReportPanel.js`, so a reading page pays
-  nothing for it. `html-to-image` (MIT, pinned) renders the DOM to a canvas; the
-  visible screenshot is the full-page canvas cropped to the current scroll.
+  and fetched with every shelled page by `editorial/ReportPanel.js`, so its
+  27,733 bytes belong to the page baseline. `html-to-image` (MIT, pinned)
+  renders the DOM to a canvas; the visible screenshot is the full-page canvas
+  cropped to the current scroll.
 - A screenshot's type comes from its leading bytes, never from the declared
   name; the page HTML is stored as `text/html`. Limits are 5 MB per screenshot
   and 2 MB of HTML.
@@ -105,6 +106,38 @@ A reader can report a problem from the page they are on, without leaving it.
   the point of it, and a 480px column makes them unreadable. `.dialog-body`
   scrolls, so the panel can be taller than the viewport without pushing its
   actions away.
+
+## Loading contract (REQ-0019/T16)
+
+- The page loads the bundle; opening the panel does not. `layout.Page` renders
+  the panel on every shelled page, and `editorial/ReportPanel.js` appends
+  `/static/js/report.js` as soon as it runs, without waiting for the trigger.
+  Opening the panel then creates or reads a draft and captures the page.
+- That page-level load is what carries reproduction across navigation.
+  `resumeReproduction()` runs when the bundle executes, reads the report id
+  from `localStorage` and the session from `sessionStorage`, and rebuilds the
+  recorder before the reader opens anything. A loader deferred to the first
+  open would miss the steps taken between a navigation and that open.
+- Measured on the isolated harness (2026-10-22, Chromium, authenticated cold
+  context; `/static/js/report.js` is 27,733 raw / 10,090 gzip bytes):
+  - cold `/worlds`: the document transfers 26,916 bytes and the bundle starts
+    79 ms after navigation, runs for 2.7 ms and transfers 28,033 bytes;
+  - opening the panel: no bundle request; one draft `POST` (18 ms), one
+    reproduction `GET` (5 ms), three evidence `PUT`s (43–61 ms) and a draft
+    re-read (11 ms), 0.55 s from click to `saved`;
+  - navigating to `/drawings` with an active reproduction: the bundle is
+    requested again from cache (0 transfer bytes, 27,733 decoded), the session
+    is kept and the `goto` step posts (18 ms);
+  - warm reload: the same cache hit, and the recorder resumes again.
+- Accepted choice: keep page-level loading. The bundle is one small file on a
+  cacheable URL, and loading it with the document is what makes the next
+  navigation resume. Deferring it to the first open would save those bytes on
+  pages where nobody reports anything, but recording would start at the open
+  rather than at the navigation.
+- No runtime optimization is authorized by this decision and no child ticket is
+  created for one. A deferred loader may only be proposed as a separate bounded
+  ticket with its own before/after measurements and proof that resumption from
+  the document load is preserved.
 
 ## Limits
 

@@ -1,10 +1,11 @@
-/* Loads the report panel bundle on demand.
+/* Loads the report panel bundle with the page.
 
    The controller renders the page to a PNG, so it is built by esbuild into
    /static/js/report.js like the other editors. This loader is what the
-   component declares, so a page that renders the panel fetches the bundle.
-   A failed request is not a loaded panel: the panel says so and offers one
-   retry on the same page. */
+   component declares, so a page that renders the panel fetches the bundle as
+   it loads: a reproduction has to resume on each document before the panel is
+   opened. A failed request is not a loaded panel: the panel says so and offers
+   one retry on the same page. */
 (function () {
   if (window.__rootGdrReportBundle) return;
   var panel = document.getElementById("report-panel");

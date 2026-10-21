@@ -1,9 +1,10 @@
 /* The report panel: capture the affected page, annotate it and keep a draft.
 
-   Loaded on demand by `editorial/ReportPanel.js`, which the component declares.
-   The capture is why this is a bundle rather than plain shell script: turning
-   the page into a PNG needs a DOM-to-image library, and a reading page must not
-   pay for it.
+   Fetched with every shelled page by `editorial/ReportPanel.js`, which the
+   component declares, so the recorder can resume a reproduction on each
+   document before the panel is opened. The capture is why this is a bundle
+   rather than plain shell script: turning the page into a PNG needs a
+   DOM-to-image library.
 
    The draft is the report id in localStorage, so a reload, a navigation or a
    closed browser does not lose saved work. Nothing here creates a board ticket;

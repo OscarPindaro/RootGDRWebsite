@@ -3,6 +3,8 @@
 The shell is deliberately small: base CSS, four small scripts and a self-hosted
 font subset. The CodeMirror editor is 557 KB and must stay off reading pages, so
 it is loaded on demand by ``layout/BlankPage.jinja`` and is budgeted separately.
+The report bundle is fetched by its panel loader with every shelled page, so a
+reading page pays for it; it is budgeted as its own group rather than left out.
 
 These are committed-file measurements, not a browser trace, so they run offline
 and are deterministic. Each threshold is the measured value plus roughly a third
@@ -104,7 +106,7 @@ BUDGETS = {
         120_000,
         40_000,
     ),
-    "lazy report panel (report.js, only when the panel is opened)": (
+    "report panel (report.js, fetched with every shelled page)": (
         _measure(REPORT),
         30_000,
         12_000,
@@ -181,6 +183,16 @@ def test_the_report_bundle_is_loaded_only_through_its_loader() -> None:
     assert "/static/js/report.js" in loader
     for path in (REPO / "src" / "frontend" / "components").rglob("*.jinja"):
         assert "/static/js/report.js" not in path.read_text(encoding="utf-8"), path
+
+
+def test_the_report_budget_names_the_page_level_fetch() -> None:
+    """The loader fetches report.js with the page, not on the first open.
+
+    The browser tests own the request behaviour; the label only has to keep the
+    page cost from being described as an open-time one.
+    """
+    labels = [label for label in BUDGETS if "report.js" in label]
+    assert labels == ["report panel (report.js, fetched with every shelled page)"]
 
 
 def test_a_read_only_page_does_not_load_the_editor_eagerly() -> None:

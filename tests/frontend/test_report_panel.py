@@ -227,6 +227,64 @@ def test_a_new_report_keeps_its_draft_and_lists_its_captures(component):
     assert entries.nth(2).inner_text().startswith("HTML della pagina")
 
 
+def test_the_page_loads_the_report_bundle_before_the_panel_opens(component):
+    """REQ-0019/T16: the bundle is a page cost, not a first-open cost.
+
+    The loader runs because the page renders the panel, and resumption needs
+    the bundle on every document. Opening the panel adds no second fetch.
+    """
+    component.route_json(
+        "POST",
+        "/api/reports/",
+        status=201,
+        body=_draft(evidence=[_capture("page_html")]),
+    )
+    page = component.mount("editorial.ReportPanel")
+    page.wait_for_function("() => window.__rootGdrReportBundle === 'ready'")
+    assert not page.locator("#report-panel").evaluate("dialog => dialog.open")
+    assert component.requests().count(("GET", "/static/js/report.js")) == 1
+
+    _open(component)
+    _wait_for_state(page, "saved")
+
+    assert component.requests().count(("GET", "/static/js/report.js")) == 1
+
+
+def test_a_new_document_resumes_the_active_reproduction(component):
+    """A navigation reloads the recorder from the session, without the panel."""
+    component.route_json(
+        "GET",
+        f"/api/reports/{DRAFT_ID}",
+        body=_draft(evidence=[_capture("page_html")]),
+    )
+    component.route_json(
+        "POST",
+        f"/api/reports/{DRAFT_ID}/reproduction/steps",
+        body={"frontendSteps": 1},
+    )
+    page = component.mount("editorial.ReportPanel")
+    component.set_local_storage(DRAFT_KEY, DRAFT_ID)
+    page.evaluate("() => sessionStorage.setItem('rootgdr.report.session', 'f-one')")
+    page.wait_for_function("() => window.__rootGdrReportBundle === 'ready'")
+
+    steps = []
+    page.on(
+        "request",
+        lambda request: (
+            steps.append(request.post_data_json)
+            if request.url.endswith(f"/api/reports/{DRAFT_ID}/reproduction/steps")
+            else None
+        ),
+    )
+    page.goto(page.url)
+    _wait_for_request(component, "POST", f"/api/reports/{DRAFT_ID}/reproduction/steps")
+    page.wait_for_timeout(200)
+
+    assert len(steps) == 1
+    assert steps[0]["session"] == "f-one"
+    assert steps[0]["steps"][0]["kind"] == "goto"
+
+
 def test_a_failed_report_bundle_is_visible_and_retried_on_the_same_page(component):
     component.route_json(
         "GET", "/static/js/report.js", status=500, body={"detail": "unavailable"}
