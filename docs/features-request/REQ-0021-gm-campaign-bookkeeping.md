@@ -164,6 +164,13 @@ automation beyond the selected reputation behavior.
 
 ## Evidence and acceptance material
 
+The [real-frontend study](../../prototypes/bookkeeping-study/README.md) provides
+story, NPC, place, character and session views under `/components/planning`.
+See its [code notes](../../prototypes/bookkeeping-study/implementation-notes.md)
+before implementing T03-T14. Both card presentations remain selectable.
+The actual htmx NPC fragment tests asset/state initialization, not persistence.
+No prototype layout is treated as owner-selected or a completed domain ticket.
+
 The separate [friend-feedback reconciliation](REQ-0024-friend-feedback-and-session-context.md)
 preserves all three interface-comment photos and maps each observation to
 existing work, missing requirements or an explicit decision. In particular,

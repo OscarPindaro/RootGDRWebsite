@@ -293,6 +293,13 @@ only with approval, and desktop/phone comparison. Record untested model quality.
 
 ## Integration and unresolved choices
 
+The [frontend study](../../prototypes/bookkeeping-study/README.md) demonstrates
+positive feedback, an editable corrected reference and exact-versus-judge
+presentation. Its [code notes](../../prototypes/bookkeeping-study/implementation-notes.md)
+explain why the local JavaScript comparison is not a production evaluator:
+real checks must query persisted state and mutation evidence.
+No model-quality score or benchmark result is established by the prototype.
+
 This capability is mandatory for agent acceptance, not a later optional analytics
 screen. Build the T03-T05 foundation alongside run/tool infrastructure rather
 than waiting until all agent features are complete.

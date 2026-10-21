@@ -24,3 +24,13 @@ Ogni prototipo è autonomo: si apre con un server statico e non tocca
 - Nessun build step: i prototipi restano file statici. Eventuali dipendenze di sviluppo servono soltanto ai test automatici.
 - Dati finti hardcoded. Un prototipo non è una proposta architetturale: la
   logica server-side definitiva vive in `src/backend/`.
+
+## In-application studies
+
+The owner also approved fixture-backed studies inside the actual frontend.
+[Bookkeeping and agents](bookkeeping-study/README.md) render through real JinjaX
+components and the dev-only application showcase at `/components/planning`.
+Their simulated state never writes campaign data or calls providers.
+The bounded mode is documented in
+[the prototyping process](../docs/development_processes/prototyping.md);
+the older standalone studies and their static conventions remain unchanged.

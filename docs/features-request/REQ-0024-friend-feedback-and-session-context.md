@@ -338,6 +338,13 @@ long lists, saved context selection and desktop/phone comparison.
 
 ## Follow-up and unresolved choices
 
+The [real-frontend study](../../prototypes/bookkeeping-study/README.md) covers
+contextual sessions/stories, NPC references and image activation through the
+actual shell and components. See its
+[code notes](../../prototypes/bookkeeping-study/implementation-notes.md).
+Citation ordering, global profile/search/report relocation and earlier create
+placement have not been selected or implemented by this study.
+
 T02 and T03 are decisions, not permission to implement every alternative.
 T05 precedes ordering implementation. T07 precedes participation schema and UI;
 choosing a derived view may eliminate the need for new association tables.

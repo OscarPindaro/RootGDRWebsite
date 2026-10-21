@@ -258,6 +258,13 @@ fresh desktop/phone evidence; no live deployment or destructive recovery drill.
 
 ## Open decisions and references
 
+An actual-frontend [planning study](../../prototypes/bookkeeping-study/README.md)
+now explores item inspection, whole-request undo and later-edit blocking at
+`/components/planning?view=history`. Its
+[implementation notes](../../prototypes/bookkeeping-study/implementation-notes.md)
+identify component reuse and code entry points. All state is simulated; this
+does not implement or verify the recovery engine in T02-T08.
+
 Decide snapshot granularity for autosave, history/trash access exceptions,
 natural-key reuse, and administrative compensation before their owning tickets.
 Do not introduce automatic expiry or silently drop older versions.

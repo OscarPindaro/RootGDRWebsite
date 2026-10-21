@@ -71,7 +71,18 @@ def test_real_shell_and_cards_do_not_overflow(component, width):
     assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
 
 
-@pytest.mark.parametrize("view", ["places", "character", "session"])
+@pytest.mark.parametrize(
+    "view",
+    [
+        "places",
+        "character",
+        "session",
+        "assistant",
+        "evaluation",
+        "history",
+        "settings",
+    ],
+)
 @pytest.mark.parametrize("width", [320, 390, 901, 1440])
 def test_reference_views_reflow(component, view, width):
     page = mount(component, view)
@@ -95,3 +106,78 @@ def test_character_reputation_is_bounded_and_tracks_are_local(component):
     expect(
         page.get_by_role("checkbox", name="Neri, Ferite, casella 1", exact=True)
     ).not_to_be_checked()
+
+
+def test_feedback_creates_correctable_reference_without_changing_original(component):
+    page = mount(component, "assistant")
+    page.locator("[data-demo-files]").set_input_files(
+        {
+            "name": "appunti.txt",
+            "mimeType": "text/plain",
+            "buffer": b"Appunti sintetici",
+        }
+    )
+    expect(page.locator("[data-demo-file-list]")).to_have_text("appunti.txt")
+    original = page.get_by_label("Richiesta al mondo", exact=True).input_value()
+    page.get_by_role("button", name="Prova il flusso della richiesta").click()
+    page.get_by_role("button", name="Risultato utile", exact=False).click()
+    page.get_by_label("Commento sul risultato", exact=True).fill(
+        "Tutto corretto, tranne il nome."
+    )
+    page.get_by_label("Nome atteso nel riferimento", exact=True).fill("Lina")
+    page.get_by_role("button", name="Mostra bozza corretta").click()
+    expect(page.locator("[data-reference-result]")).to_contain_text("Lina")
+    expect(page.locator("[data-request-echo]")).to_have_text(original)
+    assert not [r for r in component.requests() if r[0] not in {"GET", "HEAD"}]
+
+
+def test_exact_failure_cannot_be_overridden_by_judge_score(component):
+    page = mount(component, "evaluation")
+    page.get_by_label("Personaggi prodotti dal candidato (simulazione)").fill("2")
+    page.get_by_role("button", name="Confronta il candidato di prova").click()
+    expect(page.locator("[data-evaluation-verdict]")).to_contain_text("Non superato")
+    expect(page.locator("[data-evaluation-verdict]")).to_contain_text("4/5")
+    page.get_by_label("Personaggi prodotti dal candidato (simulazione)").fill("1")
+    page.get_by_role("button", name="Confronta il candidato di prova").click()
+    expect(page.locator("[data-evaluation-verdict]")).to_have_attribute(
+        "data-passed", "true"
+    )
+
+
+def test_undo_is_blocked_by_later_work_in_the_simulation(component):
+    page = mount(component, "history")
+    page.locator("label.switch").click()
+    expect(
+        page.get_by_role("switch", name="Simula una modifica successiva")
+    ).to_be_checked()
+    page.get_by_role("button", name="Prova ad annullare la richiesta").click()
+    expect(page.locator("[data-undo-result]")).to_contain_text("bloccato")
+    page.get_by_role("switch", name="Simula una modifica successiva").focus()
+    page.keyboard.press("Space")
+    expect(
+        page.get_by_role("switch", name="Simula una modifica successiva")
+    ).not_to_be_checked()
+    page.get_by_role("button", name="Prova ad annullare la richiesta").click()
+    expect(page.locator("[data-undo-result]")).to_contain_text("annullata nella prova")
+
+
+def test_prompt_version_demo_does_not_claim_to_change_active_configuration(component):
+    page = mount(component, "settings")
+    page.get_by_label("Istruzioni dell'agente", exact=True).fill(
+        "Nuova istruzione di prova."
+    )
+    page.get_by_role("button", name="Prova una nuova versione delle istruzioni").click()
+    expect(page.locator("[data-settings-version]")).to_contain_text(
+        "Bozza illustrativa v2"
+    )
+    expect(page.locator("[data-settings-version]")).to_contain_text(
+        "precedenti restano su v1"
+    )
+
+
+@pytest.mark.parametrize("view", ["story", "character", "evaluation", "settings"])
+def test_enlarged_text_does_not_overflow_on_phone(component, view):
+    page = mount(component, view)
+    page.set_viewport_size({"width": 320, "height": 900})
+    page.evaluate("document.documentElement.style.fontSize = '200%'")
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")

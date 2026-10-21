@@ -89,3 +89,42 @@ Docker desktop/phone captures have no overflow, errors or mutation requests.
 Compared with the retained prototype document/collection captures, the composition
 preserves the atlas vocabulary while using ordinary content groups rather than
 putting every place/session fact into another card.
+
+## Agent/recovery/evaluation slice
+
+There are now nine views in the actual dev application. Assistant interactions
+are prerecorded examples; source selection lists filenames without uploading
+bytes. Feedback opens an inline reference draft and preserves the original
+request. The evaluation demonstration deliberately fails when two characters
+are produced, despite an illustrative positive judge score. Recovery can
+demonstrate blocking on a later edit. Prompt changes create only a local draft.
+
+The collection also exercises an actual htmx GET fragment. Its inserted NPC
+reference keeps the current demonstration marks and receives the correct
+component styling. The browser capture verifies this against the running backend,
+not only a fake component response.
+
+The final capture command is:
+
+```console
+uv run --offline python prototypes/bookkeeping-study/capture.py \
+  --base-url http://127.0.0.1:8000 \
+  --output-dir /tmp/rootgdr-bookkeeping-study-final \
+  --views story npcs places character session assistant evaluation history settings
+```
+
+Screenshots and `metrics.json` are local verification artifacts, not committed
+source assets. They cover all nine views at 1440px and 390px; component tests also
+exercise 320/901px and enlarged text. There are no campaign mutation requests or
+provider calls. The prototype is absent from the production app's route schema.
+The Impeccable detector returned an empty finding list for the new UI files.
+
+See [implementation notes](implementation-notes.md) for component limitations,
+code entry points and remaining comparisons. No winning card layout, global
+shell rearrangement or production feature implementation is declared accepted.
+An independent visual reviewer was not launched; the author inspected the
+captures and documented the limitations. Existing frontend fixes remain owned
+by their original workstream.
+
+The final [verification/self-review](review.md) records the tested scope,
+measured sample contrast, capture results and remaining limitations.

@@ -60,6 +60,55 @@ async def capture(base_url: str, output: Path, views: list[str]) -> None:
                     await page.screenshot(
                         path=output / f"{view}-{name}-reverse.png", full_page=True
                     )
+                if view == "assistant":
+                    await page.locator(
+                        "[data-demo-request] button[type='submit']"
+                    ).click()
+                    await page.locator("[data-reference-open]").first.click()
+                    await page.locator("[name='planning-reference-name']").fill(
+                        "Nome corretto"
+                    )
+                    await page.locator("[data-reference-correct]").click()
+                elif view == "evaluation":
+                    await page.locator("[name='planning-produced-count']").fill("2")
+                    await page.locator(
+                        "[data-demo-evaluation] button[type='submit']"
+                    ).click()
+                elif view == "history":
+                    await page.locator("label.switch").click()
+                    await page.locator("[data-demo-undo]").click()
+                elif view == "settings":
+                    await page.locator(
+                        "[data-demo-settings] button[type='submit']"
+                    ).click()
+                if view in {"assistant", "evaluation", "history", "settings"}:
+                    await page.evaluate("window.scrollTo(0, 0)")
+                    await page.screenshot(
+                        path=output / f"{view}-{name}-interaction.png", full_page=True
+                    )
+                if view == "npcs":
+                    await page.get_by_role(
+                        "button", name="Scheda aperta", exact=True
+                    ).click()
+                    marks = page.locator("[data-track='ada:wounds:0']")
+                    await marks.check()
+                    await page.get_by_role(
+                        "button", name="Apri riferimento rapido"
+                    ).click()
+                    await page.locator(
+                        "#planning-quick-reference [data-npc='ada']"
+                    ).wait_for()
+                    assert await marks.count() == 2
+                    assert (
+                        await marks.nth(0).is_checked()
+                        and await marks.nth(1).is_checked()
+                    )
+                    assert (
+                        await page.locator(
+                            "#planning-quick-reference .planning-npc__tracks"
+                        ).evaluate("element => getComputedStyle(element).display")
+                        == "grid"
+                    )
                 overflow = await page.evaluate(
                     "document.documentElement.scrollWidth > window.innerWidth"
                 )

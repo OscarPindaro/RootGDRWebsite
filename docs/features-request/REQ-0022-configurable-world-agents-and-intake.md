@@ -426,6 +426,13 @@ or deterministic reproduction of a paid rerun.
 
 ## References and registration limits
 
+The [actual-frontend prototype](../../prototypes/bookkeeping-study/README.md)
+contains assistant/source, prompt/model, history and evaluation views.
+Its [implementation notes](../../prototypes/bookkeeping-study/implementation-notes.md)
+describe real component seams, including the multi-file input limitation.
+Responses, writes and versions are explicitly simulated; no provider or durable
+agent functionality is implemented or verified by that UI.
+
 Use the [research](../development_processes/world-agents-research-2026-10-21.md),
 [recovery specification](REQ-0020-world-history-and-reversible-changes.md),
 [bookkeeping specification](REQ-0021-gm-campaign-bookkeeping.md),

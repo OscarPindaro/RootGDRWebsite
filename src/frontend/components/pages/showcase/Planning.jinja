@@ -1,5 +1,5 @@
 {#def study #}
-{#css pages/showcase/Planning.css, layout/Page.css, common/Button.css, common/Alert.css, common/HStack.css, common/Grid.css, common/Pill.css, common/Dialog.css, common/Field.css, editorial/Face.css, common/Avatar.css, common/Icon.css, common/Mark.css, common/Menu.css, common/RequestFallback.css, common/SaveIndicator.css, common/Tooltip.css, editorial/ReportPanel.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css #}
+{#css pages/showcase/Planning.css, layout/Page.css, common/Button.css, common/Alert.css, common/HStack.css, common/Grid.css, common/Pill.css, common/Dialog.css, common/Field.css, editorial/Face.css, common/Avatar.css, common/Icon.css, common/Mark.css, common/Menu.css, common/RequestFallback.css, common/SaveIndicator.css, common/Tooltip.css, editorial/ReportPanel.css, layout/Palette.css, layout/Rail.css, layout/Topbar.css, layout/UserMenu.css, common/Switch.css, common/Table.css #}
 {#js pages/showcase/Planning.js #}
 <layout.Page :title="study.title" :nav="study.nav" :active="study.view" wide>
   <div class="planning" data-planning data-card-mode="open">
@@ -91,11 +91,15 @@
     {% elif study.view == "npcs" %}
     <section class="planning__section" aria-label="NPC della storia">
       <p>Un individuo e un gruppo. Tracciati e mosse sono gli stessi della vista storia.</p>
+      <common.Button variant="secondary" size="sm" hx-get="/components/planning/npc/ada"
+                     hx-target="#planning-quick-reference" hx-swap="innerHTML">Apri riferimento rapido</common.Button>
+      <div id="planning-quick-reference" class="planning__quick-reference" aria-live="polite"></div>
       <div class="planning__npc-grid">
         {% for npc in study.npcs %}<pages.showcase.PlanningNpc :npc="npc" />{% endfor %}
       </div>
     </section>
-    {% else %}<pages.showcase.PlanningReference :study="study" />{% endif %}
+    {% elif study.view in ["places", "character", "session"] %}<pages.showcase.PlanningReference :study="study" />
+    {% else %}<pages.showcase.PlanningAgent :study="study" />{% endif %}
     <p class="planning__feedback" data-planning-feedback role="status" aria-live="polite">Modalita dimostrativa: nessun salvataggio.</p>
     <common.Dialog title="Modifica immagine · prova" id="planning-image">
       <p>Qui si apre la modifica dell'immagine, non la carta sul retro.</p>

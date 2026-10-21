@@ -23,6 +23,13 @@ The fixture names, values and developments are explicitly illustrative. Track
 changes and resolution text reset on reload. No provider or domain write API
 is called, and the fixture route has no database dependency.
 
+The assistant, evaluation, history and settings views demonstrate source
+selection, a prerecorded response, feedback/reference correction, an exact
+check overriding a favorable illustrative judge score, blocked undo after a
+later edit, and a new local prompt draft. These are UI simulations, not agents,
+version storage or an evaluation engine. No real source file bytes or secrets
+are uploaded.
+
 ## Implementation
 
 `src/backend/showcase/planning.py` supplies Pydantic fixture models and the GET
@@ -33,6 +40,11 @@ Shared components are composed rather than modified. The NPC uses a local
 article because `EntityCard` is a link and cannot safely contain independent
 track inputs and image-edit buttons. This is a concrete future component
 boundary to consider, not a reason to extend EntityCard blindly.
+
+The real GET fragment route `/components/planning/npc/ada` exercises htmx
+insertion into the collection. Newly inserted references retain browser-only
+marks and load their real component CSS. Implementation implications are
+recorded in `prototypes/bookkeeping-study/implementation-notes.md`.
 
 ## Verification and limits
 

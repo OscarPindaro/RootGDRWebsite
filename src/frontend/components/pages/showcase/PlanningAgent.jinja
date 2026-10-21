@@ -1,0 +1,139 @@
+{#def study #}
+{#css pages/showcase/Planning.css, common/Button.css, common/Field.css, common/Alert.css, common/Pill.css, common/Switch.css, common/Table.css, common/Dialog.css, common/Icon.css, common/Tooltip.css #}
+{% if study.view == "assistant" %}
+<div class="planning__folio">
+  <section aria-labelledby="planning-assistant">
+    <h2 id="planning-assistant">Una richiesta, una traccia leggibile</h2>
+    <common.Alert variant="info">Nessun modello connesso. Il testo non viene interpretato: il risultato qui sotto e un esempio preregistrato.</common.Alert>
+    <label class="planning__file-input">
+      <span>Appunti, foto o trascrizione · prova locale</span>
+      <input type="file" multiple accept="image/*,.txt,.pdf" data-demo-files>
+    </label>
+    <p class="planning__hint" data-demo-file-list>Nessun file scelto. I file non vengono caricati sul server.</p>
+    <form data-demo-request class="planning__form">
+      <common.Field label="Richiesta al mondo" name="planning-request" type="textarea" required
+                    value="Crea un personaggio di nome Neri a partire dai miei appunti." />
+      <common.Button type="submit">Prova il flusso della richiesta</common.Button>
+    </form>
+    <div data-demo-response hidden class="planning__section">
+      <h3>Risultato preregistrato · esempio</h3>
+      <p data-request-echo></p>
+      <p>La prova mostra la creazione di Neri, con un collegamento alla fonte.
+        Nessun personaggio viene davvero creato.</p>
+      <details class="planning__details"><summary>Azioni e risultato</summary>
+        <ol><li>Leggere la fonte autorizzata.</li><li>Controllare se il personaggio esiste.</li><li>Creare un solo personaggio.</li></ol>
+      </details>
+      <div class="planning__feedback-controls">
+        <common.Button variant="secondary" data-reference-open>Risultato utile · conserva come riferimento</common.Button>
+        <common.Field label="Commento sul risultato" name="planning-feedback" type="textarea"
+                      placeholder="Tutto corretto, tranne..." />
+        <common.Button variant="secondary" data-reference-open>Prepara un esempio dal commento</common.Button>
+      </div>
+      <section data-reference-panel hidden class="planning__resolution" aria-label="Bozza del riferimento">
+        <h3>Correggi il riferimento, non il passato</h3>
+        <p>Il risultato originale resta intatto. Un LLM potra proporre la correzione; qui la modifichi soltanto nella prova.</p>
+        <common.Field label="Nome atteso nel riferimento" name="planning-reference-name" value="Neri" />
+        <common.Button variant="secondary" data-reference-correct>Mostra bozza corretta</common.Button>
+        <p data-reference-result role="status"></p>
+        <a href="?view=evaluation">Esplora i controlli esatti e il giudice</a>
+      </section>
+    </div>
+  </section>
+  <aside>
+    <h2>Fonti e spazio di lavoro</h2>
+    <div class="planning__place"><strong>Appunti originali</strong><p>Pagina 1 / Pagina 2</p><span class="planning__hint">Segnaposto: nessuna foto personale caricata.</span></div>
+    <div class="planning__place"><strong>Trascrizione</strong><p>Separata dall'originale e dalla prosa finale.</p></div>
+    <div class="planning__place"><strong>Workspace privato</strong><p>Utente / mondo / conversazione, con bozze della singola richiesta.</p></div>
+    <p class="planning__hint">Il prototipo non accede al filesystem del server, non carica file e non invia dati a provider.</p>
+  </aside>
+</div>
+{% elif study.view == "evaluation" %}
+<div class="planning__folio">
+  <section aria-labelledby="planning-evaluation">
+    <h2 id="planning-evaluation">Un esempio, controlli verificabili</h2>
+    <p>Riferimento sintetico: creare esattamente un personaggio, di nome Neri,
+      senza toccare altro. Suite v1 / rubrica v1 / risultato dimostrativo.</p>
+    <common.Table :headers="['Controllo', 'Atteso', 'Osservato', 'Tipo']" stack label="Controlli del benchmark">
+      {% for check in study.checks %}
+      <tr>
+        <td data-label="Controllo">{{ check.name }}</td>
+        <td data-label="Atteso">{{ check.expected }}</td>
+        <td data-label="Osservato">{% if loop.first %}<span data-produced-count>{{ check.observed }}</span>{% else %}{{ check.observed }}{% endif %}</td>
+        <td data-label="Tipo">{{ check.kind }}</td>
+      </tr>
+      {% endfor %}
+    </common.Table>
+    <form data-demo-evaluation class="planning__form">
+      <common.Field label="Personaggi prodotti dal candidato (simulazione)" name="planning-produced-count" type="number" value="1" required
+                    helper="Prova 2: il controllo esatto deve fallire anche con un buon giudizio sullo stile." />
+      <common.Button type="submit">Confronta il candidato di prova</common.Button>
+    </form>
+    <div class="planning__verdict" data-evaluation-verdict role="status">Confronto non ancora eseguito nella prova.</div>
+    <details class="planning__details"><summary>Originale e riferimento corretto</summary>
+      <p>Un commento puo correggere il nome atteso, la prosa o un controllo.
+        La nuova versione non riscrive il risultato originale e non cambia i vecchi punteggi.</p>
+    </details>
+  </section>
+  <aside>
+    <h2>Cosa stai misurando?</h2>
+    <h3>Replay registrato</h3><p>Risposte e richieste agli strumenti gia conservate. Controlla strumenti e orchestrazione.</p>
+    <h3>Nuova esecuzione</h3><p>Stessi dati iniziali, nuovo agente. Serve per misurare prompt e modello cambiati.</p>
+    <common.Alert variant="warning">Un punteggio del giudice non supera un errore nei controlli esatti.</common.Alert>
+    <p class="planning__hint">Nessuna API chiamata. Costi, latenza e qualita del modello non sono misurati.</p>
+  </aside>
+</div>
+{% elif study.view == "history" %}
+<section aria-labelledby="planning-history">
+  <h2 id="planning-history">Recuperare una richiesta, senza perdere lo storico</h2>
+  <p>Richiesta dimostrativa: aggiornamento di un personaggio e di un conflitto.
+    Puoi ispezionare una versione oppure provare l'annullamento dell'intera richiesta.</p>
+  <common.Table :headers="['Elemento', 'Prima', 'Dopo', 'Azione']" stack label="Modifiche della richiesta">
+    <tr><td data-label="Elemento">Neri / Ferite</td><td data-label="Prima">0 su 4</td><td data-label="Dopo">1 su 4</td>
+      <td data-label="Azione"><common.Button variant="secondary" size="sm" data-dialog-open="planning-version">Ispeziona versione</common.Button></td></tr>
+    <tr><td data-label="Elemento">Modulo 4a e Documento 7b</td><td data-label="Prima">Attivo</td><td data-label="Dopo">Risolto con esito scritto</td>
+      <td data-label="Azione"><common.Button variant="secondary" size="sm" data-dialog-open="planning-version">Ispeziona versione</common.Button></td></tr>
+  </common.Table>
+  <div class="planning__form">
+    <common.Switch name="planning-later-edit" label="Simula una modifica successiva di una persona"
+                   helper="L'annullamento deve fermarsi prima di sovrascrivere questo lavoro." />
+    <common.Button variant="secondary" data-demo-undo>Prova ad annullare la richiesta</common.Button>
+    <p data-undo-result role="status">Nessun annullamento di prova eseguito.</p>
+  </div>
+  <details class="planning__details"><summary>Cestino e allegati</summary>
+    <p>Un elemento eliminato resta recuperabile con i suoi collegamenti. I file
+      necessari alle vecchie versioni non vengono cancellati dal normale comando elimina.</p>
+  </details>
+</section>
+<common.Dialog title="Versione precedente · esempio" id="planning-version">
+  <p><strong>Neri / Ferite: 0 su 4.</strong></p>
+  <p>Il ripristino reale creera una nuova versione. Questa finestra non ripristina dati.</p>
+  <common.Button variant="secondary" data-dialog-close>Chiudi il confronto</common.Button>
+</common.Dialog>
+{% else %}
+<div class="planning__folio">
+  <section aria-labelledby="planning-settings">
+    <h2 id="planning-settings">Istruzioni e modello, versionati</h2>
+    <form data-demo-settings class="planning__form">
+      <common.Field label="Profilo" name="planning-profile" value="Ollama Cloud / assistente del mondo" />
+      <common.Field label="Endpoint" name="planning-endpoint" value="https://ollama.com" />
+      <common.Field label="Modello" name="planning-model" placeholder="Da scegliere dopo la verifica delle capacita" />
+      <common.Field label="Istruzioni dell'agente" name="planning-instructions" type="textarea"
+                    value="Conserva lo stile degli appunti. Non inventare fatti. Usa soltanto gli strumenti autorizzati." />
+      <common.Button type="submit">Prova una nuova versione delle istruzioni</common.Button>
+      <p data-settings-version role="status">Versione illustrativa: v1. Nessuna configurazione attiva modificata.</p>
+    </form>
+  </section>
+  <aside>
+    <h2>Configurazione della richiesta</h2>
+    <dl class="planning__facts">
+      <dt>Provider</dt><dd>Ollama Cloud, prima integrazione prevista</dd>
+      <dt>Credenziali</dt><dd>Riferimento lato server; nessuna chiave in questa pagina</dd>
+      <dt>Altri provider</dt><dd>Adattatori futuri, nessun fallback silenzioso</dd>
+    </dl>
+    <h3>Una richiesta mantiene la sua versione</h3>
+    <p>Modificare il prompt non cambia una richiesta gia in corso o in attesa di chiarimento.</p>
+    <a href="?view=evaluation">Verifica il cambiamento sulla stessa suite</a>
+    <p class="planning__hint">Le istruzioni non possono concedere permessi che l'utente non possiede.</p>
+  </aside>
+</div>
+{% endif %}

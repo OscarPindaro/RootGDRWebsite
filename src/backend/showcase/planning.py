@@ -11,7 +11,17 @@ from ..dependencies import get_catalog_dep
 from ..navigation import NavItem, Option
 
 router = APIRouter(tags=["showcase"])
-StudyView = Literal["story", "npcs", "places", "character", "session"]
+StudyView = Literal[
+    "story",
+    "npcs",
+    "places",
+    "character",
+    "session",
+    "assistant",
+    "evaluation",
+    "history",
+    "settings",
+]
 
 
 class StudyTrack(BaseModel):
@@ -49,6 +59,13 @@ class StudyPlace(BaseModel):
     description: str
 
 
+class StudyCheck(BaseModel):
+    name: str
+    expected: str
+    observed: str
+    kind: Literal["Esatto", "Giudice"]
+
+
 class PlanningStudy(BaseModel):
     view: StudyView
     title: str
@@ -57,6 +74,7 @@ class PlanningStudy(BaseModel):
     npcs: list[StudyNpc]
     places: list[StudyPlace]
     character_tracks: list[StudyTrack]
+    checks: list[StudyCheck]
 
 
 def planning_study(view: StudyView = "story") -> PlanningStudy:
@@ -66,6 +84,10 @@ def planning_study(view: StudyView = "story") -> PlanningStudy:
         ("places", "Luoghi e fazioni", "luoghi"),
         ("character", "Personaggio", "personaggi"),
         ("session", "Sessione", "sessioni"),
+        ("assistant", "Assistente e fonti", "pagina"),
+        ("evaluation", "Valutazione", "storie"),
+        ("history", "Storico e recupero", "sessioni"),
+        ("settings", "Prompt e modelli", "mondo"),
     ]
     return PlanningStudy(
         view=view,
@@ -82,6 +104,32 @@ def planning_study(view: StudyView = "story") -> PlanningStudy:
             for key, label, mark in labels
         ],
         choices=[Option(value=key, label=label) for key, label, _mark in labels],
+        checks=[
+            StudyCheck(
+                name="Personaggi creati",
+                expected="Esattamente 1",
+                observed="1",
+                kind="Esatto",
+            ),
+            StudyCheck(
+                name="Nome del personaggio",
+                expected="Neri",
+                observed="Neri",
+                kind="Esatto",
+            ),
+            StudyCheck(
+                name="Altri oggetti modificati",
+                expected="Nessuno",
+                observed="Nessuno",
+                kind="Esatto",
+            ),
+            StudyCheck(
+                name="Fedelta e stile",
+                expected="Rubrica v1",
+                observed="4/5 illustrativo",
+                kind="Giudice",
+            ),
+        ],
         places=[
             StudyPlace(
                 name="Borgo Mulino",
@@ -171,3 +219,12 @@ async def planning_page(
 ) -> HTMLResponse:
     study = planning_study(view)
     return catalog.render("pages.showcase.Planning", study=study)
+
+
+@router.get("/components/planning/npc/{npc_key}", response_class=HTMLResponse)
+async def planning_npc_fragment(
+    npc_key: Literal["ada", "patrol"],
+    catalog: Catalog = Depends(get_catalog_dep),
+) -> HTMLResponse:
+    npc = next(npc for npc in planning_study().npcs if npc.key == npc_key)
+    return catalog.render("pages.showcase.PlanningNpc", npc=npc)

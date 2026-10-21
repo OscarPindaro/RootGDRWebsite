@@ -22,6 +22,15 @@
 .planning__facts dd { margin: 0; }
 .planning__character-tracks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--sp-4); }
 .planning__reputation output { display: inline-block; min-width: var(--sp-10); text-align: center; font-family: var(--mono); }
+.planning__form, .planning__feedback-controls { display: grid; gap: var(--sp-5); margin: var(--sp-6) 0; }
+.planning__form .btn, .planning__feedback-controls .btn { justify-self: start; }
+.planning__verdict { padding: var(--sp-5); border: var(--rule-ink); margin: var(--sp-6) 0; font-family: var(--sans); }
+.planning__verdict[data-passed="false"] { border-width: var(--sp-1); }
+.planning__reading .prose, .planning__reading > p { max-width: var(--measure); }
+.planning > section > p { max-width: var(--measure); }
+.planning__quick-reference { max-width: 30rem; margin: var(--sp-5) 0; }
+.planning__file-input { display: grid; gap: var(--sp-3); padding: var(--sp-4); border: var(--rule); margin-top: var(--sp-5); font-family: var(--sans); font-size: var(--text-sm); }
+.planning__file-input input { max-width: 100%; min-width: 0; }
 .planning__heading {
   display: flex;
   align-items: start;
