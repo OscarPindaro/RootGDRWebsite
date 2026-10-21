@@ -1,0 +1,80 @@
+[
+  {
+    "device": "desktop",
+    "page": "collection",
+    "rules_including_advisory": {
+      "undersized-ui-text": 2,
+      "hero-eyebrow-chip": 1,
+      "skipped-heading": 1,
+      "cream-palette": 1
+    }
+  },
+  {
+    "device": "desktop",
+    "page": "document",
+    "rules_including_advisory": {
+      "undersized-ui-text": 2,
+      "hero-eyebrow-chip": 1,
+      "cream-palette": 1
+    }
+  },
+  {
+    "device": "desktop",
+    "page": "settings",
+    "rules_including_advisory": {
+      "undersized-ui-text": 1,
+      "hero-eyebrow-chip": 1,
+      "kicker-above-heading": 1,
+      "cream-palette": 1
+    }
+  },
+  {
+    "device": "desktop",
+    "page": "admin",
+    "rules_including_advisory": {
+      "undersized-ui-text": 1,
+      "hero-eyebrow-chip": 1,
+      "low-contrast": 25,
+      "kicker-above-heading": 2,
+      "cream-palette": 1
+    }
+  },
+  {
+    "device": "phone",
+    "page": "collection",
+    "rules_including_advisory": {
+      "undersized-ui-text": 2,
+      "kicker-above-heading": 1,
+      "skipped-heading": 1,
+      "cream-palette": 1
+    }
+  },
+  {
+    "device": "phone",
+    "page": "document",
+    "rules_including_advisory": {
+      "undersized-ui-text": 2,
+      "kicker-above-heading": 1,
+      "cream-palette": 1
+    }
+  },
+  {
+    "device": "phone",
+    "page": "settings",
+    "rules_including_advisory": {
+      "undersized-ui-text": 1,
+      "kicker-above-heading": 2,
+      "cream-palette": 1
+    }
+  },
+  {
+    "device": "phone",
+    "page": "admin",
+    "rules_including_advisory": {
+      "undersized-ui-text": 1,
+      "low-contrast": 25,
+      "kicker-above-heading": 3,
+      "cream-palette": 1
+    }
+  }
+]

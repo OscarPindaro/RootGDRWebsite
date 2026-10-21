@@ -1,0 +1,49 @@
+{
+  "total": 65,
+  "severity": {
+    "warning": 46,
+    "advisory": 19
+  },
+  "rules": {
+    "low-contrast": 29,
+    "undersized-ui-text": 10,
+    "cramped-padding": 14,
+    "cream-palette": 4,
+    "skipped-heading": 1,
+    "organic-clip-path": 4,
+    "kicker-above-heading": 3
+  },
+  "pages": {
+    "collection": {
+      "low-contrast": 1,
+      "undersized-ui-text": 3,
+      "cramped-padding": 2,
+      "cream-palette": 1,
+      "skipped-heading": 1,
+      "organic-clip-path": 1
+    },
+    "document": {
+      "low-contrast": 1,
+      "undersized-ui-text": 3,
+      "cramped-padding": 5,
+      "cream-palette": 1,
+      "organic-clip-path": 1
+    },
+    "settings": {
+      "low-contrast": 1,
+      "undersized-ui-text": 2,
+      "cramped-padding": 3,
+      "kicker-above-heading": 1,
+      "cream-palette": 1,
+      "organic-clip-path": 1
+    },
+    "admin": {
+      "low-contrast": 26,
+      "undersized-ui-text": 2,
+      "cramped-padding": 4,
+      "kicker-above-heading": 2,
+      "cream-palette": 1,
+      "organic-clip-path": 1
+    }
+  }
+}

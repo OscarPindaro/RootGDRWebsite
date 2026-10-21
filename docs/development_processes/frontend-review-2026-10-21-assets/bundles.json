@@ -1,0 +1,26 @@
+[
+  {
+    "bundle": "editor",
+    "matches": true,
+    "committed_bytes": 560553,
+    "rebuilt_bytes": 560553,
+    "committed_sha256": "1a21e044682761a7d4dcad3080a320d5501095c9a1af82ab45105ffd9da8b5ea",
+    "rebuilt_sha256": "1a21e044682761a7d4dcad3080a320d5501095c9a1af82ab45105ffd9da8b5ea"
+  },
+  {
+    "bundle": "drawings",
+    "matches": true,
+    "committed_bytes": 99142,
+    "rebuilt_bytes": 99142,
+    "committed_sha256": "cb754d33cc340655ddf69249fa77b401f7756e6f864a26c9a2fff7ffa48aa2b5",
+    "rebuilt_sha256": "cb754d33cc340655ddf69249fa77b401f7756e6f864a26c9a2fff7ffa48aa2b5"
+  },
+  {
+    "bundle": "report",
+    "matches": true,
+    "committed_bytes": 27733,
+    "rebuilt_bytes": 27733,
+    "committed_sha256": "bf1276f33e08c05361b5ac622e424ac3a3dc2c025f29219f80714369c4893fdc",
+    "rebuilt_sha256": "bf1276f33e08c05361b5ac622e424ac3a3dc2c025f29219f80714369c4893fdc"
+  }
+]

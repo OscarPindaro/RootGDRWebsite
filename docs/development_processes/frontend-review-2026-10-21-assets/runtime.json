@@ -1,0 +1,4747 @@
+{
+  "baseUrl": "http://127.0.0.1:8000",
+  "cases": {
+    "login": {
+      "cold": {
+        "navigation": [
+          {
+            "transferSize": 6445,
+            "encodedBodySize": 6145,
+            "decodedBodySize": 6145,
+            "duration": 62.59999999962747
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 132300,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 12.600000000558794
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 46012,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 30.299999999813735
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 18787,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 20.200000000186265
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 5408,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 19.90000000037253
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 851,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 20.300000000745058
+          },
+          {
+            "path": "/static/components/common/Divider.css",
+            "initiator": "link",
+            "transferSize": 821,
+            "encodedBodySize": 521,
+            "decodedBodySize": 521,
+            "duration": 19.700000000186265
+          },
+          {
+            "path": "/static/components/common/Field.css",
+            "initiator": "link",
+            "transferSize": 6934,
+            "encodedBodySize": 6634,
+            "decodedBodySize": 6634,
+            "duration": 20.09999999962747
+          },
+          {
+            "path": "/static/components/common/MediaFrame.css",
+            "initiator": "link",
+            "transferSize": 911,
+            "encodedBodySize": 611,
+            "decodedBodySize": 611,
+            "duration": 17.899999999441206
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 770,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 29.299999999813735
+          },
+          {
+            "path": "/static/components/pages/login/Login.css",
+            "initiator": "link",
+            "transferSize": 2725,
+            "encodedBodySize": 2425,
+            "decodedBodySize": 2425,
+            "duration": 25
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 1079,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 28
+          },
+          {
+            "path": "/static/components/pages/login/Login.js",
+            "initiator": "script",
+            "transferSize": 1390,
+            "encodedBodySize": 1090,
+            "decodedBodySize": 1090,
+            "duration": 28.59999999962747
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 51218,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 28.799999999813735
+          },
+          {
+            "path": "/static/img/plate-1.svg",
+            "initiator": "img",
+            "transferSize": 1093,
+            "encodedBodySize": 793,
+            "decodedBodySize": 793,
+            "duration": 35.90000000037253
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 801,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 35.799999999813735
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 6207,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 35.59999999962747
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 1315,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 35.799999999813735
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 4563,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 35.80000000074506
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 15188,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 12.5
+          }
+        ],
+        "stylesheets": 9,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/pages/login/Login.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js"
+        ],
+        "titleTop": NaN,
+        "viewport": 1440,
+        "accessibleName": null
+      },
+      "warm": {
+        "navigation": [
+          {
+            "transferSize": 6445,
+            "encodedBodySize": 6145,
+            "decodedBodySize": 6145,
+            "duration": 33.69999999925494
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 0
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Divider.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 521,
+            "decodedBodySize": 521,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Field.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 6634,
+            "decodedBodySize": 6634,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/MediaFrame.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 611,
+            "decodedBodySize": 611,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/pages/login/Login.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2425,
+            "decodedBodySize": 2425,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/pages/login/Login.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1090,
+            "decodedBodySize": 1090,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-1.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 793,
+            "decodedBodySize": 793,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 0
+          }
+        ],
+        "stylesheets": 9,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/pages/login/Login.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js"
+        ],
+        "titleTop": NaN,
+        "viewport": 1440,
+        "accessibleName": null
+      }
+    },
+    "world-list": {
+      "cold": {
+        "navigation": [
+          {
+            "transferSize": 33171,
+            "encodedBodySize": 32871,
+            "decodedBodySize": 32871,
+            "duration": 128.19999999925494
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 132300,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 20.600000000558794
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 18787,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 19.200000000186265
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 5408,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 19.700000000186265
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 46012,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 51.799999999813735
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 1003,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 26.299999999813735
+          },
+          {
+            "path": "/static/components/common/Grid.css",
+            "initiator": "link",
+            "transferSize": 1751,
+            "encodedBodySize": 1451,
+            "decodedBodySize": 1451,
+            "duration": 27
+          },
+          {
+            "path": "/static/components/common/Card.css",
+            "initiator": "link",
+            "transferSize": 909,
+            "encodedBodySize": 609,
+            "decodedBodySize": 609,
+            "duration": 28.90000000037253
+          },
+          {
+            "path": "/static/components/common/VStack.css",
+            "initiator": "link",
+            "transferSize": 587,
+            "encodedBodySize": 287,
+            "decodedBodySize": 287,
+            "duration": 27.699999999254942
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 2094,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 28.59999999962747
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 945,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 28.799999999813735
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 2341,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 32.799999999813735
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 2182,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 32.09999999962747
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 1486,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 32.700000000186265
+          },
+          {
+            "path": "/static/components/common/Pill.css",
+            "initiator": "link",
+            "transferSize": 2670,
+            "encodedBodySize": 2370,
+            "decodedBodySize": 2370,
+            "duration": 33.59999999962747
+          },
+          {
+            "path": "/static/components/pages/worlds/WorldList.css",
+            "initiator": "link",
+            "transferSize": 1708,
+            "encodedBodySize": 1408,
+            "decodedBodySize": 1408,
+            "duration": 33.799999999813735
+          },
+          {
+            "path": "/static/components/common/MediaFrame.css",
+            "initiator": "link",
+            "transferSize": 911,
+            "encodedBodySize": 611,
+            "decodedBodySize": 611,
+            "duration": 33.799999999813735
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 5490,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 38.799999999813735
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 851,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 37.700000000186265
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 2586,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 38.60000000055879
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 865,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 38.60000000055879
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 770,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 36.5
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 1079,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 38.299999999813735
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 839,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 51.5
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 731,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 44.90000000037253
+          },
+          {
+            "path": "/static/components/editorial/Masthead.css",
+            "initiator": "link",
+            "transferSize": 1246,
+            "encodedBodySize": 946,
+            "decodedBodySize": 946,
+            "duration": 46.799999999813735
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 6444,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 47.799999999813735
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 1964,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 47.90000000037253
+          },
+          {
+            "path": "/static/components/editorial/Cover.css",
+            "initiator": "link",
+            "transferSize": 1368,
+            "encodedBodySize": 1068,
+            "decodedBodySize": 1068,
+            "duration": 47.90000000037253
+          },
+          {
+            "path": "/static/components/editorial/Collection.css",
+            "initiator": "link",
+            "transferSize": 1707,
+            "encodedBodySize": 1407,
+            "decodedBodySize": 1407,
+            "duration": 50.89999999944121
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 13256,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 51.299999999813735
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 5155,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 51.40000000037253
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 3367,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 51.200000000186265
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 3274,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 55.90000000037253
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 1309,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 56.40000000037253
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 5676,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 56.299999999813735
+          },
+          {
+            "path": "/static/img/plate-1.svg",
+            "initiator": "img",
+            "transferSize": 1093,
+            "encodedBodySize": 793,
+            "decodedBodySize": 793,
+            "duration": 67.80000000074506
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 824,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 56.200000000186265
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 11568,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 56.10000000055879
+          },
+          {
+            "path": "/static/img/plate-4.svg",
+            "initiator": "img",
+            "transferSize": 1123,
+            "encodedBodySize": 823,
+            "decodedBodySize": 823,
+            "duration": 68.09999999962747
+          },
+          {
+            "path": "/static/img/plate-3.svg",
+            "initiator": "img",
+            "transferSize": 1043,
+            "encodedBodySize": 743,
+            "decodedBodySize": 743,
+            "duration": 68.79999999981374
+          },
+          {
+            "path": "/static/img/plate-2.svg",
+            "initiator": "img",
+            "transferSize": 1093,
+            "encodedBodySize": 793,
+            "decodedBodySize": 793,
+            "duration": 69.70000000018626
+          },
+          {
+            "path": "/static/img/plate-5.svg",
+            "initiator": "img",
+            "transferSize": 1093,
+            "encodedBodySize": 793,
+            "decodedBodySize": 793,
+            "duration": 73.29999999981374
+          },
+          {
+            "path": "/static/img/plate-6.svg",
+            "initiator": "img",
+            "transferSize": 1063,
+            "encodedBodySize": 763,
+            "decodedBodySize": 763,
+            "duration": 79.90000000037253
+          },
+          {
+            "path": "/static/img/plate-7.svg",
+            "initiator": "img",
+            "transferSize": 1167,
+            "encodedBodySize": 867,
+            "decodedBodySize": 867,
+            "duration": 86.79999999981374
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 51218,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 56.299999999813735
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 801,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 68.79999999981374
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 6207,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 82.79999999981374
+          },
+          {
+            "path": "/static/img/plate-8.svg",
+            "initiator": "img",
+            "transferSize": 1208,
+            "encodedBodySize": 908,
+            "decodedBodySize": 908,
+            "duration": 86.5
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 1315,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 80.09999999962747
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 4563,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 83.09999999962747
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 15188,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 26.100000000558794
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 15008,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 27.600000000558794
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 28033,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 3.2000000001862645
+          }
+        ],
+        "stylesheets": 28,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 105.0625,
+        "viewport": 1440,
+        "accessibleName": null
+      },
+      "warm": {
+        "navigation": [
+          {
+            "transferSize": 33171,
+            "encodedBodySize": 32871,
+            "decodedBodySize": 32871,
+            "duration": 35.700000000186265
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 0
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Card.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 609,
+            "decodedBodySize": 609,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Grid.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1451,
+            "decodedBodySize": 1451,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/VStack.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 287,
+            "decodedBodySize": 287,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/MediaFrame.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 611,
+            "decodedBodySize": 611,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/pages/worlds/WorldList.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1408,
+            "decodedBodySize": 1408,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Pill.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2370,
+            "decodedBodySize": 2370,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Cover.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1068,
+            "decodedBodySize": 1068,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Masthead.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 946,
+            "decodedBodySize": 946,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Collection.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1407,
+            "decodedBodySize": 1407,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-1.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 793,
+            "decodedBodySize": 793,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-2.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 793,
+            "decodedBodySize": 793,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-3.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 743,
+            "decodedBodySize": 743,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-4.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 823,
+            "decodedBodySize": 823,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-5.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 793,
+            "decodedBodySize": 793,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-6.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 763,
+            "decodedBodySize": 763,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-7.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 867,
+            "decodedBodySize": 867,
+            "duration": 0
+          },
+          {
+            "path": "/static/img/plate-8.svg",
+            "initiator": "img",
+            "transferSize": 0,
+            "encodedBodySize": 908,
+            "decodedBodySize": 908,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 0
+          }
+        ],
+        "stylesheets": 28,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 105.0625,
+        "viewport": 1440,
+        "accessibleName": null
+      }
+    },
+    "collection": {
+      "cold": {
+        "navigation": [
+          {
+            "transferSize": 27407,
+            "encodedBodySize": 27107,
+            "decodedBodySize": 27107,
+            "duration": 98
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 132300,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 8.200000000186265
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 46012,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 47.40000000037253
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 5408,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 12.699999999254942
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 18787,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 14.5
+          },
+          {
+            "path": "/static/components/common/Grid.css",
+            "initiator": "link",
+            "transferSize": 1751,
+            "encodedBodySize": 1451,
+            "decodedBodySize": 1451,
+            "duration": 16.399999999441206
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 1003,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 15.799999999813735
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 2094,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 16.299999999813735
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 945,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 28.799999999813735
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 1486,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 29.899999999441206
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 2341,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 30.09999999962747
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 2182,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 29.90000000037253
+          },
+          {
+            "path": "/static/components/editorial/EntityCard.css",
+            "initiator": "link",
+            "transferSize": 1963,
+            "encodedBodySize": 1663,
+            "decodedBodySize": 1663,
+            "duration": 29.899999999441206
+          },
+          {
+            "path": "/static/components/editorial/CollectionCreate.css",
+            "initiator": "link",
+            "transferSize": 2420,
+            "encodedBodySize": 2120,
+            "decodedBodySize": 2120,
+            "duration": 30
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 5490,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 37
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 2586,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 36.40000000037253
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 865,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 36.700000000186265
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 1079,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 34
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 851,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 34.200000000186265
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 770,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 36.5
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 839,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 40.799999999813735
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 731,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 41.39999999944121
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 1964,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 40.200000000186265
+          },
+          {
+            "path": "/static/components/editorial/Face.css",
+            "initiator": "link",
+            "transferSize": 1525,
+            "encodedBodySize": 1225,
+            "decodedBodySize": 1225,
+            "duration": 41.200000000186265
+          },
+          {
+            "path": "/static/components/editorial/SectionHead.css",
+            "initiator": "link",
+            "transferSize": 1026,
+            "encodedBodySize": 726,
+            "decodedBodySize": 726,
+            "duration": 41.299999999813735
+          },
+          {
+            "path": "/static/components/editorial/Masthead.css",
+            "initiator": "link",
+            "transferSize": 1246,
+            "encodedBodySize": 946,
+            "decodedBodySize": 946,
+            "duration": 41.40000000037253
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 6444,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 45.59999999962747
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 13256,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 46.09999999962747
+          },
+          {
+            "path": "/static/components/editorial/Collection.css",
+            "initiator": "link",
+            "transferSize": 1707,
+            "encodedBodySize": 1407,
+            "decodedBodySize": 1407,
+            "duration": 46.09999999962747
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 1309,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 46.200000000186265
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 5155,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 46.40000000037253
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 3274,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 49.60000000055879
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 5676,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 49.60000000055879
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 11568,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 50.30000000074506
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 824,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 49.39999999944121
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 3367,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 50.200000000186265
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 51218,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 49.799999999813735
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 1315,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 53.299999999813735
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 6207,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 53.299999999813735
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 4563,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 53.39999999944121
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 801,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 53.299999999813735
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 15008,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 21.699999999254942
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 15188,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 22.200000000186265
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 28033,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 1.7000000001862645
+          }
+        ],
+        "stylesheets": 26,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 134.171875,
+        "viewport": 1440,
+        "accessibleName": null
+      },
+      "warm": {
+        "navigation": [
+          {
+            "transferSize": 27407,
+            "encodedBodySize": 27107,
+            "decodedBodySize": 27107,
+            "duration": 25.699999999254942
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 0
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Grid.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1451,
+            "decodedBodySize": 1451,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/CollectionCreate.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2120,
+            "decodedBodySize": 2120,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/EntityCard.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1663,
+            "decodedBodySize": 1663,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Face.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1225,
+            "decodedBodySize": 1225,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Masthead.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 946,
+            "decodedBodySize": 946,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/SectionHead.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 726,
+            "decodedBodySize": 726,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Collection.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1407,
+            "decodedBodySize": 1407,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 0
+          }
+        ],
+        "stylesheets": 26,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 134.171875,
+        "viewport": 1440,
+        "accessibleName": null
+      }
+    },
+    "editable-document": {
+      "cold": {
+        "navigation": [
+          {
+            "transferSize": 50197,
+            "encodedBodySize": 49897,
+            "decodedBodySize": 49897,
+            "duration": 136.80000000074506
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 132300,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 12.200000000186265
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 18787,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 10.599999999627471
+          },
+          {
+            "path": "/static/components/editorial/Document.css",
+            "initiator": "link",
+            "transferSize": 2240,
+            "encodedBodySize": 1940,
+            "decodedBodySize": 1940,
+            "duration": 10.599999999627471
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 46012,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 41.39999999944121
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 5408,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 11.5
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 2341,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 14.099999999627471
+          },
+          {
+            "path": "/static/components/common/Pill.css",
+            "initiator": "link",
+            "transferSize": 2670,
+            "encodedBodySize": 2370,
+            "decodedBodySize": 2370,
+            "duration": 14.700000000186265
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 2094,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 16.200000000186265
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 945,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 16.200000000186265
+          },
+          {
+            "path": "/static/components/common/ChoiceGrid.css",
+            "initiator": "link",
+            "transferSize": 1725,
+            "encodedBodySize": 1425,
+            "decodedBodySize": 1425,
+            "duration": 15.200000000186265
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 1486,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 16.100000000558794
+          },
+          {
+            "path": "/static/components/editorial/DocIdentity.css",
+            "initiator": "link",
+            "transferSize": 1157,
+            "encodedBodySize": 857,
+            "decodedBodySize": 857,
+            "duration": 20
+          },
+          {
+            "path": "/static/components/editorial/DocEdit.css",
+            "initiator": "link",
+            "transferSize": 1904,
+            "encodedBodySize": 1604,
+            "decodedBodySize": 1604,
+            "duration": 21.300000000745058
+          },
+          {
+            "path": "/static/components/editorial/ImageEditor.css",
+            "initiator": "link",
+            "transferSize": 4889,
+            "encodedBodySize": 4589,
+            "decodedBodySize": 4589,
+            "duration": 22.300000000745058
+          },
+          {
+            "path": "/static/components/common/VStack.css",
+            "initiator": "link",
+            "transferSize": 587,
+            "encodedBodySize": 287,
+            "decodedBodySize": 287,
+            "duration": 21.299999999813735
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 1003,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 21.399999999441206
+          },
+          {
+            "path": "/static/components/editorial/DocSummary.css",
+            "initiator": "link",
+            "transferSize": 1022,
+            "encodedBodySize": 722,
+            "decodedBodySize": 722,
+            "duration": 22.299999999813735
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 2182,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 28.5
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 1964,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 29
+          },
+          {
+            "path": "/static/components/common/HStack.css",
+            "initiator": "link",
+            "transferSize": 850,
+            "encodedBodySize": 550,
+            "decodedBodySize": 550,
+            "duration": 29
+          },
+          {
+            "path": "/static/components/common/Grid.css",
+            "initiator": "link",
+            "transferSize": 1751,
+            "encodedBodySize": 1451,
+            "decodedBodySize": 1451,
+            "duration": 29.100000000558794
+          },
+          {
+            "path": "/static/components/editorial/Docbar.css",
+            "initiator": "link",
+            "transferSize": 2328,
+            "encodedBodySize": 2028,
+            "decodedBodySize": 2028,
+            "duration": 27.399999999441206
+          },
+          {
+            "path": "/static/components/common/ConfirmDialog.css",
+            "initiator": "link",
+            "transferSize": 483,
+            "encodedBodySize": 183,
+            "decodedBodySize": 183,
+            "duration": 28.09999999962747
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 851,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 32.19999999925494
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 1079,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 33.19999999925494
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 2586,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 35.09999999962747
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 865,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 35.69999999925494
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 5490,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 35.799999999813735
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 770,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 35.799999999813735
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 731,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 36.40000000037253
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 839,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 36.299999999813735
+          },
+          {
+            "path": "/static/components/editorial/Face.css",
+            "initiator": "link",
+            "transferSize": 1525,
+            "encodedBodySize": 1225,
+            "decodedBodySize": 1225,
+            "duration": 40.10000000055879
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 6444,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 40.5
+          },
+          {
+            "path": "/static/components/editorial/PublicationStatus.css",
+            "initiator": "link",
+            "transferSize": 1417,
+            "encodedBodySize": 1117,
+            "decodedBodySize": 1117,
+            "duration": 40.60000000055879
+          },
+          {
+            "path": "/static/components/editorial/Links.css",
+            "initiator": "link",
+            "transferSize": 1241,
+            "encodedBodySize": 941,
+            "decodedBodySize": 941,
+            "duration": 40.80000000074506
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 13256,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 40.90000000037253
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 5155,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 45.299999999813735
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 5676,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 45.200000000186265
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 3367,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 43.90000000037253
+          },
+          {
+            "path": "/static/components/editorial/ImageEditor.js",
+            "initiator": "script",
+            "transferSize": 13483,
+            "encodedBodySize": 13183,
+            "decodedBodySize": 13183,
+            "duration": 44
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 1309,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 44.40000000037253
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 3274,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 44.90000000037253
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 1315,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 49.69999999925494
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 801,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 50.59999999962747
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 824,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 50.799999999813735
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 6207,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 51.09999999962747
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 11568,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 51.299999999813735
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 51218,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 51.39999999944121
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 4563,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 52.799999999813735
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 15188,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 25.899999999441206
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 15008,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 29
+          },
+          {
+            "path": "/static/fonts/newsreader-latin-var-italic.woff2",
+            "initiator": "css",
+            "transferSize": 147172,
+            "encodedBodySize": 146872,
+            "decodedBodySize": 146872,
+            "duration": 29.600000000558794
+          },
+          {
+            "path": "/static/js/editor.js",
+            "initiator": "script",
+            "transferSize": 560853,
+            "encodedBodySize": 560553,
+            "decodedBodySize": 560553,
+            "duration": 7.2000000001862645
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 28033,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 3.5
+          }
+        ],
+        "stylesheets": 34,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/components/editorial/ImageEditor.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/editor.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 203.1875,
+        "viewport": 1440,
+        "accessibleName": "textbox"
+      },
+      "warm": {
+        "navigation": [
+          {
+            "transferSize": 50197,
+            "encodedBodySize": 49897,
+            "decodedBodySize": 49897,
+            "duration": 48.60000000055879
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 0
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Document.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1940,
+            "decodedBodySize": 1940,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Pill.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2370,
+            "decodedBodySize": 2370,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/ChoiceGrid.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1425,
+            "decodedBodySize": 1425,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ImageEditor.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 4589,
+            "decodedBodySize": 4589,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/DocEdit.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1604,
+            "decodedBodySize": 1604,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/DocIdentity.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 857,
+            "decodedBodySize": 857,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/DocSummary.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 722,
+            "decodedBodySize": 722,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/VStack.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 287,
+            "decodedBodySize": 287,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/HStack.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 550,
+            "decodedBodySize": 550,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Grid.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1451,
+            "decodedBodySize": 1451,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Docbar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2028,
+            "decodedBodySize": 2028,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/ConfirmDialog.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 183,
+            "decodedBodySize": 183,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Face.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1225,
+            "decodedBodySize": 1225,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Links.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 941,
+            "decodedBodySize": 941,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/PublicationStatus.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1117,
+            "decodedBodySize": 1117,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ImageEditor.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 13183,
+            "decodedBodySize": 13183,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/editor.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 560553,
+            "decodedBodySize": 560553,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/newsreader-latin-var-italic.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 146872,
+            "decodedBodySize": 146872,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 0
+          }
+        ],
+        "stylesheets": 34,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/components/editorial/ImageEditor.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/editor.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 203.1875,
+        "viewport": 1440,
+        "accessibleName": "textbox"
+      }
+    },
+    "readonly-document": {
+      "cold": {
+        "navigation": [
+          {
+            "transferSize": 30764,
+            "encodedBodySize": 30464,
+            "decodedBodySize": 30464,
+            "duration": 98.1000000005588
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 132300,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 9.400000000372529
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 18787,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 8.200000000186265
+          },
+          {
+            "path": "/static/components/editorial/Document.css",
+            "initiator": "link",
+            "transferSize": 2240,
+            "encodedBodySize": 1940,
+            "decodedBodySize": 1940,
+            "duration": 8.899999999441206
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 46012,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 52.89999999944121
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 5408,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 8.900000000372529
+          },
+          {
+            "path": "/static/components/common/Pill.css",
+            "initiator": "link",
+            "transferSize": 2670,
+            "encodedBodySize": 2370,
+            "decodedBodySize": 2370,
+            "duration": 13.700000000186265
+          },
+          {
+            "path": "/static/components/common/ChoiceGrid.css",
+            "initiator": "link",
+            "transferSize": 1725,
+            "encodedBodySize": 1425,
+            "decodedBodySize": 1425,
+            "duration": 11.299999999813735
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 2341,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 11.5
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 945,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 13.399999999441206
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 2094,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 13.5
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 1486,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 14.399999999441206
+          },
+          {
+            "path": "/static/components/editorial/ImageEditor.css",
+            "initiator": "link",
+            "transferSize": 4889,
+            "encodedBodySize": 4589,
+            "decodedBodySize": 4589,
+            "duration": 14.5
+          },
+          {
+            "path": "/static/components/common/VStack.css",
+            "initiator": "link",
+            "transferSize": 587,
+            "encodedBodySize": 287,
+            "decodedBodySize": 287,
+            "duration": 20.200000000186265
+          },
+          {
+            "path": "/static/components/editorial/DocSummary.css",
+            "initiator": "link",
+            "transferSize": 1022,
+            "encodedBodySize": 722,
+            "decodedBodySize": 722,
+            "duration": 20.40000000037253
+          },
+          {
+            "path": "/static/components/editorial/DocEdit.css",
+            "initiator": "link",
+            "transferSize": 1904,
+            "encodedBodySize": 1604,
+            "decodedBodySize": 1604,
+            "duration": 20.5
+          },
+          {
+            "path": "/static/components/editorial/DocIdentity.css",
+            "initiator": "link",
+            "transferSize": 1157,
+            "encodedBodySize": 857,
+            "decodedBodySize": 857,
+            "duration": 20.5
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 1003,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 20.700000000186265
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 2182,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 20.200000000186265
+          },
+          {
+            "path": "/static/components/common/Grid.css",
+            "initiator": "link",
+            "transferSize": 1751,
+            "encodedBodySize": 1451,
+            "decodedBodySize": 1451,
+            "duration": 23.100000000558794
+          },
+          {
+            "path": "/static/components/editorial/Docbar.css",
+            "initiator": "link",
+            "transferSize": 2328,
+            "encodedBodySize": 2028,
+            "decodedBodySize": 2028,
+            "duration": 25.100000000558794
+          },
+          {
+            "path": "/static/components/common/ConfirmDialog.css",
+            "initiator": "link",
+            "transferSize": 483,
+            "encodedBodySize": 183,
+            "decodedBodySize": 183,
+            "duration": 26.100000000558794
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 1964,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 26.300000000745058
+          },
+          {
+            "path": "/static/components/common/HStack.css",
+            "initiator": "link",
+            "transferSize": 850,
+            "encodedBodySize": 550,
+            "decodedBodySize": 550,
+            "duration": 27
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 5490,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 23.799999999813735
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 865,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 32.39999999944121
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 2586,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 36.799999999813735
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 851,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 37.200000000186265
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 839,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 34.90000000037253
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 1079,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 36
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 770,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 36.90000000037253
+          },
+          {
+            "path": "/static/components/editorial/PublicationStatus.css",
+            "initiator": "link",
+            "transferSize": 1417,
+            "encodedBodySize": 1117,
+            "decodedBodySize": 1117,
+            "duration": 42.10000000055879
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 6444,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 42.299999999813735
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 731,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 42.40000000037253
+          },
+          {
+            "path": "/static/components/editorial/Links.css",
+            "initiator": "link",
+            "transferSize": 1241,
+            "encodedBodySize": 941,
+            "decodedBodySize": 941,
+            "duration": 43.200000000186265
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 13256,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 43.299999999813735
+          },
+          {
+            "path": "/static/components/editorial/Face.css",
+            "initiator": "link",
+            "transferSize": 1525,
+            "encodedBodySize": 1225,
+            "decodedBodySize": 1225,
+            "duration": 43.90000000037253
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 5676,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 47.89999999944121
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 3274,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 49.89999999944121
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 5155,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 51.39999999944121
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 1309,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 51
+          },
+          {
+            "path": "/static/components/editorial/ImageEditor.js",
+            "initiator": "script",
+            "transferSize": 13483,
+            "encodedBodySize": 13183,
+            "decodedBodySize": 13183,
+            "duration": 51.799999999813735
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 11568,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 57.90000000037253
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 824,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 55.90000000037253
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 3367,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 58.10000000055879
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 51218,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 58.5
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 1315,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 63.10000000055879
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 801,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 63.10000000055879
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 6207,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 63.200000000186265
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 4563,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 62.89999999944121
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 15008,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 18.299999999813735
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 15188,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 17.90000000037253
+          },
+          {
+            "path": "/static/fonts/newsreader-latin-var-italic.woff2",
+            "initiator": "css",
+            "transferSize": 147172,
+            "encodedBodySize": 146872,
+            "decodedBodySize": 146872,
+            "duration": 18
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 28033,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 4.7000000001862645
+          }
+        ],
+        "stylesheets": 34,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/editorial/ImageEditor.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 189.15625,
+        "viewport": 1440,
+        "accessibleName": null
+      },
+      "warm": {
+        "navigation": [
+          {
+            "transferSize": 30764,
+            "encodedBodySize": 30464,
+            "decodedBodySize": 30464,
+            "duration": 52.799999999813735
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 0
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Document.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1940,
+            "decodedBodySize": 1940,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Pill.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2370,
+            "decodedBodySize": 2370,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/ChoiceGrid.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1425,
+            "decodedBodySize": 1425,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ImageEditor.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 4589,
+            "decodedBodySize": 4589,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/DocEdit.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1604,
+            "decodedBodySize": 1604,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/DocIdentity.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 857,
+            "decodedBodySize": 857,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/DocSummary.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 722,
+            "decodedBodySize": 722,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/VStack.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 287,
+            "decodedBodySize": 287,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/HStack.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 550,
+            "decodedBodySize": 550,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Grid.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1451,
+            "decodedBodySize": 1451,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Docbar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2028,
+            "decodedBodySize": 2028,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/ConfirmDialog.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 183,
+            "decodedBodySize": 183,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Face.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1225,
+            "decodedBodySize": 1225,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Links.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 941,
+            "decodedBodySize": 941,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/PublicationStatus.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1117,
+            "decodedBodySize": 1117,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ImageEditor.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 13183,
+            "decodedBodySize": 13183,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/newsreader-latin-var-italic.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 146872,
+            "decodedBodySize": 146872,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 0
+          }
+        ],
+        "stylesheets": 34,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/editorial/ImageEditor.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 189.15625,
+        "viewport": 1440,
+        "accessibleName": null
+      }
+    },
+    "drawing-workspace": {
+      "cold": {
+        "navigation": [
+          {
+            "transferSize": 92359,
+            "encodedBodySize": 92059,
+            "decodedBodySize": 92059,
+            "duration": 98.40000000037253
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 132300,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 12.200000000186265
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 18787,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 11.200000000186265
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 46012,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 30.5
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 5408,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 13.399999999441206
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 1079,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 16.59999999962747
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 1003,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 17
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 731,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 17
+          },
+          {
+            "path": "/static/components/editorial/Masthead.css",
+            "initiator": "link",
+            "transferSize": 1246,
+            "encodedBodySize": 946,
+            "decodedBodySize": 946,
+            "duration": 17.09999999962747
+          },
+          {
+            "path": "/static/components/editorial/DrawingEditor.css",
+            "initiator": "link",
+            "transferSize": 14772,
+            "encodedBodySize": 14472,
+            "decodedBodySize": 14472,
+            "duration": 17.200000000186265
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 1486,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 17.100000000558794
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 2341,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 21.800000000745058
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 839,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 22
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 770,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 22.40000000037253
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 945,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 22.600000000558794
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 851,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 22.600000000558794
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 2182,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 22.399999999441206
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 2586,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 25.600000000558794
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 865,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 26.40000000037253
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 5490,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 26.600000000558794
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 2094,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 26.600000000558794
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 6444,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 25.5
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 1964,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 26.399999999441206
+          },
+          {
+            "path": "/static/components/common/ButtonGroup.css",
+            "initiator": "link",
+            "transferSize": 4683,
+            "encodedBodySize": 4383,
+            "decodedBodySize": 4383,
+            "duration": 30
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 13256,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 29
+          },
+          {
+            "path": "/static/components/common/Field.css",
+            "initiator": "link",
+            "transferSize": 6934,
+            "encodedBodySize": 6634,
+            "decodedBodySize": 6634,
+            "duration": 29.90000000037253
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 5155,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 29.799999999813735
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 5676,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 30
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 3274,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 35.700000000186265
+          },
+          {
+            "path": "/static/components/editorial/DrawingEditor.js",
+            "initiator": "script",
+            "transferSize": 908,
+            "encodedBodySize": 608,
+            "decodedBodySize": 608,
+            "duration": 34.89999999944121
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 3367,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 35.5
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 1309,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 35.39999999944121
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 11568,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 35.39999999944121
+          },
+          {
+            "path": "/static/components/common/ButtonGroup.js",
+            "initiator": "script",
+            "transferSize": 3242,
+            "encodedBodySize": 2942,
+            "decodedBodySize": 2942,
+            "duration": 35.59999999962747
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 824,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 41.09999999962747
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 51218,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 41.299999999813735
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 801,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 41.5
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 6207,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 41.69999999925494
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 1315,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 40.59999999962747
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 4563,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 41.700000000186265
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 15008,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 13
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 15188,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 12.299999999813735
+          },
+          {
+            "path": "/static/js/drawings.js",
+            "initiator": "script",
+            "transferSize": 99442,
+            "encodedBodySize": 99142,
+            "decodedBodySize": 99142,
+            "duration": 4.2999999998137355
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 28033,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 3.2000000001862645
+          },
+          {
+            "path": "/api/libraries",
+            "initiator": "fetch",
+            "transferSize": 302,
+            "encodedBodySize": 2,
+            "decodedBodySize": 2,
+            "duration": 5.7999999998137355
+          }
+        ],
+        "stylesheets": 23,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/editorial/DrawingEditor.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/components/common/ButtonGroup.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/drawings.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 134.171875,
+        "viewport": 1440,
+        "accessibleName": null
+      },
+      "warm": {
+        "navigation": [
+          {
+            "transferSize": 92359,
+            "encodedBodySize": 92059,
+            "decodedBodySize": 92059,
+            "duration": 52.19999999925494
+          }
+        ],
+        "resources": [
+          {
+            "path": "/static/fonts/newsreader-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 132000,
+            "decodedBodySize": 132000,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-sans-latin-var.woff2",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 45712,
+            "decodedBodySize": 45712,
+            "duration": 0
+          },
+          {
+            "path": "/static/css/main.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 18487,
+            "decodedBodySize": 18487,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Button.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5108,
+            "decodedBodySize": 5108,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Icon.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 779,
+            "decodedBodySize": 779,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 703,
+            "decodedBodySize": 703,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Crumbs.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 431,
+            "decodedBodySize": 431,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/DrawingEditor.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 14472,
+            "decodedBodySize": 14472,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Masthead.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 946,
+            "decodedBodySize": 946,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1186,
+            "decodedBodySize": 1186,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Alert.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 551,
+            "decodedBodySize": 551,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Avatar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 645,
+            "decodedBodySize": 645,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 539,
+            "decodedBodySize": 539,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2041,
+            "decodedBodySize": 2041,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/RequestFallback.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 470,
+            "decodedBodySize": 470,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/SaveIndicator.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1882,
+            "decodedBodySize": 1882,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 2286,
+            "decodedBodySize": 2286,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Rail.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 5190,
+            "decodedBodySize": 5190,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Topbar.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 565,
+            "decodedBodySize": 565,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/UserMenu.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1794,
+            "decodedBodySize": 1794,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 1664,
+            "decodedBodySize": 1664,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 6144,
+            "decodedBodySize": 6144,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/ButtonGroup.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 4383,
+            "decodedBodySize": 4383,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/Reference.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 12956,
+            "decodedBodySize": 12956,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Field.css",
+            "initiator": "link",
+            "transferSize": 0,
+            "encodedBodySize": 6634,
+            "decodedBodySize": 6634,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Page.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4855,
+            "decodedBodySize": 4855,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Dialog.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5376,
+            "decodedBodySize": 5376,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Menu.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 2974,
+            "decodedBodySize": 2974,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/DrawingEditor.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 608,
+            "decodedBodySize": 608,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Tooltip.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 3067,
+            "decodedBodySize": 3067,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/ButtonGroup.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 2942,
+            "decodedBodySize": 2942,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/common/Mark.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1009,
+            "decodedBodySize": 1009,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/layout/Palette.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 11268,
+            "decodedBodySize": 11268,
+            "duration": 0
+          },
+          {
+            "path": "/static/components/editorial/ReportPanel.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 524,
+            "decodedBodySize": 524,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/htmx.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 50918,
+            "decodedBodySize": 50918,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/json-enc.min.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 501,
+            "decodedBodySize": 501,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/feedback.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 5907,
+            "decodedBodySize": 5907,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/format-times.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 1015,
+            "decodedBodySize": 1015,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/replay.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 4263,
+            "decodedBodySize": 4263,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/drawings.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 99142,
+            "decodedBodySize": 99142,
+            "duration": 0
+          },
+          {
+            "path": "/static/js/report.js",
+            "initiator": "script",
+            "transferSize": 0,
+            "encodedBodySize": 27733,
+            "decodedBodySize": 27733,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-400.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14708,
+            "decodedBodySize": 14708,
+            "duration": 0
+          },
+          {
+            "path": "/static/fonts/ibm-plex-mono-latin-500.woff2",
+            "initiator": "css",
+            "transferSize": 0,
+            "encodedBodySize": 14888,
+            "decodedBodySize": 14888,
+            "duration": 0
+          },
+          {
+            "path": "/api/libraries",
+            "initiator": "fetch",
+            "transferSize": 302,
+            "encodedBodySize": 2,
+            "decodedBodySize": 2,
+            "duration": 3.7000000001862645
+          }
+        ],
+        "stylesheets": 23,
+        "scripts": [
+          "http://127.0.0.1:8000/static/components/layout/Page.js",
+          "http://127.0.0.1:8000/static/components/common/Dialog.js",
+          "http://127.0.0.1:8000/static/components/common/Menu.js",
+          "http://127.0.0.1:8000/static/components/editorial/DrawingEditor.js",
+          "http://127.0.0.1:8000/static/components/common/Tooltip.js",
+          "http://127.0.0.1:8000/static/components/common/ButtonGroup.js",
+          "http://127.0.0.1:8000/static/components/common/Mark.js",
+          "http://127.0.0.1:8000/static/components/layout/Palette.js",
+          "http://127.0.0.1:8000/static/components/editorial/ReportPanel.js",
+          "http://127.0.0.1:8000/static/js/htmx.min.js",
+          "http://127.0.0.1:8000/static/js/json-enc.min.js",
+          "http://127.0.0.1:8000/static/js/feedback.js",
+          "http://127.0.0.1:8000/static/js/format-times.js",
+          "http://127.0.0.1:8000/static/js/replay.js",
+          "http://127.0.0.1:8000/static/js/drawings.js",
+          "http://127.0.0.1:8000/static/js/report.js"
+        ],
+        "titleTop": 134.171875,
+        "viewport": 1440,
+        "accessibleName": null
+      }
+    }
+  },
+  "headers": {
+    "login": {
+      "content-length": "6145",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Wed, 21 Oct 2026 16:19:26 GMT",
+      "server": "uvicorn",
+      "x-request-id": "68ee5ff73bf748ac803b35b49e48d371"
+    },
+    "world-list": {
+      "content-length": "32871",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Wed, 21 Oct 2026 16:19:27 GMT",
+      "server": "uvicorn",
+      "x-request-id": "9d034e8ae00b48268559027075f6b9ac"
+    },
+    "collection": {
+      "content-length": "27107",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Wed, 21 Oct 2026 16:19:29 GMT",
+      "server": "uvicorn",
+      "x-request-id": "c42abcc22620435fa4e2041ec5e3e5f2"
+    },
+    "editable-document": {
+      "content-length": "49897",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Wed, 21 Oct 2026 16:19:30 GMT",
+      "server": "uvicorn",
+      "x-request-id": "7ae8c8a4ac5b4491856c60f7424a25ff"
+    },
+    "readonly-document": {
+      "content-length": "30464",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Wed, 21 Oct 2026 16:19:31 GMT",
+      "server": "uvicorn",
+      "x-request-id": "7dc73dd7a3394f2bb890a8bfd9d0847f"
+    },
+    "drawing-workspace": {
+      "content-length": "92059",
+      "content-type": "text/html; charset=utf-8",
+      "date": "Wed, 21 Oct 2026 16:19:32 GMT",
+      "server": "uvicorn",
+      "x-request-id": "ee6af4e876be4a788351cf3e28cd3f1c"
+    }
+  },
+  "pageErrors": [],
+  "testData": {
+    "worldId": "01a15f42-a9ff-7b01-b5d0-b0b603263c59",
+    "characterId": "01a15f42-aa09-75b3-baf2-0ba0b553ad39"
+  },
+  "browserSaveVerified": true,
+  "persistedVersion": 2,
+  "documentAxe": [
+    {
+      "id": "aria-allowed-role",
+      "impact": "minor",
+      "nodes": [
+        [
+          "h1"
+        ]
+      ]
+    },
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "nodes": [
+        [
+          "#rail"
+        ]
+      ]
+    },
+    {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "nodes": [
+        [
+          "html"
+        ]
+      ]
+    }
+  ],
+  "closedDrawerTabs": [
+    {
+      "text": "Salta al contenuto",
+      "right": 172,
+      "rail": false
+    },
+    {
+      "text": "\u2190 Tutti i mondi",
+      "right": -129.796875,
+      "rail": true
+    },
+    {
+      "text": "Revisione frontend 74d917f3",
+      "right": -70.8125,
+      "rail": true
+    },
+    {
+      "text": "Panoramica",
+      "right": -1,
+      "rail": true
+    }
+  ],
+  "nameInput": "<input class=\"docidentity__input\">",
+  "titleInput": "<input class=\"docidentity__input\">"
+}

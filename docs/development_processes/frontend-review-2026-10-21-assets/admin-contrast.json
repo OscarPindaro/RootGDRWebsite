@@ -1,0 +1,162 @@
+{
+  "axe": [
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "nodes": [
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(1) > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(1) > td[data-label=\"Stato\"] > .pill-success.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(2) > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(2) > td[data-label=\"Stato\"] > .pill-success.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            ".pill-role-admin"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #b07a12, background color: #f6ecd4, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(3) > td[data-label=\"Stato\"] > .pill-success.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            ".cat-5"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.41 (foreground color: #fffdf6, background color: #c2506f, font size: 8.3pt (11px), font weight: bold). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(4) > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(4) > td[data-label=\"Stato\"] > .pill-success.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(5) > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(5) > td[data-label=\"Stato\"] > .pill-success.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(6) > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-testid=\"admin-user-row\"]:nth-child(6) > td[data-label=\"Stato\"] > .pill-success.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"ospite-533e19aa@example.com\"] > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"ospite-533e19aa@example.com\"] > td[data-label=\"Stato\"] > .pill-warning.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #b07a12, background color: #f6ecd4, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"ospite-b9adbc9d@example.com\"] > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"ospite-b9adbc9d@example.com\"] > td[data-label=\"Stato\"] > .pill-warning.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #b07a12, background color: #f6ecd4, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"doppio-a622161c@example.com\"] > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"doppio-a622161c@example.com\"] > td[data-label=\"Stato\"] > .pill-warning.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #b07a12, background color: #f6ecd4, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"player-1157203c@example.com\"] > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"player-1157203c@example.com\"] > td[data-label=\"Stato\"] > .pill-success.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"telefono-22364702@example.com\"] > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"telefono-22364702@example.com\"] > td[data-label=\"Stato\"] > .pill-warning.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #b07a12, background color: #f6ecd4, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"invitato-ba22252a@example.com\"] > td[data-label=\"Ruolo\"] > .pill-role-member.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 4.34 (foreground color: #3c7a52, background color: #e4efe7, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        },
+        {
+          "target": [
+            "tr[data-invite-email=\"invitato-ba22252a@example.com\"] > td[data-label=\"Stato\"] > .pill-warning.pill"
+          ],
+          "summary": "Fix any of the following:\n  Element has insufficient color contrast of 3.16 (foreground color: #b07a12, background color: #f6ecd4, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+        }
+      ]
+    }
+  ],
+  "successRatio": 4.343640198796844,
+  "warningRatio": 3.168789749280581
+}
