@@ -118,34 +118,44 @@ ticket, not a regression, and the pixel diff is unchanged.
 
 `tests/e2e/test_accessibility.py` runs axe-core (a dev dependency) over the
 world overview, a character detail, World Settings, Admin, the showcase, Login,
-registration and the 404 page, at both viewports. It fails on any serious or
-critical finding **except** `color-contrast`, which is reviewed below.
+registration and the 404 page, plus the repaired interaction states: the closed
+and open phone drawer, the populated admin table and its htmx dialogs, the
+active identity inputs, the open body/summary/Markdown textboxes, the phone
+editing command, the failed editor bundle and every visible save status. It
+fails on any serious or critical finding. `color-contrast` is asserted per
+repaired surface; the remaining exceptions are exact nodes named in the test
+file, not a rule-wide exemption, and a selector that merely shares an exempt
+prefix is still blocking.
 
-Fixed (see above): `label` (critical, ChoiceGrid) and
-`scrollable-region-focusable` (serious, Table wrapper).
+Fixed: `label` (critical, ChoiceGrid), `scrollable-region-focusable` (serious,
+Table wrapper), the closed phone drawer in the Tab order (T03), the identity
+heading and input names (T04), unnamed htmx dialogs (T07), collection heading
+levels and region names (T08), pill and avatar contrast (T06), the phone touch
+targets (T32), the open CodeMirror textbox names (T33), and the filled-field
+label and save-indicator states (T34).
 
 ### Accepted: colour contrast
 
-The scan reports `color-contrast` (serious) on the identity palette. These are
-the settled atlas colours, reproduced from `prototypes/devin-prototype/`
-(mentions, the quick strip's foot, the story band, the avatar initials), plus
-the app's own M3 status/role aliases. Correcting them means changing the
-palette, which is a design decision, not a cleanup, so they are recorded here:
+These are the remaining palette decisions. The executable record in
+`tests/e2e/test_accessibility.py` names the exact node and ratio for the
+surfaces its fixtures reach; the mention and pager states are not exercised by
+the current scan and remain recorded here.
 
 | Surface | Ratio | Where |
 |---|---|---|
 | Character/place mentions (tint as text) | 1.81 – 3.58 | character, NPC, session, page bodies |
 | Quick-strip foot labels | 2.50 – 3.75 | world overview |
-| Story band (`surface` on ochre) | 2.18 | stories |
-| Avatar initials on `--cat-*` | 3.05 – 4.41 | showcase, members |
-| Status/role pills (`--status-*`/`--role-*` on `-bg`) | 3.16 – 4.34 | Admin, World Settings, showcase |
+| Story band (`surface` on ochre) | 2.18 | stories, showcase |
+| Status aliases in the design-kit alert and warning swatch | 3.16 – 4.34 | showcase |
 | Session pager, disabled direction | 1.84 | session detail |
 | Login eyebrow / cover foot | 4.34 | login, registration |
 
 The pager case is an inactive control (WCAG 1.4.3 exempts inactive UI); it is
-flagged because it is a `<span>`. The rest are near-misses or a palette that
-needs a text-safe variant of each tint. A future palette ticket can close them;
-`final-pass.md` is the record of why they are left.
+flagged because it is a `<span>`. The rest are palette decisions kept by the
+atlas look. A future palette ticket can close them; this file is the record of
+why they are left. This is not a whole-site WCAG AA conformance claim or a
+screen-reader audit: it covers the listed pages and states with axe-core, plus
+the explicit role/name/focus and target-size assertions in the test file.
 
 ## Keyboard journeys
 
