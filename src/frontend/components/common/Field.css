@@ -78,6 +78,14 @@
   padding-block: var(--sp-4) var(--sp-2);
 }
 
+/* The filled label sits on `--surface-sunk`, where `--clr-text-muted` is
+   4.43:1 at the floating label size. The variant derives a text-safe ink from
+   the same muted role; the fill stays and the outlined label keeps the raw
+   muted ink, which is 4.85:1 on paper. */
+.field--filled .field__label {
+  color: color-mix(in srgb, var(--clr-text-muted) 70%, var(--ink));
+}
+
 .field--filled:not(.field--error):not(:focus-within) .field__box:hover {
   border-bottom-color: var(--ink);
 }

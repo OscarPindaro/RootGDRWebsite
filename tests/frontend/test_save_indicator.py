@@ -4,9 +4,48 @@ The editor script owns the text and the ``data-state``; the component owns the
 markup and the appearance. The tests drive it the way the script does.
 """
 
+import re
+
 import pytest
 
 pytestmark = pytest.mark.frontend
+
+
+def _channels(value: str) -> tuple[float, ...]:
+    """RGB channels from a computed colour, including ``color(srgb ...)``."""
+    if value.startswith("color("):
+        parts = value[value.index("(") + 1 : value.rindex(")")].split()
+        return tuple(float(part) * 255 for part in parts[1:4])
+    return tuple(float(part) for part in re.findall(r"[\d.]+", value)[:3])
+
+
+def _contrast(foreground: str, background: str) -> float:
+    """WCAG contrast for a computed pair, without rounding the ratio."""
+
+    def luminance(value: str) -> float:
+        linear = [
+            channel / 12.92
+            if channel <= 0.04045
+            else ((channel + 0.055) / 1.055) ** 2.4
+            for channel in (part / 255 for part in _channels(value))
+        ]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    light, dark = sorted((luminance(foreground), luminance(background)), reverse=True)
+    return (light + 0.05) / (dark + 0.05)
+
+
+def _painted_background(locator) -> str:
+    """The first opaque background above the element, as computed."""
+    return locator.evaluate(
+        """el => {
+            for (let node = el; node; node = node.parentElement) {
+                const background = getComputedStyle(node).backgroundColor;
+                if (background !== 'rgba(0, 0, 0, 0)') return background;
+            }
+            return 'rgb(255, 255, 255)';
+        }"""
+    )
 
 
 def _mount(component, **overrides):
@@ -71,6 +110,29 @@ def test_saving_and_dirty_share_a_colour(component):
         )
 
     assert colours[0] == colours[1]
+
+
+@pytest.mark.parametrize(
+    ("state", "text"),
+    [
+        ("saving", "Salvataggio in corso"),
+        ("dirty", "Modifiche non salvate"),
+        ("saved", "Salvato"),
+        ("error", "Salvataggio non riuscito"),
+        ("conflict", "Conflitto: modifica piu' recente"),
+    ],
+)
+def test_every_visible_state_reads_at_small_text_contrast(component, state, text):
+    """T12 measured "Salvato" at 4.46:1; the raw ochre and vermilion are lower."""
+    page = _mount(component, state=state)
+    _write(page, text)
+
+    indicator = page.locator(".save-indicator")
+    assert indicator.is_visible()
+    color = indicator.evaluate("el => getComputedStyle(el).color")
+    background = _painted_background(indicator)
+
+    assert _contrast(color, background) >= 4.5, (state, color, background)
 
 
 def test_it_overlays_the_content_top_without_taking_a_row(component):

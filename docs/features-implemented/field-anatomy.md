@@ -41,6 +41,11 @@ Root GDR atlas skin.
 - Floating is driven by `:focus-within` and `:placeholder-shown` (a single
   space placeholder is emitted when the caller gives none, so the selector
   always works). `prefers-reduced-motion` removes the label transition.
+- The filled label mixes 70% `--clr-text-muted` with `--ink`. Raw muted ink
+  on the `--surface-sunk` fill is 4.43:1 at 12px; the mix reaches 6.50:1. The
+  fill stays, the outlined label keeps the raw muted ink (4.85:1 on paper), and
+  the disabled label keeps the explicit muted ink because disabled controls are
+  exempt from the contrast requirement.
 - `common/Field.css` owns `.field`. The legacy `.field`, `.field__label`,
   `.field__hint`, `.field__bar` and the generic `.input`/`.textarea`/`.select`
   rules left `main.css`, and the `field` entry left the selector-ownership

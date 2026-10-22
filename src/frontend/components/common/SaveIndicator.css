@@ -41,8 +41,19 @@
   background: currentColor;
 }
 
+/* The raw state hues are not text-safe on `--paper` at 14px normal: `--ochre`
+   is 1.94:1, `--forest` 4.46:1 and `--vermilion` 4.08:1. Each state derives a
+   text-safe ink from its own semantic colour, so the hue stays recognisable
+   and the page background, the words, the timing and the palette are
+   unchanged. */
 .save-indicator[data-state="saving"],
-.save-indicator[data-state="dirty"] { color: var(--ochre); }
-.save-indicator[data-state="saved"] { color: var(--forest); }
+.save-indicator[data-state="dirty"] {
+  color: color-mix(in srgb, var(--ochre) 55%, var(--ink));
+}
+.save-indicator[data-state="saved"] {
+  color: color-mix(in srgb, var(--forest) 70%, var(--ink));
+}
 .save-indicator[data-state="error"],
-.save-indicator[data-state="conflict"] { color: var(--vermilion); }
+.save-indicator[data-state="conflict"] {
+  color: color-mix(in srgb, var(--vermilion) 70%, var(--ink));
+}

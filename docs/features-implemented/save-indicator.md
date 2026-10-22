@@ -32,6 +32,12 @@ it is a component.
 - `common/SaveIndicator.css` reads the tokens (`--ochre`, `--forest`,
   `--vermilion`, `--sp-*`); the rules used to live in `main.css` with raw
   values.
+- Every state derives a text-safe foreground from its own semantic colour. The
+  raw hues on `--paper` are below the 4.5:1 the 14px text needs: `--ochre`
+  1.94:1, `--forest` 4.46:1 and `--vermilion` 4.08:1. The mixes reach 4.79:1
+  (ochre 55% with `--ink`), 6.72:1 (forest 70%) and 6.41:1 (vermilion 70%), so
+  each hue stays recognisable. The page background, the words, the timing and
+  the palette are unchanged.
 - `tests/unit/jinja/test_page_status.py` asserts the document blocks no longer
   render a status of their own and that the page renders exactly one.
 

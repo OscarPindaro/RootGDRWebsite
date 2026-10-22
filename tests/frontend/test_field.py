@@ -7,10 +7,49 @@ the empty / populated / focused / error / disabled states, and the label and
 error semantics the component must keep for assistive technology.
 """
 
+import re
+
 import pytest
 from types import SimpleNamespace
 
 pytestmark = pytest.mark.frontend
+
+
+def _channels(value: str) -> tuple[float, ...]:
+    """RGB channels from a computed colour, including ``color(srgb ...)``."""
+    if value.startswith("color("):
+        parts = value[value.index("(") + 1 : value.rindex(")")].split()
+        return tuple(float(part) * 255 for part in parts[1:4])
+    return tuple(float(part) for part in re.findall(r"[\d.]+", value)[:3])
+
+
+def _contrast(foreground: str, background: str) -> float:
+    """WCAG contrast for a computed pair, without rounding the ratio."""
+
+    def luminance(value: str) -> float:
+        linear = [
+            channel / 12.92
+            if channel <= 0.04045
+            else ((channel + 0.055) / 1.055) ** 2.4
+            for channel in (part / 255 for part in _channels(value))
+        ]
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+    light, dark = sorted((luminance(foreground), luminance(background)), reverse=True)
+    return (light + 0.05) / (dark + 0.05)
+
+
+def _painted_background(locator) -> str:
+    """The first opaque background above the element, as computed."""
+    return locator.evaluate(
+        """el => {
+            for (let node = el; node; node = node.parentElement) {
+                const background = getComputedStyle(node).backgroundColor;
+                if (background !== 'rgba(0, 0, 0, 0)') return background;
+            }
+            return 'rgb(255, 255, 255)';
+        }"""
+    )
 
 
 def _mount(component, *, reduced_motion=False, **overrides):
@@ -353,6 +392,53 @@ def test_the_filled_indicator_takes_the_focus_colour(component):
 
 
 # --- States ------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("variant", ["filled", "outlined"])
+@pytest.mark.parametrize("focused", [False, True], ids=["unfocused", "focused"])
+@pytest.mark.parametrize(
+    "value", [None, "jane@example.com"], ids=["empty", "populated"]
+)
+def test_the_label_reads_at_small_text_contrast(component, variant, focused, value):
+    """The label is 12px in the floating state; every resting pair needs 4.5:1.
+
+    T12 measured the populated filled label at 4.43:1 on ``--surface-sunk``.
+    """
+    page = _mount(
+        component,
+        variant=variant,
+        reduced_motion=True,
+        **({"value": value} if value is not None else {}),
+    )
+    if focused:
+        page.locator(".field__input").focus()
+
+    label = page.locator(".field__label")
+    color = label.evaluate("el => getComputedStyle(el).color")
+    background = _painted_background(label)
+
+    assert _contrast(color, background) >= 4.5, (
+        variant,
+        focused,
+        value,
+        color,
+        background,
+    )
+
+
+def test_the_disabled_label_keeps_its_explicit_muted_ink(component):
+    """A disabled control is exempt from the text-contrast requirement."""
+    page = _mount(component, variant="filled", value="jane@example.com", disabled=True)
+
+    assert page.locator(".field__label").evaluate(
+        "el => getComputedStyle(el).color"
+    ) == _color(page, "--clr-text-muted")
+    assert (
+        float(
+            page.locator(".field__box").evaluate("el => getComputedStyle(el).opacity")
+        )
+        < 1
+    )
 
 
 def test_the_error_state_colours_the_label_and_the_rule(component):
