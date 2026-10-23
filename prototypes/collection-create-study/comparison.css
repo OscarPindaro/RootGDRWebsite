@@ -1,0 +1,93 @@
+/* Prototype-local comparison strip and the phone-only compact entry.
+   Option A is the collection as the application renders it: the creation card
+   closes the grid. Option B moves the same button above the grid below 700px
+   and gives it a compact action row; above that width nothing changes. */
+
+.study-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  padding: var(--sp-3) var(--sp-4);
+  border-bottom: var(--rule-ink);
+  border-left: var(--rule-width-strong) solid var(--vermilion);
+  background: var(--paper-deep);
+  color: var(--ink);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+}
+
+.study-bar__notice {
+  flex: 1 1 34rem;
+  margin: 0;
+  line-height: var(--leading-normal);
+}
+
+.study-bar__choices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.study-bar__sizes {
+  margin: 0;
+  color: var(--muted);
+}
+
+.study-bar__sizes a {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.study-bar__status {
+  flex: 1 1 100%;
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .study-bar {
+    gap: var(--sp-2);
+    padding: var(--sp-2) var(--sp-3);
+  }
+}
+
+/* A prototype-only control never claims to save. The marker also keeps the
+   inert state visible when the browser's own disabled styling is faint. */
+[data-prototype-inert="true"] {
+  cursor: not-allowed;
+}
+
+/* Option B, phone only. The script moves the real creation button to be the
+   grid's previous sibling; this rule gives that moved button a compact action
+   row. The media area stops being a card portrait and the body loses the card
+   padding, so the entry is a labelled action instead of a missing card. */
+@media (max-width: 700px) {
+  body[data-study-entry="b"] .container > .collection-create {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    margin-bottom: var(--sp-5);
+    padding: var(--sp-3) var(--sp-4);
+    border-style: dashed;
+    background: var(--paper-deep);
+  }
+
+  body[data-study-entry="b"] .container > .collection-create .collection-create__media {
+    flex: none;
+    aspect-ratio: auto;
+    border-bottom: 0;
+  }
+
+  body[data-study-entry="b"] .container > .collection-create .collection-create__plus {
+    width: var(--button-height-xs);
+    height: var(--button-height-xs);
+    font-size: var(--text-lg);
+  }
+
+  body[data-study-entry="b"] .container > .collection-create .collection-create__body {
+    padding: 0;
+    gap: var(--sp-1);
+  }
+}

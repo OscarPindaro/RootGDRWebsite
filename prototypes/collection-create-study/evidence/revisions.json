@@ -1,0 +1,156 @@
+{
+  "base_commit": "0227b99160c628596e6cde350f0ac510af10a853",
+  "component_blobs": {
+    "src/frontend/components/pages/characters/CharacterList.jinja": "87447d641a141195aa2705edbd23c2ce3b689adc",
+    "src/frontend/components/editorial/EntityCard.jinja": "6b129339c2334f833223ea7fc982826f27483031",
+    "src/frontend/components/editorial/EntityCard.css": "5cfd43c3b536aad8a07fbabe0bb9ef393e7a38de",
+    "src/frontend/components/editorial/CollectionCreate.jinja": "27a26abe988a74f6b1c1bc5049b430a3cb83d422",
+    "src/frontend/components/editorial/CollectionCreate.css": "4ccf9a2c5b2f7218e838c10c99d276e282dadb19",
+    "src/frontend/components/editorial/Collection.css": "d7c34473337af6880a238c1cd942d3519a8224be",
+    "src/frontend/components/common/Grid.jinja": "5154ab97c76a48b01102a4d0bdde535abbef738f",
+    "src/frontend/components/common/Grid.css": "1f12d3745c12f2c83e24b2ff3fbfd1cee77b86c3",
+    "src/frontend/components/editorial/Masthead.jinja": "bdf340347d788431d6fdb96bbdbbc375e87b71e2",
+    "src/frontend/components/editorial/Masthead.css": "9c935a95709b1923c3229c16a06f24b120209aca"
+  },
+  "fixture": {
+    "world_id": "4d2f0b7a-1c3e-4a55-9b2f-8e6a1d0c7f31",
+    "sizes": {
+      "empty": {
+        "published": 0,
+        "drafts": 0
+      },
+      "short": {
+        "published": 3,
+        "drafts": 2
+      },
+      "long": {
+        "published": 30,
+        "drafts": 3
+      }
+    },
+    "long_name": "Rugginosa la Custode delle Mappe Rubate del Guado Spezzato",
+    "draft_name": "Lo Scoiattolo Smemorato"
+  },
+  "captures": [
+    {
+      "profile": "desktop",
+      "size": "empty",
+      "entry": "a",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-empty-a.png"
+    },
+    {
+      "profile": "desktop",
+      "size": "empty",
+      "entry": "b",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-empty-b.png"
+    },
+    {
+      "profile": "desktop",
+      "size": "short",
+      "entry": "a",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-short-a.png"
+    },
+    {
+      "profile": "desktop",
+      "size": "short",
+      "entry": "b",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-short-b.png"
+    },
+    {
+      "profile": "desktop",
+      "size": "long",
+      "entry": "a",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-long-a.png"
+    },
+    {
+      "profile": "desktop",
+      "size": "long",
+      "entry": "b",
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-long-b.png"
+    },
+    {
+      "profile": "phone",
+      "size": "empty",
+      "entry": "a",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-empty-a.png"
+    },
+    {
+      "profile": "phone",
+      "size": "empty",
+      "entry": "b",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-empty-b.png"
+    },
+    {
+      "profile": "phone",
+      "size": "short",
+      "entry": "a",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-short-a.png"
+    },
+    {
+      "profile": "phone",
+      "size": "short",
+      "entry": "b",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-short-b.png"
+    },
+    {
+      "profile": "phone",
+      "size": "long",
+      "entry": "a",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-long-a.png"
+    },
+    {
+      "profile": "phone",
+      "size": "long",
+      "entry": "b",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-long-b.png"
+    }
+  ]
+}
