@@ -414,7 +414,6 @@ html[data-accent="gradiente"] .prose a:hover {
   --radius-sm: 2px;
   --radius-md: var(--radius);
   --radius-lg: 4px;
-  --radius-xl: 6px;
   --radius-full: 999px;
 
   --shadow-sm: 3px 3px 0 rgba(23, 21, 15, 0.9);
@@ -466,7 +465,6 @@ html[data-accent="gradiente"] .prose a:hover {
   --clr-bg: var(--paper);
   --clr-surface: var(--surface);
   --clr-surface-raised: var(--surface);
-  --clr-overlay: rgba(23, 21, 15, 0.55);
 
   --clr-border: var(--line);
   --clr-border-light: #e2dcc9;
@@ -491,7 +489,6 @@ html[data-accent="gradiente"] .prose a:hover {
   --status-success-bg: #e4efe7;
   --status-danger: var(--danger);
   --status-danger-bg: #f6e2dd;
-  --status-danger-light: #d1402a;
   --status-warning: var(--warn);
   --status-warning-bg: #f6ecd4;
   --status-info: var(--cobalt);

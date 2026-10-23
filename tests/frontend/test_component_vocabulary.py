@@ -65,9 +65,50 @@ def _documented() -> dict[str, list[str]]:
     return documented
 
 
+def _audit() -> dict[str, list[str]]:
+    text = MANUAL.read_text(encoding="utf-8")
+    block = text.split("<!-- component-vocabulary-audit:start -->", 1)[1].split(
+        "<!-- component-vocabulary-audit:end -->", 1
+    )[0]
+    audit: dict[str, list[str]] = {}
+    for line in block.splitlines():
+        match = re.match(r"^([a-z.-]+):\s*(.+?)\s*$", line)
+        if match:
+            audit[match.group(1)] = match.group(2).split()
+    return audit
+
+
 def _classes(stylesheet: Path) -> set[str]:
     css = re.sub(r"/\*.*?\*/", "", stylesheet.read_text(encoding="utf-8"), flags=re.S)
     return set(re.findall(r"\.([a-z][a-z0-9-]*)", css))
+
+
+def _templates() -> dict[Path, str]:
+    return {
+        template: template.read_text(encoding="utf-8")
+        for template in COMPONENTS.rglob("*.jinja")
+    }
+
+
+def _literal(tag: str, attribute: str) -> set[str]:
+    return set(re.findall(rf'(?<![:\w-]){attribute}="([a-z0-9-]+)"', tag))
+
+
+def _loop_sizes(source: str) -> set[str]:
+    sizes: set[str] = set()
+    for variable, literal, body in re.findall(
+        r"\{% for (\w+) in (\[[^\]]*\]) %\}(.*?)\{% endfor %\}", source, re.S
+    ):
+        if f':size="{variable}"' in body:
+            sizes.update(ast.literal_eval(literal))
+    return sizes
+
+
+def _pill_variants(source: str) -> set[str]:
+    variants: set[str] = set()
+    for tag in re.findall(r"<common\.Pill\b([^>]*)>", source, re.S):
+        variants |= _literal(tag, "variant") or {"neutral"}
+    return variants
 
 
 def _render(name: str, **props: object) -> str:
@@ -206,6 +247,116 @@ def test_callers_use_only_documented_options() -> None:
             assert set(re.findall(r'(?<![:\w-])variant="([a-z-]+)"', tag)) <= set(
                 documented["pill.variant"]
             ), template
+
+
+def test_documented_options_have_a_consumer_or_a_recorded_retention() -> None:
+    documented = _documented()
+    audit = _audit()
+    templates = _templates()
+
+    button_variants: set[str] = set()
+    button_sizes: set[str] = set()
+    pill_variants: set[str] = set()
+    grid_columns: set[str] = set()
+    grid_minimums: set[str] = set()
+    grid_flags: set[str] = set()
+
+    for source in templates.values():
+        for tag in _button_tags(source):
+            button_variants |= _literal(tag, "variant")
+            button_sizes |= _literal(tag, "size")
+        button_sizes |= _loop_sizes(source)
+        pill_variants |= _pill_variants(source)
+        for tag in re.findall(r"<common\.Grid\b([^>]*)>", source, re.S):
+            grid_columns |= set(re.findall(r'(?<![:\w-])columns="?(\d+)"?', tag))
+            grid_minimums |= _literal(tag, "min")
+            grid_flags |= {
+                flag
+                for flag in documented["grid.flags"]
+                if re.search(rf"(?<![\w-]){re.escape(flag)}(?![\w-])", tag)
+            }
+
+    assert set(documented["button.variant"]) <= button_variants
+    assert (
+        set(documented["button.size"]) | set(documented["button.size.experimental"])
+        <= button_sizes
+    )
+    assert set(documented["pill.variant"]) <= pill_variants
+    assert set(documented["grid.min"]) <= grid_minimums
+    assert set(documented["grid.flags"]) <= grid_flags
+    assert set(documented["grid.columns"]) - grid_columns == set(
+        audit["grid.columns.no-caller"]
+    )
+
+
+def test_design_kit_keeps_the_experimental_sizes_in_its_loops() -> None:
+    documented = _documented()
+    showcase = SHOWCASE.read_text(encoding="utf-8")
+    expected = set(documented["button.size"]) | set(
+        documented["button.size.experimental"]
+    )
+
+    assert expected <= _loop_sizes(showcase)
+    assert showcase.count('{% for group_size in ["xs", "sm", "md", "lg", "xl"] %}') == 2
+
+
+def test_reserved_shape_keeps_its_callers_and_remains_unstyled() -> None:
+    documented = _documented()
+    shapes = set(documented["button.shape.reserved-noop"])
+
+    passed = {
+        shape
+        for path, source in _templates().items()
+        if path != SHOWCASE
+        for tag in _button_tags(source)
+        for shape in _literal(tag, "shape")
+    }
+    assert "square" in passed
+    for name in (
+        "layout/Topbar.jinja",
+        "common/MenuTrigger.jinja",
+        "common/IconButton.jinja",
+    ):
+        assert 'shape="square"' in (COMPONENTS / name).read_text(encoding="utf-8"), name
+    assert "btn-{{ shape }}" in (COMPONENTS / "common" / "ButtonGroup.jinja").read_text(
+        encoding="utf-8"
+    )
+    assert 'shape="square"' in SHOWCASE.read_text(encoding="utf-8")
+    assert 'shape="round"' in BUTTON_JINJA.read_text(encoding="utf-8").splitlines()[0]
+
+    all_component_classes = set().union(
+        *(_classes(stylesheet) for stylesheet in COMPONENTS.rglob("*.css"))
+    )
+    assert not {f"btn-{shape}" for shape in shapes} & all_component_classes
+
+
+def test_pill_design_kit_only_variants_keep_their_specimens() -> None:
+    documented = set(_documented()["pill.variant"])
+    showcase_only = set(_audit()["pill.design-kit-only"])
+    showcase = SHOWCASE.read_text(encoding="utf-8")
+
+    assert showcase_only <= documented
+    for variant in showcase_only:
+        assert f'variant="{variant}"' in showcase
+        for path, source in _templates().items():
+            if path != SHOWCASE:
+                assert variant not in _pill_variants(source), path
+
+
+def test_audited_tokens_match_the_tree() -> None:
+    audit = _audit()
+    main_css = MAIN_CSS.read_text(encoding="utf-8")
+    frontend = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in COMPONENTS.parent.rglob("*")
+        if path.is_file() and path.suffix in {".css", ".jinja", ".js", ".mjs", ".py"}
+    )
+
+    for token in audit["token.removed"]:
+        assert token not in main_css, token
+        assert token not in frontend, token
+    for token in audit["token.retained"]:
+        assert token in main_css, token
 
 
 def test_unsupported_values_are_unstyled_until_t19_rejects_them() -> None:

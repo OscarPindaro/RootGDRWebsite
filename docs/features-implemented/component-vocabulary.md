@@ -5,6 +5,12 @@ The finite set of public options an author may pass to `common.Button`,
 owner delegated the choice to the coordinator on 2026-10-23; this record is the
 accepted outcome for REQ-0019/T18 and the input for T19, T20 and T31.
 
+REQ-0019/T20 audited every option and token the 2026-10-21 review named. No
+component option was removed: `lg`, `xl`, the standalone `shape` argument and
+the ten design-kit-only Pill variants all keep their implemented CSS and their
+specimens. Three dead alias tokens were removed; every other candidate is
+retained with the consumer or the documented reason recorded below.
+
 ## What it does
 
 ### Public options
@@ -25,7 +31,8 @@ from the supported product list and are not used by a production caller; T20
 does not delete them. `shape` on a standalone button emits `btn-round` or
 `btn-square`, which no stylesheet styles. It is kept because `Topbar`,
 `MenuTrigger`, `IconButton`, `ButtonGroup` and the design kit pass it; removing
-it would ripple without a visible change.
+it would ripple without a visible change. The T20 audit below records the
+consumers behind each retained option.
 
 ### Decision ownership
 
@@ -42,7 +49,8 @@ it would ripple without a visible change.
 
 `tests/frontend/test_component_vocabulary.py` reads this block and compares it
 with the component templates, their stylesheets, the spacing and grid tokens in
-`main.css`, and the design-kit callers.
+`main.css`, and the design-kit callers. It also reads the T20 audit block below,
+so a retained option cannot lose its last consumer unnoticed.
 
 <!-- component-vocabulary:start -->
 ```text
@@ -57,6 +65,46 @@ grid.min: card cover story quick
 grid.flags: flush split document
 ```
 <!-- component-vocabulary:end -->
+
+### T20 audit
+
+The audit checked stylesheets, templates, component and page scripts, the
+design-kit specimens and the spacing/grid tokens before changing anything. It
+includes `var()` lookups, JavaScript and template interpolation, and the two
+dynamic size loops in `Showcase.jinja`. A value has a consumer when one of those
+places reads it; a value with no reader was either removed or retained for a
+recorded reason.
+
+| Candidate | Consumers found | Outcome |
+|---|---|---|
+| Button `lg`, `xl` | `.btn-lg`/`.btn-xl` and their `--button-height-*`, `--button-padding-*`, `--button-icon-*` tokens; the matching `ButtonGroup` rules and tokens; both design-kit loops over `["xs", "sm", "md", "lg", "xl"]`; `tests/unit/jinja/test_button_groups.py` renders `xl`. No production caller. | Retained as design-kit experiments. |
+| Button `shape` | `Button.jinja` emits `btn-{shape}`; `Topbar`, `MenuTrigger` and `IconButton` pass `square`; `round` is the default; `ButtonGroup.jinja` emits `btn-{shape}` on its items and `Showcase.jinja` passes `square` to a group and shows the standalone specimen. No stylesheet styles the standalone `btn-round`/`btn-square`; `ButtonGroup.css` styles the group's corners. | Retained as a reserved no-op. |
+| Pill `info`, `accent`, `role-dev`, `npc`, `vermilion`, `cobalt`, `ochre`, `act1`, `act2`, `act3` | `Showcase.jinja` renders every one; `tests/frontend/test_button_skin.py` pins each fill token and its 4.5:1 contrast. No product caller. | Retained; the design kit is their contract. |
+| `--ok` | No stylesheet, template, script or specimen reads it. `docs/frontend_guide.md` names it in the identity-token list; the standalone prototype defines its own copy. | Retained: the guide is the documented contract and its rewrite is T21. Removing the token would leave the guide naming an absent value. |
+| `--clr-surface-raised` | No code reader. `docs/jinjax.md` names it as the light surface a component must not hardcode when it can render on both paper and rail. | Retained for the same guide reason; T21 owns the rewrite. |
+| `--clr-overlay` | No reader in any stylesheet, template, script, test or specimen. | Removed. |
+| `--status-danger-light` | No reader; its value duplicates `--vermilion`/`--p1`, but the alias itself was unused. | Removed. |
+| `--radius-xl` | No reader; the other radius steps are used. | Removed. |
+| `--clr-nav-accent` | No reader. It is a semantic role alias and is not on the review's candidate list. | Retained and reported to the coordinator; it is outside T20's approved removal list. |
+
+Removing the three aliases cannot change a rendered style: no declaration,
+template, script or specimen referenced them, so no computed value depends on
+them. `--ok`, `--clr-surface-raised` and `--clr-nav-accent` are the only unread
+aliases left; the first two exist because a central guide names them, and the
+third is outside the approved list.
+
+<!-- component-vocabulary-audit:start -->
+```text
+pill.design-kit-only: info accent role-dev npc vermilion cobalt ochre act1 act2 act3
+grid.columns.no-caller: 3
+token.removed: --clr-overlay --status-danger-light --radius-xl
+token.retained: --ok --clr-surface-raised --clr-nav-accent
+```
+<!-- component-vocabulary-audit:end -->
+
+`tests/frontend/test_component_vocabulary.py` reads this block. It fails if a
+documented option loses its last consumer without a recorded retention, if a new
+option is added without a caller or specimen, or if a removed token comes back.
 
 ### Invalid values today
 
@@ -169,6 +217,19 @@ become a shared argument. Stored tint ids and existing aliases keep their names.
   correction is needed.
 - **Grid gap.** Callers use `5`, `6` and `10`; the default is `6`. The supported
   list is every step that exists as a `--sp-*` token.
+- **Design-kit loops.** `Showcase.jinja` has two
+  `{% for group_size in ["xs", "sm", "md", "lg", "xl"] %}` loops. Each passes
+  `:size` to the `ButtonGroup` and to every `Button` in the group, so `lg` and
+  `xl` have a dynamic template consumer even though no product page uses them.
+  The audit test reads the literal list and fails if a size leaves it.
+- **Token aliases (T20).** The review named five no-reference aliases. Three had
+  no reader anywhere and were removed: `--clr-overlay`, `--status-danger-light`
+  and `--radius-xl`. `--ok` and `--clr-surface-raised` have no code reader either,
+  but `docs/frontend_guide.md` and `docs/jinjax.md` name them; removing them
+  would leave those guides describing absent values, so they stay until T21
+  rewrites the guides. `--clr-nav-accent` is also unread, but it is a semantic
+  role alias and was not on the review's candidate list; it is reported rather
+  than removed.
 
 ## Used by
 
@@ -183,9 +244,15 @@ become a shared argument. Stored tint ids and existing aliases keep their names.
 
 - There is no runtime validation in this ticket. T19 owns the rejection and its
   diagnostics.
-- No token or CSS is removed here. T20 owns the removal list, and this record
-  retains `lg`, `xl`, `columns=3` and every Pill variant.
-- T31 aligns the token hook with this record. The hook cannot tell a shared
-  step written in `rem` from private geometry, so review owns that distinction.
+- T20 removed no component option. It removed only the three unread aliases
+  `--clr-overlay`, `--status-danger-light` and `--radius-xl`; `lg`, `xl`,
+  `columns=3`, the standalone `shape` argument and every Pill variant stay.
+- `--ok`, `--clr-surface-raised` and `--clr-nav-accent` remain. The first two are
+  named by central guides and wait for T21; the third is a semantic role alias
+  outside the approved removal list.
+- T31 aligned the token hook with this record: it guards palette and shared
+  measures, allows a component's own rem/em/clamp geometry, and cannot by itself
+  tell a shared step written in `rem` from private geometry, so review owns that
+  distinction.
 - The design kit still shows `lg` and `xl`; its Buttons note marks them as
   experiments so the specimen does not imply they are product options.
