@@ -1,7 +1,10 @@
-/* Prototype-local comparison strip and the phone-only compact entry.
-   Option A is the collection as the application renders it: the creation card
-   closes the grid. Option B moves the same button above the grid below 700px
-   and gives it a compact action row; above that width nothing changes. */
+/* Prototype-local comparison strip and the pre-implementation entry.
+   Option B is the implemented product entry: the real script moves the button
+   above the grid below 700px and the component's own stylesheet gives it the
+   compact row, so the study adds nothing for it. Option A is the earlier
+   arrangement, reproduced here: the same button back inside the grid, with the
+   card geometry stated explicitly instead of inherited from a product state
+   that no longer exists. */
 
 .study-bar {
   display: flex;
@@ -58,36 +61,33 @@
   cursor: not-allowed;
 }
 
-/* Option B, phone only. The script moves the real creation button to be the
-   grid's previous sibling; this rule gives that moved button a compact action
-   row. The media area stops being a card portrait and the body loses the card
-   padding, so the entry is a labelled action instead of a missing card. */
-@media (max-width: 700px) {
-  body[data-study-entry="b"] .container > .collection-create {
-    display: flex;
-    align-items: center;
-    gap: var(--sp-3);
-    width: 100%;
-    margin-bottom: var(--sp-5);
-    padding: var(--sp-3) var(--sp-4);
-    border-style: dashed;
-    background: var(--paper-deep);
-  }
+/* Option A, the pre-implementation card. The button carries the product's
+   `data-collection-action` marker from the phone placement it received on
+   load, so the card geometry is restated here for the option that no longer
+   exists in the product. */
+body[data-study-entry="a"] .collection-create {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: auto;
+  margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+}
 
-  body[data-study-entry="b"] .container > .collection-create .collection-create__media {
-    flex: none;
-    aspect-ratio: auto;
-    border-bottom: 0;
-  }
+body[data-study-entry="a"] .collection-create .collection-create__media {
+  flex: initial;
+  aspect-ratio: var(--media-ratio-portrait);
+  border-bottom: var(--rule-ink);
+  border-bottom-style: dashed;
+}
 
-  body[data-study-entry="b"] .container > .collection-create .collection-create__plus {
-    width: var(--button-height-xs);
-    height: var(--button-height-xs);
-    font-size: var(--text-lg);
-  }
+body[data-study-entry="a"] .collection-create .collection-create__plus {
+  width: var(--collection-create-plus);
+  height: var(--collection-create-plus);
+  font-size: var(--text-2xl);
+}
 
-  body[data-study-entry="b"] .container > .collection-create .collection-create__body {
-    padding: 0;
-    gap: var(--sp-1);
-  }
+body[data-study-entry="a"] .collection-create .collection-create__body {
+  padding: 0.9rem 0.95rem 1rem;
+  gap: 0.4rem;
 }

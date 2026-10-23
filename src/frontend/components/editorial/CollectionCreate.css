@@ -5,7 +5,9 @@
    transparent, so it reads as the card that is not there yet. The action and
    the disabled state live here; the openable hover, the focus ring and the
    pressed state are the shared collection-surface rule in
-   editorial/Collection.css. */
+   editorial/Collection.css. Below the compact breakpoint the colocated script
+   moves the same button above the grid and marks it `data-collection-action`;
+   that state is the compact action row below. */
 .collection-create {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -70,4 +72,38 @@
 .collection-create__hint {
   color: var(--muted);
   font-size: 0.86rem;
+}
+
+/* The phone action row: the entry above the collection, still dashed and
+   filled with paper so it reads as the missing card's command. The media slot
+   keeps only the plus, and the body loses the card padding, so the whole entry
+   is a labelled action instead of a cell. The media query keeps the card when
+   a resize has not reached the script yet. */
+@media (max-width: 700px) {
+  .collection-create[data-collection-action] {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-3);
+    width: 100%;
+    margin-bottom: var(--sp-5);
+    padding: var(--sp-3) var(--sp-4);
+    background: var(--paper-deep);
+  }
+
+  .collection-create[data-collection-action] .collection-create__media {
+    flex: none;
+    aspect-ratio: auto;
+    border-bottom: 0;
+  }
+
+  .collection-create[data-collection-action] .collection-create__plus {
+    width: var(--button-height-xs);
+    height: var(--button-height-xs);
+    font-size: var(--text-lg);
+  }
+
+  .collection-create[data-collection-action] .collection-create__body {
+    padding: 0;
+    gap: var(--sp-1);
+  }
 }

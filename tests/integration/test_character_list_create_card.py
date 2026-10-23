@@ -74,10 +74,18 @@ async def test_the_create_card_starts_a_draft_in_name_editing(
             # F14: the create card also carries the shared collection-surface
             # rule, so it lifts and focuses exactly like an entity card.
             assert 'class="collection-create collection-surface"' in listing.text
+            # T27: one button, one action. The phone placement is the same node
+            # moved by the component's own script, not a second control.
+            assert listing.text.count('aria-label="Nuovo personaggio"') == 1
+            assert "editorial/CollectionCreate.js" in listing.text
             # Empty Characters: the card is the collection, not an empty panel
             # with a second action beside it.
             assert "empty-state" not in listing.text
             assert "Nessun personaggio: creane uno per cominciare." in listing.text
+
+            before = await client.get(f"/api/worlds/{world_id}/characters/")
+            assert before.status_code == 200
+            assert before.json()["data"] == []
 
             created = await client.post(
                 f"/worlds/{world_id}/characters/new",
@@ -92,6 +100,13 @@ async def test_the_create_card_starts_a_draft_in_name_editing(
             assert detail.status_code == 200
             # ?edit=1 lands the draft in the name editor.
             assert 'data-auto-edit="true"' in detail.text
+
+            # One activation is one persisted draft, and the API says so.
+            after = await client.get(f"/api/worlds/{world_id}/characters/")
+            assert after.status_code == 200
+            characters = after.json()["data"]
+            assert len(characters) == 1
+            assert characters[0]["isDraft"] is True
     finally:
         async with db_manager.async_session_maker() as cleanup:
             async with cleanup.begin():

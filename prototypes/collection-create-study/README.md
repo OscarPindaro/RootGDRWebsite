@@ -53,10 +53,10 @@ Both options read the same DOM, the same cards, the same drafts and the same
 never changes the fixture; it only moves the real button and changes the body
 attribute the study stylesheet reads.
 
-| | A · Retained | B · Compact above the grid |
+| | A · Pre-implementation | B · Implemented |
 |---|---|---|
-| Entry | `editorial.CollectionCreate` as the last grid cell | The same button, moved before the grid |
-| Widths | every width | below 700px only; above, A is unchanged |
+| Entry | `editorial.CollectionCreate` as the last grid cell, reproduced by the study | The same button, moved before the grid by the product's own script |
+| Widths | reproduced at every width for comparison | below 700px; above, the entry is the last grid cell |
 | Empty collection | the dashed card is the collection, with the hint in its body | compact action with the same hint, empty grid below |
 | Tap target (390px) | 350 × 476 (350 × 527 empty) | 350 × 58 (350 × 96 empty) |
 | Desktop | unchanged | unchanged |
@@ -65,7 +65,19 @@ B is not the removed masthead plus: it is the same creation button, with the
 same `hx-post`, the same accessible name and the same hint, in a labelled action
 row above the collection. The study never adds a second creation control.
 
+Since REQ-0019/T27 the product implements B, so the study no longer inherits
+either entry from the application. B is the real entry: the product's
+`editorial/CollectionCreate.js` moves the button below 700px and the component's
+stylesheet gives it the compact row. A is the earlier arrangement, reproduced by
+the study's own stylesheet: the script puts the same button back inside the grid
+and `comparison.css` restates the card geometry. A is therefore a prototype-only
+state and no longer a product state.
+
 ## Measurements
+
+These are the baseline numbers taken at `094ac4a`, before REQ-0019/T27
+implemented the decision. They describe the comparison the choice was made on;
+the product now renders B, and A exists only inside this study.
 
 Phone profile 390×844, scroll position 0. "Scroll to entry" is the minimum
 vertical scroll that brings the whole creation entry into view; "hint below
@@ -95,15 +107,19 @@ this for all six combinations. Both entries exceed the 44px touch target.
 `capture.py` and the focused test read the same definition from
 `study.MEASURE_JS`.
 
-## Recommendation, decision left to the coordinator
+## Decision (2026-10-23)
 
-The study recommends **B at phone widths, A retained at 701px and above**.
+The coordinator, on behalf of the owner, selected **B below 700px and A at 701px
+and above**. REQ-0019/T27 implemented it on the character and NPC collections:
+the existing button moves above the grid below 700px as a compact labelled
+action row, and desktop keeps it as the grid's last cell. The product's own
+script and stylesheet own B; this study now reproduces A with prototype CSS.
 
-Why, in measured terms: with 30 entries the retained entry needs 17,664px of
-scrolling and 41 Tab presses, while B is in the first screen and 11 Tab presses
-away. Even when the collection is empty, A puts its explanatory hint 313px below
-the first phone screen, while B shows it immediately. B keeps the same button,
-label, hint and POST, and its 58px row is a valid touch target.
+Why, in measured terms: with 30 entries the pre-implementation entry needed
+17,664px of scrolling and 41 Tab presses, while B is in the first screen and 11
+Tab presses away. Even when the collection is empty, A puts its explanatory hint
+313px below the first phone screen, while B shows it immediately. B keeps the
+same button, label, hint and POST, and its 58px row is a valid touch target.
 
 What B costs, and what choosing A buys:
 
@@ -118,14 +134,6 @@ What B costs, and what choosing A buys:
 - A keeps one creation model everywhere, needs no new treatment, and keeps the
   card metaphor and the empty placeholder. Its cost is reachability as the
   collection grows and a below-the-fold explanation when empty.
-
-The owner delegated the decision to the coordinator for this ticket. This
-document records the comparison and the recommendation; it does not choose.
-If B is selected, T27's boundary is the character and NPC collection
-composition below 700px: move the existing button above the grid, give it the
-compact row, keep the same POST and hint, leave desktop and every other
-collection type unchanged, and do not restore the masthead plus. If A is
-selected, T27 is an explicit no-change outcome.
 
 The comparison does not settle appearance disclosure (T24), phone search (T28),
 or creation on the ledger, atlas, story-band, row and cover collections, whose
@@ -185,6 +193,10 @@ moves them, so these images are not a frozen reference.
 
 ## What this revision shows
 
+The captures and numbers above describe `094ac4a`, before the product
+implemented B. They are the baseline the decision was made on, not a description
+of the current application.
+
 Compared with `prototypes/devin-prototype/personaggi.html` at 390px: the same
 atlas shell, serif names, portrait media and dashed creation card. The study
 does not reuse the prototype's static shell; the shell and the list come from
@@ -203,8 +215,10 @@ the real catalog.
 
 - `study.py` — typed fixture, three collection states, the raw catalog render,
   the shared measurement expression and the source revisions.
-- `comparison.css` — the prototype strip and the phone-only compact entry.
-- `comparison.js` — entry switching, the DOM move and the inert write boundary.
+- `comparison.css` — the prototype strip and the explicit pre-implementation
+  card geometry for option A.
+- `comparison.js` — entry switching, the DOM move for option A and the inert
+  write boundary.
 - `controls.html` — the labelled comparison strip and the state links.
 - `capture.py` — desktop/phone captures, measurements and the interactive
   `--serve` entry point on the ephemeral server.

@@ -104,6 +104,9 @@ def test_the_collection_create_card_starts_a_draft_in_name_editing(
     assert card.evaluate("el => el.tagName") == "BUTTON"
     assert card.get_attribute("aria-label") == "Nuovo personaggio"
     assert session.page.locator(".masthead .btn-icon-only").count() == 0
+    # T27 keeps the desktop entry as the grid's last cell.
+    assert card.evaluate("el => el.parentElement.classList.contains('grid')")
+    assert card.evaluate("el => el === el.parentElement.lastElementChild")
 
     card.click()
     session.page.wait_for_selector(".docidentity__input")
@@ -116,6 +119,42 @@ def test_the_collection_create_card_starts_a_draft_in_name_editing(
     ).json()
     assert payload["isDraft"] is True
 
+    assert session.errors == []
+
+
+def test_the_collection_create_entry_is_reachable_on_a_phone(
+    session: BrowserSession, seed_world
+) -> None:
+    """T27: below 700px the same button is the collection's action row above
+    the grid, inside the first screen, and one activation persists one draft."""
+    world_id = seed_world("Mondo Tasca")
+    session.page.set_viewport_size({"width": 390, "height": 844})
+    session.goto(f"/worlds/{world_id}/characters")
+
+    entry = session.page.locator('[data-testid="create-character"]')
+    assert entry.count() == 1
+    assert entry.evaluate("el => el.parentElement.classList.contains('container')")
+    assert entry.evaluate("el => el.nextElementSibling.classList.contains('grid')")
+    assert entry.evaluate("el => el.hasAttribute('data-collection-action')")
+    box = entry.bounding_box()
+    assert box["y"] + box["height"] <= 844
+    assert 44 <= box["height"] < 120
+
+    before = session.expect_api(f"/api/worlds/{world_id}/characters/").json()["data"]
+    assert before == []
+
+    entry.click()
+    session.page.wait_for_selector(".docidentity__input")
+    assert "edit=" not in session.page.url, session.page.url
+
+    character_id = re.search(r"/characters/([0-9a-f-]{36})", session.page.url).group(1)
+    payload = session.expect_api(
+        f"/api/worlds/{world_id}/characters/{character_id}"
+    ).json()
+    assert payload["isDraft"] is True
+
+    after = session.expect_api(f"/api/worlds/{world_id}/characters/").json()["data"]
+    assert [item["id"] for item in after] == [character_id]
     assert session.errors == []
 
 

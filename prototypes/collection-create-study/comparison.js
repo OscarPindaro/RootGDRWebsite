@@ -1,10 +1,11 @@
 /* Comparison-only behaviour for the collection creation study.
  *
  * The page is the real character list. This script switches the two creation
- * entries on the same DOM: option A leaves the real creation card as the last
- * grid cell, option B moves that same button above the grid below 700px and
- * gives it a compact action row. Nothing here is a product setting or a
- * persistence layer.
+ * entries on the same DOM: option A is the pre-implementation arrangement,
+ * reproduced here by putting the same button back inside the grid; option B is
+ * the implemented entry, which the product's own script already places above
+ * the grid below 700px. Nothing here is a product setting or a persistence
+ * layer.
  */
 (function () {
   "use strict";
@@ -117,5 +118,10 @@
   });
 
   var requested = new URLSearchParams(window.location.search).get("entry");
-  setEntry(requested === "b" ? "b" : "a");
+  /* The product's own placement script is a module, so it runs after this
+     classic one. Placing the requested entry on DOMContentLoaded keeps option A
+     a reproduction of the earlier arrangement instead of a race with it. */
+  document.addEventListener("DOMContentLoaded", function () {
+    setEntry(requested === "b" ? "b" : "a");
+  });
 })();

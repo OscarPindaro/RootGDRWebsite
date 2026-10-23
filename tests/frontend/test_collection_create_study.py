@@ -2,11 +2,14 @@
 
 The study renders the application's own ``pages.characters.CharacterList``
 through the real catalog and serves the raw full pages on the ephemeral
-component server. Option A keeps the real creation card as the last grid cell;
-option B moves that same button above the grid below 700px and gives it a
-compact action row. Both options read the same cards, drafts and button.
+component server. Option B is the implemented entry: the product's own script
+moves the single button above the grid below 700px and the component's
+stylesheet gives it a compact action row. Option A is the pre-implementation
+arrangement, reproduced by the study: the same button back inside the grid with
+the card geometry the prototype restates. Both options read the same cards,
+drafts and button.
 
-The test measures what the decision turns on: the first real card's offset, the
+The test measures what the decision turned on: the first real card's offset, the
 scroll needed to reveal the creation entry and its empty-collection hint, the
 tap-target box, the actions above the collection, keyboard reach and horizontal
 overflow. Every write control is inert and the page states that its saves are
@@ -214,12 +217,20 @@ def test_both_entries_render_the_same_collection(component, key):
     assert len(before["drafts"]) == drafts[key]
 
 
-def test_the_retained_card_closes_the_grid(component):
+def test_the_pre_implementation_card_closes_the_grid(component):
     page, _ = _open(component, "long", width=390, height=844, entry="a")
 
     create = page.locator('[data-testid="create-character"]')
     assert create.evaluate("el => el.parentElement.className") == "grid grid-auto"
     assert create.evaluate("el => el === el.parentElement.lastElementChild")
+    # The card geometry is the prototype's reproduction, not a product state.
+    assert (
+        create.evaluate(
+            "el => getComputedStyle(el.querySelector('.collection-create__media'))"
+            ".aspectRatio"
+        )
+        != "auto"
+    )
     measured = _measure(page)
     assert measured["cards"] == 30
     assert measured["drafts"] == 3
@@ -232,6 +243,10 @@ def test_the_compact_entry_precedes_the_grid_on_a_phone(component):
     create = page.locator('[data-testid="create-character"]')
     assert create.evaluate("el => el.parentElement.className") == "container"
     assert create.evaluate("el => el.nextElementSibling.classList.contains('grid')")
+    # B is the implemented entry: the product's script marked the move and the
+    # component's own stylesheet supplies the row.
+    assert create.evaluate("el => el.hasAttribute('data-collection-action')")
+    assert create.evaluate("el => getComputedStyle(el).display") == "flex"
     measured = _measure(page)
     assert measured["create_above_first_card"] is True
     assert measured["create_parent"] == "container"
@@ -248,34 +263,34 @@ def test_the_compact_entry_is_phone_only(component):
 
 def test_the_long_collection_is_reachable_at_the_top_of_the_phone_page(component):
     page, _ = _open(component, "long", width=390, height=844, entry="a")
-    retained = _measure(page)
+    pre_implementation = _measure(page)
     page, _ = _open(component, "long", width=390, height=844, entry="b")
     compact = _measure(page)
 
-    # A leaves the entry after 30 cards and 3 drafts; B keeps it in the first
-    # screen.
-    assert retained["create_reveal"] > 3000
+    # A leaves the entry after 30 cards and 3 drafts; the implemented B keeps
+    # it in the first screen.
+    assert pre_implementation["create_reveal"] > 3000
     assert compact["create_reveal"] == 0
     # B costs the first real card the height of its action row, but the card
     # still starts inside the first phone screen.
-    assert compact["first_card_top"] > retained["first_card_top"]
-    assert compact["first_card_top"] - retained["first_card_top"] < 200
+    assert compact["first_card_top"] > pre_implementation["first_card_top"]
+    assert compact["first_card_top"] - pre_implementation["first_card_top"] < 200
     assert compact["first_card_top"] < 844
     # One more action competes at the top of the phone page, and no more.
-    assert compact["header_actions"] == retained["header_actions"]
-    assert compact["top_actions"] == retained["top_actions"] + 1
+    assert compact["header_actions"] == pre_implementation["header_actions"]
+    assert compact["top_actions"] == pre_implementation["top_actions"] + 1
 
 
 def test_an_empty_collection_still_explains_itself_in_both_entries(component):
     page, _ = _open(component, "empty", width=390, height=844, entry="a")
-    retained = _measure(page)
+    pre_implementation = _measure(page)
     hint = page.locator(".collection-create__hint")
     assert "Nessun personaggio" in hint.inner_text()
-    assert retained["cards"] == 0
-    # The retained card is a full empty card cell, and at 390x844 its hint sits
-    # below the first screen.
-    assert retained["create_height"] > 400
-    assert retained["hint_reveal"] > 100
+    assert pre_implementation["cards"] == 0
+    # The pre-implementation card is a full empty cell, and at 390x844 its
+    # hint sits below the first screen.
+    assert pre_implementation["create_height"] > 400
+    assert pre_implementation["hint_reveal"] > 100
 
     page, _ = _open(component, "empty", width=390, height=844, entry="b")
     compact = _measure(page)
@@ -284,7 +299,7 @@ def test_an_empty_collection_still_explains_itself_in_both_entries(component):
     assert compact["create_height"] < 120
     assert compact["hint_reveal"] == 0
     # With no cards both entries are the only action above the collection.
-    assert compact["top_actions"] == retained["top_actions"]
+    assert compact["top_actions"] == pre_implementation["top_actions"]
 
 
 @pytest.mark.parametrize("key", SIZES)
@@ -312,7 +327,7 @@ def test_no_horizontal_overflow_at_phone_widths(component, width, key, entry):
 
 def test_keyboard_reaches_the_create_entry_sooner_in_b(component):
     page, _ = _open(component, "long", width=390, height=844, entry="a")
-    retained = _tabs_to_create(page)
+    pre_implementation = _tabs_to_create(page)
     create = page.locator('[data-testid="create-character"]')
     assert create.evaluate("el => getComputedStyle(el).outlineStyle") != "none"
     assert create.evaluate("el => getComputedStyle(el).outlineWidth") != "0px"
@@ -330,7 +345,7 @@ def test_keyboard_reaches_the_create_entry_sooner_in_b(component):
         if request[0] not in {"GET", "HEAD", "OPTIONS"}
     ]
 
-    assert compact < retained
+    assert compact < pre_implementation
 
 
 def test_the_comparison_and_the_simulated_boundary_are_labelled(component):
