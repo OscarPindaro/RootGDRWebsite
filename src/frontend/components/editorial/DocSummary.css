@@ -23,10 +23,26 @@
 .docsummary__render > :last-child { margin-bottom: 0; }
 .docsummary__render:empty { min-height: 1.2em; }
 
+/* The writing field carries the same vermilion rule as the body's, so both
+   Markdown fields read as the same thing when they are open. The container's
+   own hover rule stands down while the field is open, or the two lines would
+   sit side by side. */
+.docsummary__editor {
+  border: 0;
+  border-left: 3px solid var(--vermilion);
+  padding-left: var(--sp-3);
+}
+
+.docsummary:has(.docsummary__editor:not([hidden])) {
+  border-left-color: transparent;
+}
+
 .docsummary__editor .cm-editor {
   border: 0;
   background: transparent;
 }
+
+.docsummary__editor .cm-focused { outline: none; }
 
 .docsummary__editor .cm-content {
   min-height: 4.5rem;

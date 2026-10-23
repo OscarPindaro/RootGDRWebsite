@@ -253,6 +253,29 @@ def test_the_summary_has_the_same_close_command(component):
     )
 
 
+def test_the_summary_field_carries_the_same_rule_as_the_body(component):
+    """Both Markdown fields look the same when open: vermilion left rule."""
+    summary = _mount_summary(component, value="Sintesi iniziale.")
+    summary.dblclick("[data-summary-render]")
+    summary.wait_for_selector("[data-doc-summary] .cm-editor")
+    summary_rule = summary.evaluate(
+        "() => getComputedStyle(document.querySelector('[data-summary-editor]'))"
+        ".borderLeftWidth + ' ' + getComputedStyle(document.querySelector"
+        "('[data-summary-editor]')).borderLeftStyle"
+    )
+
+    body = _mount(component)
+    body.dblclick("[data-doc-render]")
+    body.wait_for_selector("[data-doc-edit] .cm-editor")
+    body_rule = body.evaluate(
+        "() => getComputedStyle(document.querySelector('[data-doc-editor]'))"
+        ".borderLeftWidth + ' ' + getComputedStyle(document.querySelector"
+        "('[data-doc-editor]')).borderLeftStyle"
+    )
+
+    assert summary_rule == body_rule == "3px solid"
+
+
 def test_the_summary_label_stays_above_the_open_field(component):
     """Opening the summary must not push "Sintesi" below its own field.
 
