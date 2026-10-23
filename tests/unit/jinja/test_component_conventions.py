@@ -2,7 +2,7 @@
 
 These are cheap to state and easy to break, and a broken one only shows up when
 a page actually renders — which the compile-only tests in
-``tests/integration/jinja/test_templates_compile.py`` do not do. A component
+``tests/unit/jinja/test_templates_compile.py`` do not do. A component
 whose arguments are read before ``{#def #}`` compiles fine and raises
 ``UndefinedError`` at render time.
 

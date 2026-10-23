@@ -617,10 +617,10 @@ field with the URL's autosave controller, and guards on `data-summary-ready`.
 | This guide | `uv run harness test unit -- tests/unit/test_frontend_guide_links.py` | every local link in this file resolves, and the guide links the manuals it defers to. |
 
 **Compilation is checked separately.** The only compile check is
-`tests/integration/jinja/test_templates_compile.py`. It is marked `unit` but
+`tests/unit/jinja/test_templates_compile.py`. It is marked `unit` but
 lives outside `tests/unit`, so `harness test unit` does not collect it, and the
 integration profile selects `-m integration`, so it does not collect it either.
-Run it by path: `uv run pytest tests/integration/jinja/test_templates_compile.py`.
+Run it by path: `uv run pytest tests/unit/jinja/test_templates_compile.py`.
 It currently fails on `common/Button.jinja`, `common/Grid.jinja` and
 `common/Pill.jinja` because its environment comes from `_build_templates` and
 does not enable the `do` extension JinjaX uses; treat a rendering test as the

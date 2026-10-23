@@ -133,6 +133,10 @@ def _markdown(value: str | None) -> Markup:
 @lru_cache(maxsize=1)
 def _build_templates(templates_dir: str):
     templates = Jinja2Templates(directory=templates_dir)
+    # Components call the vocabulary guard with ``{% do %}``. JinjaX enables
+    # that extension in its own environment, so this one must match it or the
+    # compile guard rejects templates the application renders every day.
+    templates.env.add_extension("jinja2.ext.do")
     templates.env.filters["money"] = _money
     templates.env.filters["money_precise"] = _money_precise
     templates.env.filters["metric_value"] = _metric_value
