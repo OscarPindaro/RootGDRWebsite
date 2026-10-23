@@ -21,6 +21,42 @@ this comparison list capability claims that remain untested; B and C reproduce
 the *output shape* those tools are documented to produce, not their editing
 experience, import quality or agent behaviour.
 
+### Verified: what Agent-Native Design is
+
+Checked against the vendor's own announcement (Builder.io blog, 6 August 2026 —
+not 14 October as the earlier notes said) and the repository README:
+
+- The artifact is **self-contained HTML with Tailwind and Alpine**, rendered in a
+  preview iframe and exported as HTML, ZIP or PDF. The vendor states the workflow
+  has "three steps, and none of them involve a vector canvas".
+- **No canonical components**: "Components are duplicated HTML rather than
+  instances of a canonical master, and there's no mature library or
+  variable-governance workflow yet." No vector authoring.
+- There **is** an editor: "tweak controls" for common design variables plus
+  conversational structural edits, marketed as a "Figma-like editor". The vendor
+  does not describe drag, resize, direct text editing or HTML/CSS editing inside
+  the Design app, so the extent of that editor is unverified.
+- A second surface is documented and matters more here: the **`visual-edit`
+  skill** opens the *running app* on a canvas, lets a person adjust copy, colour,
+  spacing and padding directly, and then the coding agent pulls the pending batch
+  and applies it to source. The canvas never writes to the code by itself. It is
+  installed per repository (`npx @agent-native/core@latest skills add visual-edit`)
+  and driven from Claude Code.
+- A design system can be attached from a Builder project, a **public repository
+  URL** (this repository is public), a package registry entry, or uploaded Figma
+  files and markdown. Whether its indexing understands JinjaX templates and
+  per-component CSS is unknown and untested.
+- The vendor's own FAQ concedes that vector authoring, canonical component
+  systems, variable collections and library governance "remain Figma's", and
+  names **Penpot** as "the mature open-source Figma replacement".
+
+The earlier characterisation in this file — "prompt-driven generator with no
+boards, components, instances or libraries" — is right about the design file and
+the component model, and wrong about editing: tweak controls exist, and the
+`visual-edit` canvas is real direct manipulation, just aimed at a live page
+rather than a vector document.
+
+
 ### Why only D is installed
 
 - `@mcp-b/global` is a 9-package npm dependency with an IIFE build, so it runs in
