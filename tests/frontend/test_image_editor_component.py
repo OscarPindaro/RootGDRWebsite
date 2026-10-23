@@ -2,13 +2,16 @@
 
 Covers the world cover proportion (it must match the world list), the history
 button position (under the image, not over it), the live selection/restore/
-delete/clear updates that replaced page reloads, and the external history
-trigger.
+delete/clear updates that replaced page reloads, the external history trigger,
+and the phone appearance disclosure (REQ-0019/T25).
 """
+
+from types import SimpleNamespace
 
 import pytest
 
 from backend.content.view_helpers import animal_options, tint_options
+from backend.navigation import Crumb, WorldContext
 
 pytestmark = pytest.mark.frontend
 
@@ -506,3 +509,197 @@ def test_an_external_trigger_opens_the_history_dialog(component):
     assert page.get_by_test_id("image-history-dialog").get_attribute("id") == (
         "image-history-external"
     )
+
+
+# --- Phone appearance disclosure (REQ-0019/T25) -----------------------------
+#
+# The arrangement is part of the document composition, so these mount the real
+# CharacterDetail page: the disclosure follows the document column query, and a
+# standalone editor has no such container.
+
+
+def _document_props(*, can_manage=True, locked=False) -> dict:
+    return {
+        "world": SimpleNamespace(
+            id=WORLD_ID,
+            name="Il Boschetto di Smeraldo",
+            description="d",
+            version=1,
+            image_url=None,
+            current_place_id=None,
+        ),
+        "world_context": WorldContext(
+            id=WORLD_ID, name="Il Boschetto di Smeraldo", role="Master"
+        ),
+        "nav": None,
+        "pages": [],
+        "crumbs": [
+            Crumb(label="Mondi", href="/worlds"),
+            Crumb(label="Il Boschetto di Smeraldo"),
+        ],
+        "current_user": SimpleNamespace(
+            name="Ada",
+            email="ada@example.com",
+            role="admin",
+            avatar_url=None,
+            symbol_style="icons",
+        ),
+        "character": SimpleNamespace(
+            id=OWNER_ID,
+            name="Fiamma Rossa",
+            title="Mercante del Guado",
+            short_description="Vende tutto, comprese le informazioni.",
+            body="Porta sale a @[Il Cerchio di Pietre].",
+            tint="p8",
+            animal="🦊",
+            image_url=None,
+            locked=locked,
+            is_draft=False,
+            version=3,
+            owner=SimpleNamespace(name="Ada"),
+        ),
+        "can_manage": can_manage,
+        "animals": animal_options(),
+        "tints": tint_options(),
+        "short_html": "<p>Vende tutto, comprese le informazioni.</p>",
+        "body_html": "<p>Porta sale.</p>",
+        "links": None,
+        "auto_edit": False,
+    }
+
+
+def _document(component, width=390, **overrides):
+    page = component.mount(
+        "pages.characters.CharacterDetail", props=_document_props(**overrides)
+    )
+    page.set_viewport_size({"width": width, "height": 844})
+    return page
+
+
+def _disclosure(page):
+    return page.locator("[data-image-disclosure]")
+
+
+def _no_horizontal_overflow(page) -> bool:
+    return page.evaluate(
+        "() => document.documentElement.scrollWidth"
+        " <= document.documentElement.clientWidth"
+    )
+
+
+def test_a_phone_puts_the_appearance_controls_behind_the_aspect_disclosure(component):
+    page = _document(component, width=390)
+
+    disclosure = _disclosure(page)
+    assert disclosure.is_visible()
+    assert "Aspetto" in disclosure.inner_text()
+    assert "Asperto" not in disclosure.inner_text()
+    assert disclosure.get_attribute("aria-expanded") == "false"
+    controls = disclosure.get_attribute("aria-controls").split()
+    assert len(controls) == 2
+    for control in controls:
+        assert page.locator(f"#{control}").count() == 1
+    assert page.get_by_test_id("image-editor-surface").is_visible()
+    assert page.locator(".image-editor__choices .choice-grid").first.is_hidden()
+    assert page.get_by_test_id("image-history-open").is_hidden()
+
+    surface = page.get_by_test_id("image-editor-surface").bounding_box()
+    trigger = disclosure.bounding_box()
+    heading = page.locator(".docidentity h1").bounding_box()
+    assert surface["y"] + surface["height"] <= trigger["y"]
+    assert trigger["y"] + trigger["height"] <= heading["y"]
+
+
+def test_opening_the_disclosure_keeps_focus_scroll_and_version(component):
+    page = _document(component, width=390)
+    root = page.locator("[data-image-editor]")
+    version = root.get_attribute("data-version")
+    disclosure = _disclosure(page)
+    disclosure.scroll_into_view_if_needed()
+    before = page.evaluate("window.scrollY")
+
+    disclosure.click()
+
+    assert page.evaluate("window.scrollY") == before
+    assert disclosure.get_attribute("aria-expanded") == "true"
+    assert disclosure.evaluate("element => document.activeElement === element")
+    assert page.locator(".image-editor__choices .choice-grid").first.is_visible()
+    assert page.get_by_test_id("image-history-open").is_visible()
+    assert root.get_attribute("data-version") == version
+    assert page.locator('input[name="animal"][value="🦊"]').is_checked()
+    assert page.locator('input[name="tint"][value="p8"]').is_checked()
+
+    # Closing with focus inside the panel returns it to the trigger.
+    page.locator('input[name="tint"][value="p5"]').focus()
+    disclosure.evaluate("element => element.click()")
+
+    assert disclosure.get_attribute("aria-expanded") == "false"
+    assert page.locator(".image-editor__choices .choice-grid").first.is_hidden()
+    assert disclosure.evaluate("element => document.activeElement === element")
+    assert root.get_attribute("data-version") == version
+
+
+def test_a_failed_save_stays_visible_when_the_controls_are_collapsed(component):
+    component.allow_console_errors("500")
+    component.route_json("PATCH", AUTOSAVE, status=500, body={})
+    page = _document(component, width=390)
+
+    _disclosure(page).click()
+    page.locator('input[name="tint"][value="p5"]').check()
+    page.wait_for_function(
+        "() => document.querySelector('[data-image-status]')"
+        ".getAttribute('data-state') === 'error'"
+    )
+    _disclosure(page).click()
+
+    status = page.locator("[data-image-status]")
+    assert status.is_visible()
+    assert status.inner_text().strip()
+    assert page.locator(".image-editor__choices .choice-grid").first.is_hidden()
+
+
+def test_desktop_keeps_the_appearance_controls_always_visible(component):
+    page = _document(component, width=1440)
+
+    assert _disclosure(page).is_hidden()
+    assert page.locator(".image-editor__choices .choice-grid").first.is_visible()
+    assert page.get_by_test_id("image-history-open").is_visible()
+
+
+@pytest.mark.parametrize("width", [320, 390])
+def test_the_phone_disclosure_and_revealed_controls_meet_the_touch_floor(
+    component, width
+):
+    page = _document(component, width=width)
+
+    box = _disclosure(page).bounding_box()
+    assert box["width"] >= TOUCH_TARGET
+    assert box["height"] >= TOUCH_TARGET
+    assert _no_horizontal_overflow(page)
+
+    _disclosure(page).click()
+
+    boxes = page.eval_on_selector_all(
+        ".image-editor__choices .choice-grid__option, "
+        "[data-testid='image-history-open']",
+        """elements => elements.map(element => {
+            const box = element.getBoundingClientRect();
+            return {width: box.width, height: box.height, right: box.right};
+        })""",
+    )
+    assert len(boxes) > 1
+    for box in boxes:
+        assert box["width"] >= TOUCH_TARGET
+        assert box["height"] >= TOUCH_TARGET
+        assert box["right"] <= width
+    assert _no_horizontal_overflow(page)
+
+
+def test_a_locked_document_keeps_the_read_only_portrait_without_the_disclosure(
+    component,
+):
+    page = _document(component, width=390, locked=True)
+
+    assert _disclosure(page).count() == 0
+    assert page.locator("[data-image-choices]").count() == 0
+    assert page.locator(".image-editor__surface--readonly").is_visible()

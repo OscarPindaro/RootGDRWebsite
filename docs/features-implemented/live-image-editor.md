@@ -21,6 +21,13 @@ the page.
   the 44px floor in both dimensions, and so does the history command. A grid
   that cannot hold its declared columns at that size drops columns rather than
   overflowing the page; desktop keeps the size the editor asks for.
+- Where the document head stacks the portrait above the identity, the history,
+  animal/shape and tint controls sit behind one `Aspetto` disclosure under the
+  portrait. The portrait and its upload target stay visible, and the identity
+  follows the picture instead of a grid of choices. Desktop keeps the controls
+  always visible.
+- The live save/error status stays in flow when the controls are collapsed: a
+  failed save is readable without opening the disclosure.
 
 ## How it is built
 
@@ -32,6 +39,19 @@ the page.
   from widening its own track, so the ratio only gives way where it would leave
   the cell under the floor. `common/Button.css` applies the floor to
   `.btn-icon-only`'s width as well as its height.
+- `editorial/ImageEditor.jinja` renders one `common.Button` disclosure inside
+  the media column, after the upload form, with `aria-expanded` and
+  `aria-controls` pointing at the existing tools row and choices block. The
+  disclosure keeps the same `ChoiceGrid` fieldsets, `data-autosave-url`, choice
+  sets and version propagation; toggling only sets `data-appearance-expanded`
+  on the editor root. `ImageEditor.css` shows the trigger and hides the tools
+  and choice grids inside `@container document-column (max-width: 34.5rem)`, so
+  the arrangement follows the document column rather than the viewport and the
+  desktop composition is unchanged. The status paragraph stays in the choices
+  block and reserves no height while empty.
+- `editorial/ImageEditor.js` toggles the attribute, `aria-expanded` and the
+  `+`/`−` mark; closing with focus inside the choices returns focus to the
+  trigger. No request path was added.
 - `editorial/ImageEditor.js` no longer calls `location.reload()`. After a
   mutation it either syncs the media from the response (upload) or reloads the
   revision list and derives the current revision from it (`syncMedia`). The
@@ -63,6 +83,9 @@ the page.
   returns on cancel).
 - History loads lazily when the dialog is opened; there is no live update if
   another session changes the revisions meanwhile.
+- The disclosure belongs to the document composition. The world cover editor
+  has no symbol/tint choices and no `document-column` container, so it keeps
+  its current arrangement.
 - The 44px floor is this project's target contract for a control used on a
   phone. It is not a WCAG 2.2 AA conformance claim for every target in the
   application.

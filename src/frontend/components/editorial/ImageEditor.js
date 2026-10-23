@@ -38,6 +38,21 @@
     status.dataset.state = error ? "error" : "";
   }
 
+  // The disclosure only rearranges the existing controls: it changes no form,
+  // URL, version or selection. Closing it with focus inside returns focus to
+  // the trigger instead of dropping it on the body.
+  function setAppearanceExpanded(root, expanded) {
+    var trigger = root.querySelector("[data-image-disclosure]");
+    if (!trigger) return;
+    var choices = root.querySelector("[data-image-choices]");
+    if (!expanded && choices && choices.contains(document.activeElement)) {
+      trigger.focus();
+    }
+    root.dataset.appearanceExpanded = expanded ? "true" : "false";
+    trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
+    trigger.querySelector(".image-editor__disclosure-state").textContent = expanded ? "−" : "+";
+  }
+
   function revisionContentUrl(root, revisionId) {
     return root.dataset.historyUrl + "/" + revisionId + "/content";
   }
@@ -229,6 +244,10 @@
     var surface = root.querySelector("[data-image-surface]");
     var form = root.querySelector("[data-image-form]");
     var confirmDialog = root.querySelector("[data-image-confirm]");
+
+    root.querySelector("[data-image-disclosure]")?.addEventListener("click", function () {
+      setAppearanceExpanded(root, root.dataset.appearanceExpanded !== "true");
+    });
 
     form.addEventListener("submit", function (event) {
       event.preventDefault();

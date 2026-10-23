@@ -2,8 +2,11 @@
 {#css common/Button.css, common/ChoiceGrid.css, common/Dialog.css, common/Tooltip.css, common/HStack.css, editorial/ImageEditor.css, common/Icon.css, editorial/Face.css #}
 {% set editable = can_manage and not locked %}
 {% set dialog_id = history_dialog_id or ("image-history-dialog-" ~ owner_kind ~ "-" ~ owner_id) %}
+{% set appearance_id = "image-appearance-" ~ owner_kind ~ "-" ~ owner_id %}
+{% set appearance_controls = (appearance_id ~ "-tools " if history_trigger else "") ~ appearance_id ~ "-choices" %}
 <div class="image-editor image-editor--{{ owner_kind }}{% if symbol_options and tints %} image-editor--with-choices{% endif %}"
      data-image-editor
+     {% if symbol_options and tints %}data-appearance-expanded="false"{% endif %}
      data-owner-kind="{{ owner_kind }}"
      data-image-label="{{ label }}"
      data-upload-url="{{ upload_url }}"
@@ -33,8 +36,18 @@
              aria-label="{{ 'Cambia' if image_url else 'Carica' }} {{ label | lower }}">
       <common.Button variant="secondary" size="sm" class="image-editor__fallback-submit" type="submit" data-image-submit>Carica immagine</common.Button>
     </form>
+    {% if symbol_options and tints %}
+    <common.Button variant="secondary" size="sm" class="image-editor__disclosure"
+                   data-image-disclosure aria-expanded="false" :aria-controls="appearance_controls">
+      <span class="image-editor__disclosure-text">
+        <span>Aspetto</span>
+        <span class="image-editor__disclosure-hint">{{ 'Animale' if symbol_kind == 'emoji' else 'Forma' }}, tinta e storico</span>
+      </span>
+      <span class="image-editor__disclosure-state" aria-hidden="true">+</span>
+    </common.Button>
+    {% endif %}
     {% if history_trigger %}
-    <common.HStack gap=2 wrap class="image-editor__tools">
+    <common.HStack gap=2 wrap class="image-editor__tools" :id="appearance_id ~ '-tools'">
       <common.IconButton icon="history" label="Storico immagini"
                          :data-dialog-open="dialog_id"
                          data-image-history-open data-testid="image-history-open" />
@@ -55,7 +68,7 @@
   </div>
 
   {% if editable and symbol_options and tints %}
-  <div class="image-editor__choices" data-image-choices data-autosave-url="/api/worlds/{{ world_id }}/{{ owner_kind ~ 's' if owner_kind != 'character' else 'characters' }}/{{ owner_id }}">
+  <div class="image-editor__choices" id="{{ appearance_id }}-choices" data-image-choices data-autosave-url="/api/worlds/{{ world_id }}/{{ owner_kind ~ 's' if owner_kind != 'character' else 'characters' }}/{{ owner_id }}">
     <common.ChoiceGrid :label="'Animale' if symbol_kind == 'emoji' else 'Forma'" :name="symbol_name"
                        :kind="symbol_kind" :options="symbol_options" :columns="8" :value="symbol" />
     <common.ChoiceGrid label="Tinta della scheda" name="tint" kind="tint"

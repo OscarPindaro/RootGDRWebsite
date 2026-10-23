@@ -19,12 +19,25 @@ def _file(name: str, mime: str, content: bytes) -> dict[str, object]:
     return {"name": name, "mimeType": mime, "buffer": content}
 
 
+def _open_appearance(session: BrowserSession) -> None:
+    """Reveal the appearance controls where the document hides them.
+
+    On a phone the portrait and one ``Aspetto`` disclosure sit above the
+    identity; desktop renders the controls directly.
+    """
+    disclosure = session.page.locator("[data-image-disclosure]")
+    if disclosure.count() and disclosure.is_visible():
+        if disclosure.get_attribute("aria-expanded") != "true":
+            disclosure.click()
+
+
 def _assert_phone_targets(session: BrowserSession, width: int) -> None:
     """The whole choice label and the history action are the tap targets.
 
     The transparent radio is not: it is measured through the label that holds
     it, which is the box the phone actually hits.
     """
+    _open_appearance(session)
     boxes = session.page.eval_on_selector_all(
         ".image-editor__choices .choice-grid__option, "
         "[data-testid='image-history-open']",
@@ -180,6 +193,13 @@ def test_character_image_keyboard_focus_and_symbol_tint_on_phone(
     session.goto(f"/worlds/{world_id}/characters/{character_id}")
     _no_reload_marker(session)
 
+    disclosure = session.page.locator("[data-image-disclosure]")
+    assert disclosure.is_visible()
+    assert disclosure.inner_text().startswith("Aspetto")
+    assert disclosure.get_attribute("aria-expanded") == "false"
+    assert session.page.locator(".image-editor__choices .choice-grid").first.is_hidden()
+    assert session.page.get_by_test_id("image-editor-surface").is_visible()
+
     _assert_phone_targets(session, 390)
     session.page.set_viewport_size({"width": 320, "height": 844})
     _assert_phone_targets(session, 320)
@@ -226,6 +246,18 @@ def test_character_image_keyboard_focus_and_symbol_tint_on_phone(
     session.page.keyboard.press("Escape")
     assert not dialog.is_visible()
     assert trigger.evaluate("element => document.activeElement === element")
+
+    # Collapsing the disclosure returns the phone to the portrait and the
+    # identity; the chosen symbol and tint stay persisted and the page stays.
+    disclosure.click()
+    assert disclosure.get_attribute("aria-expanded") == "false"
+    assert session.page.locator(".image-editor__choices .choice-grid").first.is_hidden()
+    assert session.page.locator("[data-image-status]").is_visible()
+    assert session.page.get_by_test_id("image-editor-surface").is_visible()
+    persisted = session.expect_api(api_path).json()
+    assert persisted["animal"] == changed_animal["animal"]
+    assert persisted["tint"] == "p8"
+    assert _stayed(session)
     assert session.errors == []
 
 
@@ -243,6 +275,10 @@ def test_symbol_and_tint_update_the_fallback_face_without_a_reload(
     api_path = f"/api/worlds/{world_id}/characters/{character_id}"
     session.goto(f"/worlds/{world_id}/characters/{character_id}")
     _no_reload_marker(session)
+    assert session.page.locator("[data-image-disclosure]").is_hidden()
+    assert session.page.locator(
+        ".image-editor__choices .choice-grid"
+    ).first.is_visible()
     assert session.page.locator(".face__emoji").inner_text() == "🐈"
 
     with session.page.expect_response(_is_api("PATCH", character_id)):
