@@ -104,8 +104,19 @@ the document come from the real catalog.
 - At 390px, both arrangements stack in the same order: portrait and appearance
   choices, identity, body, backlinks. The comparison does not change the phone
   reading order.
-- No arrangement is declared the owner's choice. T24 and T26 use the approved
-  mode for their own decisions; T23 records the method and this exemplar.
+## Owner decision
+
+On 2026-10-23 the owner chose **A, the portrait beside the identity, with the
+body in the identity column** ("affiancato").
+
+The application already renders A, so this decision requires no product change.
+It confirms the existing document composition and rejects B, the full-width body
+below the portrait column, for the document pages covered by this exemplar.
+
+The choice does not settle the phone appearance-control disclosure (T24) or the
+phone collection-creation arrangement (T26); those remain their own decisions.
+T24 and T26 use the approved mode for their own comparisons; T23 records the
+method and this exemplar.
 
 ## Files
 
