@@ -1,3 +1,4 @@
 {#def variant="neutral" #}
 {#css common/Pill.css #}
+{% do component_option("common.Pill", "variant", variant, "neutral", "success", "danger", "warning", "info", "accent", "role-admin", "role-dev", "role-member", "master", "player", "draft", "plain", "forest", "npc", "vermilion", "cobalt", "ochre", "act1", "act2", "act3") %}
 <span class="pill pill-{{ variant }}">{{ content }}</span>

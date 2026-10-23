@@ -1,5 +1,8 @@
 {#def columns=None, min=None, gap=6, flush=False, split=False, document=False #}
 {#css common/Grid.css #}
+{% if columns is not none %}{% do component_option("common.Grid", "columns", columns, "2", "3") %}{% endif %}
+{% do component_option("common.Grid", "gap", gap, "1", "2", "3", "4", "5", "6", "8", "10", "12", "16", "20") %}
+{% if min is not none %}{% do component_option("common.Grid", "min", min, "card", "cover", "story", "quick") %}{% endif %}
 {% set grid_classes = "grid" ~ (" grid-columns-" ~ columns if columns else "") ~ (" grid-auto" if min else "") ~ (" grid-flush" if flush else "") ~ (" grid-split" if split else "") ~ (" grid-document" if document else "") %}
 {% set grid_style = "--grid-gap: var(--sp-" ~ gap ~ ");" ~ (" --grid-min: var(--grid-min-" ~ min ~ ");" if min else "") ~ " " ~ attrs.get("style", "") %}
 <div {{ attrs.render(class=grid_classes, style=grid_style) }}>

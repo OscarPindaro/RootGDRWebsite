@@ -99,6 +99,30 @@ def _time(value) -> str:
     return Markup(f'<time datetime="{iso}">{iso}</time>')
 
 
+class ComponentOptionError(ValueError):
+    """A shared component received a value outside its finite vocabulary."""
+
+
+def _component_option(
+    component: str, argument: str, value: object, *allowed: str
+) -> None:
+    """Reject a value the component's vocabulary does not declare.
+
+    A component template calls this with ``{% do %}`` after ``{#def#}`` and
+    before it builds a class, so a literal and a computed value fail at the
+    same point. Only the finite arguments named by the caller are checked;
+    native HTML attributes are collected in ``attrs`` and never inspected.
+    """
+    text = str(value)
+    if text in allowed:
+        return
+    expected = ", ".join(allowed)
+    raise ComponentOptionError(
+        f"{component}: argument '{argument}' does not accept {text!r}; "
+        f"expected one of: {expected}"
+    )
+
+
 _markdown_renderer = MarkdownIt("commonmark", {"html": False})
 
 
@@ -150,6 +174,7 @@ def get_catalog(
     catalog.jinja_env.globals["icon_body"] = icon_body
     catalog.jinja_env.globals["icon_class"] = icon_class
     catalog.jinja_env.globals["kind_label"] = kind_label
+    catalog.jinja_env.globals["component_option"] = _component_option
     catalog.jinja_env.globals["global_nav"] = global_nav
     catalog.jinja_env.globals["world_nav"] = world_nav
     return catalog

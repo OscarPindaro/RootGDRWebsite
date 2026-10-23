@@ -11,6 +11,12 @@ the ten design-kit-only Pill variants all keep their implemented CSS and their
 specimens. Three dead alias tokens were removed; every other candidate is
 retained with the consumer or the documented reason recorded below.
 
+REQ-0019/T19 enforces the finite choices in this record when a component
+renders. An undeclared value stops the render with a diagnostic naming the
+component, the argument and the value instead of producing a class no
+stylesheet matches. The check covers only the arguments listed below; native
+HTML attributes and the reserved `shape` no-op keep their current behavior.
+
 ## What it does
 
 ### Public options
@@ -39,7 +45,7 @@ consumers behind each retained option.
 | Decision | Owner | Consequence |
 |---|---|---|
 | The supported, experimental and reserved options above | Project owner; delegated to the coordinator on 2026-10-23 | Authors use this list; T19 enforces it |
-| Rejecting an unsupported value | T19 | Runtime rejection; this ticket adds none |
+| Rejecting an unsupported value | T19 | Render-time rejection by `component_option`; the message names the component, argument and value |
 | Removing unused or experimental surface | T20, only from this record | A retained option stays even when no caller uses it |
 | Token checks and private geometry | T31, following "Private geometry" below | A local rem/clamp value is not a token violation |
 | Stored tint ids and live aliases | Project owner | `--p1`–`--p12`, `tint="p8"`, `tint="ochre"` and the alias names are not renamed for consistency |
@@ -106,26 +112,38 @@ token.retained: --ok --clr-surface-raised --clr-nav-accent
 documented option loses its last consumer without a recorded retention, if a new
 option is added without a caller or specimen, or if a removed token comes back.
 
-### Invalid values today
+### Enforced values
 
-No template validates a finite choice yet. An unknown value is interpolated into
-a class and renders without the matching rule:
+`Button.jinja`, `Pill.jinja` and `Grid.jinja` check their finite arguments at
+render time, after `{#def#}` and before they build a class. Each template calls
+the `component_option` Jinja global in a `{% do %}`:
 
-- An unknown `Button.variant` keeps the base `.btn` geometry and has no variant
-  fill. An unknown `Button.size` keeps the `md` defaults because `.btn` sets
-  `--button-height-md`, `--button-padding-md` and `--button-icon-md`.
-- An unknown `Pill.variant` keeps the base `.pill` surface fill.
-- An unknown `Grid.columns` emits `grid-columns-N` with no rule, so the grid has
-  one implicit column.
-- A `Grid.gap` that is not a spacing step sets `--grid-gap: var(--sp-N)` to an
-  undefined token. The `gap` declaration is invalid at computed-value time and
-  the grid loses its gap; the `var(--sp-6)` fallback in `Grid.css` does not
-  apply because `--grid-gap` is defined.
-- An unknown `Grid.min` leaves `--grid-min-*` undefined, so
-  `grid-template-columns` is invalid and the grid has one implicit column.
+```jinja
+{% do component_option("common.Button", "variant", variant, "primary", "secondary", "text", "danger") %}
+```
 
-T19 replaces this behavior with a clear rejection that names the component,
-argument and value.
+The check covers exactly the finite choices above: Button `variant` and `size`
+(including the experimental `lg` and `xl`), Pill `variant`, and Grid `columns`,
+`gap` and `min`. `Grid.columns` and `Grid.min` are checked only when the caller
+sets them; `gap` has a default. The standalone `shape` argument is not checked:
+it is the documented no-op. Native HTML attributes, `class`, `data-*` and
+`aria-*` still pass through `attrs` untouched. A Jinja expression is checked
+with the value it produces at render time, so a valid computed value keeps
+working and an invalid one fails at the same point as a literal.
+
+A rejected value raises `backend.jinja.ComponentOptionError` and the render
+stops; no markup is produced. The message names the component, the argument and
+the value, then lists the accepted values:
+
+```text
+common.Button: argument 'variant' does not accept 'ghost'; expected one of: primary, secondary, text, danger
+```
+
+The error is an ordinary render failure: the application answers with a 500 and
+the server log carries the message, rather than serving a class no stylesheet
+matches. `tests/unit/jinja/test_component_options.py` renders every documented
+value and pins the rejection for an invented Button or Pill variant, Grid
+`columns=4`, an absent spacing step and an unknown minimum.
 
 ### Private geometry
 
@@ -187,6 +205,12 @@ become a shared argument. Stored tint ids and existing aliases keep their names.
   `.grid.grid-document`. `main.css` owns `--sp-*` and `--grid-min-*`.
 - `ButtonGroup.css` styles the group's own `button-group-{shape}` corners. That
   is a group argument, not a revival of the standalone `btn-{shape}` no-op.
+- `backend/jinja.py` registers `component_option` on the catalog. The three
+  component templates call it in a `{% do %}`; it raises
+  `ComponentOptionError` for a value outside the accepted list. The choices are
+  declared in the template next to the argument they bound, and
+  `test_component_options.py` renders every value in this record, so the
+  template list and the manual cannot drift.
 
 ### Evidence and corrections
 
@@ -242,8 +266,16 @@ become a shared argument. Stored tint ids and existing aliases keep their names.
 
 ## Limits
 
-- There is no runtime validation in this ticket. T19 owns the rejection and its
-  diagnostics.
+- The finite choices are enforced when a component renders. There is no static
+  or pre-commit value check: the `template-types` checker still checks prop
+  names and types, not the values of these three arguments, so an invalid
+  literal in a branch that never renders is not reported before the request.
+- Only Button `variant`/`size`, Pill `variant` and Grid `columns`/`gap`/`min`
+  are checked. `ButtonGroup.button_variant` and `ChoiceGrid.columns` are
+  separate arguments with their own rules and keep their current behavior.
+- The standalone Button `shape` argument is accepted without a value check. It
+  stays the documented no-op, so `round` and `square` keep rendering the same
+  unstyled class.
 - T20 removed no component option. It removed only the three unread aliases
   `--clr-overlay`, `--status-danger-light` and `--radius-xl`; `lg`, `xl`,
   `columns=3`, the standalone `shape` argument and every Pill variant stay.
