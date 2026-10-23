@@ -253,6 +253,36 @@ def test_the_summary_has_the_same_close_command(component):
     )
 
 
+def test_the_summary_label_stays_above_the_open_field(component):
+    """Opening the summary must not push "Sintesi" below its own field.
+
+    The label, the editor host and the rendered value are siblings, so their
+    DOM order is what the reader sees: label, field, command.
+    """
+    page = _mount_summary(component, value="Sintesi iniziale.")
+    page.dblclick("[data-summary-render]")
+    page.wait_for_selector("[data-doc-summary] .cm-editor")
+
+    order = page.evaluate(
+        """() => {
+            const block = document.querySelector('[data-doc-summary]');
+            const index = (selector) =>
+                [...block.children].findIndex((child) => child.matches(selector));
+            return {
+                label: index('.eyebrow'),
+                editor: index('[data-summary-editor]'),
+                render: index('[data-summary-render]'),
+                command: index('[data-summary-actions]'),
+            };
+        }"""
+    )
+
+    assert order["label"] < order["editor"] < order["render"] < order["command"], order
+    label = page.locator("[data-doc-summary] .eyebrow").bounding_box()
+    editor = page.locator("[data-doc-summary] .cm-editor").bounding_box()
+    assert label["y"] + label["height"] <= editor["y"] + 1, (label, editor)
+
+
 @pytest.mark.parametrize("overrides", [{"can_manage": False}, {"locked": True}])
 def test_readers_and_locked_documents_get_no_close_command(component, overrides):
     page = _mount(component, **overrides)

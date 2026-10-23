@@ -5,8 +5,10 @@
      data-autosave-url="/api{{ base }}" data-autosave-version="{{ version }}"
      {% if locked or not can_manage %}data-readonly="true"{% endif %}>
   <textarea name="body" data-summary-source hidden>{{ value }}</textarea>
-  <div class="docsummary__editor" data-summary-editor hidden></div>
   <span class="eyebrow">Sintesi</span>
+  {# The editor sits after the label, so opening it keeps "Sintesi" above the
+     field instead of leaving it between the field and its command. #}
+  <div class="docsummary__editor" data-summary-editor hidden></div>
   <div class="docsummary__render prose" data-summary-render data-doc-block="summary"
        {% if not (locked or not can_manage) %}tabindex="0"{% endif %}>{{ value_html }}</div>
   <button type="button" hidden data-summary-preview
