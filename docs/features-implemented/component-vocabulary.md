@@ -86,9 +86,38 @@ BEM internals, and one-off alignments. Examples are the pill's `0.35rem` gap and
 `0.15rem` vertical padding, and the text button's `0.06em` letter spacing. These
 are not public options and do not need a token in `main.css`. A value that is
 shared across components, or that belongs to the palette or a shared scale,
-still belongs in `main.css`. T31 must distinguish legitimate local geometry from
-a genuine palette or shared-contract violation; converting px to rem is not token
-compliance.
+still belongs in `main.css`.
+
+The `design-tokens` hook (`E920`) enforces that boundary:
+
+- A colour literal is a palette violation. The palette lives in `main.css`.
+- A `px` length is an absolute size outside the approved local form. A shared
+  step or measure uses a token; private geometry uses a local `rem`/`clamp`
+  value. Border, outline and shadow declarations may stay in `px` because they
+  describe a line or its offset, not a spacing choice.
+- `rem`, `em` and `clamp` values pass as private geometry. Rewriting a shared
+  `px` value as `rem` does not move it into the token layer: passing the hook
+  is not proof of token compliance, and review still asks whether the value is
+  shared.
+
+### Retained opt-outs
+
+`/* design-tokens: off */` on a line, or in the first three lines of a file,
+skips that line or file. Each current use has a reason the policy cannot
+express:
+
+- `common/Avatar.css` `.cat-5 { color: #000; }` — no atlas ink reaches 4.5:1
+  on the pink categorical fill (`--ink` is 4.06:1, black is 4.67:1).
+- `layout/Rail.css` `text-underline-offset: 3px` — a one-off underline
+  alignment, not a shared measure.
+- `layout/Page.css` `left: -9999px` — the off-screen-until-focused technique,
+  not a size choice.
+- `pages/showcase/Showcase.css` — the file opt-out for the style guide's fixed
+  demo boxes. A file opt-out is for a design-kit stylesheet, not product CSS.
+
+The hook also skips values inside `url(...)` (inline SVG is image data, not
+theme CSS), `@media` queries (breakpoints are not spacing), and comments
+(prose about a value is not the value).
 
 ### Extension rule
 
@@ -156,6 +185,7 @@ become a shared argument. Stored tint ids and existing aliases keep their names.
   diagnostics.
 - No token or CSS is removed here. T20 owns the removal list, and this record
   retains `lg`, `xl`, `columns=3` and every Pill variant.
-- T31 owns the token-check correction for private geometry.
+- T31 aligns the token hook with this record. The hook cannot tell a shared
+  step written in `rem` from private geometry, so review owns that distinction.
 - The design kit still shows `lg` and `xl`; its Buttons note marks them as
   experiments so the specimen does not imply they are product options.
