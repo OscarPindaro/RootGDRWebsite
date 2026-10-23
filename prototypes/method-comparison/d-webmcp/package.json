@@ -1,0 +1,8 @@
+{
+  "name": "webmcp-study",
+  "private": true,
+  "description": "Real WebMCP polyfill driving the planning-study interactions",
+  "dependencies": {
+    "@mcp-b/global": "6.0.3"
+  }
+}

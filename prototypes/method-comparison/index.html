@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confronto dei metodi di prototipazione</title>
+  <link rel="stylesheet" href="shared/study.css">
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker">Root GDR · confronto dei metodi · 2026-10-23</p>
+    <h1>La stessa schermata, quattro modi di produrla</h1>
+    <p class="lede">Il soggetto è la preparazione di «Ritorno a Borgo Mulino» con la colonna
+      delle persone: prosa, conflitti, schede dense. Scegli il metodo, non il marchio.</p>
+
+    <ul class="tool-list" style="margin-top:2rem">
+      <li>
+        <strong>A · studio dentro l'applicazione (JinjaX reale)</strong>
+        <p class="hint">Componenti, token, font, dialoghi e htmx veri. Richiede il backend di sviluppo.</p>
+        <p><a class="btn" href="http://127.0.0.1:8000/components/planning?view=story">Apri A</a></p>
+      </li>
+      <li>
+        <strong>B · output in stile Agent-Native Design (Tailwind + Alpine)</strong>
+        <p class="hint">HTML autonomo, utility class, dati finti. Emulazione del formato, non il prodotto.</p>
+        <p><a class="btn" href="b-agent-native/index.html">Apri B</a></p>
+      </li>
+      <li>
+        <strong>C · artboard vettoriale (stile Penpot / OpenPencil)</strong>
+        <p class="hint">Geometria e gerarchia senza token, font o comportamento. Emulazione di ciò che il file contiene.</p>
+        <p><a class="btn" href="c-vector-mock/index.html">Apri C</a></p>
+      </li>
+      <li>
+        <strong>D · WebMCP reale su una pagina di prova</strong>
+        <p class="hint">Polyfill <code>@mcp-b/global</code> installato in locale; le azioni sono strumenti tipizzati.</p>
+        <p><a class="btn" href="d-webmcp/index.html">Apri D</a></p>
+      </li>
+    </ul>
+
+    <h2>Cosa cambia davvero</h2>
+    <table style="width:100%;border-collapse:collapse;font-family:var(--sans);font-size:.9rem">
+      <thead>
+        <tr>
+          <th style="text-align:left;border-bottom:1px solid var(--ink);padding:.5rem">Criterio</th>
+          <th style="text-align:left;border-bottom:1px solid var(--ink);padding:.5rem">A</th>
+          <th style="text-align:left;border-bottom:1px solid var(--ink);padding:.5rem">B</th>
+          <th style="text-align:left;border-bottom:1px solid var(--ink);padding:.5rem">C</th>
+          <th style="text-align:left;border-bottom:1px solid var(--ink);padding:.5rem">D</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td style="padding:.5rem">Identità e token reali</td><td>sì</td><td>a mano</td><td>a mano</td><td>sì</td></tr>
+        <tr><td style="padding:.5rem">Comportamento (dialoghi, focus, htmx)</td><td>reale</td><td>ricostruito</td><td>assente</td><td>reale</td></tr>
+        <tr><td style="padding:.5rem">Scopre difetti d'integrazione</td><td>sì</td><td>no</td><td>no</td><td>sì</td></tr>
+        <tr><td style="padding:.5rem">Costo per diventare codice</td><td>nullo</td><td>traduzione</td><td>traduzione</td><td>nullo</td></tr>
+        <tr><td style="padding:.5rem">Un agente può pilotarla</td><td>via test</td><td>via DOM</td><td>no</td><td>via strumenti</td></tr>
+      </tbody>
+    </table>
+
+    <p class="hint" style="margin-top:2rem">B e C riproducono la forma dell'output documentata per
+      quegli strumenti; nessuno dei due è stato eseguito. D usa il polyfill reale, ma l'API
+      del browser è ancora dietro un flag. Nessuna scelta fra i metodi è registrata qui.</p>
+  </div>
+</body>
+</html>

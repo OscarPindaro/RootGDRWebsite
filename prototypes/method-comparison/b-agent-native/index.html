@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ritorno a Borgo Mulino — mock Tailwind</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"></script>
+  <style>
+    :root { --paper:#f3efe4; --ink:#17150f; --muted:#6d6858; --surface:#fffdf6; --line:#d6cfbc; }
+    body { background: var(--paper); color: var(--ink); }
+    .rule { border-color: var(--line); }
+  </style>
+</head>
+<body class="font-serif antialiased" x-data="study()">
+  <div class="mx-auto max-w-6xl px-6 py-8">
+
+    <p class="font-sans text-xs uppercase tracking-widest text-[color:var(--muted)]">
+      Metodo B · emulazione dell'output di Agent-Native Design · Tailwind + Alpine
+    </p>
+
+    <header class="mt-6 flex items-start justify-between gap-8 border-b-[3px] pb-6" style="border-color:var(--ink)">
+      <div>
+        <p class="font-sans text-sm text-[color:var(--muted)]">Borgo Mulino / Preparazione del GM</p>
+        <h1 class="mt-2 max-w-xl text-4xl leading-tight">Ritorno a Borgo Mulino</h1>
+        <p class="mt-3 max-w-prose text-lg">La situazione, le persone e quello che cambia al tavolo.</p>
+      </div>
+      <span class="font-sans whitespace-nowrap rounded border px-2 py-1 text-xs uppercase tracking-wider rule">In corso</span>
+    </header>
+
+    <div class="mt-6 flex flex-wrap items-center gap-3">
+      <div class="flex gap-2" role="group" aria-label="Confronto schede NPC">
+        <button type="button" @click="mode='open'"
+                :class="mode==='open' ? 'bg-[color:var(--ink)] text-[color:var(--paper)]' : 'bg-transparent'"
+                class="font-sans rounded border px-3 py-2 text-sm rule">Scheda aperta</button>
+        <button type="button" @click="mode='flip'"
+                :class="mode==='flip' ? 'bg-[color:var(--ink)] text-[color:var(--paper)]' : 'bg-transparent'"
+                class="font-sans rounded border px-3 py-2 text-sm rule">Carta fronte / retro</button>
+      </div>
+      <span class="font-sans text-sm text-[color:var(--muted)]">Stesso contenuto, due presentazioni.</span>
+    </div>
+
+    <div class="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1.45fr)_minmax(18rem,0.8fr)]">
+
+      <main>
+        <h2 class="text-2xl">Arrivare a Borgo Mulino</h2>
+        <div class="mt-4 max-w-prose space-y-4 text-lg leading-relaxed">
+          <p>Il mulino domina la strada che attraversa la radura. Ci sono sacchi di grano,
+            ma le macine lavorano a fatica. Gli abitanti aspettano risposte.</p>
+          <p>Questa pagina mette insieme la preparazione. I possibili sviluppi restano
+            ipotesi; soltanto il diario del conflitto racconta cosa succede davvero.</p>
+        </div>
+        <p class="mt-3 font-sans text-sm text-[color:var(--muted)]">
+          Testo di esempio ispirato agli appunti, non trascrizione o cronaca.
+        </p>
+
+        <h2 class="mt-12 text-2xl">Conflitti</h2>
+        <nav class="mt-4 space-y-2 font-sans text-sm" aria-label="Conflitti della storia">
+          <a class="underline underline-offset-4" href="#modulo">Modulo 4a e Documento 7b</a><br>
+          <a class="underline underline-offset-4" href="#tempio">Il tempio conteso</a>
+          <span class="text-[color:var(--muted)]">esempio sintetico</span>
+        </nav>
+
+        <article id="modulo" class="mt-8 border-t pt-6 rule">
+          <div class="flex items-start justify-between gap-4">
+            <h3 class="text-xl">Modulo 4a e Documento 7b</h3>
+            <span class="font-sans rounded border px-2 py-1 text-xs uppercase tracking-wider rule">Attivo</span>
+          </div>
+          <p class="mt-4 max-w-prose text-lg leading-relaxed">Il grano c'è. A fermare la produzione
+            sono autorizzazioni incompatibili e due uffici che si rimandano la responsabilità.</p>
+          <p class="mt-4 font-sans text-sm">Ada e la pattuglia / Mulino / Municipio</p>
+
+          <details class="mt-6 border-y py-4 rule">
+            <summary class="font-sans cursor-pointer">Possibili sviluppi
+              <span class="text-[color:var(--muted)]">preparazione</span></summary>
+            <p class="mt-3 max-w-prose">Se nessuno interviene, un nuovo carico resta fermo al ponte.</p>
+          </details>
+
+          <h4 class="mt-6 font-sans text-sm font-semibold uppercase tracking-wider">Sviluppi effettivi</h4>
+          <ol class="mt-3 list-decimal space-y-3 pl-5">
+            <li><span class="font-mono text-xs">Sessione 1 · esempio</span>
+              <p>Il gruppo scopre il blocco delle autorizzazioni.</p></li>
+            <li><span class="font-mono text-xs">Sessione 2 · esempio</span>
+              <p>Ada accetta di parlare con i responsabili degli uffici.</p></li>
+          </ol>
+          <p class="mt-3 font-sans text-sm text-[color:var(--muted)]">
+            Sviluppi inventati soltanto per confrontare la presentazione.
+          </p>
+        </article>
+
+        <article id="tempio" class="mt-8 border-t pt-6 rule">
+          <h3 class="text-xl">Il tempio conteso</h3>
+          <p class="mt-3 max-w-prose">Un unico luogo nel bosco, vicino a due radure. Le rivendicazioni
+            appartengono al conflitto; il controllo attuale appartiene al luogo.</p>
+        </article>
+      </main>
+
+      <aside aria-label="Persone della storia">
+        <h2 class="text-2xl">Persone della storia</h2>
+        <p class="mt-2 font-sans text-sm text-[color:var(--muted)]">
+          Segna i tracciati per provare l'interazione. Non vengono salvati.
+        </p>
+
+        <template x-for="npc in npcs" :key="npc.name">
+          <article class="mt-6 border rule" style="background:var(--surface)">
+            <div class="flex h-32 items-center justify-center border-b rule" :style="`background:${npc.tint}`">
+              <span class="h-16 w-16 rounded-full border-[3px]" style="border-color:var(--ink)"></span>
+            </div>
+            <div class="p-5">
+              <p class="font-sans text-sm text-[color:var(--muted)]" x-text="npc.role"></p>
+              <h3 class="mt-1 text-xl" x-text="npc.name"></h3>
+              <p class="mt-2 text-sm" x-text="npc.description"></p>
+            </div>
+            <div class="border-t p-5 rule" x-show="mode==='open' || npc.open">
+              <div class="flex justify-between font-sans text-sm">
+                <strong x-text="npc.name"></strong><span x-text="`Danno: ${npc.damage}`"></span>
+              </div>
+              <div class="mt-4 grid grid-cols-2 gap-3">
+                <template x-for="track in npc.tracks" :key="track.label">
+                  <fieldset>
+                    <legend class="font-sans text-sm" x-text="track.label"></legend>
+                    <div class="mt-1 flex gap-1">
+                      <template x-for="box in track.capacity" :key="box">
+                        <label class="flex h-9 w-9 items-center justify-center">
+                          <input type="checkbox" class="h-5 w-5 accent-[color:var(--ink)]"
+                                 :checked="box <= track.marked"
+                                 @change="announce(`${npc.name}: ${track.label}`)">
+                        </label>
+                      </template>
+                    </div>
+                  </fieldset>
+                </template>
+              </div>
+              <dl class="mt-4 text-sm">
+                <dt class="font-sans font-semibold">Motivazione</dt><dd x-text="npc.motivation"></dd>
+                <dt class="mt-2 font-sans font-semibold">Cosa vuole</dt><dd x-text="npc.wants"></dd>
+                <dt class="mt-2 font-sans font-semibold">Cosa accetta</dt><dd x-text="npc.accepts"></dd>
+              </dl>
+              <h4 class="mt-4 font-sans text-sm font-semibold uppercase tracking-wider">Mosse</h4>
+              <ul class="mt-2 list-disc space-y-2 pl-5 text-sm">
+                <template x-for="move in npc.moves" :key="move.title">
+                  <li><strong x-text="move.title"></strong>
+                    <p class="mt-1" x-text="move.description"></p></li>
+                </template>
+              </ul>
+            </div>
+            <div class="border-t p-5 rule" x-show="mode==='flip'">
+              <button type="button" @click="npc.open = !npc.open"
+                      class="font-sans rounded border px-3 py-2 text-sm rule"
+                      x-text="npc.open ? 'Torna al fronte' : 'Gira scheda'"></button>
+            </div>
+          </article>
+        </template>
+      </aside>
+    </div>
+
+    <p class="mt-10 border-t pt-4 font-sans text-sm text-[color:var(--muted)] rule"
+       x-text="message" role="status" aria-live="polite"></p>
+  </div>
+
+  <script>
+    function study() {
+      return {
+        mode: 'open',
+        message: 'Modalità dimostrativa: nessun salvataggio.',
+        announce(what) { this.message = `${what} modificato per questa prova. Nessun salvataggio.`; },
+        npcs: [
+          {
+            name: 'Ada', role: 'Custode del mulino', tint: '#d97a26', open: true,
+            description: 'Conosce ogni rumore delle macine. Prima ascolta, poi risponde.',
+            motivation: 'Proteggere il lavoro degli abitanti.',
+            wants: 'Rimettere in moto il mulino.',
+            accepts: 'Aspettare, se qualcuno garantisce il prossimo carico.',
+            damage: '1 ferita',
+            tracks: [
+              { label: 'Fatica', capacity: 3, marked: 1 },
+              { label: 'Ferite', capacity: 2, marked: 0 },
+              { label: 'Usura', capacity: 2, marked: 0 },
+              { label: 'Morale', capacity: 4, marked: 1 }
+            ],
+            moves: [
+              { title: 'Conoscere il lavoro', description: 'Indica chi ha toccato un meccanismo.' },
+              { title: 'Chiedere una garanzia', description: '' }
+            ]
+          },
+          {
+            name: 'La pattuglia del ponte', role: 'Gruppo di abitanti', tint: '#7d8f3a', open: false,
+            description: 'Quattro abitanti sorvegliano il passaggio. Non cercano una battaglia.',
+            motivation: 'Tenere aperta la strada dei rifornimenti.',
+            wants: 'Un passaggio sicuro per il prossimo carico.',
+            accepts: 'Una tregua con condizioni chiare.',
+            damage: '2 ferite',
+            tracks: [
+              { label: 'Fatica', capacity: 2, marked: 0 },
+              { label: 'Ferite', capacity: 4, marked: 1 },
+              { label: 'Morale', capacity: 3, marked: 0 }
+            ],
+            moves: [
+              { title: 'Chiudere il passaggio', description: '' },
+              { title: 'Cercare un accordo', description: 'Offrono una via d\'uscita.' }
+            ]
+          }
+        ]
+      };
+    }
+  </script>
+</body>
+</html>

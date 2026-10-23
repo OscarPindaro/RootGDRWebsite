@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Metodo D · WebMCP reale</title>
+  <link rel="stylesheet" href="../shared/study.css">
+</head>
+<body>
+  <div class="wrap">
+    <p class="kicker">Metodo D · WebMCP con polyfill reale <code>@mcp-b/global</code> 6.0.3</p>
+    <h1>Ritorno a Borgo Mulino</h1>
+    <p class="lede">La stessa schermata, con le sue azioni pubblicate come strumenti tipizzati.
+      Un agente non deve indovinare quale pulsante premere: chiama <code>planning.setCardMode</code>.</p>
+
+    <div class="row">
+      <div role="group" aria-label="Confronto schede NPC">
+        <button type="button" class="btn" data-mode="open" aria-pressed="true">Scheda aperta</button>
+        <button type="button" class="btn" data-mode="flip" aria-pressed="false">Carta fronte / retro</button>
+      </div>
+      <span class="hint" data-status role="status" aria-live="polite">Nessuno strumento invocato.</span>
+    </div>
+
+    <div class="cols">
+      <main>
+        <h2>Modulo 4a e Documento 7b</h2>
+        <p>Il grano c'è. A fermare la produzione sono autorizzazioni incompatibili
+          e due uffici che si rimandano la responsabilità.</p>
+        <p class="hint">Testo dimostrativo; nessuna campagna reale è coinvolta.</p>
+      </main>
+
+      <aside>
+        <h2>Persone della storia</h2>
+        <article class="card" data-npc="ada">
+          <button type="button" class="portrait" data-open-image aria-label="Modifica immagine di Ada">
+            <span class="dot"></span><span class="badge">Modifica immagine</span>
+          </button>
+          <div class="card-body">
+            <p class="hint">Custode del mulino</p>
+            <h3>Ada</h3>
+            <p>Conosce ogni rumore delle macine. Prima ascolta, poi risponde.</p>
+          </div>
+          <div class="card-body" data-tracks>
+            <fieldset><legend>Fatica</legend>
+              <label class="box"><input type="checkbox" data-track="ada:fatigue:0" checked></label>
+              <label class="box"><input type="checkbox" data-track="ada:fatigue:1"></label>
+              <label class="box"><input type="checkbox" data-track="ada:fatigue:2"></label>
+            </fieldset>
+            <fieldset><legend>Ferite</legend>
+              <label class="box"><input type="checkbox" data-track="ada:wounds:0"></label>
+              <label class="box"><input type="checkbox" data-track="ada:wounds:1"></label>
+            </fieldset>
+          </div>
+        </article>
+      </aside>
+    </div>
+
+    <section class="tools" aria-labelledby="tools-title">
+      <h2 id="tools-title">Strumenti registrati sulla pagina</h2>
+      <p class="hint" data-api-note>Verifica dell'API in corso…</p>
+      <ul class="tool-list" data-tool-list></ul>
+    </section>
+  </div>
+
+  <dialog id="image-dialog" aria-labelledby="image-dialog-title">
+    <h2 id="image-dialog-title">Modifica immagine · prova</h2>
+    <p>Si apre la modifica dell'immagine, non la carta sul retro.</p>
+    <button type="button" class="btn" data-close-dialog>Chiudi</button>
+  </dialog>
+
+  <script src="node_modules/@mcp-b/global/dist/index.iife.js"></script>
+  <script src="tools.js"></script>
+</body>
+</html>
