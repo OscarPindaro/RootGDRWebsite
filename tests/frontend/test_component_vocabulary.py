@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from backend.jinja import get_catalog
+from backend.jinja import ComponentOptionError, get_catalog
 
 pytestmark = pytest.mark.frontend
 
@@ -359,20 +359,28 @@ def test_audited_tokens_match_the_tree() -> None:
         assert token in main_css, token
 
 
-def test_unsupported_values_are_unstyled_until_t19_rejects_them() -> None:
+def test_unsupported_values_are_rejected_at_render() -> None:
+    """T19 enforces the documented vocabulary; nothing renders unstyled.
+
+    The T18 record proved these values were undeclared and had no rule. Since
+    T19 they fail at render with a diagnostic naming the component, argument and
+    value, so a caller cannot ship a class nobody styles.
+    """
     documented = _documented()
 
-    assert "btn-ghost" in _render("common.Button", variant="ghost")
-    assert "btn-ghost" not in _classes(BUTTON_CSS)
+    for name, props, argument, value in (
+        ("common.Button", {"variant": "ghost"}, "variant", "ghost"),
+        ("common.Button", {"size": "xxl"}, "size", "xxl"),
+        ("common.Pill", {"variant": "ghost"}, "variant", "ghost"),
+        ("common.Grid", {"columns": 4}, "columns", "4"),
+        ("common.Grid", {"gap": 7}, "gap", "7"),
+        ("common.Grid", {"min": "huge"}, "min", "huge"),
+    ):
+        with pytest.raises(ComponentOptionError) as error:
+            _render(name, **props)
+        message = str(error.value)
+        assert name in message and argument in message and value in message, message
 
-    assert "pill-ghost" in _render("common.Pill", variant="ghost")
-    assert "pill-ghost" not in _classes(PILL_CSS)
-
-    assert "grid-columns-4" in _render("common.Grid", columns=4)
-    assert "grid-columns-4" not in _classes(GRID_CSS)
-
-    assert "--grid-gap: var(--sp-7);" in _render("common.Grid", gap=7)
+    assert "4" not in documented["grid.columns"]
     assert "7" not in documented["grid.gap"]
-
-    assert "--grid-min: var(--grid-min-huge);" in _render("common.Grid", min="huge")
     assert "huge" not in documented["grid.min"]
