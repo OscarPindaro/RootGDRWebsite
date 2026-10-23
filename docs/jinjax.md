@@ -599,8 +599,10 @@ their assets itself:
 ```
 
 The `jinjax-css-dependencies` pre-commit hook adds a missing declaration. This
-matters for fragments loaded over htmx: only the assets of the rendered tree are
-emitted, so an htmx response must carry the CSS of everything it renders.
+matters for fragments loaded over htmx: a fragment response carries markup only,
+so the host page must declare the CSS and JS of everything the fragment renders.
+The declarations are what the hook checks; they do not emit `<link>` tags inside
+the fragment.
 
 Styles are global — JinjaX does not scope them — so every rule is scoped under
 the component's root class, and class names are kebab-case and prefixed by the

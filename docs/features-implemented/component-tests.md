@@ -48,6 +48,11 @@ component tests.
 
 - No database, backend or authentication: journeys that need persisted state
   stay in E2E.
+- The harness shell supplies the assets it collected, so an isolated mount
+  proves a component's declarations and computed styles, not that a real host
+  declared them before an htmx swap. `tests/frontend/test_asset_delivery.py`
+  covers the raw host/fragment seam; the limit is recorded in
+  [css-ownership.md](css-ownership.md).
 - Fonts are self-hosted (F20), so the shell links the real `main.css` and the
   component server serves the real WOFF2 files: glyph metrics match the pages.
 - Timers use Playwright's clock when a component needs it; the ButtonGroup

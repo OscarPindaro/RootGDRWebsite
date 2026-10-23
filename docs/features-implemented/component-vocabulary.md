@@ -86,8 +86,8 @@ recorded reason.
 | Button `lg`, `xl` | `.btn-lg`/`.btn-xl` and their `--button-height-*`, `--button-padding-*`, `--button-icon-*` tokens; the matching `ButtonGroup` rules and tokens; both design-kit loops over `["xs", "sm", "md", "lg", "xl"]`; `tests/unit/jinja/test_button_groups.py` renders `xl`. No production caller. | Retained as design-kit experiments. |
 | Button `shape` | `Button.jinja` emits `btn-{shape}`; `Topbar`, `MenuTrigger` and `IconButton` pass `square`; `round` is the default; `ButtonGroup.jinja` emits `btn-{shape}` on its items and `Showcase.jinja` passes `square` to a group and shows the standalone specimen. No stylesheet styles the standalone `btn-round`/`btn-square`; `ButtonGroup.css` styles the group's corners. | Retained as a reserved no-op. |
 | Pill `info`, `accent`, `role-dev`, `npc`, `vermilion`, `cobalt`, `ochre`, `act1`, `act2`, `act3` | `Showcase.jinja` renders every one; `tests/frontend/test_button_skin.py` pins each fill token and its 4.5:1 contrast. No product caller. | Retained; the design kit is their contract. |
-| `--ok` | No stylesheet, template, script or specimen reads it. `docs/frontend_guide.md` names it in the identity-token list; the standalone prototype defines its own copy. | Retained: the guide is the documented contract and its rewrite is T21. Removing the token would leave the guide naming an absent value. |
-| `--clr-surface-raised` | No code reader. `docs/jinjax.md` names it as the light surface a component must not hardcode when it can render on both paper and rail. | Retained for the same guide reason; T21 owns the rewrite. |
+| `--ok` | No stylesheet, template, script or specimen reads it. `docs/frontend_guide.md` names it in the identity-token list; the standalone prototype defines its own copy. | Retained: the guide is the documented contract, and its T21 rewrite keeps the name. Removing the token would leave the guide naming an absent value. |
+| `--clr-surface-raised` | No code reader. `docs/jinjax.md` names it as the light surface a component must not hardcode when it can render on both paper and rail. | Retained for the same guide reason; the T21 rewrite keeps the name. |
 | `--clr-overlay` | No reader in any stylesheet, template, script, test or specimen. | Removed. |
 | `--status-danger-light` | No reader; its value duplicates `--vermilion`/`--p1`, but the alias itself was unused. | Removed. |
 | `--radius-xl` | No reader; the other radius steps are used. | Removed. |
@@ -250,10 +250,10 @@ become a shared argument. Stored tint ids and existing aliases keep their names.
   no reader anywhere and were removed: `--clr-overlay`, `--status-danger-light`
   and `--radius-xl`. `--ok` and `--clr-surface-raised` have no code reader either,
   but `docs/frontend_guide.md` and `docs/jinjax.md` name them; removing them
-  would leave those guides describing absent values, so they stay until T21
-  rewrites the guides. `--clr-nav-accent` is also unread, but it is a semantic
-  role alias and was not on the review's candidate list; it is reported rather
-  than removed.
+  would leave those guides describing absent values, so they stay and the T21
+  rewrite keeps both names. `--clr-nav-accent` is also unread, but it is a
+  semantic role alias and was not on the review's candidate list; it is reported
+  rather than removed.
 
 ## Used by
 
@@ -280,8 +280,8 @@ become a shared argument. Stored tint ids and existing aliases keep their names.
   `--clr-overlay`, `--status-danger-light` and `--radius-xl`; `lg`, `xl`,
   `columns=3`, the standalone `shape` argument and every Pill variant stay.
 - `--ok`, `--clr-surface-raised` and `--clr-nav-accent` remain. The first two are
-  named by central guides and wait for T21; the third is a semantic role alias
-  outside the approved removal list.
+  named by central guides, and the T21 rewrite keeps both names; the third is a
+  semantic role alias outside the approved removal list.
 - T31 aligned the token hook with this record: it guards palette and shared
   measures, allows a component's own rem/em/clamp geometry, and cannot by itself
   tell a shared step written in `rem` from private geometry, so review owns that
