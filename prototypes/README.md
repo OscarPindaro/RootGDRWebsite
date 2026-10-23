@@ -36,6 +36,7 @@ Esperimenti applicativi:
 |---|---|---|---|
 | [`bookkeeping-study/`](bookkeeping-study/) | Pagine reali JinjaX con fixture tipizzate e route dev-only | Atlante editoriale esistente | `uv run harness dev up`, poi `http://127.0.0.1:8001/components/planning` |
 | [`document-layout-study/`](document-layout-study/) | Scheda personaggio reale, due disposizioni sullo stesso DOM, server effimero | Atlante editoriale esistente | `uv run python prototypes/document-layout-study/capture.py --serve` |
+| [`appearance-study/`](appearance-study/) | Scheda personaggio reale, controlli aspetto sempre visibili o dietro disclosure sul telefono, stesso DOM | Atlante editoriale esistente | `uv run python prototypes/appearance-study/capture.py --serve` |
 
 ## Convenzioni
 
@@ -72,6 +73,9 @@ components and the dev-only application showcase at `/components/planning`.
 [Document layout](document-layout-study/README.md) renders one real character
 document on the ephemeral component server and compares two arrangements on
 the same DOM; its write controls are inert and it uses no application route.
+[Phone appearance](appearance-study/README.md) uses the same method to compare
+always-visible appearance controls with an explicit phone disclosure, and
+records the identity distance, control count, focus order and touch floor.
 Neither simulated state writes campaign data or calls providers.
 The bounded mode is documented in
 [the prototyping process](../docs/development_processes/prototyping.md);

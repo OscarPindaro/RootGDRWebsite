@@ -1,0 +1,229 @@
+{
+  "base_commit": "0227b99160c628596e6cde350f0ac510af10a853",
+  "component_blobs": {
+    "src/frontend/components/pages/characters/CharacterDetail.jinja": "88a75edf50e181d5474a39f0d26173cbf6b0572f",
+    "src/frontend/components/editorial/Document.css": "9318616d0951b423c0486039da0e0ae1057d5dff",
+    "src/frontend/components/editorial/ImageEditor.jinja": "34b7ed8785c5da9edde5771cf00ed26b16182f13",
+    "src/frontend/components/editorial/ImageEditor.css": "fbb1df9b248ff1d56e0049f8911579f6e5ecc263",
+    "src/frontend/components/editorial/ImageEditor.js": "2d4e9b5a94952e94370f09728c7d891b0e5e755d",
+    "src/frontend/components/editorial/DocIdentity.jinja": "d854edb6b85747eb54cb51d750da81a611602eac",
+    "src/frontend/components/editorial/DocEdit.jinja": "0015dd40556782284c68befb5d4821a096f43e72",
+    "src/frontend/components/editorial/DocSummary.jinja": "beb46af3e5d7c8b349ebdeb14ed8390d82d6b0d1",
+    "src/frontend/components/common/ChoiceGrid.css": "dbffcabc5f2c4b9dd13c2e20f7bd4e6bc08a0ec1",
+    "src/frontend/components/common/Button.css": "2e0ecdf27f87183f1e2e8ac2d9567d1d52e2fdb6",
+    "prototypes/appearance-study/comparison.css": "38ef865fcd88c88511e13b8d595e9b8d9ab7725c",
+    "prototypes/appearance-study/comparison.js": "81cd89447fe67297e09df06e319b717ec4e0f0e1",
+    "prototypes/appearance-study/study.py": "2c2e809c920a913c981534a16eca45f7339d19b0"
+  },
+  "fixture": {
+    "world_id": "7c1e4a90-3b6d-4f21-8a5e-9d2c6b0f4e13",
+    "character_id": "2f8b6d1c-5a3e-4c79-b0d4-6e9a1f7c3b52",
+    "name": "Fiamma Rossa"
+  },
+  "captures": [
+    {
+      "profile": "desktop",
+      "state": "a",
+      "appearance": "always",
+      "expanded": false,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-a.png",
+      "measurement": {
+        "identityOffset": 28,
+        "identityFromMain": 203,
+        "identityPageTop": 331,
+        "visibleControlsBefore": 30,
+        "surface": {
+          "width": 240,
+          "height": 300,
+          "top": 302
+        },
+        "disclosure": {
+          "width": 0,
+          "height": 0,
+          "top": 0
+        },
+        "history": {
+          "width": 40,
+          "height": 40,
+          "top": 610
+        },
+        "choicesVisible": true,
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "focusOrder": [
+          "surface",
+          "history",
+          "animal",
+          "tint"
+        ]
+      }
+    },
+    {
+      "profile": "desktop",
+      "state": "b",
+      "appearance": "disclosure",
+      "expanded": false,
+      "viewport": {
+        "width": 1440,
+        "height": 1000
+      },
+      "path": "evidence/desktop-b.png",
+      "measurement": {
+        "identityOffset": 28,
+        "identityFromMain": 203,
+        "identityPageTop": 331,
+        "visibleControlsBefore": 30,
+        "surface": {
+          "width": 240,
+          "height": 300,
+          "top": 302
+        },
+        "disclosure": {
+          "width": 0,
+          "height": 0,
+          "top": 0
+        },
+        "history": {
+          "width": 40,
+          "height": 40,
+          "top": 610
+        },
+        "choicesVisible": true,
+        "scrollWidth": 1440,
+        "innerWidth": 1440,
+        "focusOrder": [
+          "surface",
+          "history",
+          "animal",
+          "tint"
+        ]
+      }
+    },
+    {
+      "profile": "phone",
+      "state": "a",
+      "appearance": "always",
+      "expanded": false,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-a.png",
+      "measurement": {
+        "identityOffset": 843,
+        "identityFromMain": 1115,
+        "identityPageTop": 1448,
+        "visibleControlsBefore": 30,
+        "surface": {
+          "width": 220,
+          "height": 275,
+          "top": 605
+        },
+        "disclosure": {
+          "width": 0,
+          "height": 0,
+          "top": 0
+        },
+        "history": {
+          "width": 44,
+          "height": 44,
+          "top": 888
+        },
+        "choicesVisible": true,
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "focusOrder": [
+          "surface",
+          "history",
+          "animal",
+          "tint"
+        ]
+      }
+    },
+    {
+      "profile": "phone",
+      "state": "b",
+      "appearance": "disclosure",
+      "expanded": false,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-b.png",
+      "measurement": {
+        "identityOffset": 386,
+        "identityFromMain": 657,
+        "identityPageTop": 1010,
+        "visibleControlsBefore": 2,
+        "surface": {
+          "width": 220,
+          "height": 275,
+          "top": 625
+        },
+        "disclosure": {
+          "width": 220,
+          "height": 51,
+          "top": 908
+        },
+        "history": {
+          "width": 0,
+          "height": 0,
+          "top": 0
+        },
+        "choicesVisible": false,
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "focusOrder": [
+          "surface",
+          "disclosure"
+        ]
+      }
+    },
+    {
+      "profile": "phone",
+      "state": "b-open",
+      "appearance": "disclosure",
+      "expanded": true,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "path": "evidence/phone-b-open.png",
+      "measurement": {
+        "identityOffset": 901,
+        "identityFromMain": 1173,
+        "identityPageTop": 1526,
+        "visibleControlsBefore": 31,
+        "surface": {
+          "width": 220,
+          "height": 275,
+          "top": 625
+        },
+        "disclosure": {
+          "width": 220,
+          "height": 51,
+          "top": 908
+        },
+        "history": {
+          "width": 44,
+          "height": 44,
+          "top": 966
+        },
+        "choicesVisible": true,
+        "scrollWidth": 390,
+        "innerWidth": 390,
+        "focusOrder": [
+          "surface",
+          "disclosure",
+          "history",
+          "animal",
+          "tint"
+        ]
+      }
+    }
+  ]
+}
