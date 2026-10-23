@@ -91,6 +91,25 @@ name an earlier ticket retired (`.btn--*`, `.pill--*`, `.card--npc`, `.docpage`,
 component template or script. It strips comments first, so a file may still
 name what it replaced.
 
+### Component vocabulary
+
+The public options are finite and recorded in
+[features-implemented/component-vocabulary.md](features-implemented/component-vocabulary.md),
+with the owner's accepted choices and the test that checks them. In short:
+`common.Button` takes `variant` `primary`, `secondary`, `text` or `danger`, and
+`size` `xs`, `sm` or `md`; `lg` and `xl` are design-kit experiments. `shape` is
+a reserved no-op on a standalone button (the class is emitted and no stylesheet
+styles it); `ButtonGroup` still uses its own `shape` for the group's corners.
+`common.Pill` takes the 21 status, role and product names listed there.
+`common.Grid` takes `columns` 2 or 3, `min` `card`, `cover`, `story` or `quick`,
+`gap` one of the `--sp-*` steps, and the `flush`, `split` and `document` flags.
+
+An unsupported value currently renders the base component with no matching
+variant rule; T19 adds the rejection. Private geometry (a component's own
+rem/clamp values and BEM internals) stays in its stylesheet and is not a public
+option. A new public option needs a stylesheet rule or token, a design-kit
+specimen, a test, and an entry in the vocabulary manual.
+
 ## 3. Anatomy of a component
 
 ```
