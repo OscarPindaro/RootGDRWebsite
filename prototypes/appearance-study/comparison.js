@@ -85,9 +85,45 @@
     status("Salvataggio simulato: nessuna modifica registrata.");
   }
 
+  function productDisclosure() {
+    return document.querySelector("[data-image-disclosure]");
+  }
+
+  function appearanceRoot() {
+    return document.querySelector("[data-image-editor][data-appearance-expanded]");
+  }
+
   function disclosure() {
+    var product = productDisclosure();
+    if (product) {
+      // The component ships the disclosure: use its button and its state. The
+      // observer below mirrors the product state into the study strip without
+      // depending on which click listener runs first.
+      document.body.setAttribute("data-study-disclosure-mode", "product");
+      var root = appearanceRoot();
+      if (root && window.MutationObserver) {
+        new MutationObserver(function () {
+          var expanded = root.getAttribute("data-appearance-expanded") === "true";
+          document.body.setAttribute(
+            "data-study-expanded",
+            expanded ? "true" : "false"
+          );
+          measure();
+        }).observe(root, {
+          attributes: true,
+          attributeFilter: ["data-appearance-expanded"],
+        });
+      }
+      return product;
+    }
+
     var choices = document.querySelector("[data-image-choices]");
-    if (!choices) return null;
+    if (!choices) {
+      document.body.setAttribute("data-study-disclosure-mode", "none");
+      return null;
+    }
+
+    document.body.setAttribute("data-study-disclosure-mode", "prototype");
     var media = document.querySelector(".image-editor__media");
     var tools = document.querySelector(".image-editor__tools");
     var button = document.createElement("button");
@@ -116,7 +152,7 @@
     return button;
   }
 
-  function syncDisclosure() {
+  function syncFallbackDisclosure() {
     var button = document.querySelector("[data-study-disclosure]");
     if (!button) return;
     var expanded = document.body.getAttribute("data-study-expanded") === "true";
@@ -152,7 +188,8 @@
       .slice.call(
         document.querySelectorAll(
           "[data-image-surface], [data-image-history-open], " +
-            "[data-image-choices] .choice-grid__option, [data-study-disclosure]"
+            "[data-image-choices] .choice-grid__option, " +
+            "[data-image-disclosure], [data-study-disclosure]"
         )
       )
       .filter(function (element) {
@@ -162,8 +199,10 @@
             Node.DOCUMENT_POSITION_PRECEDING
         );
       });
-    var button = document.querySelector("[data-study-disclosure]");
-    var target = visible(button)
+    var button = [productDisclosure(), document.querySelector("[data-study-disclosure]")]
+      .filter(Boolean)
+      .find(visible);
+    var target = button
       ? Math.round(button.getBoundingClientRect().height) + " px"
       : "non attiva";
     output.textContent =
@@ -176,8 +215,21 @@
   }
 
   function setExpanded(expanded, announce) {
+    var root = appearanceRoot();
+    if (root) {
+      root.setAttribute(
+        "data-appearance-expanded",
+        expanded ? "true" : "false"
+      );
+    }
+    var product = productDisclosure();
+    if (product) {
+      product.setAttribute("aria-expanded", expanded ? "true" : "false");
+      var state = product.querySelector(".image-editor__disclosure-state");
+      if (state) state.textContent = expanded ? "−" : "+";
+    }
     document.body.setAttribute("data-study-expanded", expanded ? "true" : "false");
-    syncDisclosure();
+    syncFallbackDisclosure();
     if (announce) {
       status(
         expanded
@@ -190,8 +242,7 @@
 
   function setAppearance(mode) {
     document.body.setAttribute("data-study-appearance", mode);
-    document.body.setAttribute("data-study-expanded", "false");
-    syncDisclosure();
+    setExpanded(false, false);
     document
       .querySelectorAll("[data-study-appearance-choice]")
       .forEach(function (button) {
@@ -214,7 +265,7 @@
   });
 
   disclosure();
-  syncDisclosure();
+  syncFallbackDisclosure();
 
   document.addEventListener("click", function (event) { block(event, false); }, true);
   document.addEventListener("dblclick", function (event) { block(event, true); }, true);

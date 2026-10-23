@@ -1,18 +1,18 @@
 {
-  "base_commit": "0227b99160c628596e6cde350f0ac510af10a853",
+  "base_commit": "9dddb7799555ca7eea6b683f6248d2a7bd46efaa",
   "component_blobs": {
     "src/frontend/components/pages/characters/CharacterDetail.jinja": "88a75edf50e181d5474a39f0d26173cbf6b0572f",
     "src/frontend/components/editorial/Document.css": "9318616d0951b423c0486039da0e0ae1057d5dff",
-    "src/frontend/components/editorial/ImageEditor.jinja": "34b7ed8785c5da9edde5771cf00ed26b16182f13",
-    "src/frontend/components/editorial/ImageEditor.css": "fbb1df9b248ff1d56e0049f8911579f6e5ecc263",
-    "src/frontend/components/editorial/ImageEditor.js": "2d4e9b5a94952e94370f09728c7d891b0e5e755d",
+    "src/frontend/components/editorial/ImageEditor.jinja": "077c0d0f27e1f244580157515426ef9073157aa5",
+    "src/frontend/components/editorial/ImageEditor.css": "a2bca742d34b1bdf57c1f823faff92ad1218c75e",
+    "src/frontend/components/editorial/ImageEditor.js": "78fb6d7cb5b8f21018c7b574b8baa587562b9bba",
     "src/frontend/components/editorial/DocIdentity.jinja": "d854edb6b85747eb54cb51d750da81a611602eac",
     "src/frontend/components/editorial/DocEdit.jinja": "0015dd40556782284c68befb5d4821a096f43e72",
     "src/frontend/components/editorial/DocSummary.jinja": "beb46af3e5d7c8b349ebdeb14ed8390d82d6b0d1",
     "src/frontend/components/common/ChoiceGrid.css": "dbffcabc5f2c4b9dd13c2e20f7bd4e6bc08a0ec1",
     "src/frontend/components/common/Button.css": "2e0ecdf27f87183f1e2e8ac2d9567d1d52e2fdb6",
-    "prototypes/appearance-study/comparison.css": "38ef865fcd88c88511e13b8d595e9b8d9ab7725c",
-    "prototypes/appearance-study/comparison.js": "81cd89447fe67297e09df06e319b717ec4e0f0e1",
+    "prototypes/appearance-study/comparison.css": "5da89a4322f998fdab40d919a06ab7b25a68293e",
+    "prototypes/appearance-study/comparison.js": "68d9058f994a97e014b246083575c744a34323cc",
     "prototypes/appearance-study/study.py": "2c2e809c920a913c981534a16eca45f7339d19b0"
   },
   "fixture": {
@@ -41,11 +41,7 @@
           "height": 300,
           "top": 302
         },
-        "disclosure": {
-          "width": 0,
-          "height": 0,
-          "top": 0
-        },
+        "disclosure": null,
         "history": {
           "width": 40,
           "height": 40,
@@ -82,11 +78,7 @@
           "height": 300,
           "top": 302
         },
-        "disclosure": {
-          "width": 0,
-          "height": 0,
-          "top": 0
-        },
+        "disclosure": null,
         "history": {
           "width": 40,
           "height": 40,
@@ -123,11 +115,7 @@
           "height": 275,
           "top": 605
         },
-        "disclosure": {
-          "width": 0,
-          "height": 0,
-          "top": 0
-        },
+        "disclosure": null,
         "history": {
           "width": 44,
           "height": 44,
@@ -155,9 +143,9 @@
       },
       "path": "evidence/phone-b.png",
       "measurement": {
-        "identityOffset": 386,
-        "identityFromMain": 657,
-        "identityPageTop": 1010,
+        "identityOffset": 394,
+        "identityFromMain": 665,
+        "identityPageTop": 1018,
         "visibleControlsBefore": 2,
         "surface": {
           "width": 220,

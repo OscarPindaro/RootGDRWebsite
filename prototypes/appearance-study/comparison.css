@@ -54,8 +54,9 @@
   cursor: not-allowed;
 }
 
-/* Comparison-only disclosure. It is a real button with the atlas skin, so the
-   measurement uses the same touch-target contract as the product controls. */
+/* Comparison-only fallback disclosure, used only when the rendered component
+   has no product disclosure of its own. It is a real button with the atlas
+   skin, so the measurement uses the same touch-target contract. */
 .study-disclosure {
   display: none;
   width: 100%;
@@ -85,14 +86,60 @@
 /* The arrangement applies exactly where the corrected document head stacks the
    portrait above the identity, and only for option B. Desktop keeps A. */
 @container document-column (max-width: 34.5rem) {
-  body[data-study-appearance="disclosure"] .study-disclosure {
+  /* Option B: the product ships the disclosure. When it does, its own rules
+     and script drive the collapsed and expanded states. The fallback path
+     below is used only by a component that has no product disclosure. */
+  body[data-study-appearance="disclosure"][data-study-disclosure-mode="prototype"]
+    .study-disclosure {
     display: flex;
   }
 
-  body[data-study-appearance="disclosure"][data-study-expanded="false"]
+  body[data-study-appearance="disclosure"][data-study-disclosure-mode="prototype"][data-study-expanded="false"]
     .image-editor__choices,
-  body[data-study-appearance="disclosure"][data-study-expanded="false"]
+  body[data-study-appearance="disclosure"][data-study-disclosure-mode="prototype"][data-study-expanded="false"]
     .image-editor__tools {
     display: none;
+  }
+
+  /* Option A deliberately reproduces the pre-disclosure arrangement, whatever
+     state the product component starts in. These rules override the
+     component's collapsed state explicitly: the controls stay visible and the
+     disclosure stays out of the way. The component's collapsed state also
+     tightens the editor gap and the choices rows, so A restores the document
+     face layout it had before the disclosure existed. */
+  body[data-study-appearance="always"] .image-editor__disclosure,
+  body[data-study-appearance="always"] .study-disclosure {
+    display: none;
+  }
+
+  body[data-study-appearance="always"]
+    .image-editor[data-appearance-expanded="false"] {
+    gap: var(--sp-4);
+  }
+
+  body[data-study-appearance="always"]
+    .image-editor[data-appearance-expanded="false"]
+    .image-editor__tools {
+    display: flex;
+  }
+
+  body[data-study-appearance="always"]
+    .image-editor[data-appearance-expanded="false"]
+    .image-editor__choices {
+    grid-template-rows: repeat(2, minmax(0, 1fr)) auto;
+    min-height: 100%;
+  }
+
+  body[data-study-appearance="always"]
+    .image-editor[data-appearance-expanded="false"]
+    .image-editor__choices
+    .choice-grid {
+    display: grid;
+  }
+
+  body[data-study-appearance="always"]
+    .image-editor[data-appearance-expanded="false"]
+    .image-editor__status {
+    min-height: 1.2em;
   }
 }

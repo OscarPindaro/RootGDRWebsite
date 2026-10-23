@@ -36,8 +36,7 @@ _MEASURE = """() => {
         return box.width > 0 && box.height > 0
             && style.visibility !== 'hidden' && style.display !== 'none';
     };
-    const box = (selector) => {
-        const element = document.querySelector(selector);
+    const box = (element) => {
         if (!element) return null;
         const rect = element.getBoundingClientRect();
         return {
@@ -52,12 +51,17 @@ _MEASURE = """() => {
     const headingTop = heading.getBoundingClientRect().top + scrollY;
     const controls = [...document.querySelectorAll(
         '[data-image-surface], [data-image-history-open], '
-        + '[data-image-choices] .choice-grid__option, [data-study-disclosure]'
+        + '[data-image-choices] .choice-grid__option, '
+        + '[data-image-disclosure], [data-study-disclosure]'
     )].filter(element =>
         visible(element)
         && (heading.compareDocumentPosition(element)
             & Node.DOCUMENT_POSITION_PRECEDING)
     );
+    const disclosure = [
+        document.querySelector('[data-image-disclosure]'),
+        document.querySelector('[data-study-disclosure]'),
+    ].filter(Boolean).find(visible);
     return {
         identityOffset: Math.round(
             headingTop
@@ -68,10 +72,12 @@ _MEASURE = """() => {
         ),
         identityPageTop: Math.round(headingTop),
         visibleControlsBefore: controls.length,
-        surface: box('[data-image-surface]'),
-        disclosure: box('[data-study-disclosure]'),
-        history: box('[data-image-history-open]'),
-        choicesVisible: visible(document.querySelector('[data-image-choices]')),
+        surface: box(document.querySelector('[data-image-surface]')),
+        disclosure: box(disclosure),
+        history: box(document.querySelector('[data-image-history-open]')),
+        choicesVisible: visible(
+            document.querySelector('[data-image-choices] .choice-grid')
+        ),
         scrollWidth: document.documentElement.scrollWidth,
         innerWidth: innerWidth,
     };
@@ -82,7 +88,9 @@ _IDENTIFY_ACTIVE = """() => {
     const face = document.querySelector('.document__face--editor');
     if (!element || !face.contains(element)) return null;
     if (element.matches('[data-image-surface]')) return 'surface';
-    if (element.matches('[data-study-disclosure]')) return 'disclosure';
+    if (element.matches('[data-image-disclosure], [data-study-disclosure]')) {
+        return 'disclosure';
+    }
     if (element.matches('[data-image-history-open]')) return 'history';
     const grid = element.closest('.choice-grid');
     if (grid) {
