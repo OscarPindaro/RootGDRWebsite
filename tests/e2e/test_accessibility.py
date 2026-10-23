@@ -633,6 +633,17 @@ def test_phone_editing_controls_are_named_and_clear_the_touch_target(
     session.goto(api_path.replace("/api", ""))
     page = session.page
 
+    # Since T25 the appearance controls, history included, sit behind the
+    # phone disclosure. Open it first: the control is reachable and named, and
+    # that is what this test asserts.
+    disclosure = page.get_by_role("button", name="Aspetto")
+    disclosure.wait_for(state="visible")
+    assert disclosure.get_attribute("aria-expanded") == "false"
+    disclosure.click()
+    page.wait_for_function(
+        "() => document.querySelector('[data-image-editor]')"
+        ".dataset.appearanceExpanded === 'true'"
+    )
     trigger = page.get_by_test_id("image-history-open")
     assert trigger.get_attribute("aria-label") == "Storico immagini"
     trigger.focus()
@@ -658,6 +669,12 @@ def test_phone_editing_controls_are_named_and_clear_the_touch_target(
 
     for width in (390, 320):
         page.set_viewport_size({"width": width, "height": 844})
+        if width == 320 and disclosure.get_attribute("aria-expanded") != "true":
+            disclosure.click()
+            page.wait_for_function(
+                "() => document.querySelector('[data-image-editor]')"
+                ".dataset.appearanceExpanded === 'true'"
+            )
         for control in (trigger, command):
             box = control.evaluate(
                 """element => {
